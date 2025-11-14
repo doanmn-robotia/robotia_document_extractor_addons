@@ -1,0 +1,314 @@
+/**
+ * Modern Smooth Animations
+ * Inspired by Vercel, Linear, and Tailwind UI
+ * Smooth micro-interactions with natural easing
+ */
+
+// ========================================================================
+// KEYFRAME ANIMATIONS
+// ========================================================================
+
+// Fade in animation
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+// Slide up and fade in
+@keyframes slideUpFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+// Slide down and fade in
+@keyframes slideDownFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+// Scale in
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+// Skeleton shimmer loading
+@keyframes shimmer {
+    0% {
+        background-position: -1000px 0;
+    }
+    100% {
+        background-position: 1000px 0;
+    }
+}
+
+// Spin (for loaders)
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+// Bounce (subtle)
+@keyframes bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-4px);
+    }
+}
+
+// Indigo pulse for focus rings
+@keyframes pulseFocus {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
+    }
+    50% {
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+    }
+}
+
+// ========================================================================
+// UTILITY CLASSES
+// ========================================================================
+
+// Fade in
+.animate-fade-in {
+    animation: fadeIn var(--transition-base) var(--ease-out);
+}
+
+// Slide up fade in
+.animate-slide-up {
+    animation: slideUpFadeIn var(--transition-slow) var(--ease-out);
+}
+
+// Slide down fade in
+.animate-slide-down {
+    animation: slideDownFadeIn var(--transition-slow) var(--ease-out);
+}
+
+// Scale in
+.animate-scale-in {
+    animation: scaleIn var(--transition-base) var(--ease-out);
+}
+
+// Skeleton loader
+.skeleton-loader {
+    background: linear-gradient(
+        90deg,
+        var(--gray-200) 0px,
+        var(--gray-100) 40px,
+        var(--gray-200) 80px
+    );
+    background-size: 1000px 100%;
+    animation: shimmer 1.5s infinite linear;
+}
+
+// Spin animation
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+// ========================================================================
+// MICRO-INTERACTIONS
+// ========================================================================
+
+// Smooth hover lift
+.hover-lift {
+    transition: transform var(--transition-base) var(--ease-out),
+                box-shadow var(--transition-base) var(--ease-out);
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+}
+
+// Subtle hover lift (for cards)
+.hover-lift-sm {
+    transition: transform var(--transition-base) var(--ease-out),
+                box-shadow var(--transition-base) var(--ease-out);
+
+    &:hover {
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-lg);
+    }
+}
+
+// Scale on hover
+.hover-scale {
+    transition: transform var(--transition-fast) var(--ease-out);
+
+    &:hover {
+        transform: scale(1.02);
+    }
+}
+
+// Scale on hover (subtle for buttons)
+.hover-scale-sm {
+    transition: transform var(--transition-fast) var(--ease-out);
+
+    &:hover {
+        transform: scale(1.01);
+    }
+}
+
+// Smooth color transitions
+.transition-colors {
+    transition: background-color var(--transition-base) var(--ease-out),
+                color var(--transition-base) var(--ease-out),
+                border-color var(--transition-base) var(--ease-out);
+}
+
+// All smooth transitions
+.transition-all {
+    transition: all var(--transition-base) var(--ease-out);
+}
+
+// Focus ring animation
+.focus-ring {
+    transition: box-shadow var(--transition-fast) var(--ease-out);
+
+    &:focus, &:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    }
+}
+
+// ========================================================================
+// APP MENU ICON ANIMATIONS
+// ========================================================================
+
+// Effect wrapper styling
+.effect-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 150px;
+}
+
+.effect-name {
+    text-align: center;
+    font-weight: var(--font-weight-semibold);
+    margin-top: 1rem;
+    color: var(--text-primary);
+}
+
+// Base app icon style
+.app-icon {
+    width: 100%;
+    height: 100%;
+    border-radius: var(--radius-md);
+    position: relative;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform var(--transition-fast) var(--ease-out);
+
+    &:hover {
+        transform: scale(1.05);
+    }
+}
+
+// Grid inside the app icon
+.icon-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-gap: 3px;
+    width: 24px;
+    height: 24px;
+}
+
+.grid-item {
+    background-color: white;
+    border-radius: 2px;
+    transition: background-color var(--transition-slow) var(--ease-in-out);
+}
+
+/**
+ * Pulse Animation Mixin
+ *
+ * Creates a pulse animation keyframe for a specific color.
+ * Reduces code duplication for multiple color variations.
+ *
+ * @param {string} $name - The name suffix for the animation
+ * @param {color} $color - The color to pulse to
+ */
+@mixin pulse-animation($name, $color) {
+    @keyframes pulse-#{$name} {
+        0% {
+            background-color: white;
+        }
+        50% {
+            background-color: $color;
+        }
+        100% {
+            background-color: white;
+        }
+    }
+}
+
+// Generate pulse animations for all color variations
+@include pulse-animation('red', #ff5252);
+@include pulse-animation('orange', #ff9800);
+@include pulse-animation('yellow', #ffc107);
+@include pulse-animation('green', #4caf50);
+@include pulse-animation('blue', #2196f3);
+@include pulse-animation('indigo', #3f51b5);
+@include pulse-animation('purple', #9c27b0);
+@include pulse-animation('pink', #e91e63);
+@include pulse-animation('teal', #009688);
+
+/**
+ * Grid Item Animation Mixin
+ *
+ * Applies pulse animation to a specific grid item with delay.
+ *
+ * @param {number} $index - The nth-child index
+ * @param {string} $color - The color name for the animation
+ * @param {number} $delay - The animation delay in seconds
+ */
+@mixin grid-item-animation($index, $color, $delay) {
+    .pulsing-colors:hover .grid-item:nth-child(#{$index}) {
+        animation: pulse-#{$color} 1s infinite;
+        animation-delay: #{$delay}s;
+    }
+}
+
+// Apply animations to grid items with progressive delays
+@include grid-item-animation(1, 'red', 0);
+@include grid-item-animation(2, 'orange', 0.05);
+@include grid-item-animation(3, 'yellow', 0.1);
+@include grid-item-animation(4, 'green', 0.15);
+@include grid-item-animation(5, 'blue', 0.2);
+@include grid-item-animation(6, 'indigo', 0.25);
+@include grid-item-animation(7, 'purple', 0.3);
+@include grid-item-animation(8, 'pink', 0.35);
+@include grid-item-animation(9, 'teal', 0.4);

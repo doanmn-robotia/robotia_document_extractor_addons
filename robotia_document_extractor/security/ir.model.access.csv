@@ -1,0 +1,14 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_controlled_substance_user,controlled.substance user,model_controlled_substance,base.group_user,1,0,0,0
+access_controlled_substance_manager,controlled.substance manager,model_controlled_substance,base.group_system,1,1,1,1
+access_activity_field_user,activity.field user,model_activity_field,base.group_user,1,0,0,0
+access_activity_field_manager,activity.field manager,model_activity_field,base.group_system,1,1,1,1
+access_document_extraction_user,document.extraction user,model_document_extraction,base.group_user,1,1,1,1
+access_substance_usage_user,substance.usage user,model_substance_usage,base.group_user,1,1,1,1
+access_equipment_product_user,equipment.product user,model_equipment_product,base.group_user,1,1,1,1
+access_equipment_ownership_user,equipment.ownership user,model_equipment_ownership,base.group_user,1,1,1,1
+access_collection_recycling_user,collection.recycling user,model_collection_recycling,base.group_user,1,1,1,1
+access_quota_usage_user,quota.usage user,model_quota_usage,base.group_user,1,1,1,1
+access_equipment_product_report_user,equipment.product.report user,model_equipment_product_report,base.group_user,1,1,1,1
+access_equipment_ownership_report_user,equipment.ownership.report user,model_equipment_ownership_report,base.group_user,1,1,1,1
+access_collection_recycling_report_user,collection.recycling.report user,model_collection_recycling_report,base.group_user,1,1,1,1

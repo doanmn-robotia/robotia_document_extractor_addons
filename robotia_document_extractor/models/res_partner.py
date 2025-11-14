@@ -1,0 +1,50 @@
+# -*- coding: utf-8 -*-
+
+from odoo import models, fields
+
+
+class ResPartner(models.Model):
+    """Extend res.partner to add organization-specific fields"""
+    _inherit = 'res.partner'
+
+    # Business License Info
+    business_license_number = fields.Char(
+        string='Business License Number',
+        help='Mã số doanh nghiệp',
+        index=True
+    )
+    business_license_date = fields.Date(
+        string='Business License Date',
+        help='Ngày cấp giấy phép đăng ký kinh doanh'
+    )
+    business_license_place = fields.Char(
+        string='Business License Place',
+        help='Nơi cấp giấy phép'
+    )
+
+    # Legal Representative
+    legal_representative_name = fields.Char(
+        string='Legal Representative',
+        help='Tên người đại diện theo pháp luật'
+    )
+    legal_representative_position = fields.Char(
+        string='Legal Representative Position',
+        help='Chức vụ người đại diện'
+    )
+
+    # Contact Person (different from legal representative)
+    contact_person_name = fields.Char(
+        string='Contact Person',
+        help='Tên người đại diện liên lạc'
+    )
+
+    # Additional fields (fax may not exist in base)
+    fax = fields.Char(
+        string='Fax'
+    )
+
+    _sql_constraints = [
+        ('business_license_number_unique',
+         'UNIQUE(business_license_number)',
+         'The business license number must be unique!')
+    ]

@@ -1,0 +1,105 @@
+<templates id="template" xml:space="preserve">
+
+    <t t-inherit="web.NavBar" t-inherit-mode="extension" owl="1">
+
+        <xpath expr="//t[@t-if='!env.isSmall']" position="replace">
+            
+        </xpath>
+
+        <xpath expr="//header//t[@t-call='web.NavBar.AppsMenu']" position="replace">
+            <t t-if="env.isSmall">
+                <a href="/robotia" class="o_menu_toggle border-0" t-att-class="{'hasImage': currentApp?.webIconData}" accesskey="h" t-ref="menuApps" t-on-click.prevent="_openAppMenuSidebar">
+                    <t t-call="web.NavBar.AppsMenu.Sidebar">
+                        <t t-set="apps" t-value="menuService.getApps()" />
+                    </t>
+                </a>
+            </t>
+            <div t-else="" class="o_navbar_apps_menu dropdown o_navbar_apps_menu">
+                <div class="effect-wrapper o-dropdown dropdown-toggle dropdown" t-on-click="(ev) => env.toggleNavBar()" title="Home Menu">
+                    <div class="app-icon pulsing-colors" >
+                        <div class="icon-grid">
+                        <div class="grid-item"></div>
+                        <div class="grid-item"></div>
+                        <div class="grid-item"></div>
+                        <div class="grid-item"></div>
+                        <div class="grid-item"></div>
+                        <div class="grid-item"></div>
+                        <div class="grid-item"></div>
+                        <div class="grid-item"></div>
+                        <div class="grid-item"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </xpath>
+    </t>
+
+    <t t-name="theme.NavBar.SectionsMenu">
+        <t t-set="sections" t-value="currentAppSections" />
+        <div t-if="currentAppSections.length" class="nav_sidebar nav_sub_sidebar" t-ref="appSubMenus" role="menu">
+            <DropdownGroup>
+                <t t-foreach="sections" t-as="section" t-key="section.id">
+                    <Dropdown position="'right-middle'" t-if="section.childrenTree.length" state="subMenuState">
+                        <div t-att-data-hotkey="hotkey" class="tab sub_tab d-flex justify-content-between align-items-center" t-att-data-menu-xmlid="section.xmlid" >
+                            <span t-esc="section.name" t-att-data-section="section.id" />
+                            <i class="fa fa-ellipsis-v" aria-hidden="true"></i>
+                        </div>
+                        <t t-set-slot="content">
+                            <t t-call="web.NavBar.SectionsMenu.Dropdown.MenuSlot">
+                                <t t-set="items" t-value="section.childrenTree" />
+                                <t t-set="decalage" t-value="decalage + 12" />
+                            </t>
+                        </t>
+                    </Dropdown>
+                    <t t-if="!section.childrenTree.length">
+                        <div class="tab sub_tab d-flex justify-content-between align-items-center">
+                            <DropdownItem
+                                onSelected="() => this.onNavBarDropdownItemSelection(section)"
+                                t-esc="section.name"
+                                attrs="{
+                                    href: getMenuItemHref(section),
+                                    'data-hotkey': hotkey,
+                                    'data-menu-xmlid': section.xmlid,
+                                    'data-section': section.id,
+                                }"
+                            />
+                            <i class="fa fa-angle-right" aria-hidden="true"></i>
+                        </div>
+                    </t>
+                </t>
+                <t t-if="currentAppSectionsExtra.length"
+                    t-call="web.NavBar.SectionsMenu.MoreDropdown">
+                    <t t-set="sections" t-value="currentAppSectionsExtra" />
+                    <t t-if="sectionsVisibleCount lt 10">
+                        <t t-set="hotkey" t-value="(sectionsVisibleCount + 1 % 10).toString()" />
+                    </t>
+                </t>
+            </DropdownGroup>
+        </div>
+    </t>
+
+    <t t-name="theme.NavSideBar">
+        <t t-set="apps" t-value="menuService.getApps()" />
+        <div class="nav_sidebar h-100 border-end">
+            <div class="p-2 mb-3 d-flex justify-content-center align-items-center">
+                <img t-attf-src="/web/binary/company_logo?company={{company.currentCompany.id}}" alt="Logo" style="max-height:100px; max-width: 200px; width:auto"/>
+            </div>
+            <div class="d-flex align-items-center justify-content-between app_name_container">
+                <p class="p-2 app_name" >Apps</p>
+                <span t-on-click="(ev) => this.openCommand()">
+                    <i class="fa fa-search" aria-hidden="true"></i>
+                </span>
+            </div>
+            <t t-foreach="apps" t-as="app" t-key="app.id">
+                <a class="tab"
+                     t-att-class="{
+                        'selected': currentApp and currentApp.id == app.id
+                     }" t-att-data-key="app.id" role="tab" t-on-click="() => this.onNavBarDropdownItemSelection(app)">
+                    <span class="icon d-none d-md-block" t-attf-style="background : url('{{app.webIconData}}') no-repeat center;background-size:contain;"/> <span class="app_name"><t t-esc="app.name"/></span>
+                </a>
+                <t t-if="currentApp and currentApp.id == app.id" t-call="theme.NavBar.SectionsMenu"/>
+            </t>
+        </div>
+    </t>
+
+</templates>

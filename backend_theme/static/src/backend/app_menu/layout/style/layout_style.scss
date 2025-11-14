@@ -1,0 +1,1060 @@
+/**
+ * Backend Theme Layout Styles
+ * Modern minimal design inspired by Vercel, Linear, and Tailwind UI
+ * Organized into logical sections for easier maintenance.
+ */
+
+/* ========================================================================
+   GLOBAL STYLES - Clean minimal base
+   ======================================================================== */
+
+body {
+    background-color: var(--bg-body);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-relaxed);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.o_web_client {
+    background-color: var(--bg-body);
+}
+
+.o_action_manager {
+    background-color: var(--bg-body);
+}
+
+.o_content {
+    background-color: var(--bg-body);
+}
+
+// Smooth scrolling
+html {
+    scroll-behavior: smooth;
+}
+
+// Selection color
+::selection {
+    background-color: var(--primary-light);
+    color: var(--primary-accent);
+}
+
+/* ========================================================================
+   FORM STATUS & BUTTONS - Modern minimal style
+   ======================================================================== */
+
+.o_form_status_indicator {
+    align-self: auto !important;
+
+    .o_form_status_indicator_buttons {
+        gap: var(--space-3);
+        align-items: center;
+
+        // Bold & Prominent Save button (Vercel-inspired)
+        .o_form_button_save {
+            background: var(--primary-accent);
+            border: none !important;
+            color: white;
+            font-weight: var(--font-weight-semibold);
+            font-size: var(--font-size-sm);
+            padding: var(--space-2) var(--space-5) !important;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-md);
+            transition: all var(--transition-base) var(--ease-out);
+
+            &:hover {
+                background: var(--primary-hover);
+                box-shadow: var(--shadow-primary);
+                transform: translateY(-2px);
+            }
+
+            &:active {
+                transform: translateY(0);
+                box-shadow: var(--shadow-sm);
+            }
+
+            &:focus, &:focus-visible {
+                outline: none;
+                box-shadow: var(--shadow-primary), 0 0 0 3px rgba(99, 102, 241, 0.2);
+            }
+        }
+
+        // Outlined/Ghost Discard button (minimal)
+        .o_form_button_cancel {
+            background: transparent;
+            border: 1px solid var(--border-color-strong) !important;
+            color: var(--text-secondary);
+            font-weight: var(--font-weight-medium);
+            font-size: var(--font-size-sm);
+            padding: var(--space-2) var(--space-4) !important;
+            border-radius: var(--radius-md);
+            transition: all var(--transition-base) var(--ease-out);
+
+            &:hover {
+                background: var(--gray-100);
+                border-color: var(--gray-400);
+                color: var(--text-primary);
+            }
+
+            &:active {
+                background: var(--gray-200);
+            }
+
+            &:focus, &:focus-visible {
+                outline: none;
+                box-shadow: 0 0 0 3px rgba(100, 116, 139, 0.15);
+            }
+        }
+    }
+}
+
+.o_field_widget.o_field_many2one .o_external_button,
+.o_field_many2one_selection .o_external_button {
+    flex: 0 0 auto;
+    padding-left: var(--space-2);
+    padding-right: var(--space-1);
+    margin-left: var(--space-1);
+    font-size: var(--font-size-lg);
+    color: var(--primary-accent);
+    border: none;
+    visibility: visible !important;
+    transition: color var(--transition-fast) var(--ease-out),
+                transform var(--transition-fast) var(--ease-out);
+
+    &:hover {
+        color: var(--primary-hover);
+        transform: scale(1.1);
+    }
+}
+
+.o_field_percentage > div input ~ span {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-left: var(--space-2);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-secondary);
+}
+
+/* ========================================================================
+   NAVBAR & TOP BAR - Clean minimal design
+   ======================================================================== */
+
+
+.o_nav_entry:hover {
+    background-color: var(--gray-100) !important;
+    color: var(--text-primary);
+}
+
+.app_bar .app_container {
+    a:hover {
+        background: var(--secondary-hover) !important;
+    }
+
+    .scroll_container .app_items_wrapper .app_items {
+        background-color: var(--app-bar-accent);
+
+        .o-app-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 5px;
+        }
+    }
+}
+
+.nav-container {
+    height: auto !important;
+    background: transparent !important;
+    float: none !important;
+    padding: 0 !important;
+    width: 850px !important;
+    margin: 0 auto !important;
+}
+
+/* ========================================================================
+   FULLSCREEN MENU
+   ======================================================================== */
+
+.fullscreen-menu {
+    height: calc(100vh - 46px);
+    background: var(--full-screen-bg);
+    background-size: cover;
+    background-repeat: no-repeat;
+    min-width: 100%;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    margin-top: 0;
+    position: fixed;
+    top: 46px;
+    left: -1px;
+    padding: 2.5rem 0;
+}
+
+.a_app_menu_title {
+    color: var(--app-menu-font-color) !important;
+}
+
+.app_components {
+    position: relative;
+    top: unset;
+    flex: 1;
+    background-repeat: no-repeat !important;
+    background-size: cover !important;
+}
+
+.app-menu {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    margin: 0 auto;
+    margin-right: 70px;
+}
+
+/* ========================================================================
+   SEARCH COMPONENTS
+   ======================================================================== */
+
+.o-menu-search-result.dropdown-item.col-12.ml-auto.mr-auto {
+    background-repeat: no-repeat;
+    background-size: 23px;
+    padding-left: 40px;
+    margin-bottom: 5px;
+}
+
+.o_searchview {
+    padding: 5px !important;
+}
+
+.o_searchview_icon {
+    margin-left: 8px;
+}
+
+.search-results a {
+    color: white !important;
+    cursor: pointer !important;
+}
+
+/* ========================================================================
+   MODULE & ICONS
+   ======================================================================== */
+
+.oe_module_icon {
+    width: 70px;
+    max-height: 70px;
+    max-width: 23%;
+    float: left;
+    border-radius: 10px;
+}
+
+.o_base_settings .o_setting_container .settings_tab .selected {
+    background-color: var(--primary-hover);
+}
+
+/* ========================================================================
+   KANBAN VIEW - Modern elevated cards (exclude ghost/drag placeholders)
+   ======================================================================== */
+
+.o_kanban_view {
+    background-color: var(--bg-body);
+    
+    .o_kanban_renderer {
+        padding: var(--space-4) !important;
+    }
+
+    .o_kanban_record:not(.o_kanban_ghost) {
+        background: var(--bg-white);
+        border: 1px solid var(--border-color-light);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-sm);
+        transition: transform var(--transition-base) var(--ease-out),
+                    box-shadow var(--transition-base) var(--ease-out);
+        padding: var(--space-4);
+
+        &:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--border-color);
+        }
+
+        &.o_kanban_record_has_image_fill .o_kanban_image_fill_left {
+            margin-top: calc(-1 * var(--space-4));
+            margin-bottom: calc(-1 * var(--space-4));
+            margin-left: calc(-1 * var(--space-4));
+            border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+        }
+    }
+
+    &.o_kanban_grouped {
+        .o_kanban_group {
+            background: transparent;
+            padding: var(--space-2);
+        }
+
+        .o_kanban_header {
+            background: var(--bg-white);
+            border-radius: var(--radius-md);
+            padding: var(--space-3);
+            margin-bottom: var(--space-3);
+            border: 1px solid var(--border-color-light);
+        }
+
+        .o_kanban_record:not(.o_kanban_ghost),
+        .o_kanban_quick_create {
+            width: 100%;
+            margin-left: 0;
+            margin-right: 0;
+            margin-bottom: var(--space-3);
+        }
+    }
+}
+
+/* ========================================================================
+   DROPDOWNS & MENUS - Elevated with smooth animations
+   ======================================================================== */
+
+.o-dropdown {
+    &.dropup > .o-dropdown--menu,
+    &.dropdown > .o-dropdown--menu,
+    &.dropleft > .o-dropdown--menu,
+    &.dropright > .o-dropdown--menu {
+        left: auto;
+        right: auto;
+        margin-left: 0;
+        margin-right: 0;
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--border-color-light);
+        box-shadow: var(--shadow-lg);
+        padding: var(--space-2);
+        animation: slideDownFadeIn var(--transition-base) var(--ease-out);
+    }
+}
+
+.dropdown-menu {
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color-light);
+    box-shadow: var(--shadow-lg);
+    padding: var(--space-2);
+    animation: slideDownFadeIn var(--transition-base) var(--ease-out);
+
+    &.show {
+        display: block;
+    }
+
+    .dropdown-item {
+        border-radius: var(--radius-md);
+        padding: var(--space-2) var(--space-3);
+        margin: var(--space-1) 0;
+        color: var(--text-secondary);
+        font-weight: var(--font-weight-medium);
+        transition: background-color var(--transition-base) var(--ease-out),
+                    color var(--transition-base) var(--ease-out);
+
+        &:hover {
+            background-color: var(--gray-100);
+            color: var(--text-primary);
+        }
+
+        &:active, &.active {
+            background-color: var(--primary-light);
+            color: var(--primary-accent);
+        }
+    }
+
+    .dropdown-divider {
+        margin: var(--space-2) 0;
+        border-color: var(--border-color-light);
+    }
+}
+
+/* ========================================================================
+   FORMS & CONTROLS - Clean modern design
+   ======================================================================== */
+
+.o_form_view {
+    background-color: var(--bg-body);
+
+    .o_form_sheet {
+        background: var(--bg-white);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-color-light);
+        padding: var(--space-6);
+    }
+
+    .oe_button_box .btn.oe_stat_button {
+        color: var(--primary-accent) !important;
+        height: 44px;
+        padding: var(--space-2) var(--space-3);
+        text-align: left;
+        white-space: nowrap;
+        background-color: var(--bg-white);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        margin-bottom: var(--space-2);
+        margin-right: var(--space-2);
+        transition: all var(--transition-base) var(--ease-out);
+        font-weight: var(--font-weight-medium);
+
+        &:hover {
+            background-color: var(--primary-light);
+            border-color: var(--primary-accent);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .o_button_icon {
+            color: var(--primary-accent) !important;
+            font-size: var(--font-size-xl);
+        }
+
+        .o_stat_value {
+            color: var(--text-primary);
+            font-weight: var(--font-weight-semibold);
+        }
+
+        .o_stat_text {
+            color: var(--text-secondary);
+            font-size: var(--font-size-xs);
+        }
+    }
+
+    .o_form_uri,
+    .o_form_uri > span:first-child {
+        color: var(--primary-accent) !important;
+        font-weight: var(--font-weight-medium);
+        transition: color var(--transition-base) var(--ease-out);
+
+        &:hover {
+            color: var(--primary-hover) !important;
+        }
+    }
+
+    .oe_title .o_field_widget {
+        border: none !important;
+    }
+
+    // Modern field widgets - style the container like an input (specific field types only)
+    .o_field_widget.o_field_daterange,
+    .o_field_widget.o_field_date,
+    .o_field_widget.o_field_datetime,
+    .o_field_widget.o_field_integer,
+    .o_field_widget.o_field_char,
+    .o_field_widget.o_field_selection,
+    .o_field_widget.o_field_many2one_avatar,
+    .o_field_widget.o_field_many2one,
+    .o_field_widget.o_field_email,
+    .o_field_widget.o_field_many2many_tags {
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: var(--space-1) var(--space-2);
+        transition: border-color var(--transition-base) var(--ease-out),
+                    box-shadow var(--transition-base) var(--ease-out);
+        display: inline-block;
+
+        &:focus-within {
+            border-color: var(--primary-accent);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+            outline: none;
+        }
+
+        // Clear CSS for inputs inside o_field_widget to avoid conflicts
+        input:not(.o_searchview_input),
+        textarea,
+        select {
+            border: none !important;
+            border-radius: 0 !important;
+            padding: 0 !important;
+            box-shadow: none !important;
+            outline: none !important;
+        }
+    }
+
+}
+
+/* ========================================================================
+   OVERRIDE: Reset field widget styling inside list/tree view
+   ======================================================================== */
+
+.o_form_view .o_list_renderer .o_field_widget.o_field_daterange,
+.o_form_view .o_list_renderer .o_field_widget.o_field_char,
+.o_form_view .o_list_renderer .o_field_widget.o_field_selection,
+.o_form_view .o_list_renderer .o_field_widget.o_field_many2one_avatar,
+.o_form_view .o_list_renderer .o_field_widget.o_field_many2one,
+.o_form_view .o_list_renderer .o_field_widget.o_field_many2many_tags {
+    border: unset !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    box-shadow: unset !important;
+    display: revert !important;
+
+    &:focus-within {
+        border: unset !important;
+        box-shadow: unset !important;
+    }
+}
+
+.custom-control-input:checked ~ .custom-control-label::before,
+.form-check-input:checked {
+    color: white;
+    border-color: var(--primary-accent) !important;
+    background-color: var(--primary-accent) !important;
+    box-shadow: var(--shadow-primary-sm);
+}
+
+/* ========================================================================
+   CALENDAR & DATES
+   ======================================================================== */
+
+.o_calendar_view {
+    .o_calendar_widget {
+        .fc-timeGridDay-view .fc-widget-header.fc-today,
+        .fc-timeGridWeek-view .fc-widget-header.fc-today {
+            border-radius: 25px;
+            background: var(--primary-accent) !important;
+            color: var(--bg-white) !important;
+        }
+    }
+
+    .fc-view .fc-event.o_calendar_color_3:not(.o_calendar_hatched):not(.o_calendar_striked) {
+        background: var(--primary-hover) !important;
+        border-radius: 10px;
+    }
+}
+
+/* ========================================================================
+   TABS & NAVIGATION
+   ======================================================================== */
+
+.nav-tabs {
+    .nav-link.active,
+    .nav-item.show .nav-link {
+        border: none;
+        border-bottom: solid;
+        font-weight: bold;
+        background: var(--primary-accent) !important;
+        color: var(--bg-white) !important;
+        border-radius: 5px, 50px, 5px, 50px;
+    }
+}
+
+.nav-link {
+    color: var(--primary-accent) !important;
+}
+
+/* ========================================================================
+   DASHBOARD COMPONENTS
+   ======================================================================== */
+
+.o_dashboards .o_website_dashboard {
+    div.o_box {
+        color: rgba(73, 80, 87, 0.76);
+        background-color: white;
+        background-size: cover;
+        margin-top: 16px;
+        position: static;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+        border-radius: 10px;
+    }
+
+    .o_dashboard_common .o_inner_box {
+        padding-top: 10px;
+        text-align: center;
+        border: 1px solid var(--bg-white) !important;
+        height: 80px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        cursor: pointer;
+        color: var(--color-white) !important;
+        background-color: var(--primary-accent) !important;
+        border-radius: 10px;
+
+        &:hover {
+            background-color: var(--primary-hover) !important;
+        }
+    }
+}
+
+.o_purchase_dashboard .table {
+    > thead > tr > td.o_main,
+    tbody > tr > td.o_main {
+        background-color: var(--primary-accent) !important;
+        border-radius: 10px;
+    }
+}
+
+.o_mail_preview .o_mail_preview_image.o_mail_preview_app > img {
+    border-radius: 10px;
+}
+
+/* ========================================================================
+   SEARCH PANEL
+   ======================================================================== */
+
+.o_search_panel {
+    .o_search_panel_category .o_search_panel_section_icon {
+        color: var(--primary-accent) !important;
+    }
+}
+
+/* ========================================================================
+   BADGES & LABELS - Rounded pills with soft colors
+   ======================================================================== */
+
+.badge-primary {
+    color: var(--primary-accent) !important;
+    background-color: var(--primary-light) !important;
+    font-weight: var(--font-weight-medium);
+    border-radius: var(--radius-full);
+    padding: var(--space-1) var(--space-3);
+    font-size: var(--font-size-xs);
+}
+
+.badge-success {
+    color: var(--success-dark) !important;
+    background-color: var(--success-light) !important;
+    border-radius: var(--radius-full);
+}
+
+.badge-warning {
+    color: var(--warning-dark) !important;
+    background-color: var(--warning-light) !important;
+    border-radius: var(--radius-full);
+}
+
+.badge-danger, .badge-error {
+    color: var(--error-dark) !important;
+    background-color: var(--error-light) !important;
+    border-radius: var(--radius-full);
+}
+
+.badge-info {
+    color: var(--info-dark) !important;
+    background-color: var(--info-light) !important;
+    border-radius: var(--radius-full);
+}
+
+.text-bg-primary {
+    background-color: var(--primary-light) !important;
+    color: var(--primary-accent) !important;
+}
+
+.text-action {
+    color: var(--primary-accent) !important;
+    font-weight: var(--font-weight-medium);
+}
+
+/* ========================================================================
+   MODALS & WIZARDS - Elevated and centered
+   ======================================================================== */
+
+.modal.o_technical_modal,
+.modal {
+    .modal-content {
+        border-radius: var(--radius-xl);
+        border: 1px solid var(--border-color-light);
+        box-shadow: var(--shadow-2xl);
+        overflow: hidden;
+    }
+
+    .modal-header {
+        background-color: var(--bg-white);
+        border-bottom: 1px solid var(--border-color-light);
+        padding: var(--space-5) var(--space-6);
+
+        .modal-title {
+            font-size: var(--font-size-xl);
+            font-weight: var(--font-weight-semibold);
+            color: var(--text-primary);
+        }
+
+        .btn-close {
+            transition: transform var(--transition-fast) var(--ease-out);
+
+            &:hover {
+                transform: scale(1.1);
+            }
+        }
+    }
+
+    .modal-body {
+        padding: var(--space-6);
+        color: var(--text-secondary);
+    }
+
+    .modal-footer {
+        background-color: var(--bg-surface-secondary);
+        border-top: 1px solid var(--border-color-light);
+        padding: var(--space-4) var(--space-6);
+        gap: var(--space-2);
+    }
+}
+
+.modal-backdrop {
+    backdrop-filter: blur(4px);
+    background-color: rgba(15, 23, 42, 0.4);
+}
+
+/* ========================================================================
+   STATUS BAR - Modern pipeline/workflow status styling
+   ======================================================================== */
+
+.o_statusbar_status {
+    .o_arrow_button.btn-secondary {
+        margin: 0 !important;
+        color: var(--gray-600) !important;
+        background-color: var(--gray-200) !important;
+        border: 1px solid var(--gray-300);
+        border-radius: var(--radius-md);
+        font-weight: var(--font-weight-medium);
+        padding: var(--space-2) var(--space-3);
+        transition: all var(--transition-base);
+        box-shadow: var(--shadow-xs);
+
+        // Hover state for inactive steps
+        &:hover:not(.o_arrow_button_current) {
+            background-color: var(--gray-300) !important;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        // Current/Active state - Info blue
+        &.o_arrow_button_current {
+            color: white !important;
+            background-color: var(--info) !important;
+            border-color: var(--info-dark);
+            font-weight: var(--font-weight-semibold);
+            box-shadow: 0 1px 3px rgba(59, 130, 246, 0.3);
+
+            &:hover {
+                background-color: var(--info-dark) !important;
+                transform: translateY(-1px);
+                box-shadow: 0 4px 6px rgba(59, 130, 246, 0.25);
+            }
+        }
+
+        // Active state (when pressed)
+        &:active {
+            transform: translateY(0);
+        }
+    }
+}
+
+/* ========================================================================
+   BUTTONS & LINKS - Modern minimal buttons
+   ======================================================================== */
+
+.btn-primary {
+    background: var(--primary-accent) !important;
+    border-color: var(--primary-accent) !important;
+    color: white !important;
+    font-weight: var(--font-weight-medium);
+    border-radius: var(--radius-md);
+    padding: var(--space-2) var(--space-4);
+    box-shadow: var(--shadow-xs);
+    transition: all var(--transition-base) var(--ease-out);
+
+    &:hover {
+        background: var(--primary-hover) !important;
+        border-color: var(--primary-hover) !important;
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-primary-sm);
+    }
+
+    &:active {
+        transform: translateY(0);
+    }
+}
+
+.btn-secondary {
+    background: var(--bg-white) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-primary) !important;
+    font-weight: var(--font-weight-medium);
+    border-radius: var(--radius-md);
+    padding: var(--space-2) var(--space-4);
+    box-shadow: var(--shadow-xs);
+    transition: all var(--transition-base) var(--ease-out);
+
+    &:hover {
+        background: var(--gray-50) !important;
+        border-color: var(--border-color-strong) !important;
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-sm);
+    }
+}
+
+.btn-success {
+    background: var(--success) !important;
+    border-color: var(--success) !important;
+    color: white !important;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-xs);
+
+    &:hover {
+        background: var(--success-dark) !important;
+        box-shadow: 0 4px 12px -2px rgba(16, 185, 129, 0.3);
+    }
+}
+
+.btn-warning {
+    background: var(--warning) !important;
+    border-color: var(--warning) !important;
+    color: white !important;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-xs);
+
+    &:hover {
+        background: var(--warning-dark) !important;
+    }
+}
+
+.btn-danger {
+    background: var(--error) !important;
+    border-color: var(--error) !important;
+    color: white !important;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-xs);
+
+    &:hover {
+        background: var(--error-dark) !important;
+        box-shadow: 0 4px 12px -2px rgba(239, 68, 68, 0.3);
+    }
+}
+
+.btn-info {
+    background: var(--info) !important;
+    border-color: var(--info) !important;
+    color: white !important;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-xs);
+
+    &:hover {
+        background: var(--info-dark) !important;
+    }
+}
+
+// Generic button styles
+.btn {
+    border-radius: var(--radius-md);
+    font-weight: var(--font-weight-medium);
+    transition: all var(--transition-base) var(--ease-out);
+
+    &:focus,
+    &:focus-visible {
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    }
+}
+
+a {
+    color: var(--primary-accent);
+    text-decoration: none;
+    transition: color var(--transition-base) var(--ease-out);
+
+    &:hover {
+        color: var(--primary-hover);
+    }
+}
+
+/* ========================================================================
+   RESPONSIVE DESIGN - TABLET
+   ======================================================================== */
+
+@media (max-width: 768px) {
+    .app-menu {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        justify-content: flex-start;
+        margin: 0 auto;
+    }
+
+    .o_cp_bottom,
+    .o_cp_top {
+        flex-wrap: wrap !important;
+    }
+
+    .o_form_view {
+        .o_form_statusbar {
+            flex-direction: column !important;
+            padding-left: 0 !important;
+
+            > .o_field_widget {
+                margin-left: -24px !important;
+                margin-top: 1px !important;
+            }
+        }
+
+        .o_cp_buttons {
+            overflow: auto !important;
+        }
+    }
+
+    .app_components .search-input {
+        margin-left: 60px !important;
+    }
+
+    .search-container.has-results .search-results {
+        margin-left: 60px !important;
+    }
+}
+
+@media (min-width: 768px) {
+    .o_form_view .o_form_sheet_bg > .o_form_sheet {
+        border-radius: 10px;
+    }
+
+    .search-container {
+        width: 750px;
+        margin: 0 auto;
+    }
+}
+
+/* ========================================================================
+   RESPONSIVE DESIGN - MOBILE
+   ======================================================================== */
+
+@media (max-width: 767px) {
+    .o_form_view {
+        .o_group {
+            width: 100% !important;
+        }
+
+        .o_form_sheet_bg > .o_form_sheet {
+            min-width: 100%;
+            max-width: 100%;
+            min-height: 100%;
+            border: 1px solid #c8c8d3;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            background: white;
+            margin: 4.8px auto;
+            padding: 24px 16px;
+        }
+    }
+
+    .dropdown-menu.show {
+        display: block;
+        border-radius: 0;
+    }
+
+    .o_control_panel {
+        .breadcrumb > li {
+            display: inline-block;
+            max-width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            vertical-align: top;
+        }
+
+        .o_cp_top_right {
+            min-height: 30px;
+            max-width: 100%;
+            margin-left: 10%;
+        }
+    }
+
+    .oe_topbar_name {
+        display: none;
+    }
+
+    .nav-container {
+        position: relative;
+        width: 100vw !important;
+        display: flex;
+        align-items: start;
+        margin-top: 2rem;
+    }
+
+    .o_cp_top {
+        flex-wrap: wrap !important;
+
+        &_left,
+        &_right {
+            width: 100%;
+        }
+
+        &_right {
+            margin: 1.5rem auto;
+            margin-left: 0 !important;
+        }
+    }
+
+    .o_cp_searchview {
+        width: 100%;
+    }
+
+    .o_content.o_controller_with_searchpanel,
+    .o_controller_with_searchpanel {
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    .o_search_panel {
+        display: flex;
+        overflow-x: auto;
+        overflow-y: auto;
+        height: 200px;
+        width: 100%;
+
+        section {
+            margin-right: 1rem;
+            width: 100% !important;
+        }
+    }
+
+    .o_setting_container {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .settings_tab {
+        display: flex;
+        flex-direction: row !important;
+        overflow-x: auto;
+        height: 40px;
+    }
+
+    .settings {
+        margin-top: 1.5rem;
+    }
+}
+
+@media (max-width: 524px) {
+    .o_control_panel .o_cp_bottom_right > .o_cp_pager {
+        margin-top: 5px;
+    }
+
+    div.app-menu {
+        *::before,
+        *::after {
+            box-sizing: none;
+        }
+    }
+}
+
+@media (max-width: 493px) {
+    .o_control_panel .o_cp_bottom_left > .o_cp_action_menus {
+        margin-left: 0;
+        padding-right: 10px;
+    }
+}
+
+/* ========================================================================
+   MOBILE MESSAGING
+   ======================================================================== */
+
+.o_MobileMessagingNavbar_tab.o-active {
+    color: var(--primary-accent) !important;
+}
+
+/* ========================================================================
+   MISC UTILITIES
+   ======================================================================== */
+
+.text-center {
+    text-align: center !important;
+}

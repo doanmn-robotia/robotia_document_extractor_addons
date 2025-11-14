@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <!-- Custom Form View Template with Controller passed to Renderer -->
+    <t t-name="robotia_document_extractor.ExtractionFormView" t-inherit="web.FormView" t-inherit-mode="primary">
+
+        <!-- Pass controller prop to Renderer -->
+        <xpath expr="//Layout/t[@t-component='props.Renderer']" position="replace">
+            <t t-component="props.Renderer"
+               controller="this"
+               record="model.root"
+               Compiler="props.Compiler"
+               archInfo="archInfo"
+               translateAlert="translateAlert"
+               onNotebookPageChange.bind="onNotebookPageChange"
+               activeNotebookPages="props.state and props.state.activeNotebookPages"/>
+        </xpath>
+
+    </t>
+
+</templates>

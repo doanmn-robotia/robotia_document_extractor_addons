@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.backend.theme</field>
+        <field name="model">res.config.settings</field>
+        <field name="priority" eval="90"/>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app data-string="Theme" string="Theme" name="backend_theme" groups="base.group_system">
+                    <block title="Theme Colors" name="theme_colors_block">
+                        <setting string="Primary Color" company_dependent="0" help="Main color used throughout the backend theme (buttons, headers, navigation, etc.)">
+                            <field name="theme_primary_color" widget="color"/>
+                        </setting>
+                        <setting string="Secondary Color" company_dependent="0" help="Secondary color used for accents and highlights in the theme">
+                            <field name="theme_secondary_color" widget="color"/>
+                        </setting>
+                        <setting>
+                            <button name="action_reset_theme_colors"
+                                    string="Reset to Default Colors"
+                                    type="object"
+                                    class="btn-secondary"
+                                    icon="fa-undo"
+                                    confirm="Are you sure you want to reset all theme colors to default values?"/>
+                        </setting>
+                    </block>
+                    <block>
+                        <div class="text-muted mt-3">
+                            <i class="fa fa-info-circle"/> Note: After saving or resetting, please refresh your browser to see the color changes applied.
+                        </div>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+</odoo>

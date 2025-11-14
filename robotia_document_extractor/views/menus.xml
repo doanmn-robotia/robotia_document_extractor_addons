@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ========================================== -->
+    <!-- Master Data Actions -->
+    <!-- ========================================== -->
+
+    <!-- Controlled Substances -->
+    <record id="view_controlled_substance_list" model="ir.ui.view">
+        <field name="name">controlled.substance.list</field>
+        <field name="model">controlled.substance</field>
+        <field name="arch" type="xml">
+            <list string="Controlled Substances">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="formula"/>
+                <field name="cas_number"/>
+                <field name="form_type"/>
+                <field name="gwp"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_controlled_substance_form" model="ir.ui.view">
+        <field name="name">controlled.substance.form</field>
+        <field name="model">controlled.substance</field>
+        <field name="arch" type="xml">
+            <form string="Controlled Substance">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name" required="1"/>
+                            <field name="code"/>
+                            <field name="formula"/>
+                        </group>
+                        <group>
+                            <field name="cas_number"/>
+                            <field name="form_type"/>
+                            <field name="gwp"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_controlled_substance" model="ir.actions.act_window">
+        <field name="name">Controlled Substances</field>
+        <field name="res_model">controlled.substance</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- Activity Fields -->
+    <record id="view_activity_field_list" model="ir.ui.view">
+        <field name="name">activity.field.list</field>
+        <field name="model">activity.field</field>
+        <field name="arch" type="xml">
+            <list string="Activity Fields" editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="description"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_activity_field" model="ir.actions.act_window">
+        <field name="name">Activity Fields</field>
+        <field name="res_model">activity.field</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- ========================================== -->
+    <!-- Dashboard Client Action (Placeholder) -->
+    <!-- ========================================== -->
+    <record id="action_dashboard" model="ir.actions.client">
+        <field name="name">Dashboard</field>
+        <field name="tag">document_extractor.dashboard</field>
+    </record>
+
+    <!-- ========================================== -->
+    <!-- Settings Action (Placeholder) -->
+    <!-- ========================================== -->
+    <record id="action_document_extractor_settings" model="ir.actions.act_window">
+        <field name="name">Document Extractor Settings</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_mode">form</field>
+        <field name="target">inline</field>
+        <field name="context">{'module': 'robotia_document_extractor'}</field>
+    </record>
+
+
+        <!-- Root Menu -->
+    <menuitem id="menu_document_extractor_root"
+              name="Document Extractor"
+              sequence="10"/>
+
+    <!-- Dashboard Menu -->
+    <menuitem id="menu_dashboard"
+              name="Dashboard"
+              parent="menu_document_extractor_root"
+              action="action_dashboard"
+              sequence="1"/>
+
+    <!-- Documents Menu -->
+    <menuitem id="menu_documents"
+              name="Documents"
+              parent="menu_document_extractor_root"
+              sequence="10"/>
+
+    <menuitem id="menu_all_documents"
+              name="All Documents"
+              parent="menu_documents"
+              action="action_document_extraction_all"
+              sequence="1"/>
+
+    <menuitem id="menu_registrations"
+              name="Registrations (Form 01)"
+              parent="menu_documents"
+              action="action_document_extraction_registration"
+              sequence="2"/>
+
+    <menuitem id="menu_reports"
+              name="Reports (Form 02)"
+              parent="menu_documents"
+              action="action_document_extraction_report"
+              sequence="3"/>
+
+    <!-- Master Data Menu -->
+    <menuitem id="menu_master_data"
+              name="Master Data"
+              parent="menu_document_extractor_root"
+              sequence="20"/>
+
+    <menuitem id="menu_controlled_substances"
+              name="Controlled Substances"
+              parent="menu_master_data"
+              action="action_controlled_substance"
+              sequence="1"/>
+
+    <menuitem id="menu_activity_fields"
+              name="Activity Fields"
+              parent="menu_master_data"
+              action="action_activity_field"
+              sequence="2"/>
+
+    <!-- Configuration Menu -->
+    <menuitem id="menu_configuration"
+              name="Configuration"
+              parent="menu_document_extractor_root"
+              sequence="90"
+              groups="base.group_system"/>
+
+    <menuitem id="menu_settings"
+              name="Settings"
+              parent="menu_configuration"
+              action="action_document_extractor_settings"
+              sequence="1"
+              groups="base.group_system"/>
+
+
+</odoo>

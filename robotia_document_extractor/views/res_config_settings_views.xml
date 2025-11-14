@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.robotia.document.extractor</field>
+        <field name="model">res.config.settings</field>
+        <field name="priority" eval="90"/>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app string="Document Extractor" name="robotia_document_extractor" groups="base.group_system">
+                    <block title="AI Configuration">
+                        <setting id="gemini_api_key_setting"
+                                 help="Configure your Google Gemini API key for AI-powered document extraction">
+                            <field name="gemini_api_key" password="True" placeholder="AIza..." class="oe_inline"/>
+                            <div class="content-group mt8">
+                                <div class="text-muted">
+                                    Get your API key from <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a>
+                                </div>
+                            </div>
+                        </setting>
+                    </block>
+
+                    <block title="Document Processing">
+                        <setting id="extraction_info_setting" string="Extraction Information">
+                            <div class="text-muted">
+                                <ul>
+                                    <li>Model: Google Gemini 2.0 Flash Exp (with PDF understanding)</li>
+                                    <li>Supports Form 01 (Registration) and Form 02 (Report)</li>
+                                    <li>Automatic data extraction from Vietnamese PDFs</li>
+                                    <li>Human-in-the-loop validation workflow</li>
+                                </ul>
+                            </div>
+                        </setting>
+                    </block>
+
+                    <block title="AI Extraction Prompts Configuration">
+                        <setting id="extraction_prompts_setting" string="Configure AI Extraction Prompts">
+                            <div class="d-flex gap-2">
+                                <button string="Get Register Prompt" name="action_get_prompt_form_01" type="object" class="btn btn-outline-primary"/>
+                                <button string="Get Report Prompt" name="action_get_prompt_form_02" type="object" class="btn btn-outline-primary"/>
+                            </div>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+</odoo>

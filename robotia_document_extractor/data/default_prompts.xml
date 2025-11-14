@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Default AI Extraction Prompts
+        These are loaded when the module is installed
+        Users can customize these prompts via Settings > Document Extractor > AI Extraction Prompts Configuration
+    -->
+    <data noupdate="1">
+        <!-- Form 01 (Registration) Default Prompt -->
+        <function model="document.extraction.service" name="_initialize_default_prompts"/>
+    </data>
+</odoo>

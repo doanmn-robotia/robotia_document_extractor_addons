@@ -1,0 +1,105 @@
+// Section List View Styles
+// For tables with title/section rows (substance usage, collection/recycling, etc.)
+
+.o_section_list_view {
+    // Section/Title rows styling
+    tbody tr.o_is_section {
+        background-color: #f8fafc; // slate-50
+        border-top: 2px solid #cbd5e1; // slate-300
+        border-bottom: 1px solid #cbd5e1;
+
+        td {
+            font-weight: 600;
+            color: #1e293b; // slate-800
+            padding: 0.75rem 0.5rem;
+            font-size: 0.95rem;
+
+            // Hide input widgets in section rows (they should be read-only display)
+            input, select, textarea {
+                border: none;
+                background: transparent;
+                font-weight: 600;
+                color: #1e293b;
+                pointer-events: none;
+            }
+        }
+
+        // Hover effect for section rows
+        &:hover {
+            background-color: #f1f5f9; // slate-100
+        }
+
+        // Handle (drag icon) for title rows - slightly transparent
+        .o_handle_cell {
+            opacity: 0.6;
+            cursor: grab;
+
+            &:hover {
+                opacity: 1;
+            }
+
+            &:active {
+                cursor: grabbing;
+            }
+        }
+
+        // Hide checkbox for section rows
+        .o_list_record_selector {
+            visibility: hidden;
+        }
+    }
+
+    // Regular data rows
+    tbody tr:not(.o_is_section) {
+        &:hover {
+            background-color: #fafafa;
+        }
+
+        // Handle styling for data rows
+        .o_handle_cell {
+            cursor: grab;
+
+            &:active {
+                cursor: grabbing;
+            }
+        }
+    }
+
+    // Handle cell general styling
+    .o_handle_cell {
+        padding: 0.25rem 0.5rem;
+        text-align: center;
+        color: #94a3b8; // slate-400
+        transition: all 0.2s ease;
+
+        &:hover {
+            color: #475569; // slate-600
+        }
+
+        .o_row_handle {
+            font-size: 1.2rem;
+        }
+    }
+}
+
+// Additional styling for extraction form tables
+.o_form_extraction_split {
+    .o_section_list_view {
+        margin-bottom: 1rem;
+
+        // Make table more compact
+        th, td {
+            padding: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        // Header styling
+        thead th {
+            background-color: #f8fafc;
+            border-bottom: 2px solid #cbd5e1;
+            font-weight: 600;
+            color: #475569; // slate-600
+            white-space: nowrap;
+        }
+    }
+}

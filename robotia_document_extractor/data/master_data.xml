@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Activity Fields (4.1.2) -->
+        <record id="activity_field_production" model="activity.field">
+            <field name="name">Production of controlled substances</field>
+            <field name="code">production</field>
+            <field name="sequence">10</field>
+        </record>
+
+        <record id="activity_field_import" model="activity.field">
+            <field name="name">Import of controlled substances</field>
+            <field name="code">import</field>
+            <field name="sequence">20</field>
+        </record>
+
+        <record id="activity_field_export" model="activity.field">
+            <field name="name">Export of controlled substances</field>
+            <field name="code">export</field>
+            <field name="sequence">30</field>
+        </record>
+
+        <record id="activity_field_equipment_production" model="activity.field">
+            <field name="name">Production of equipment/products containing controlled substances</field>
+            <field name="code">equipment_production</field>
+            <field name="sequence">40</field>
+        </record>
+
+        <record id="activity_field_equipment_import" model="activity.field">
+            <field name="name">Import of equipment/products containing controlled substances</field>
+            <field name="code">equipment_import</field>
+            <field name="sequence">50</field>
+        </record>
+
+        <record id="activity_field_ac_ownership" model="activity.field">
+            <field name="name">Ownership of air conditioning systems (>26.5 kW / 90,000 BTU/h)</field>
+            <field name="code">ac_ownership</field>
+            <field name="sequence">60</field>
+        </record>
+
+        <record id="activity_field_refrigeration_ownership" model="activity.field">
+            <field name="name">Ownership of industrial refrigeration equipment (>40 kW)</field>
+            <field name="code">refrigeration_ownership</field>
+            <field name="sequence">70</field>
+        </record>
+
+        <record id="activity_field_collection" model="activity.field">
+            <field name="name">Collection, recycling, reuse and disposal of controlled substances</field>
+            <field name="code">collection_recycling</field>
+            <field name="sequence">80</field>
+        </record>
+
+        <!-- Common Controlled Substances -->
+        <!-- HFC Group -->
+        <record id="substance_hfc_134a" model="controlled.substance">
+            <field name="name">HFC-134a</field>
+            <field name="code">HFC-134a</field>
+            <field name="formula">CH2FCF3</field>
+            <field name="cas_number">811-97-2</field>
+            <field name="form_type">both</field>
+            <field name="gwp">1430</field>
+        </record>
+
+        <record id="substance_hfc_125" model="controlled.substance">
+            <field name="name">HFC-125</field>
+            <field name="code">HFC-125</field>
+            <field name="formula">CHF2CF3</field>
+            <field name="cas_number">354-33-6</field>
+            <field name="form_type">both</field>
+            <field name="gwp">3500</field>
+        </record>
+
+        <record id="substance_hfc_143a" model="controlled.substance">
+            <field name="name">HFC-143a</field>
+            <field name="code">HFC-143a</field>
+            <field name="formula">CH3CF3</field>
+            <field name="cas_number">420-46-2</field>
+            <field name="form_type">both</field>
+            <field name="gwp">4470</field>
+        </record>
+
+        <record id="substance_hfc_32" model="controlled.substance">
+            <field name="name">HFC-32</field>
+            <field name="code">HFC-32</field>
+            <field name="formula">CH2F2</field>
+            <field name="cas_number">75-10-5</field>
+            <field name="form_type">both</field>
+            <field name="gwp">675</field>
+        </record>
+
+        <record id="substance_r410a" model="controlled.substance">
+            <field name="name">R-410A (HFC blend)</field>
+            <field name="code">R-410A</field>
+            <field name="formula">50% HFC-32, 50% HFC-125</field>
+            <field name="cas_number">N/A</field>
+            <field name="form_type">both</field>
+            <field name="gwp">2088</field>
+        </record>
+
+        <record id="substance_r407c" model="controlled.substance">
+            <field name="name">R-407C (HFC blend)</field>
+            <field name="code">R-407C</field>
+            <field name="formula">23% HFC-32, 25% HFC-125, 52% HFC-134a</field>
+            <field name="cas_number">N/A</field>
+            <field name="form_type">both</field>
+            <field name="gwp">1774</field>
+        </record>
+
+        <!-- HCFC Group -->
+        <record id="substance_hcfc_22" model="controlled.substance">
+            <field name="name">HCFC-22</field>
+            <field name="code">HCFC-22</field>
+            <field name="formula">CHClF2</field>
+            <field name="cas_number">75-45-6</field>
+            <field name="form_type">both</field>
+            <field name="gwp">1810</field>
+        </record>
+
+        <record id="substance_hcfc_141b" model="controlled.substance">
+            <field name="name">HCFC-141b</field>
+            <field name="code">HCFC-141b</field>
+            <field name="formula">CH3CCl2F</field>
+            <field name="cas_number">1717-00-6</field>
+            <field name="form_type">both</field>
+            <field name="gwp">725</field>
+        </record>
+
+        <record id="substance_hcfc_142b" model="controlled.substance">
+            <field name="name">HCFC-142b</field>
+            <field name="code">HCFC-142b</field>
+            <field name="formula">CH3CClF2</field>
+            <field name="cas_number">75-68-3</field>
+            <field name="form_type">both</field>
+            <field name="gwp">2310</field>
+        </record>
+    </data>
+</odoo>
