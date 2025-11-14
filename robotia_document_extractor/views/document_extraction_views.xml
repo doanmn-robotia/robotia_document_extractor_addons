@@ -36,21 +36,21 @@
                         <!-- Page 2: Organization Information (4.1.1 & 4.2.1) -->
                         <page string="Organization Info" name="organization_info">
                             <group>
-                                <group string="Organization Details">
+                                <group string="Organization Details" colspan="2">
                                     <field name="organization_id"/>
                                     <field name="organization_name" required="1"/>
                                     <field name="business_license_number"/>
                                     <field name="business_license_date"/>
                                     <field name="business_license_place"/>
                                 </group>
-                                <group string="Representative Information">
+                                <group string="Representative Information" colspan="2">
                                     <field name="legal_representative_name"/>
                                     <field name="legal_representative_position"/>
                                     <field name="contact_person_name"/>
                                 </group>
                             </group>
                             <group>
-                                <group string="Contact Details">
+                                <group string="Contact Details" colspan="2">
                                     <field name="contact_address"/>
                                     <field name="contact_phone"/>
                                     <field name="contact_fax"/>

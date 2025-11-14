@@ -55,6 +55,7 @@ export class DocumentExtractionFormRenderer extends FormRenderer {
 /**
  * Custom Form Controller for Document Extraction
  * Handles Split.js initialization for split view with PDF preview
+ * Responsive: Only enables split on desktop (>=992px), stacks on mobile
  */
 export class DocumentExtractionFormController extends FormController {
     static template = "robotia_document_extractor.ExtractionFormView";
@@ -72,25 +73,50 @@ export class DocumentExtractionFormController extends FormController {
             const formSheet = document.querySelector(".o_form_renderer > .o_form_sheet_bg");
             const pdfPreview = document.querySelector(".o_form_renderer > .o_pdf_preview");
 
-            if (formSheet && pdfPreview && window.Split) {
-                // Use smaller minSize to support different zoom levels and screen sizes
-                const splitInstance = Split([formSheet, pdfPreview], {
-                    sizes: [55, 45],              // More balanced split
-                    minSize: [300, 250],           // Smaller minimum sizes (was 400, 300)
-                    expandToMin: false,            // Don't expand to min automatically
-                    gutterSize: 10,                // Slightly larger gutter for easier dragging
-                    snapOffset: 0,                 // Disable snapping
-                    dragInterval: 1,               // Smooth dragging
-                    cursor: 'col-resize',          // Explicit cursor
-                });
-
-                // Cleanup function to destroy split instance
-                return () => {
-                    if (splitInstance) {
-                        splitInstance.destroy();
-                    }
-                };
+            if (!formSheet || !pdfPreview || !window.Split) {
+                return;
             }
+
+            let splitInstance = null;
+
+            // Function to initialize/destroy split based on screen size
+            const handleResize = () => {
+                const isDesktop = window.matchMedia('(min-width: 992px)').matches;
+
+                if (isDesktop && !splitInstance) {
+                    // Desktop: Initialize Split.js
+                    splitInstance = Split([formSheet, pdfPreview], {
+                        sizes: [55, 45],              // More balanced split
+                        minSize: [300, 250],          // Smaller minimum sizes
+                        expandToMin: false,            // Don't expand to min automatically
+                        gutterSize: 10,                // Slightly larger gutter for easier dragging
+                        snapOffset: 0,                 // Disable snapping
+                        dragInterval: 1,               // Smooth dragging
+                        cursor: 'col-resize',          // Explicit cursor
+                    });
+                } else if (!isDesktop && splitInstance) {
+                    // Mobile: Destroy Split.js
+                    splitInstance.destroy();
+                    splitInstance = null;
+                    // Reset inline styles set by Split.js
+                    formSheet.style.width = '';
+                    pdfPreview.style.width = '';
+                }
+            };
+
+            // Initial setup
+            handleResize();
+
+            // Listen to window resize
+            window.addEventListener('resize', handleResize);
+
+            // Cleanup function
+            return () => {
+                window.removeEventListener('resize', handleResize);
+                if (splitInstance) {
+                    splitInstance.destroy();
+                }
+            };
 
         }, () => []);
     }

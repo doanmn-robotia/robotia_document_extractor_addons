@@ -91,6 +91,12 @@
         th, td {
             padding: 0.5rem;
             font-size: 0.875rem;
+
+            // RESPONSIVE: Mobile - smaller padding and font
+            @media (max-width: 991px) {
+                padding: 0.35rem;
+                font-size: 0.8rem;
+            }
         }
 
         // Header styling
@@ -100,6 +106,50 @@
             font-weight: 600;
             color: #475569; // slate-600
             white-space: nowrap;
+
+            // RESPONSIVE: Mobile - allow wrapping, smaller font
+            @media (max-width: 991px) {
+                white-space: normal;
+                font-size: 0.75rem;
+                padding: 0.35rem 0.25rem;
+            }
+        }
+
+        // RESPONSIVE: Mobile - enable horizontal scroll for wide tables
+        @media (max-width: 991px) {
+            overflow-x: auto;
+            display: block;
+            -webkit-overflow-scrolling: touch; // Smooth scrolling on iOS
+
+            table {
+                min-width: 100%;
+                width: max-content; // Allow table to expand
+            }
+        }
+    }
+
+    // RESPONSIVE: Form groups and fields
+    .o_group {
+        @media (max-width: 991px) {
+            // Stack form groups vertically on mobile
+            &.o_group_col_6 {
+                width: 100% !important;
+                max-width: 100%;
+            }
+        }
+    }
+
+    // RESPONSIVE: Notebook tabs
+    .o_notebook {
+        @media (max-width: 991px) {
+            .nav-tabs {
+                flex-wrap: wrap;
+
+                .nav-link {
+                    font-size: 0.85rem;
+                    padding: 0.5rem 0.75rem;
+                }
+            }
         }
     }
 }

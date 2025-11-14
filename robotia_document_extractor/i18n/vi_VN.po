@@ -983,6 +983,16 @@ msgstr "Xem trước tài liệu PDF"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_form
+msgid "Add equipment"
+msgstr "Thêm thiết bị"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_form
+msgid "Add section title"
+msgstr "Thêm đầu mục"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_form
 msgid "Document Name"
 msgstr "Tên tài liệu"
 
