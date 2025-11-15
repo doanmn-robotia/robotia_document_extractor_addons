@@ -336,31 +336,93 @@ STEP 2: DETERMINE TABLE PRESENCE based on activity fields
 STEP 3: CONDITIONAL EXTRACTION - Extract ONLY relevant sub-sections
 
    For Table 1.1 (Bảng 1.1: Substance Usage):
-   - IF "production" checked → extract title "Sản xuất chất được kiểm soát" + data rows
-   - IF "import" checked → extract title "Nhập khẩu chất được kiểm soát" + data rows
-   - IF "export" checked → extract title "Xuất khẩu chất được kiểm soát" + data rows
+   - IF "production" checked → include title + data rows
+   - IF "import" checked → include title + data rows
+   - IF "export" checked → include title + data rows
    - DO NOT create title rows for unchecked activities
 
    For Table 1.2 (Bảng 1.2: Equipment/Product):
-   - IF "equipment_production" checked → extract rows with production data
-   - IF "equipment_import" checked → extract rows with import data
-   - May have merged title rows "Sản xuất thiết bị..." or "Nhập khẩu thiết bị..."
+   - IF "equipment_production" checked → include title + data rows
+   - IF "equipment_import" checked → include title + data rows
 
    For Table 1.3 (Bảng 1.3: Equipment Ownership):
-   - IF "ac_ownership" checked → extract title "Máy điều hòa không khí..." + data rows
-   - IF "refrigeration_ownership" checked → extract title "Thiết bị lạnh công nghiệp..." + data rows
+   - IF "ac_ownership" checked → include title + data rows
+   - IF "refrigeration_ownership" checked → include title + data rows
 
    For Table 1.4 (Bảng 1.4: Collection & Recycling):
-   - Always has 4 sub-sections if table exists: Thu gom, Tái sử dụng, Tái chế, Xử lý
-   - Extract all 4 title rows + their data rows
+   - ALWAYS has 4 sub-sections if table exists
+   - Include all 4 title rows + their data rows
 
-STEP 4: EXTRACT TABLE DATA
+STEP 4: EXTRACT TABLE DATA WITH FIXED TITLES
 
-   For each table that exists (has_table_1_x = true):
-   - Identify MERGED CELL rows → create title entries (is_title=true, numeric fields=null)
-   - Identify SEPARATE CELL rows → create data entries (is_title=false, fill actual values)
+   ⚠️⚠️⚠️ CRITICAL: USE EXACT TITLE TEXT FROM TEMPLATE ⚠️⚠️⚠️
+
+   For Table 1.1 (Substance Usage) - Include only checked sections:
+   [
+     // IF "production" is checked:
+     {"is_title": true, "sequence": 1, "usage_type": "production", "substance_name": "Sản xuất chất được kiểm soát",
+      "year_1_quantity_kg": null, "year_1_quantity_co2": null, ...all numeric fields: null},
+     ...data rows for production with is_title=false, usage_type="production", sequence=2,3,4...
+
+     // IF "import" is checked:
+     {"is_title": true, "sequence": X, "usage_type": "import", "substance_name": "Nhập khẩu chất được kiểm soát",
+      "year_1_quantity_kg": null, ...all numeric fields: null},
+     ...data rows for import with is_title=false, usage_type="import"...
+
+     // IF "export" is checked:
+     {"is_title": true, "sequence": Y, "usage_type": "export", "substance_name": "Xuất khẩu chất được kiểm soát",
+      "year_1_quantity_kg": null, ...all numeric fields: null},
+     ...data rows for export with is_title=false, usage_type="export"...
+   ]
+
+   For Table 1.2 (Equipment/Product) - Include only checked sections:
+   [
+     // IF "equipment_production" is checked:
+     {"is_title": true, "sequence": 1, "product_type": "Sản xuất thiết bị, sản phẩm có chứa hoặc sản xuất từ chất được kiểm soát",
+      "hs_code": null, "capacity": null, "quantity": null, ...all other fields: null},
+     ...data rows for production with is_title=false...
+
+     // IF "equipment_import" is checked:
+     {"is_title": true, "sequence": X, "product_type": "Nhập khẩu thiết bị, sản phẩm có chứa hoặc sản xuất từ chất được kiểm soát",
+      "hs_code": null, ...all fields: null},
+     ...data rows for import with is_title=false...
+   ]
+
+   For Table 1.3 (Equipment Ownership) - Include only checked sections:
+   [
+     // IF "ac_ownership" is checked:
+     {"is_title": true, "sequence": 1, "equipment_type": "Máy điều hòa không khí có năng suất lạnh danh định lớn hơn 26,5 kW (90.000 BTU/h) và có tổng năng suất lạnh danh định của các thiết bị lớn hơn 586 kW (2.000.000 BTU/h)",
+      "start_year": null, "capacity": null, "equipment_quantity": null, ...all other fields: null},
+     ...data rows for air conditioner with is_title=false...
+
+     // IF "refrigeration_ownership" is checked:
+     {"is_title": true, "sequence": X, "equipment_type": "Thiết bị lạnh công nghiệp có công suất điện lớn hơn 40 kW",
+      "start_year": null, ...all fields: null},
+     ...data rows for refrigeration with is_title=false...
+   ]
+
+   For Table 1.4 (Collection & Recycling) - ALWAYS include all 4 sections:
+   [
+     {"is_title": true, "sequence": 1, "activity_type": "collection", "substance_name": "Thu gom chất được kiểm soát",
+      "quantity_kg": null, "quantity_co2": null},
+     ...data rows for collection with is_title=false, activity_type="collection"...
+
+     {"is_title": true, "sequence": X, "activity_type": "reuse", "substance_name": "Tái sử dụng chất được kiểm soát sau thu gom",
+      "quantity_kg": null, "quantity_co2": null},
+     ...data rows for reuse with is_title=false, activity_type="reuse"...
+
+     {"is_title": true, "sequence": Y, "activity_type": "recycle", "substance_name": "Tái chế chất sau thu gom",
+      "quantity_kg": null, "quantity_co2": null},
+     ...data rows for recycle with is_title=false, activity_type="recycle"...
+
+     {"is_title": true, "sequence": Z, "activity_type": "disposal", "substance_name": "Xử lý chất được kiểm soát",
+      "quantity_kg": null, "quantity_co2": null},
+     ...data rows for disposal with is_title=false, activity_type="disposal"...
+   ]
+
    - Use sequential numbering for "sequence" field
-   - Extract ALL rows completely based on conditional extraction rules above
+   - Title rows: ALL numeric/data fields MUST be null
+   - Data rows: Fill actual values from PDF
 
 STEP 5: DATA CONVERSION
 
@@ -402,8 +464,16 @@ Return a JSON object with this EXACT structure (all field names in English):
 
   "activity_field_codes": [<array of codes from section "b) Thông tin về lĩnh vực hoạt động sử dụng chất được kiểm soát">],
 
+  "has_table_2_1": <boolean>,
+  "has_table_2_2": <boolean>,
+  "has_table_2_3": <boolean>,
+  "has_table_2_4": <boolean>,
+
   "quota_usage": [
     {
+      "is_title": <true for merged cell rows, false for data rows>,
+      "sequence": <incremental number>,
+      "usage_type": "<production|import|export>",
       "substance_name": "<string>",
       "hs_code": "<string>",
       "allocated_quota_kg": <float or null>,
@@ -422,6 +492,9 @@ Return a JSON object with this EXACT structure (all field names in English):
 
   "equipment_product_report": [
     {
+      "is_title": <true for merged cell rows, false for data rows>,
+      "sequence": <incremental number>,
+      "production_type": "<production|import>",
       "product_type": "<string>",
       "hs_code": "<string>",
       "capacity": "<string>",
@@ -434,6 +507,9 @@ Return a JSON object with this EXACT structure (all field names in English):
 
   "equipment_ownership_report": [
     {
+      "is_title": <true for merged cell rows, false for data rows>,
+      "sequence": <incremental number>,
+      "ownership_type": "<air_conditioner|refrigeration>",
       "equipment_type": "<string>",
       "equipment_quantity": <integer or null>,
       "substance_name": "<string>",
@@ -464,7 +540,8 @@ Return a JSON object with this EXACT structure (all field names in English):
 }
 
 CRITICAL INSTRUCTIONS:
-1. EXTRACT ACTIVITY FIELD CODES from section "b) Thông tin về lĩnh vực hoạt động sử dụng chất được kiểm soát"
+
+STEP 1: EXTRACT ACTIVITY FIELD CODES from section "b) Thông tin về lĩnh vực hoạt động sử dụng chất được kiểm soát"
    Map Vietnamese labels to codes (same as Form 01):
    - "Sản xuất chất được kiểm soát" → "production"
    - "Nhập khẩu chất được kiểm soát" → "import"
@@ -476,13 +553,95 @@ CRITICAL INSTRUCTIONS:
    - "Thu gom, tái chế, tái sử dụng và xử lý..." → "collection_recycling"
    Return as array where checkbox is checked or text is present
 
-2. Extract ALL tables completely - read every single row
-3. Table 2.4 has complex structure with multiple columns per substance - read carefully
-4. Convert Vietnamese numbers to float/int (handle commas, dots correctly)
-5. Use null for empty/missing values in numeric fields, never use empty strings
-6. Return ONLY valid JSON, no explanations or markdown formatting
-7. Preserve Vietnamese text exactly for names, addresses, and text fields
-8. Be very careful with table structure - make sure you're reading the correct columns
+STEP 2: DETERMINE TABLE PRESENCE based on activity fields
+
+   **Activity Fields → Tables Mapping:**
+
+   has_table_2_1 = true IF any of these is checked:
+     - "production" OR "import" OR "export"
+
+   has_table_2_2 = true IF any of these is checked:
+     - "equipment_production" OR "equipment_import"
+
+   has_table_2_3 = true IF any of these is checked:
+     - "ac_ownership" OR "refrigeration_ownership"
+
+   has_table_2_4 = true IF this is checked:
+     - "collection_recycling"
+
+STEP 3: CONDITIONAL EXTRACTION - Extract ONLY relevant tables
+
+   For Table 2.1 (Bảng 2.1: Quota Usage):
+   - Extract ONLY if has_table_2_1 = true
+   - Extract ALL rows for production, import, export with quota information
+
+   For Table 2.2 (Bảng 2.2: Equipment/Product Report):
+   - Extract ONLY if has_table_2_2 = true
+   - Extract ALL equipment/product rows
+
+   For Table 2.3 (Bảng 2.3: Equipment Ownership Report):
+   - Extract ONLY if has_table_2_3 = true
+   - Extract ALL equipment ownership rows
+
+   For Table 2.4 (Bảng 2.4: Collection & Recycling Report):
+   - Extract ONLY if has_table_2_4 = true
+   - Extract ALL substance rows with collection, reuse, recycle, disposal data
+
+STEP 4: EXTRACT TABLE DATA WITH FIXED TITLES
+
+   ⚠️⚠️⚠️ CRITICAL: ALWAYS INCLUDE TITLE ROWS FOR TABLES 2.1, 2.2, 2.3 ⚠️⚠️⚠️
+
+   For Table 2.1 (Quota Usage Report) - ALWAYS include 3 title rows:
+   [
+     {"is_title": true, "sequence": 1, "usage_type": "production", "substance_name": "Sản xuất chất được kiểm soát",
+      "hs_code": null, "allocated_quota_kg": null, ...all other numeric fields: null},
+     ...data rows for production with is_title=false, usage_type="production", sequence=2,3,4...
+     {"is_title": true, "sequence": X, "usage_type": "import", "substance_name": "Nhập khẩu chất được kiểm soát",
+      "hs_code": null, ...all numeric fields: null},
+     ...data rows for import with is_title=false, usage_type="import"...
+     {"is_title": true, "sequence": Y, "usage_type": "export", "substance_name": "Xuất khẩu chất được kiểm soát",
+      "hs_code": null, ...all numeric fields: null},
+     ...data rows for export with is_title=false, usage_type="export"...
+   ]
+
+   For Table 2.2 (Equipment/Product Report) - ALWAYS include 2 title rows:
+   [
+     {"is_title": true, "sequence": 1, "production_type": "production",
+      "product_type": "Sản xuất thiết bị, sản phẩm có chứa hoặc sản xuất từ chất được kiểm soát",
+      "hs_code": null, "capacity": null, ...all other fields: null},
+     ...data rows for production with is_title=false, production_type="production"...
+     {"is_title": true, "sequence": X, "production_type": "import",
+      "product_type": "Nhập khẩu thiết bị, sản phẩm có chứa hoặc sản xuất từ chất được kiểm soát",
+      "hs_code": null, ...all fields: null},
+     ...data rows for import with is_title=false, production_type="import"...
+   ]
+
+   For Table 2.3 (Equipment Ownership Report) - ALWAYS include 2 title rows:
+   [
+     {"is_title": true, "sequence": 1, "ownership_type": "air_conditioner",
+      "equipment_type": "Máy điều hòa không khí có năng suất lạnh danh định lớn hơn 26,5 kW (90.000 BTU/h) và có tổng năng suất lạnh danh định của các thiết bị lớn hơn 586 kW (2.000.000 BTU/h)",
+      "equipment_quantity": null, "substance_name": null, ...all other fields: null},
+     ...data rows for air conditioner with is_title=false, ownership_type="air_conditioner"...
+     {"is_title": true, "sequence": X, "ownership_type": "refrigeration",
+      "equipment_type": "Thiết bị lạnh công nghiệp có công suất điện lớn hơn 40 kW",
+      "equipment_quantity": null, ...all fields: null},
+     ...data rows for refrigeration with is_title=false, ownership_type="refrigeration"...
+   ]
+
+   For Table 2.4 (Collection & Recycling Report) - NO title rows, just substance data rows with all columns filled
+
+   - For each table that exists (has_table_2_x = true), extract ALL rows completely
+   - If table does not exist (has_table_2_x = false), return empty array for that table
+
+STEP 5: DATA FORMATTING
+   - Convert Vietnamese numbers to float/int (handle commas, dots correctly)
+   - Use null for empty/missing values in numeric fields, never use empty strings
+   - Preserve Vietnamese text exactly for names, addresses, and text fields
+   - Table 2.4 has complex structure with multiple columns per substance - read carefully
+
+STEP 6: OUTPUT FORMAT
+   - Return ONLY valid JSON, no explanations or markdown formatting
+   - Ensure all has_table_2_x fields are set correctly based on activity fields
 """
 
     def _clean_extracted_data(self, data, document_type):
@@ -527,6 +686,10 @@ CRITICAL INSTRUCTIONS:
             })
         else:  # '02'
             cleaned.update({
+                'has_table_2_1': data.get('has_table_2_1', False),
+                'has_table_2_2': data.get('has_table_2_2', False),
+                'has_table_2_3': data.get('has_table_2_3', False),
+                'has_table_2_4': data.get('has_table_2_4', False),
                 'quota_usage': data.get('quota_usage', []),
                 'equipment_product_report': data.get('equipment_product_report', []),
                 'equipment_ownership_report': data.get('equipment_ownership_report', []),

@@ -7,7 +7,7 @@ class QuotaUsage(models.Model):
     """Table 2.1: Quota Usage Report (Form 02 only)"""
     _name = 'quota.usage'
     _description = 'Quota Usage'
-    _order = 'document_id, substance_name'
+    _order = 'document_id, sequence, id'
 
     document_id = fields.Many2one(
         comodel_name='document.extraction',
@@ -16,9 +16,29 @@ class QuotaUsage(models.Model):
         ondelete='cascade',
         index=True
     )
+    sequence = fields.Integer(
+        string='Sequence',
+        default=10,
+        help='Used to order rows (title rows first in each section)'
+    )
+    is_title = fields.Boolean(
+        string='Is Title Row',
+        default=False,
+        help='If True, this row is a section title (Production/Import/Export)'
+    )
+    usage_type = fields.Selection(
+        selection=[
+            ('production', 'Production'),
+            ('import', 'Import'),
+            ('export', 'Export')
+        ],
+        string='Usage Type',
+        required=True,
+        index=True
+    )
     substance_name = fields.Char(
         string='Substance Name',
-        required=True
+        help='For title rows, this contains the section name (e.g., "Sản xuất chất được kiểm soát")'
     )
     hs_code = fields.Char(
         string='HS Code'

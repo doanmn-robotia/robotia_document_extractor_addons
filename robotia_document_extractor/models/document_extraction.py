@@ -128,6 +128,28 @@ class DocumentExtraction(models.Model):
         help='Organization registers collection, recycling, reuse, disposal'
     )
 
+    # ===== Report Table Selection (Form 02 only) =====
+    has_table_2_1 = fields.Boolean(
+        string='Has Table 2.1 (Quota Usage Report)',
+        default=False,
+        help='Organization reports quota usage (production, import, export)'
+    )
+    has_table_2_2 = fields.Boolean(
+        string='Has Table 2.2 (Equipment/Product Report)',
+        default=False,
+        help='Organization reports equipment/product manufacturing or import'
+    )
+    has_table_2_3 = fields.Boolean(
+        string='Has Table 2.3 (Equipment Ownership Report)',
+        default=False,
+        help='Organization reports owned equipment'
+    )
+    has_table_2_4 = fields.Boolean(
+        string='Has Table 2.4 (Collection & Recycling Report)',
+        default=False,
+        help='Organization reports collection, recycling, reuse, disposal'
+    )
+
     # ===== Table 1.1: Substance Usage (Production, Import, Export) =====
     substance_usage_ids = fields.One2many(
         comodel_name='substance.usage',

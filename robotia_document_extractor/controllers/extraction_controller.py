@@ -123,6 +123,12 @@ class ExtractionController(http.Controller):
 
             # Add One2many table data (Form 02)
             elif document_type == '02':
+                # Report table flags
+                context['default_has_table_2_1'] = extracted_data.get('has_table_2_1', False)
+                context['default_has_table_2_2'] = extracted_data.get('has_table_2_2', False)
+                context['default_has_table_2_3'] = extracted_data.get('has_table_2_3', False)
+                context['default_has_table_2_4'] = extracted_data.get('has_table_2_4', False)
+
                 # Table 2.1 - Quota Usage
                 context['default_quota_usage_ids'] = build_o2m_commands(
                     extracted_data.get('quota_usage', [])

@@ -1242,3 +1242,83 @@ msgstr "Báo cáo thu gom và tái chế"
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_search
 msgid "Activity Field"
 msgstr "Lĩnh vực hoạt động"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_document_extraction__has_table_1_1
+msgid "Has Table 1.1 (Substance Usage)"
+msgstr "Có Bảng 1.1 (Sử dụng Chất)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_document_extraction__has_table_1_1
+msgid "Organization registers substance usage (production, import, export)"
+msgstr "Tổ chức đăng ký sử dụng chất (sản xuất, nhập khẩu, xuất khẩu)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_document_extraction__has_table_1_2
+msgid "Has Table 1.2 (Equipment/Product)"
+msgstr "Có Bảng 1.2 (Thiết bị/Sản phẩm)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_document_extraction__has_table_1_2
+msgid "Organization registers equipment/product info"
+msgstr "Tổ chức đăng ký thông tin thiết bị/sản phẩm"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_document_extraction__has_table_1_3
+msgid "Has Table 1.3 (Equipment Ownership)"
+msgstr "Có Bảng 1.3 (Sở hữu Thiết bị)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_document_extraction__has_table_1_3
+msgid "Organization registers equipment ownership"
+msgstr "Tổ chức đăng ký sở hữu thiết bị"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_document_extraction__has_table_1_4
+msgid "Has Table 1.4 (Collection & Recycling)"
+msgstr "Có Bảng 1.4 (Thu gom & Tái chế)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_document_extraction__has_table_1_4
+msgid "Organization registers collection, recycling, reuse, disposal"
+msgstr "Tổ chức đăng ký thu gom, tái chế, tái sử dụng, xử lý"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_document_extraction__has_table_2_1
+msgid "Has Table 2.1 (Quota Usage Report)"
+msgstr "Có Bảng 2.1 (Báo cáo Hạn ngạch)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_document_extraction__has_table_2_1
+msgid "Organization reports quota usage (production, import, export)"
+msgstr "Tổ chức báo cáo sử dụng hạn ngạch (sản xuất, nhập khẩu, xuất khẩu)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_document_extraction__has_table_2_2
+msgid "Has Table 2.2 (Equipment/Product Report)"
+msgstr "Có Bảng 2.2 (Báo cáo Thiết bị/Sản phẩm)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_document_extraction__has_table_2_2
+msgid "Organization reports equipment/product manufacturing or import"
+msgstr "Tổ chức báo cáo sản xuất hoặc nhập khẩu thiết bị/sản phẩm"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_document_extraction__has_table_2_3
+msgid "Has Table 2.3 (Equipment Ownership Report)"
+msgstr "Có Bảng 2.3 (Báo cáo Sở hữu Thiết bị)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_document_extraction__has_table_2_3
+msgid "Organization reports owned equipment"
+msgstr "Tổ chức báo cáo thiết bị sở hữu"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_document_extraction__has_table_2_4
+msgid "Has Table 2.4 (Collection & Recycling Report)"
+msgstr "Có Bảng 2.4 (Báo cáo Thu gom & Tái chế)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_document_extraction__has_table_2_4
+msgid "Organization reports collection, recycling, reuse, disposal"
+msgstr "Tổ chức báo cáo thu gom, tái chế, tái sử dụng, xử lý"
