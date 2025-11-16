@@ -1,0 +1,336 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <!-- Company Dashboard Main Template -->
+    <t t-name="robotia_document_extractor.CompanyDashboard">
+        <div class="company-dashboard-page">
+
+            <!-- Loading State -->
+            <div t-if="state.loading" class="dashboard-loading">
+                <div class="text-center py-5">
+                    <i class="fa fa-spinner fa-spin fa-3x text-primary"/>
+                    <p class="mt-3">Đang tải dữ liệu...</p>
+                </div>
+            </div>
+
+            <!-- Error State -->
+            <div t-elif="state.error" class="dashboard-error">
+                <div class="alert alert-danger">
+                    <i class="fa fa-exclamation-triangle"/>
+                    <span t-esc="state.error"/>
+                </div>
+            </div>
+
+            <!-- Dashboard Content -->
+            <div t-else="" class="page">
+
+                <!-- HEADER -->
+                <div class="header">
+                    <div>
+                        <div class="header-title">
+                            <t t-esc="state.organizationName"/> – Dashboard Chi Tiết
+                        </div>
+                        <div class="header-sub">
+                            Phân tích dữ liệu Mẫu 01/02 theo doanh nghiệp
+                        </div>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn btn-outline">
+                            <i class="fa fa-file-pdf-o"/> Xuất báo cáo PDF
+                        </button>
+                    </div>
+                </div>
+
+                <!-- GRID: COMPANY INFO + KPI -->
+                <div class="grid-2">
+
+                    <!-- COMPANY INFO CARD -->
+                    <div class="card">
+                        <div class="card-title">Thông tin doanh nghiệp</div>
+                        <table class="info-table">
+                            <tr>
+                                <td class="info-label">Tên doanh nghiệp:</td>
+                                <td t-esc="state.companyInfo.name"/>
+                            </tr>
+                            <tr>
+                                <td class="info-label">Mã doanh nghiệp:</td>
+                                <td t-esc="state.companyInfo.business_license_number || 'N/A'"/>
+                            </tr>
+                            <tr>
+                                <td class="info-label">Địa chỉ:</td>
+                                <td>
+                                    <t t-esc="state.companyInfo.street || ''"/>
+                                    <t t-if="state.companyInfo.city">
+                                        , <t t-esc="state.companyInfo.city"/>
+                                    </t>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="info-label">Lĩnh vực hoạt động:</td>
+                                <td t-esc="state.companyInfo.activity_fields || 'N/A'"/>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <!-- KPI CARD -->
+                    <div class="card">
+                        <div class="card-title">Tổng quan dữ liệu</div>
+                        <div class="kpi-row">
+                            <div class="kpi-card">
+                                <div class="kpi-label">Tổng chất sử dụng</div>
+                                <div class="kpi-value" t-esc="state.kpiData.totalSubstances"/>
+                                <div class="kpi-sub">Theo bảng 1.1 – 1.3</div>
+                            </div>
+                            <div class="kpi-card">
+                                <div class="kpi-label">Tổng khối lượng (kg)</div>
+                                <div class="kpi-value" t-esc="formatNumber(state.kpiData.totalKg, 0)"/>
+                                <div class="kpi-sub">Tổng hợp từ tất cả bảng</div>
+                            </div>
+                            <div class="kpi-card">
+                                <div class="kpi-label">Tổng CO₂e (t)</div>
+                                <div class="kpi-value" t-esc="formatNumber(state.kpiData.totalCO2e, 2)"/>
+                                <div class="kpi-sub">Theo GWP từng chất</div>
+                            </div>
+                            <div class="kpi-card">
+                                <div class="kpi-label">Tỷ lệ thu gom</div>
+                                <div class="kpi-value">
+                                    <t t-esc="formatNumber(state.kpiData.recoveryRate, 1)"/>%
+                                </div>
+                                <div class="kpi-sub">Theo bảng 2.4</div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- ROW: CHARTS -->
+                <div class="grid-2">
+
+                    <!-- Trend Chart -->
+                    <div class="panel">
+                        <div class="panel-header">
+                            <div class="panel-title">Xu hướng sử dụng chất theo năm</div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas t-ref="trendChart"/>
+                        </div>
+                    </div>
+
+                    <!-- Quota Chart -->
+                    <div class="panel">
+                        <div class="panel-header">
+                            <div class="panel-title">Hạn ngạch được phân bổ – sử dụng</div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas t-ref="quotaChart"/>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- TAB SECTION -->
+                <div class="tabs">
+                    <div class="tab"
+                         t-att-class="state.activeTab === 'table_1_1' ? 'active' : ''"
+                         t-on-click="() => this.switchTab('table_1_1')">
+                        Bảng 1.1 – SX/NK/XK
+                    </div>
+                    <div class="tab"
+                         t-att-class="state.activeTab === 'table_1_2' ? 'active' : ''"
+                         t-on-click="() => this.switchTab('table_1_2')">
+                        Bảng 1.2 – Thiết bị chứa chất
+                    </div>
+                    <div class="tab"
+                         t-att-class="state.activeTab === 'table_1_3' ? 'active' : ''"
+                         t-on-click="() => this.switchTab('table_1_3')">
+                        Bảng 1.3 – Sở hữu thiết bị
+                    </div>
+                    <div class="tab"
+                         t-att-class="state.activeTab === 'table_2_1' ? 'active' : ''"
+                         t-on-click="() => this.switchTab('table_2_1')">
+                        Bảng 2.1 – Hạn ngạch
+                    </div>
+                    <div class="tab"
+                         t-att-class="state.activeTab === 'table_2_4' ? 'active' : ''"
+                         t-on-click="() => this.switchTab('table_2_4')">
+                        Bảng 2.4 – Thu gom &amp; Tái chế
+                    </div>
+                    <div class="tab"
+                         t-att-class="state.activeTab === 'ocr_history' ? 'active' : ''"
+                         t-on-click="() => this.switchTab('ocr_history')">
+                        Lịch sử OCR &amp; xác thực
+                    </div>
+                </div>
+
+                <!-- TABLE PANEL -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title" t-esc="getTabLabel(state.activeTab)"/>
+                    </div>
+
+                    <div t-if="activeTabData.length === 0" class="empty-state">
+                        <i class="fa fa-inbox"/>
+                        <p>Chưa có dữ liệu</p>
+                    </div>
+
+                    <!-- Table 1.1: SX/NK/XK -->
+                    <div t-elif="state.activeTab === 'table_1_1'" class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Năm</th>
+                                    <th>Hoạt động</th>
+                                    <th>Tên chất</th>
+                                    <th>Khối lượng (kg)</th>
+                                    <th>CO₂e (t)</th>
+                                    <th>Ghi chú</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="activeTabData" t-as="row" t-key="row_index">
+                                    <td t-esc="row.year"/>
+                                    <td t-esc="row.activity"/>
+                                    <td t-esc="row.substance_name"/>
+                                    <td t-esc="formatNumber(row.quantity_kg, 0)"/>
+                                    <td t-esc="formatNumber(row.co2e, 2)"/>
+                                    <td t-esc="row.note"/>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Table 1.2: Equipment Product -->
+                    <div t-elif="state.activeTab === 'table_1_2'" class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Năm</th>
+                                    <th>Loại thiết bị</th>
+                                    <th>Tên chất</th>
+                                    <th>Số lượng</th>
+                                    <th>Công suất (kW)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="activeTabData" t-as="row" t-key="row_index">
+                                    <td t-esc="row.year"/>
+                                    <td t-esc="row.equipment_type"/>
+                                    <td t-esc="row.substance_name"/>
+                                    <td t-esc="formatNumber(row.quantity, 0)"/>
+                                    <td t-esc="formatNumber(row.capacity, 2)"/>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Table 1.3: Equipment Ownership -->
+                    <div t-elif="state.activeTab === 'table_1_3'" class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Năm</th>
+                                    <th>Loại thiết bị</th>
+                                    <th>Năm bắt đầu</th>
+                                    <th>Công suất (kW)</th>
+                                    <th>Số lượng</th>
+                                    <th>Chất chứa</th>
+                                    <th>Lượng nạp (kg)</th>
+                                    <th>Tần suất nạp</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="activeTabData" t-as="row" t-key="row_index">
+                                    <td t-esc="row.year"/>
+                                    <td t-esc="row.equipment_type"/>
+                                    <td t-esc="row.year_start"/>
+                                    <td t-esc="formatNumber(row.capacity, 2)"/>
+                                    <td t-esc="formatNumber(row.quantity, 0)"/>
+                                    <td t-esc="row.substance_name"/>
+                                    <td t-esc="formatNumber(row.refill_amount, 0)"/>
+                                    <td t-esc="formatNumber(row.refill_frequency, 2)"/>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Table 2.1: Quota Usage -->
+                    <div t-elif="state.activeTab === 'table_2_1'" class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Năm</th>
+                                    <th>Tên chất</th>
+                                    <th>Hạn ngạch phân bổ (kg)</th>
+                                    <th>Hạn ngạch sử dụng (kg)</th>
+                                    <th>Ghi chú</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="activeTabData" t-as="row" t-key="row_index">
+                                    <td t-esc="row.year"/>
+                                    <td t-esc="row.substance_name"/>
+                                    <td t-esc="formatNumber(row.quota_allocated_kg, 0)"/>
+                                    <td t-esc="formatNumber(row.quota_used_kg, 0)"/>
+                                    <td t-esc="row.note"/>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Table 2.4: Collection & Recycling -->
+                    <div t-elif="state.activeTab === 'table_2_4'" class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Năm</th>
+                                    <th>Tên chất</th>
+                                    <th>Thu gom (kg)</th>
+                                    <th>Tái sử dụng (kg)</th>
+                                    <th>Tái chế (kg)</th>
+                                    <th>Tiêu hủy (kg)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="activeTabData" t-as="row" t-key="row_index">
+                                    <td t-esc="row.year"/>
+                                    <td t-esc="row.substance_name"/>
+                                    <td t-esc="formatNumber(row.collected, 0)"/>
+                                    <td t-esc="formatNumber(row.reused, 0)"/>
+                                    <td t-esc="formatNumber(row.recycled, 0)"/>
+                                    <td t-esc="formatNumber(row.destroyed, 0)"/>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- OCR History -->
+                    <div t-elif="state.activeTab === 'ocr_history'" class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Năm</th>
+                                    <th>Loại tài liệu</th>
+                                    <th>Tên file PDF</th>
+                                    <th>Ngày tạo</th>
+                                    <th>Người tạo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="activeTabData" t-as="row" t-key="row_index">
+                                    <td t-esc="row.year"/>
+                                    <td t-esc="row.document_type"/>
+                                    <td t-esc="row.pdf_filename"/>
+                                    <td t-esc="row.create_date"/>
+                                    <td t-esc="row.create_uid"/>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </t>
+
+</templates>

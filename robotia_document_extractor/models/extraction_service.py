@@ -84,90 +84,112 @@ class DocumentExtractionService(models.AbstractModel):
 
         _logger.info(f"Calling Gemini API for extraction (PDF size: {len(pdf_binary)} bytes)")
 
-        try:
-            # Upload PDF file to Gemini
-            # Note: Gemini requires file upload for large documents
-            import tempfile
-            import os
+        # Upload PDF file to Gemini
+        # Note: Gemini requires file upload for large documents
+        import tempfile
+        import os
+        import time
 
+        # Constants
+        GEMINI_POLL_INTERVAL_SECONDS = 2
+        GEMINI_MAX_POLL_RETRIES = 30  # 30 * 2s = 60s timeout
+        GEMINI_MAX_TOKENS = 16000
+
+        tmp_file_path = None
+        uploaded_file = None
+
+        try:
             # Create temporary file
             with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
                 tmp_file.write(pdf_binary)
                 tmp_file_path = tmp_file.name
 
-            try:
-                # Upload file to Gemini
-                uploaded_file = client.files.upload(file=tmp_file_path)
-                _logger.info(f"File uploaded to Gemini: {uploaded_file.name}")
+            _logger.info(f"Created temp file: {tmp_file_path}")
 
-                # Wait for file to be processed
-                import time
-                while uploaded_file.state.name == "PROCESSING":
-                    _logger.info("Waiting for file processing...")
-                    time.sleep(2)
-                    uploaded_file = client.files.get(name=uploaded_file.name)
+            # Upload file to Gemini
+            uploaded_file = client.files.upload(file=tmp_file_path)
+            _logger.info(f"File uploaded to Gemini: {uploaded_file.name}")
 
-                if uploaded_file.state.name == "FAILED":
-                    raise ValueError("File processing failed in Gemini")
+            # Wait for file to be processed with timeout
+            poll_count = 0
+            while uploaded_file.state.name == "PROCESSING":
+                if poll_count >= GEMINI_MAX_POLL_RETRIES:
+                    raise TimeoutError(f"Gemini file processing timeout after {GEMINI_MAX_POLL_RETRIES * GEMINI_POLL_INTERVAL_SECONDS}s")
 
-                # Generate content with the uploaded file
-                response = client.models.generate_content(
-                    model='gemini-2.0-flash-exp',
-                    contents=[uploaded_file, prompt],
-                    config=types.GenerateContentConfig(
-                        temperature=0.1,  # Low temperature for consistent structured output
-                        max_output_tokens=16000,
-                        response_mime_type='application/json',  # Force JSON output
-                        top_p=0.8,
-                        top_k=40
-                    )
+                _logger.info(f"Waiting for file processing... (attempt {poll_count + 1}/{GEMINI_MAX_POLL_RETRIES})")
+                time.sleep(GEMINI_POLL_INTERVAL_SECONDS)
+                uploaded_file = client.files.get(name=uploaded_file.name)
+                poll_count += 1
+
+            if uploaded_file.state.name == "FAILED":
+                raise ValueError("File processing failed in Gemini")
+
+            _logger.info(f"File processing completed: {uploaded_file.state.name}")
+
+            # Generate content with the uploaded file
+            response = client.models.generate_content(
+                model='gemini-2.0-flash-exp',
+                contents=[uploaded_file, prompt],
+                config=types.GenerateContentConfig(
+                    temperature=0.1,  # Low temperature for consistent structured output
+                    max_output_tokens=GEMINI_MAX_TOKENS,
+                    response_mime_type='application/json',  # Force JSON output
+                    top_p=0.8,
+                    top_k=40
                 )
+            )
 
-                # Get response text
-                extracted_text = response.text
+            # Get response text
+            extracted_text = response.text
 
-                _logger.info(f"Gemini API response received (length: {len(extracted_text)} chars)")
-
-            finally:
-                # Clean up temporary file
-                if os.path.exists(tmp_file_path):
-                    os.unlink(tmp_file_path)
-
-                # Delete uploaded file from Gemini
-                try:
-                    client.files.delete(name=uploaded_file.name)
-                except:
-                    pass
-
-            # Parse JSON from response
-            try:
-                # Find JSON block in response (Gemini may wrap it in markdown)
-                if '```json' in extracted_text:
-                    json_start = extracted_text.find('```json') + 7
-                    json_end = extracted_text.find('```', json_start)
-                    json_str = extracted_text[json_start:json_end].strip()
-                elif '```' in extracted_text:
-                    json_start = extracted_text.find('```') + 3
-                    json_end = extracted_text.find('```', json_start)
-                    json_str = extracted_text[json_start:json_end].strip()
-                else:
-                    json_str = extracted_text.strip()
-
-                extracted_data = json.loads(json_str)
-                _logger.info("Successfully parsed JSON response")
-
-            except json.JSONDecodeError as e:
-                _logger.error(f"Failed to parse JSON: {e}\nResponse: {extracted_text[:500]}")
-                raise ValueError(f"Failed to parse AI response as JSON: {e}")
-
-            # Validate and clean extracted data
-            cleaned_data = self._clean_extracted_data(extracted_data, document_type)
-
-            return cleaned_data
+            _logger.info(f"Gemini API response received (length: {len(extracted_text)} chars)")
 
         except Exception as e:
-            _logger.exception(f"Unexpected error during extraction: {e}")
-            raise ValueError(f"Extraction failed: {str(e)}")
+            _logger.exception(f"Extraction failed during Gemini API call")
+            raise ValueError(f"Extraction failed: {type(e).__name__}: {str(e)}")
+
+        finally:
+            # ALWAYS cleanup temporary file
+            if tmp_file_path and os.path.exists(tmp_file_path):
+                try:
+                    os.unlink(tmp_file_path)
+                    _logger.info(f"Cleaned up temp file: {tmp_file_path}")
+                except Exception as e:
+                    _logger.warning(f"Failed to cleanup temp file {tmp_file_path}: {e}")
+
+            # ALWAYS cleanup Gemini uploaded file
+            if uploaded_file:
+                try:
+                    client.files.delete(name=uploaded_file.name)
+                    _logger.info(f"Deleted Gemini file: {uploaded_file.name}")
+                except Exception as e:
+                    _logger.warning(f"Failed to delete Gemini file: {e}")
+
+        # Parse JSON from response
+        try:
+            # Find JSON block in response (Gemini may wrap it in markdown)
+            if '```json' in extracted_text:
+                json_start = extracted_text.find('```json') + 7
+                json_end = extracted_text.find('```', json_start)
+                json_str = extracted_text[json_start:json_end].strip()
+            elif '```' in extracted_text:
+                json_start = extracted_text.find('```') + 3
+                json_end = extracted_text.find('```', json_start)
+                json_str = extracted_text[json_start:json_end].strip()
+            else:
+                json_str = extracted_text.strip()
+
+            extracted_data = json.loads(json_str)
+            _logger.info("Successfully parsed JSON response")
+
+        except json.JSONDecodeError as e:
+            _logger.error(f"Failed to parse JSON: {e}\nResponse: {extracted_text[:500]}")
+            raise ValueError(f"Failed to parse AI response as JSON: {e}")
+
+        # Validate and clean extracted data
+        cleaned_data = self._clean_extracted_data(extracted_data, document_type)
+
+        return cleaned_data
 
     def _build_extraction_prompt(self, document_type):
         """

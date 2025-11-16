@@ -119,14 +119,6 @@ export class ExtractionSectionListRenderer extends NoMagicColumnListRenderer {
     }
 
     /**
-     * Control inline editing for section rows
-     */
-    isInlineEditable(record) {
-        // Section rows should be editable to change title text
-        return this.isSection(record) && this.props.editable;
-    }
-
-    /**
      * Override add() to handle context for section rows
      */
     add(params) {

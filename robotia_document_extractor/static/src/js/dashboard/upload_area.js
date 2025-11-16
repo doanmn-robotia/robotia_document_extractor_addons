@@ -3,12 +3,16 @@
 import { Component, useState } from "@odoo/owl";
 import { useService } from "@web/core/utils/hooks";
 import { rpc } from "@web/core/network/rpc";
+import { _t } from "@web/core/l10n/translation";
 
 
 export class UploadArea extends Component {
     static template = "robotia_document_extractor.UploadArea";
     static props = {
-        onExtractionComplete: { type: Function, optional: true }
+        onExtractionComplete: { type: Function, optional: true },
+        onUploadStart: { type: Function, optional: true },
+        onUploadEnd: { type: Function, optional: true },
+        disabled: { type: Boolean, optional: true }
     };
 
     setup() {
@@ -24,6 +28,10 @@ export class UploadArea extends Component {
 
     onDragOver(ev) {
         ev.preventDefault();
+        // Don't show drag over effect if disabled or already uploading
+        if (this.props.disabled || this.state.uploading) {
+            return;
+        }
         this.state.dragOver = true;
     }
 
@@ -35,6 +43,11 @@ export class UploadArea extends Component {
     onDrop(ev) {
         ev.preventDefault();
         this.state.dragOver = false;
+
+        // Don't handle drop if disabled or already uploading
+        if (this.props.disabled || this.state.uploading) {
+            return;
+        }
 
         const files = ev.dataTransfer.files;
         if (files.length > 0) {
@@ -55,7 +68,7 @@ export class UploadArea extends Component {
         // Validate file type
         if (file.type !== 'application/pdf') {
             this.notification.add(
-                'Please select a PDF file',
+                _t('Please select a PDF file'),
                 { type: 'warning' }
             );
             return;
@@ -65,10 +78,15 @@ export class UploadArea extends Component {
         const maxSize = 50 * 1024 * 1024; // 50MB
         if (file.size > maxSize) {
             this.notification.add(
-                'File size exceeds 50MB limit',
+                _t('File size exceeds 50MB limit'),
                 { type: 'warning' }
             );
             return;
+        }
+
+        // Notify parent that upload is starting
+        if (this.props.onUploadStart) {
+            this.props.onUploadStart();
         }
 
         this.state.uploading = true;
@@ -86,11 +104,16 @@ export class UploadArea extends Component {
 
             this.state.uploading = false;
 
+            // Notify parent that upload has ended
+            if (this.props.onUploadEnd) {
+                this.props.onUploadEnd();
+            }
+
             // Handle result
             if (result.type === 'ir.actions.act_window') {
                 // Success - open form with extracted data
                 this.notification.add(
-                    'Document extracted successfully! Please review the data.',
+                    _t('Document extracted successfully! Please review the data.'),
                     { type: 'success' }
                 );
 
@@ -109,8 +132,13 @@ export class UploadArea extends Component {
             console.error('Extraction error:', error);
             this.state.uploading = false;
 
+            // Notify parent that upload has ended (even on error)
+            if (this.props.onUploadEnd) {
+                this.props.onUploadEnd();
+            }
+
             this.notification.add(
-                `Extraction failed: ${error.message || 'Unknown error'}`,
+                _t('Extraction failed: %s', error.message || _t('Unknown error')),
                 { type: 'danger', sticky: true }
             );
         }

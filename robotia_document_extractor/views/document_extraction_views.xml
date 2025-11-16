@@ -9,7 +9,7 @@
                   js_class="document_extraction_form"
                   class="o_form_extraction_split">
                 <header>
-                    <field name="state" widget="statusbar" statusbar_visible="draft,validated,completed"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,validated,completed" options="{'clickable': '1'}"/>
                 </header>
 
                 <sheet>
@@ -23,7 +23,7 @@
                     <group>
                         <group>
                             <field name="document_type" required="1"/>
-                            <field name="year" required="1"/>
+                            <field name="year" required="1" options="{'enable_formatting': false}"/>
                             <field name="extraction_date" readonly="1"/>
                         </group>
                         <group>
@@ -37,7 +37,9 @@
                         <page string="Organization Info" name="organization_info">
                             <group>
                                 <group string="Organization Details" colspan="2">
-                                    <field name="organization_id"/>
+                                    <field name="organization_id"
+                                           domain="[('x_partner_type', '=', 'organization')]"
+                                           context="{'form_view_ref': 'robotia_document_extractor.view_partner_organization_form', 'tree_view_ref': 'robotia_document_extractor.view_partner_organization_list', 'default_x_partner_type': 'organization'}"/>
                                     <field name="organization_name" required="1"/>
                                     <field name="business_license_number"/>
                                     <field name="business_license_date"/>
@@ -101,7 +103,7 @@
                               invisible="document_type != '01' or not has_table_1_1">
                             <field name="substance_usage_ids" widget="extraction_section_one2many" nolabel="1">
                                 <list editable="bottom">
-                                    <field name="sequence" widget="handle"/>
+                                    <field name="sequence" widget="handle" options="{'enable_formatting': false}"/>
                                     <field name="substance_name" widget="extraction_title_field"/>
                                     <field name="year_1_quantity_kg"/>
                                     <field name="year_1_quantity_co2"/>
@@ -127,7 +129,7 @@
                               invisible="document_type != '01' or not has_table_1_2">
                             <field name="equipment_product_ids" widget="extraction_section_one2many" nolabel="1">
                                 <list editable="bottom">
-                                    <field name="sequence" widget="handle"/>
+                                    <field name="sequence" widget="handle" options="{'enable_formatting': false}"/>
                                     <field name="product_type" widget="extraction_title_field"/>
                                     <field name="hs_code"/>
                                     <field name="capacity"/>
@@ -150,12 +152,12 @@
                               invisible="document_type != '01' or not has_table_1_3">
                             <field name="equipment_ownership_ids" widget="extraction_section_one2many_equipment_type" nolabel="1">
                                 <list editable="bottom">
-                                    <field name="sequence" widget="handle"/>
+                                    <field name="sequence" widget="handle" options="{'enable_formatting': false}"/>
                                     <field name="equipment_type" widget="extraction_title_field"/>
-                                    <field name="start_year"/>
+                                    <field name="start_year" options="{'enable_formatting': false}"/>
                                     <field name="capacity"/>
                                     <field name="substance_name"/>
-                                    <field name="equipment_quantity"/>
+                                    <field name="equipment_quantity" options="{'enable_formatting': false}"/>
                                     <field name="refill_frequency"/>
                                     <field name="substance_quantity_per_refill"/>
                                     <field name="is_title" column_invisible="1"/>
@@ -173,7 +175,7 @@
                               invisible="document_type != '01' or not has_table_1_4">
                             <field name="collection_recycling_ids" widget="extraction_section_one2many" nolabel="1">
                                 <list editable="bottom">
-                                    <field name="sequence" widget="handle"/>
+                                    <field name="sequence" widget="handle" options="{'enable_formatting': false}"/>
                                     <field name="activity_type" column_invisible="1"/>
                                     <field name="substance_name" widget="extraction_title_field"/>
                                     <field name="quantity_kg"/>
@@ -193,7 +195,7 @@
                               invisible="document_type != '02' or not has_table_2_1">
                             <field name="quota_usage_ids" widget="extraction_section_one2many" nolabel="1">
                                 <list editable="bottom">
-                                    <field name="sequence" widget="handle"/>
+                                    <field name="sequence" widget="handle" options="{'enable_formatting': false}"/>
                                     <field name="substance_name" widget="extraction_title_field"/>
                                     <field name="hs_code"/>
                                     <field name="allocated_quota_kg"/>
@@ -223,7 +225,7 @@
                               invisible="document_type != '02' or not has_table_2_2">
                             <field name="equipment_product_report_ids" widget="extraction_section_one2many" nolabel="1">
                                 <list editable="bottom">
-                                    <field name="sequence" widget="handle"/>
+                                    <field name="sequence" widget="handle" options="{'enable_formatting': false}"/>
                                     <field name="product_type" widget="extraction_title_field"/>
                                     <field name="hs_code"/>
                                     <field name="capacity"/>
@@ -247,12 +249,12 @@
                               invisible="document_type != '02' or not has_table_2_3">
                             <field name="equipment_ownership_report_ids" widget="extraction_section_one2many_equipment_type" nolabel="1">
                                 <list editable="bottom">
-                                    <field name="sequence" widget="handle"/>
+                                    <field name="sequence" widget="handle" options="{'enable_formatting': false}"/>
                                     <field name="equipment_type" widget="extraction_title_field"/>
-                                    <field name="equipment_quantity"/>
+                                    <field name="equipment_quantity" options="{'enable_formatting': false}"/>
                                     <field name="substance_name"/>
                                     <field name="capacity"/>
-                                    <field name="start_year"/>
+                                    <field name="start_year" options="{'enable_formatting': false}"/>
                                     <field name="refill_frequency"/>
                                     <field name="substance_quantity_per_refill"/>
                                     <field name="notes"/>
@@ -300,7 +302,10 @@
                         <h3>PDF Document Preview</h3>
                     </div>
                     <div class="o_pdf_preview_content">
-                        <field name="pdf_file" widget="pdf_viewer" options="{'height': '100%'}"/>
+                        <field name="id" invisible="1"/>
+                        <field name="pdf_attachment_id" invisible="1"/>
+                        <field name="pdf_file" widget="pdf_viewer" invisible="not id" options="{'height': '100%'}"/>
+                        <field name="pdf_url" widget="pdf_url_viewer" invisible="id"/>
                     </div>
                 </div>
             </form>
@@ -316,7 +321,7 @@
                 <field name="name"/>
                 <field name="document_type"/>
                 <field name="organization_id"/>
-                <field name="year"/>
+                <field name="year" options="{'enable_formatting': false}"/>
                 <field name="extraction_date"/>
                 <field name="state" widget="badge" decoration-info="state == 'draft'"
                        decoration-warning="state == 'validated'"
@@ -334,7 +339,7 @@
                 <!-- Search Fields - Basic Info -->
                 <field name="name"/>
                 <field name="document_type"/>
-                <field name="year"/>
+                <field name="year" options="{'enable_formatting': false}"/>
                 <field name="state"/>
                 <field name="extraction_date"/>
 

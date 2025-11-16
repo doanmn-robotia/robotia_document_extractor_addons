@@ -41,7 +41,41 @@ class ControlledSubstance(models.Model):
         string='Active',
         default=True
     )
+    needs_review = fields.Boolean(
+        string='Needs Review',
+        default=False,
+        help='Auto-created substance that needs admin review and GWP configuration'
+    )
+    created_from_extraction = fields.Boolean(
+        string='Created from Extraction',
+        default=False,
+        help='Created automatically during document extraction'
+    )
 
     _sql_constraints = [
         ('code_unique', 'UNIQUE(code)', 'The substance code must be unique!')
     ]
+
+    @api.model
+    def name_create(self, name):
+        """Override name_create to set created_from_extraction flag"""
+        record = self.create({
+            'name': name,
+            'code': name,  # Use name as code initially
+            'needs_review': True,
+            'created_from_extraction': True
+        })
+        return record.id, record.display_name
+
+    def action_view_dashboard(self):
+        """Open substance dashboard with analytics"""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'document_extractor.substance_dashboard',
+            'context': {
+                'default_substance_id': self.id,
+                'default_substance_name': self.name,
+            },
+            'name': f'Dashboard - {self.name}'
+        }

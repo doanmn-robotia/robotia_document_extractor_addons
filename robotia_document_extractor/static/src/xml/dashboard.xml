@@ -16,7 +16,11 @@
 
             <div t-else="">
                 <!-- Upload Area -->
-                <UploadArea onExtractionComplete.bind="onExtractionComplete"/>
+                <UploadArea
+                    onExtractionComplete.bind="onExtractionComplete"
+                    onUploadStart.bind="onUploadStart"
+                    onUploadEnd.bind="onUploadEnd"
+                    disabled="state.uploading"/>
 
                 <!-- Statistics Cards -->
                 <div class="statistics-cards mt-4">
@@ -24,17 +28,21 @@
                         title.translate="Registrations"
                         count="state.statistics.registrations"
                         docType="'01'"
-                        onClick.bind="onCardClick"/>
+                        onClick.bind="onCardClick"
+                        disabled="state.uploading"/>
 
                     <StatisticsCard
                         title.translate="Reports"
                         count="state.statistics.reports"
                         docType="'02'"
-                        onClick.bind="onCardClick"/>
+                        onClick.bind="onCardClick"
+                        disabled="state.uploading"/>
                 </div>
 
                 <!-- Recent Extractions -->
-                <RecentExtractions class="'mt-4'"/>
+                <div class="mt-4">
+                    <RecentExtractions disabled="state.uploading"/>
+                </div>
             </div>
         </div>
     </t>
@@ -43,7 +51,10 @@
     <t t-name="robotia_document_extractor.UploadArea">
         <div class="upload-area-container">
             <div class="upload-area"
-                 t-att-class="state.dragOver ? 'drag-over' : ''"
+                 t-att-class="{
+                     'drag-over': state.dragOver,
+                     'disabled': props.disabled or state.uploading
+                 }"
                  t-on-dragover="onDragOver"
                  t-on-dragleave="onDragLeave"
                  t-on-drop="onDrop">
@@ -108,7 +119,9 @@
 
     <!-- Statistics Card Template -->
     <t t-name="robotia_document_extractor.StatisticsCard">
-        <div class="stat-card" t-on-click="handleClick">
+        <div class="stat-card"
+             t-att-class="{'disabled': props.disabled}"
+             t-on-click="handleClick">
             <div class="stat-card-icon">
                 <i t-att-class="props.docType === '01' ? 'fa fa-file-text fa-2x' : 'fa fa-bar-chart fa-2x'"/>
             </div>
@@ -144,6 +157,7 @@
             <div t-else="" class="recent-list">
                 <div t-foreach="state.recentDocuments" t-as="doc" t-key="doc.id"
                      class="recent-item"
+                     t-att-class="{'disabled': props.disabled}"
                      t-on-click="() => this.openDocument(doc.id)">
 
                     <div class="recent-item-icon">

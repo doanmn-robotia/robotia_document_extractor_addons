@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <!-- Equipment Dashboard Main Template -->
+    <t t-name="robotia_document_extractor.EquipmentDashboard">
+        <div class="equipment-dashboard-page">
+
+            <!-- Loading State -->
+            <div t-if="state.loading" class="dashboard-loading">
+                <div class="text-center py-5">
+                    <i class="fa fa-spinner fa-spin fa-3x text-primary"/>
+                    <p class="mt-3">Đang tải dữ liệu...</p>
+                </div>
+            </div>
+
+            <!-- Error State -->
+            <div t-elif="state.error" class="dashboard-error">
+                <div class="alert alert-danger">
+                    <i class="fa fa-exclamation-triangle"/>
+                    <span t-esc="state.error"/>
+                </div>
+            </div>
+
+            <!-- Dashboard Content -->
+            <div t-else="" class="page">
+
+                <!-- HEADER -->
+                <div class="header">
+                    <div>
+                        <div class="header-title">
+                            <t t-esc="state.equipmentTypeName"/> – Dashboard Thiết bị Chi Tiết
+                        </div>
+                        <div class="header-sub">
+                            Dữ liệu tổng hợp về thiết bị chứa chất HFC
+                        </div>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn btn-outline">
+                            <i class="fa fa-file-pdf-o"/> Xuất báo cáo thiết bị
+                        </button>
+                    </div>
+                </div>
+
+                <!-- GRID 1: INFO + KPI -->
+                <div class="grid-2">
+
+                    <!-- DEVICE INFO -->
+                    <div class="card">
+                        <div class="card-title">Thông tin thiết bị</div>
+                        <table class="info-table">
+                            <tr>
+                                <td class="info-label">Loại thiết bị:</td>
+                                <td class="info-value" t-esc="state.equipmentInfo.name"/>
+                            </tr>
+                            <tr>
+                                <td class="info-label">Số doanh nghiệp sở hữu:</td>
+                                <td class="info-value">
+                                    <t t-esc="state.equipmentInfo.total_companies"/> DN
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="info-label">Nhóm chất thường chứa:</td>
+                                <td class="info-value" t-esc="state.equipmentInfo.common_substances || 'N/A'"/>
+                            </tr>
+                            <tr>
+                                <td class="info-label">Tổng công suất làm lạnh ghi nhận:</td>
+                                <td class="info-value">
+                                    <t t-esc="formatNumber(state.equipmentInfo.total_capacity, 1)"/> kW
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="info-label">Khoảng công suất:</td>
+                                <td class="info-value" t-esc="state.equipmentInfo.capacity_range || 'N/A'"/>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <!-- KPI -->
+                    <div class="grid-4">
+                        <div class="kpi-card">
+                            <div class="kpi-label">Thiết bị đã ghi nhận</div>
+                            <div class="kpi-value" t-esc="state.kpiData.totalCount"/>
+                            <div class="kpi-sub">Tổng số dòng Bảng 1.3</div>
+                        </div>
+
+                        <div class="kpi-card">
+                            <div class="kpi-label">Tổng lượng chất (kg)</div>
+                            <div class="kpi-value" t-esc="formatNumber(state.kpiData.totalKg, 0)"/>
+                            <div class="kpi-sub">Theo bảng 1.3</div>
+                        </div>
+
+                        <div class="kpi-card">
+                            <div class="kpi-label">Tổng CO₂e (t)</div>
+                            <div class="kpi-value" t-esc="formatNumber(state.kpiData.totalCO2e, 2)"/>
+                            <div class="kpi-sub">Theo hệ số GWP</div>
+                        </div>
+
+                        <div class="kpi-card">
+                            <div class="kpi-label">Tần suất nạp môi chất TB</div>
+                            <div class="kpi-value">
+                                <t t-esc="formatNumber(state.kpiData.avgRefillFrequency, 2)"/> lần/năm
+                            </div>
+                            <div class="kpi-sub">Từ dữ liệu thực tế</div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- CHARTS ROW 1 -->
+                <div class="grid-2">
+
+                    <!-- Chart 1 -->
+                    <div class="panel">
+                        <div class="panel-header">
+                            <div class="panel-title">Xu hướng thiết bị theo năm</div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas t-ref="trendChart"/>
+                        </div>
+                    </div>
+
+                    <!-- Chart 2 -->
+                    <div class="panel">
+                        <div class="panel-header">
+                            <div class="panel-title">Phân bổ theo chất chứa trong thiết bị</div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas t-ref="pieChart"/>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- CHARTS ROW 2 -->
+                <div class="grid-2">
+
+                    <div class="panel">
+                        <div class="panel-header">
+                            <div class="panel-title">Tổng công suất theo doanh nghiệp</div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas t-ref="capacityChart"/>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <div class="panel-header">
+                            <div class="panel-title">Ước tính rò rỉ – Refill theo năm</div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas t-ref="refillChart"/>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- TABLE DETAIL -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">Danh sách thiết bị chi tiết</div>
+                    </div>
+
+                    <div t-if="state.details.length === 0" class="empty-state">
+                        <i class="fa fa-inbox"/>
+                        <p>Chưa có dữ liệu</p>
+                    </div>
+
+                    <div t-else="" class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Doanh nghiệp</th>
+                                    <th>Năm bắt đầu</th>
+                                    <th>Công suất (kW)</th>
+                                    <th>Số lượng</th>
+                                    <th>Chất chứa</th>
+                                    <th>Lượng nạp (kg)</th>
+                                    <th>Tần suất nạp</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="state.details" t-as="row" t-key="row_index">
+                                    <td t-esc="row.organization_name"/>
+                                    <td t-esc="row.year_start"/>
+                                    <td t-esc="formatNumber(row.capacity, 1)"/>
+                                    <td t-esc="formatNumber(row.quantity, 0)"/>
+                                    <td t-esc="row.substance_name"/>
+                                    <td t-esc="formatNumber(row.refill_amount, 0)"/>
+                                    <td t-esc="formatNumber(row.refill_frequency, 2)"/>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </t>
+
+</templates>

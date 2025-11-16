@@ -28,7 +28,20 @@ class DocumentExtraction(models.Model):
     )
     pdf_file = fields.Binary(
         string='PDF File',
-        attachment=True
+        attachment=True,
+        compute='_compute_pdf_file',
+        inverse='_inverse_pdf_file',
+        store=False
+    )
+    pdf_attachment_id = fields.Many2one(
+        comodel_name='ir.attachment',
+        string='PDF Attachment',
+        ondelete='cascade'
+    )
+    pdf_url = fields.Char(
+        string='PDF URL',
+        compute='_compute_pdf_url',
+        store=False
     )
     pdf_filename = fields.Char(
         string='PDF Filename'
@@ -60,7 +73,14 @@ class DocumentExtraction(models.Model):
         comodel_name='res.partner',
         string='Organization',
         ondelete='restrict',
-        index=True
+        index=True,
+        domain=[('x_partner_type', '=', 'organization')],
+        context={
+            'form_view_ref': 'robotia_document_extractor.view_partner_organization_form',
+            'tree_view_ref': 'robotia_document_extractor.view_partner_organization_list',
+            'search_view_ref': 'robotia_document_extractor.view_partner_organization_search',
+            'default_x_partner_type': 'organization',
+        }
     )
     organization_name = fields.Char(
         string='Organization Name',
@@ -215,6 +235,46 @@ class DocumentExtraction(models.Model):
             year = record.year or 'N/A'
             record.name = f"{doc_type_label} - {org_name} - {year}"
 
+    @api.depends('pdf_attachment_id')
+    def _compute_pdf_file(self):
+        """Compute pdf_file from attachment"""
+        for record in self:
+            if record.pdf_attachment_id:
+                record.pdf_file = record.pdf_attachment_id.datas
+            else:
+                record.pdf_file = False
+
+    @api.depends('pdf_attachment_id')
+    def _compute_pdf_url(self):
+        """Compute PDF URL for iframe viewing"""
+        for record in self:
+            if record.pdf_attachment_id:
+                # Generate URL to view attachment
+                base_url = record.env['ir.config_parameter'].sudo().get_param('web.base.url')
+                record.pdf_url = f"{base_url}/web/content/{record.pdf_attachment_id.id}?download=false"
+            else:
+                record.pdf_url = False
+
+    def _inverse_pdf_file(self):
+        """Update attachment when pdf_file is set directly"""
+        for record in self:
+            if record.pdf_file and record.pdf_attachment_id:
+                record.pdf_attachment_id.write({
+                    'datas': record.pdf_file
+                })
+            elif record.pdf_file and not record.pdf_attachment_id:
+                # Create new attachment if pdf_file is set but no attachment exists
+                attachment = self.env['ir.attachment'].create({
+                    'name': record.pdf_filename or 'document.pdf',
+                    'type': 'binary',
+                    'datas': record.pdf_file,
+                    'res_model': self._name,
+                    'res_id': record.id,
+                    'public': True,
+                    'mimetype': 'application/pdf',
+                })
+                record.pdf_attachment_id = attachment.id
+
     # ===== Onchange Methods =====
     @api.onchange('organization_id')
     def _onchange_organization_id(self):
@@ -237,13 +297,16 @@ class DocumentExtraction(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         """
-        Override create to auto-create organization if not exists
+        Override create to:
+        1. Auto-create organization if not exists
+        2. Link PDF attachment to the newly created record
 
         Logic:
         - If organization_id empty but business_license_number exists:
           - Search partner by business_license_number
           - If found → set organization_id
           - If not found → create new partner → set organization_id
+        - If pdf_attachment_id exists, update it with the new res_id
         """
         for vals in vals_list:
             if not vals.get('organization_id') and vals.get('business_license_number'):
@@ -270,12 +333,25 @@ class DocumentExtraction(models.Model):
                         'fax': vals.get('contact_fax'),
                         'email': vals.get('contact_email'),
                         'is_company': True,
-                        'company_type': 'company'
+                        'company_type': 'company',
+                        'x_partner_type': 'organization'
                     }
                     new_partner = self.env['res.partner'].create(partner_vals)
                     vals['organization_id'] = new_partner.id
 
-        return super(DocumentExtraction, self).create(vals_list)
+        # Create records
+        records = super(DocumentExtraction, self).create(vals_list)
+
+        # Link PDF attachments to created records
+        for record in records:
+            if record.pdf_attachment_id and record.pdf_attachment_id.res_id == 0:
+                # Update attachment with actual res_id
+                record.pdf_attachment_id.sudo().write({
+                    'res_id': record.id,
+                    'public': False,  # Make private now that it's linked to a record
+                })
+
+        return records
 
     # ===== Validation Methods =====
     def action_validate(self):

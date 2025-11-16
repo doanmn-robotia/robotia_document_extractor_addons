@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <!-- Substance Dashboard Main Template -->
+    <t t-name="robotia_document_extractor.SubstanceDashboard">
+        <div class="substance-dashboard-page">
+
+            <!-- Loading State -->
+            <div t-if="state.loading" class="dashboard-loading">
+                <div class="text-center py-5">
+                    <i class="fa fa-spinner fa-spin fa-3x text-primary"/>
+                    <p class="mt-3">Đang tải dữ liệu...</p>
+                </div>
+            </div>
+
+            <!-- Error State -->
+            <div t-elif="state.error" class="dashboard-error">
+                <div class="alert alert-danger">
+                    <i class="fa fa-exclamation-triangle"/>
+                    <span t-esc="state.error"/>
+                </div>
+            </div>
+
+            <!-- Dashboard Content -->
+            <div t-else="" class="page">
+
+                <!-- HEADER -->
+                <div class="header">
+                    <div>
+                        <div class="header-title">
+                            <t t-esc="state.substanceName"/> – Dashboard Chi Tiết
+                        </div>
+                        <div class="header-sub">
+                            Phân tích theo năm, doanh nghiệp &amp; hoạt động
+                            <t t-if="state.substanceInfo.formula">
+                                • <t t-esc="state.substanceInfo.formula"/>
+                            </t>
+                            <t t-if="state.substanceInfo.gwp">
+                                • GWP: <t t-esc="state.substanceInfo.gwp"/>
+                            </t>
+                        </div>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn btn-outline" t-on-click="() => this.viewAllDocuments()">
+                            <i class="fa fa-file-text-o"/> Xem tất cả tài liệu
+                        </button>
+                    </div>
+                </div>
+
+                <!-- KPI ROW -->
+                <div class="kpi-row">
+                    <div class="kpi-card">
+                        <div class="kpi-label">Tổng khối lượng (kg)</div>
+                        <div class="kpi-value" t-esc="formatNumber(state.kpiData.totalUsageKg, 0)"/>
+                        <div class="kpi-sub">Theo toàn bộ doanh nghiệp &amp; năm</div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-label">Tổng CO₂e (t)</div>
+                        <div class="kpi-value" t-esc="formatNumber(state.kpiData.totalCO2e, 2)"/>
+                        <div class="kpi-sub">
+                            Dựa trên hệ số GWP
+                            <t t-if="state.substanceInfo.gwp">
+                                (<t t-esc="state.substanceInfo.gwp"/>)
+                            </t>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-label">Doanh nghiệp sử dụng</div>
+                        <div class="kpi-value">
+                            <t t-esc="state.kpiData.organizationCount"/> DN
+                        </div>
+                        <div class="kpi-sub">Có xuất hiện trong các bảng</div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-label">Số tài liệu</div>
+                        <div class="kpi-value" t-esc="state.kpiData.documentCount"/>
+                        <div class="kpi-sub">Đã trích xuất</div>
+                    </div>
+                </div>
+
+                <!-- ROW 1: MAIN CHARTS -->
+                <div class="grid-2">
+
+                    <!-- Line Chart -->
+                    <div class="panel">
+                        <div class="panel-header">
+                            <div class="panel-title">Xu hướng khối lượng theo năm</div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas t-ref="lineChart"/>
+                        </div>
+                    </div>
+
+                    <!-- Pie Chart - Activity Type Distribution -->
+                    <div class="panel">
+                        <div class="panel-header flex-column">
+                            <div class="panel-title">Phân bổ theo loại hoạt động</div>
+                            <div class="panel-subtitle" style="font-size: 11px; color: #666; margin-top: 4px;">
+                                Sản xuất / Nhập khẩu / Xuất khẩu / Thu gom / Tái chế / Tiêu hủy
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas t-ref="pieChart"/>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- ROW 2: TABLE + BAR CHART -->
+                <div class="grid-2">
+
+                    <!-- Top Companies Table -->
+                    <div class="panel">
+                        <div class="panel-header">
+                            <div class="panel-title">
+                                Top doanh nghiệp sử dụng <t t-esc="state.substanceName"/>
+                            </div>
+                        </div>
+
+                        <div t-if="state.topCompaniesData.length === 0" class="empty-state">
+                            <i class="fa fa-inbox"/>
+                            <p>Chưa có dữ liệu</p>
+                        </div>
+
+                        <div t-else="" class="table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Doanh nghiệp</th>
+                                        <th>Khối lượng (kg)</th>
+                                        <th>CO₂e (t)</th>
+                                        <th>Số tài liệu</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="state.topCompaniesData" t-as="company" t-key="company.organization_id">
+                                        <td>
+                                            <strong t-esc="company.organization_name"/>
+                                        </td>
+                                        <td>
+                                            <t t-esc="formatNumber(company.total_kg, 0)"/>
+                                        </td>
+                                        <td>
+                                            <t t-esc="formatNumber(company.total_co2e, 2)"/>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-primary" t-esc="company.document_count"/>
+                                        </td>
+                                        <td>
+                                            <button class="btn-link"
+                                                    t-on-click="() => this.viewOrganization(company.organization_id)">
+                                                <i class="fa fa-eye"/> Xem
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Bar Chart - Top Companies -->
+                    <div class="panel">
+                        <div class="panel-header flex-column">
+                            <div class="panel-title">Hạn ngạch: Được cấp vs Đã sử dụng</div>
+                            <div class="panel-subtitle" style="font-size: 11px; color: #666; margin-top: 4px;">
+                                Top 10 doanh nghiệp (theo hạn ngạch được cấp)
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas t-ref="barChart"/>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- ROW 3: PIVOT TABLE (if we have year-by-year data) -->
+                <div t-if="state.pivotData &amp;&amp; state.pivotData.length > 0" class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            Pivot – <t t-esc="state.substanceName"/> theo doanh nghiệp &amp; năm
+                        </div>
+                    </div>
+
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Doanh nghiệp</th>
+                                    <th t-foreach="state.years" t-as="year" t-key="year" t-esc="year"/>
+                                    <th>Tổng (kg)</th>
+                                    <th>Tổng CO₂e (t)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="state.pivotData" t-as="row" t-key="row.organization_id">
+                                    <td>
+                                        <strong t-esc="row.organization_name"/>
+                                    </td>
+                                    <td t-foreach="state.years" t-as="year" t-key="year">
+                                        <t t-esc="formatNumber(row.years[year] || 0, 0)"/>
+                                    </td>
+                                    <td>
+                                        <strong t-esc="formatNumber(row.total_kg, 0)"/>
+                                    </td>
+                                    <td>
+                                        <strong t-esc="formatNumber(row.total_co2e, 2)"/>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </t>
+
+</templates>

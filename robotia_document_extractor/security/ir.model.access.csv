@@ -3,6 +3,18 @@ access_controlled_substance_user,controlled.substance user,model_controlled_subs
 access_controlled_substance_manager,controlled.substance manager,model_controlled_substance,base.group_system,1,1,1,1
 access_activity_field_user,activity.field user,model_activity_field,base.group_user,1,0,0,0
 access_activity_field_manager,activity.field manager,model_activity_field,base.group_system,1,1,1,1
+access_equipment_type_user,equipment.type user,model_equipment_type,base.group_user,1,0,0,0
+access_equipment_type_manager,equipment.type manager,model_equipment_type,base.group_system,1,1,1,1
+access_hs_code_user,hs.code user,model_hs_code,base.group_user,1,0,0,0
+access_hs_code_manager,hs.code manager,model_hs_code,base.group_system,1,1,1,1
+access_recycling_technology_user,recycling.technology user,model_recycling_technology,base.group_user,1,0,0,0
+access_recycling_technology_manager,recycling.technology manager,model_recycling_technology,base.group_system,1,1,1,1
+access_recycling_facility_user,recycling.facility user,model_recycling_facility,base.group_user,1,0,0,0
+access_recycling_facility_manager,recycling.facility manager,model_recycling_facility,base.group_system,1,1,1,1
+access_collection_location_user,collection.location user,model_collection_location,base.group_user,1,0,0,0
+access_collection_location_manager,collection.location manager,model_collection_location,base.group_system,1,1,1,1
+access_trade_location_user,trade.location user,model_trade_location,base.group_user,1,0,0,0
+access_trade_location_manager,trade.location manager,model_trade_location,base.group_system,1,1,1,1
 access_document_extraction_user,document.extraction user,model_document_extraction,base.group_user,1,1,1,1
 access_substance_usage_user,substance.usage user,model_substance_usage,base.group_user,1,1,1,1
 access_equipment_product_user,equipment.product user,model_equipment_product,base.group_user,1,1,1,1
@@ -12,3 +24,4 @@ access_quota_usage_user,quota.usage user,model_quota_usage,base.group_user,1,1,1
 access_equipment_product_report_user,equipment.product.report user,model_equipment_product_report,base.group_user,1,1,1,1
 access_equipment_ownership_report_user,equipment.ownership.report user,model_equipment_ownership_report,base.group_user,1,1,1,1
 access_collection_recycling_report_user,collection.recycling.report user,model_collection_recycling_report,base.group_user,1,1,1,1
+access_substance_aggregate_user,substance.aggregate user,model_substance_aggregate,base.group_user,1,0,0,0

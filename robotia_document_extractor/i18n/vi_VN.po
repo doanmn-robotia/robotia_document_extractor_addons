@@ -1322,3 +1322,855 @@ msgstr "Có Bảng 2.4 (Báo cáo Thu gom & Tái chế)"
 #: model:ir.model.fields,help:robotia_document_extractor.field_document_extraction__has_table_2_4
 msgid "Organization reports collection, recycling, reuse, disposal"
 msgstr "Tổ chức báo cáo thu gom, tái chế, tái sử dụng, xử lý"
+# ========================================
+# EQUIPMENT TYPE MASTER DATA
+# ========================================
+
+#. module: robotia_document_extractor
+#: model:ir.actions.act_window,name:robotia_document_extractor.action_equipment_type
+#: model:ir.ui.menu,name:robotia_document_extractor.menu_equipment_types
+msgid "Equipment Types"
+msgstr "Loại thiết bị"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_type__name
+msgid "Equipment Type Name"
+msgstr "Tên loại thiết bị"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_equipment_type__name
+msgid "Name of equipment type (e.g., Air Conditioner, Industrial Refrigeration)"
+msgstr "Tên loại thiết bị (ví dụ: Máy điều hòa, Máy lạnh công nghiệp)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_type__code
+msgid "Code"
+msgstr "Mã"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_type__category
+msgid "Category"
+msgstr "Danh mục"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__equipment_type__category__ac
+msgid "Air Conditioner"
+msgstr "Máy điều hòa"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__equipment_type__category__refrigeration
+msgid "Refrigeration"
+msgstr "Máy lạnh"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__equipment_type__category__industrial
+msgid "Industrial Equipment"
+msgstr "Thiết bị công nghiệp"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__equipment_type__category__other
+msgid "Other"
+msgstr "Khác"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_type__min_capacity
+msgid "Min Capacity (kW)"
+msgstr "Công suất tối thiểu (kW)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_type__max_capacity
+msgid "Max Capacity (kW)"
+msgstr "Công suất tối đa (kW)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_type__needs_review
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_controlled_substance__needs_review
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_collection_location__needs_review
+msgid "Needs Review"
+msgstr "Cần xem xét"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_equipment_type__needs_review
+msgid "Auto-created record that needs admin review"
+msgstr "Bản ghi tự động tạo cần quản trị viên xem xét"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_type__created_from_extraction
+msgid "Created from Extraction"
+msgstr "Tạo từ trích xuất"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_equipment_type_form
+msgid "Needs Review"
+msgstr "Cần xem xét"
+
+# ========================================
+# HS CODE MASTER DATA
+# ========================================
+
+#. module: robotia_document_extractor
+#: model:ir.actions.act_window,name:robotia_document_extractor.action_hs_code
+#: model:ir.ui.menu,name:robotia_document_extractor.menu_hs_codes
+msgid "HS Codes"
+msgstr "Mã HS"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_hs_code__code
+msgid "HS Code"
+msgstr "Mã HS"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_hs_code__code
+msgid "Harmonized System code (e.g., 2903.39.90)"
+msgstr "Mã Hệ thống Hài hòa (ví dụ: 2903.39.90)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_hs_code__name
+msgid "Description"
+msgstr "Mô tả"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_hs_code__product_category
+msgid "Product Category"
+msgstr "Danh mục sản phẩm"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_hs_code__chapter
+msgid "Chapter (2 digits)"
+msgstr "Chương (2 chữ số)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_hs_code__controlled_substance_ids
+msgid "Related Controlled Substances"
+msgstr "Các chất được kiểm soát liên quan"
+
+# ========================================
+# RECYCLING TECHNOLOGY MASTER DATA
+# ========================================
+
+#. module: robotia_document_extractor
+#: model:ir.actions.act_window,name:robotia_document_extractor.action_recycling_technology
+#: model:ir.ui.menu,name:robotia_document_extractor.menu_recycling_technologies
+msgid "Recycling Technologies"
+msgstr "Công nghệ tái chế"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_recycling_technology__name
+msgid "Technology Name"
+msgstr "Tên công nghệ"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_recycling_technology__technology_type
+msgid "Technology Type"
+msgstr "Loại công nghệ"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__recycling_technology__technology_type__collection
+msgid "Collection/Recovery"
+msgstr "Thu gom/Thu hồi"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__recycling_technology__technology_type__reuse
+msgid "Reuse"
+msgstr "Tái sử dụng"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__recycling_technology__technology_type__recycle
+msgid "Recycling"
+msgstr "Tái chế"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__recycling_technology__technology_type__disposal
+msgid "Disposal/Destruction"
+msgstr "Tiêu hủy/Xử lý"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_recycling_technology__efficiency_rate
+msgid "Efficiency Rate (%)"
+msgstr "Tỷ lệ hiệu quả (%)"
+
+# ========================================
+# RECYCLING FACILITY MASTER DATA
+# ========================================
+
+#. module: robotia_document_extractor
+#: model:ir.actions.act_window,name:robotia_document_extractor.action_recycling_facility
+#: model:ir.ui.menu,name:robotia_document_extractor.menu_recycling_facilities
+msgid "Recycling Facilities"
+msgstr "Cơ sở tái chế"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_recycling_facility__name
+msgid "Facility Name"
+msgstr "Tên cơ sở"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_recycling_facility__facility_type
+msgid "Facility Type"
+msgstr "Loại cơ sở"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__recycling_facility__facility_type__recycling
+msgid "Recycling"
+msgstr "Tái chế"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__recycling_facility__facility_type__disposal
+msgid "Disposal"
+msgstr "Tiêu hủy"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__recycling_facility__facility_type__recovery
+msgid "Recovery"
+msgstr "Thu hồi"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__recycling_facility__facility_type__mixed
+msgid "Mixed Services"
+msgstr "Dịch vụ hỗn hợp"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_recycling_facility__partner_id
+msgid "Operating Company"
+msgstr "Công ty vận hành"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_recycling_facility__city
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_collection_location__city
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_trade_location__city
+msgid "City/Province"
+msgstr "Thành phố/Tỉnh"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_recycling_facility__capacity
+msgid "Annual Capacity (kg)"
+msgstr "Công suất năm (kg)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_recycling_facility__technology_ids
+msgid "Available Technologies"
+msgstr "Công nghệ có sẵn"
+
+# ========================================
+# COLLECTION LOCATION MASTER DATA
+# ========================================
+
+#. module: robotia_document_extractor
+#: model:ir.actions.act_window,name:robotia_document_extractor.action_collection_location
+#: model:ir.ui.menu,name:robotia_document_extractor.menu_collection_locations
+msgid "Collection Locations"
+msgstr "Địa điểm thu gom"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_collection_location__name
+msgid "Location Name"
+msgstr "Tên địa điểm"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_collection_location__location_type
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_trade_location__location_type
+msgid "Location Type"
+msgstr "Loại địa điểm"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__collection_location__location_type__collection
+msgid "Collection Point"
+msgstr "Điểm thu gom"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__collection_location__location_type__storage
+msgid "Storage Facility"
+msgstr "Kho lưu trữ"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__collection_location__location_type__processing
+msgid "Processing Site"
+msgstr "Cơ sở xử lý"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_collection_location__district
+msgid "District"
+msgstr "Quận/Huyện"
+
+# ========================================
+# TRADE LOCATION MASTER DATA
+# ========================================
+
+#. module: robotia_document_extractor
+#: model:ir.actions.act_window,name:robotia_document_extractor.action_trade_location
+#: model:ir.ui.menu,name:robotia_document_extractor.menu_trade_locations
+msgid "Trade Locations"
+msgstr "Địa điểm xuất nhập khẩu"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__trade_location__location_type__port
+msgid "Seaport"
+msgstr "Cảng biển"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__trade_location__location_type__airport
+msgid "Airport"
+msgstr "Sân bay"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__trade_location__location_type__border
+msgid "Land Border Crossing"
+msgstr "Cửa khẩu biên giới"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__trade_location__location_type__customs
+msgid "Customs Office"
+msgstr "Cơ quan hải quan"
+
+# ========================================
+# COMMON TRANSLATIONS
+# ========================================
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_equipment_type_search
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_hs_code_search
+msgid "Needs Review"
+msgstr "Cần xem xét"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_equipment_type_search
+msgid "Auto Created"
+msgstr "Tự động tạo"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_equipment_type_search
+msgid "Active"
+msgstr "Đang hoạt động"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_equipment_type_search
+msgid "Inactive"
+msgstr "Không hoạt động"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_equipment_type_search
+msgid "Group By"
+msgstr "Nhóm theo"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_type__sequence
+msgid "Sequence"
+msgstr "Thứ tự"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_type__description
+msgid "Description"
+msgstr "Mô tả"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_type__active
+msgid "Active"
+msgstr "Đang hoạt động"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_equipment_type_form
+msgid "Create your first Equipment Type"
+msgstr "Tạo Loại thiết bị đầu tiên"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_equipment_type_form
+msgid "Equipment types are automatically created when you save documents."
+msgstr "Loại thiết bị được tự động tạo khi bạn lưu tài liệu."
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_equipment_type_form
+msgid "Review and configure them here."
+msgstr "Xem xét và cấu hình chúng tại đây."
+
+
+# ========================================
+# EQUIPMENT TYPE - Individual Field Translations
+# ========================================
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_type__needs_review
+msgid "Needs Review"
+msgstr "Cần xem xét"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_type__created_from_extraction
+msgid "Created from Extraction"
+msgstr "Tạo từ trích xuất"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_equipment_type__created_from_extraction
+msgid "Created automatically during document extraction"
+msgstr "Được tạo tự động trong quá trình trích xuất tài liệu"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_type__active
+msgid "Active"
+msgstr "Đang hoạt động"
+
+# ========================================
+# HS CODE - Individual Field Translations
+# ========================================
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_hs_code__needs_review
+msgid "Needs Review"
+msgstr "Cần xem xét"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_hs_code__created_from_extraction
+msgid "Created from Extraction"
+msgstr "Tạo từ trích xuất"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_hs_code__created_from_extraction
+msgid "Created automatically during document extraction"
+msgstr "Được tạo tự động trong quá trình trích xuất tài liệu"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_hs_code__active
+msgid "Active"
+msgstr "Đang hoạt động"
+
+# ========================================
+# RECYCLING TECHNOLOGY - Individual Field Translations
+# ========================================
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_recycling_technology__needs_review
+msgid "Needs Review"
+msgstr "Cần xem xét"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_recycling_technology__created_from_extraction
+msgid "Created from Extraction"
+msgstr "Tạo từ trích xuất"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_recycling_technology__created_from_extraction
+msgid "Created automatically during document extraction"
+msgstr "Được tạo tự động trong quá trình trích xuất tài liệu"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_recycling_technology__active
+msgid "Active"
+msgstr "Đang hoạt động"
+
+# ========================================
+# RECYCLING FACILITY - Individual Field Translations
+# ========================================
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_recycling_facility__needs_review
+msgid "Needs Review"
+msgstr "Cần xem xét"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_recycling_facility__created_from_extraction
+msgid "Created from Extraction"
+msgstr "Tạo từ trích xuất"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_recycling_facility__created_from_extraction
+msgid "Created automatically during document extraction"
+msgstr "Được tạo tự động trong quá trình trích xuất tài liệu"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_recycling_facility__active
+msgid "Active"
+msgstr "Đang hoạt động"
+
+# ========================================
+# COLLECTION LOCATION - Individual Field Translations
+# ========================================
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_collection_location__needs_review
+msgid "Needs Review"
+msgstr "Cần xem xét"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_collection_location__created_from_extraction
+msgid "Created from Extraction"
+msgstr "Tạo từ trích xuất"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_collection_location__created_from_extraction
+msgid "Created automatically during document extraction"
+msgstr "Được tạo tự động trong quá trình trích xuất tài liệu"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_collection_location__active
+msgid "Active"
+msgstr "Đang hoạt động"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_collection_location__address
+msgid "Address"
+msgstr "Địa chỉ"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_collection_location__country_id
+msgid "Country"
+msgstr "Quốc gia"
+
+# ========================================
+# TRADE LOCATION - Individual Field Translations
+# ========================================
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_trade_location__needs_review
+msgid "Needs Review"
+msgstr "Cần xem xét"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_trade_location__created_from_extraction
+msgid "Created from Extraction"
+msgstr "Tạo từ trích xuất"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_trade_location__created_from_extraction
+msgid "Created automatically during document extraction"
+msgstr "Được tạo tự động trong quá trình trích xuất tài liệu"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_trade_location__active
+msgid "Active"
+msgstr "Đang hoạt động"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_trade_location__country_id
+msgid "Country"
+msgstr "Quốc gia"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_trade_location__name
+msgid "Location Name"
+msgstr "Tên địa điểm"
+
+# ========================================
+# CONTROLLED SUBSTANCE - Individual Field Translations
+# ========================================
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_controlled_substance__needs_review
+msgid "Needs Review"
+msgstr "Cần xem xét"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_controlled_substance__needs_review
+msgid "Auto-created substance that needs admin review and GWP configuration"
+msgstr "Chất tự động tạo cần quản trị viên xem xét và cấu hình GWP"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_controlled_substance__created_from_extraction
+msgid "Created from Extraction"
+msgstr "Tạo từ trích xuất"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_controlled_substance__created_from_extraction
+msgid "Created automatically during document extraction"
+msgstr "Được tạo tự động trong quá trình trích xuất tài liệu"
+
+# ========================================
+# RECYCLING FACILITY - Additional Fields
+# ========================================
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_recycling_facility__address
+msgid "Address"
+msgstr "Địa chỉ"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_recycling_facility__address
+msgid "Full address of facility"
+msgstr "Địa chỉ đầy đủ của cơ sở"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_recycling_facility__country_id
+msgid "Country"
+msgstr "Quốc gia"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_recycling_facility__country_id
+msgid "Country where facility is located"
+msgstr "Quốc gia nơi cơ sở đặt tại"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_recycling_facility__city
+msgid "City or province where facility is located"
+msgstr "Thành phố hoặc tỉnh nơi cơ sở đặt tại"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_recycling_facility__capacity
+msgid "Annual processing capacity in kilograms"
+msgstr "Công suất xử lý hàng năm tính bằng kilogram"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_recycling_facility__technology_ids
+msgid "Technologies available at this facility"
+msgstr "Các công nghệ có sẵn tại cơ sở này"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_recycling_facility__partner_id
+msgid "Company operating this facility"
+msgstr "Công ty vận hành cơ sở này"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_res_partner__x_partner_type
+msgid "Partner Type"
+msgstr "Loại đối tác"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_res_partner__x_partner_type
+msgid "Type of partner for filtering in document extractor module"
+msgstr "Loại đối tác để lọc trong module trích xuất tài liệu"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__res_partner__x_partner_type__standard
+msgid "Standard Contact"
+msgstr "Liên hệ thông thường"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__res_partner__x_partner_type__organization
+msgid "Controlled Substance Organization"
+msgstr "Tổ chức quản lý chất kiểm soát"
+
+#. module: robotia_document_extractor
+#: model:ir.actions.act_window,name:robotia_document_extractor.action_partner_organization
+#: model:ir.ui.menu,name:robotia_document_extractor.menu_organizations
+msgid "Organizations"
+msgstr "Tổ chức"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_partner_organization_list
+msgid "Organizations"
+msgstr "Tổ chức"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_partner_organization_form
+msgid "Organization"
+msgstr "Tổ chức"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_partner_organization_search
+msgid "Search Organizations"
+msgstr "Tìm kiếm tổ chức"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_partner_organization_search
+msgid "Has Business License"
+msgstr "Có giấy phép kinh doanh"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_partner_organization_search
+msgid "Companies"
+msgstr "Công ty"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_partner_organization_search
+msgid "City"
+msgstr "Thành phố"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_partner_organization_search
+msgid "Country"
+msgstr "Quốc gia"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_partner_organization_form
+msgid "Organization Name"
+msgstr "Tên tổ chức"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_partner_organization_form
+msgid "Business License"
+msgstr "Giấy phép kinh doanh"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_partner_organization_form
+msgid "Contact Information"
+msgstr "Thông tin liên hệ"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_partner_organization_form
+msgid "Address"
+msgstr "Địa chỉ"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_partner_organization_form
+msgid "Legal Representative"
+msgstr "Người đại diện pháp luật"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_partner_organization_form
+msgid "Internal Notes"
+msgstr "Ghi chú nội bộ"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.actions.act_window,help:robotia_document_extractor.action_partner_organization
+msgid "Create your first Organization"
+msgstr "Tạo tổ chức đầu tiên của bạn"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.actions.act_window,help:robotia_document_extractor.action_partner_organization
+msgid ""
+"Organizations are automatically created when you extract documents.\n"
+"                You can also create them manually here."
+msgstr ""
+"Tổ chức được tạo tự động khi bạn trích xuất tài liệu.\n"
+"                Bạn cũng có thể tạo thủ công tại đây."
+
+#. module: robotia_document_extractor
+#: model_terms:ir.actions.act_window,help:robotia_document_extractor.action_equipment_type
+msgid "Create your first Equipment Type"
+msgstr "Tạo loại thiết bị đầu tiên"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.actions.act_window,help:robotia_document_extractor.action_equipment_type
+msgid ""
+"Equipment types are automatically created when you save documents.\n"
+"                Review and configure them here."
+msgstr ""
+"Loại thiết bị được tạo tự động khi bạn lưu tài liệu.\n"
+"                Xem xét và cấu hình chúng tại đây."
+
+#. module: robotia_document_extractor
+#: model_terms:ir.actions.act_window,help:robotia_document_extractor.action_hs_code
+msgid "Create your first HS Code"
+msgstr "Tạo mã HS đầu tiên"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.actions.act_window,help:robotia_document_extractor.action_hs_code
+msgid ""
+"HS Codes are automatically created when you save documents.\n"
+"                Review and link them to controlled substances here."
+msgstr ""
+"Mã HS được tạo tự động khi bạn lưu tài liệu.\n"
+"                Xem xét và liên kết chúng với chất kiểm soát tại đây."
+
+#. module: robotia_document_extractor
+#: model_terms:ir.actions.act_window,help:robotia_document_extractor.action_recycling_technology
+msgid "Create your first Recycling Technology"
+msgstr "Tạo công nghệ tái chế đầu tiên"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.actions.act_window,help:robotia_document_extractor.action_recycling_technology
+msgid ""
+"Recycling technologies are automatically created when you save documents.\n"
+"                Review and configure efficiency rates here."
+msgstr ""
+"Công nghệ tái chế được tạo tự động khi bạn lưu tài liệu.\n"
+"                Xem xét và cấu hình tỷ lệ hiệu suất tại đây."
+
+#. module: robotia_document_extractor
+#: model_terms:ir.actions.act_window,help:robotia_document_extractor.action_recycling_facility
+msgid "Create your first Recycling Facility"
+msgstr "Tạo cơ sở tái chế đầu tiên"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.actions.act_window,help:robotia_document_extractor.action_recycling_facility
+msgid ""
+"Recycling facilities are automatically created when you save documents.\n"
+"                Review and configure location/capacity here."
+msgstr ""
+"Cơ sở tái chế được tạo tự động khi bạn lưu tài liệu.\n"
+"                Xem xét và cấu hình vị trí/công suất tại đây."
+
+#. module: robotia_document_extractor
+#: model_terms:ir.actions.act_window,help:robotia_document_extractor.action_collection_location
+msgid "Create your first Collection Location"
+msgstr "Tạo địa điểm thu gom đầu tiên"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.actions.act_window,help:robotia_document_extractor.action_collection_location
+msgid ""
+"Collection locations are automatically created when you save documents.\n"
+"                Review and configure them here."
+msgstr ""
+"Địa điểm thu gom được tạo tự động khi bạn lưu tài liệu.\n"
+"                Xem xét và cấu hình chúng tại đây."
+
+#. module: robotia_document_extractor
+#: model_terms:ir.actions.act_window,help:robotia_document_extractor.action_trade_location
+msgid "Create your first Trade Location"
+msgstr "Tạo địa điểm thương mại đầu tiên"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.actions.act_window,help:robotia_document_extractor.action_trade_location
+msgid ""
+"Trade locations (ports, customs) are automatically created when you save documents.\n"
+"                Review and configure them here."
+msgstr ""
+"Địa điểm thương mại (cảng, hải quan) được tạo tự động khi bạn lưu tài liệu.\n"
+"                Xem xét và cấu hình chúng tại đây."
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_partner_organization_form
+msgid "Dashboard"
+msgstr "Dashboard"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_partner_organization_form
+msgid "View analytics dashboard for this organization"
+msgstr "Xem dashboard phân tích cho tổ chức này"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_partner_organization_form
+msgid "Street..."
+msgstr "Đường..."
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_partner_organization_form
+msgid "Street 2..."
+msgstr "Đường 2..."
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_partner_organization_form
+msgid "Internal notes..."
+msgstr "Ghi chú nội bộ..."
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_partner_organization_search
+msgid "Group By"
+msgstr "Nhóm theo"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_recycling_facility_form
+msgid "Location"
+msgstr "Vị trí"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_recycling_facility_form
+msgid "Technologies"
+msgstr "Công nghệ"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/dashboard/upload_area.js:0
+msgid "Please select a PDF file"
+msgstr "Vui lòng chọn tệp PDF"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/dashboard/upload_area.js:0
+msgid "File size exceeds 50MB limit"
+msgstr "Kích thước tệp vượt quá giới hạn 50MB"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/dashboard/upload_area.js:0
+msgid "Document extracted successfully! Please review the data."
+msgstr "Trích xuất tài liệu thành công! Vui lòng kiểm tra dữ liệu."
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/dashboard/upload_area.js:0
+msgid "Extraction failed: %s"
+msgstr "Trích xuất thất bại: %s"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/dashboard/upload_area.js:0
+msgid "Unknown error"
+msgstr "Lỗi không xác định"
+

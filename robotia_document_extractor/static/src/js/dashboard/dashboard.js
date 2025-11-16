@@ -21,7 +21,8 @@ export class Dashboard extends Component {
                 registrations: 0,
                 reports: 0
             },
-            loading: true
+            loading: true,
+            uploading: false
         });
 
         onWillStart(async () => {
@@ -45,6 +46,11 @@ export class Dashboard extends Component {
     }
 
     onCardClick(docType) {
+        // Don't allow navigation while uploading
+        if (this.state.uploading) {
+            return;
+        }
+
         const domain = [['document_type', '=', docType]];
         const name = docType === '01' ? 'Registrations (Form 01)' : 'Reports (Form 02)';
 
@@ -56,6 +62,14 @@ export class Dashboard extends Component {
             domain: domain,
             target: 'current'
         });
+    }
+
+    onUploadStart() {
+        this.state.uploading = true;
+    }
+
+    onUploadEnd() {
+        this.state.uploading = false;
     }
 
     async onExtractionComplete() {

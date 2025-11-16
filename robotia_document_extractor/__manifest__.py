@@ -2,7 +2,7 @@
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 {
     'name': 'Robotia Document Extractor',
-    'version': '1.3',
+    'version': '1.4.0',
     'sequence': 10,
     'description': "",
     'depends': ['web'],
@@ -11,6 +11,7 @@
         'data/master_data.xml',
         'data/default_prompts.xml',
         'views/document_extraction_views.xml',
+        'views/master_data_views.xml',
         'views/res_config_settings_views.xml',
         'views/menus.xml',
     ],
@@ -18,7 +19,28 @@
     'application': True,
     'assets': {
         'web.assets_backend': [
-            # Form view customization
+            # Utilities (must load first)
+            'robotia_document_extractor/static/src/js/utils/chart_utils.js',
+
+            # Dashboards (JS)
+            'robotia_document_extractor/static/src/js/dashboard/substance_dashboard.js',
+            'robotia_document_extractor/static/src/js/dashboard/company_dashboard.js',
+            'robotia_document_extractor/static/src/js/dashboard/equipment_dashboard.js',
+            'robotia_document_extractor/static/src/js/dashboard/recovery_dashboard.js',
+
+            # Templates (XML)
+            'robotia_document_extractor/static/src/xml/substance_dashboard.xml',
+            'robotia_document_extractor/static/src/xml/company_dashboard.xml',
+            'robotia_document_extractor/static/src/xml/equipment_dashboard.xml',
+            'robotia_document_extractor/static/src/xml/recovery_dashboard.xml',
+
+            # Styles (SCSS)
+            'robotia_document_extractor/static/src/scss/substance_dashboard.scss',
+            'robotia_document_extractor/static/src/scss/company_dashboard.scss',
+            'robotia_document_extractor/static/src/scss/equipment_dashboard.scss',
+            'robotia_document_extractor/static/src/scss/recovery_dashboard.scss',
+
+            # Other existing files
             'robotia_document_extractor/static/src/**/*'
         ],
     },

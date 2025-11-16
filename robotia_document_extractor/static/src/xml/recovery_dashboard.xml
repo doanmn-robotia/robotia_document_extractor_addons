@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <!-- Recovery Dashboard Main Template -->
+    <t t-name="robotia_document_extractor.RecoveryDashboard">
+        <div class="recovery-dashboard-page">
+
+            <!-- Loading State -->
+            <div t-if="state.loading" class="dashboard-loading">
+                <div class="text-center py-5">
+                    <i class="fa fa-spinner fa-spin fa-3x text-primary"/>
+                    <p class="mt-3">Đang tải dữ liệu...</p>
+                </div>
+            </div>
+
+            <!-- Error State -->
+            <div t-elif="state.error" class="dashboard-error">
+                <div class="alert alert-danger">
+                    <i class="fa fa-exclamation-triangle"/>
+                    <span t-esc="state.error"/>
+                </div>
+            </div>
+
+            <!-- Dashboard Content -->
+            <div t-else="" class="page">
+
+                <!-- HEADER -->
+                <div class="header">
+                    <div>
+                        <div class="header-title">Thu gom – Tái sử dụng – Tái chế – Tiêu hủy</div>
+                        <div class="header-sub">Chi tiết theo năm, chất &amp; doanh nghiệp</div>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn btn-outline">
+                            <i class="fa fa-file-pdf-o"/> Xuất báo cáo dữ liệu
+                        </button>
+                    </div>
+                </div>
+
+                <!-- TOP INFO -->
+                <div class="card">
+                    <div class="card-title">Thông tin tổng hợp</div>
+                    <table class="info-table">
+                        <tr>
+                            <td class="info-label">Số doanh nghiệp tham gia:</td>
+                            <td class="info-value">
+                                <t t-esc="state.info.total_companies"/> DN
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="info-label">Chất chủ đạo:</td>
+                            <td class="info-value" t-esc="state.info.main_substances || 'N/A'"/>
+                        </tr>
+                        <tr>
+                            <td class="info-label">Năm dữ liệu:</td>
+                            <td class="info-value" t-esc="state.info.year_range || 'N/A'"/>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- KPI BLOCK -->
+                <div class="kpi-row">
+
+                    <div class="kpi-card">
+                        <div class="kpi-label">Tổng lượng thu gom (kg)</div>
+                        <div class="kpi-value" t-esc="formatNumber(state.kpiData.totalCollected, 0)"/>
+                        <div class="kpi-sub">Theo bảng 2.4</div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-label">Tổng lượng tái sử dụng</div>
+                        <div class="kpi-value" t-esc="formatNumber(state.kpiData.totalReused, 0)"/>
+                        <div class="kpi-sub">Tính từ DN báo cáo</div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-label">Tổng lượng tái chế</div>
+                        <div class="kpi-value" t-esc="formatNumber(state.kpiData.totalRecycled, 0)"/>
+                        <div class="kpi-sub">Theo công nghệ tái chế</div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-label">Tổng lượng tiêu hủy</div>
+                        <div class="kpi-value" t-esc="formatNumber(state.kpiData.totalDestroyed, 0)"/>
+                        <div class="kpi-sub">Lò đốt / Plasma</div>
+                    </div>
+
+                </div>
+
+                <!-- CHARTS ROW 1 -->
+                <div class="grid-2">
+
+                    <div class="panel">
+                        <div class="panel-header">
+                            <div class="panel-title">Xu hướng thu gom theo năm</div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas t-ref="trendChart"/>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <div class="panel-header">
+                            <div class="panel-title">Cơ cấu thu gom</div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas t-ref="pieChart"/>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- CHARTS ROW 2 -->
+                <div class="grid-2">
+
+                    <div class="panel">
+                        <div class="panel-header">
+                            <div class="panel-title">Tái sử dụng theo chất</div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas t-ref="reuseChart"/>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <div class="panel-header">
+                            <div class="panel-title">Tái chế theo công nghệ</div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas t-ref="recycleChart"/>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- TABLE DETAIL -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">Chi tiết thu gom – tái chế – tiêu hủy</div>
+                    </div>
+
+                    <div t-if="state.details.length === 0" class="empty-state">
+                        <i class="fa fa-inbox"/>
+                        <p>Chưa có dữ liệu</p>
+                    </div>
+
+                    <div t-else="" class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Doanh nghiệp</th>
+                                    <th>Chất</th>
+                                    <th>Thu gom (kg)</th>
+                                    <th>Tái sử dụng (kg)</th>
+                                    <th>Tái chế (kg)</th>
+                                    <th>Tiêu hủy (kg)</th>
+                                    <th>Công nghệ</th>
+                                    <th>Địa điểm</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="state.details" t-as="row" t-key="row_index">
+                                    <td t-esc="row.organization_name"/>
+                                    <td t-esc="row.substance_name"/>
+                                    <td t-esc="formatNumber(row.collected, 0)"/>
+                                    <td t-esc="formatNumber(row.reused, 0)"/>
+                                    <td t-esc="formatNumber(row.recycled, 0)"/>
+                                    <td t-esc="formatNumber(row.destroyed, 0)"/>
+                                    <td t-esc="row.technology"/>
+                                    <td t-esc="row.location"/>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </t>
+
+</templates>

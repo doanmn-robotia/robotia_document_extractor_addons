@@ -7,6 +7,9 @@ import { useService } from "@web/core/utils/hooks";
 
 export class RecentExtractions extends Component {
     static template = "robotia_document_extractor.RecentExtractions";
+    static props = {
+        disabled: { type: Boolean, optional: true }
+    };
 
     setup() {
         this.orm = useService("orm");
@@ -42,6 +45,11 @@ export class RecentExtractions extends Component {
     }
 
     openDocument(documentId) {
+        // Don't open document if disabled
+        if (this.props.disabled) {
+            return;
+        }
+
         this.action.doAction({
             type: 'ir.actions.act_window',
             res_model: 'document.extraction',
@@ -76,6 +84,6 @@ export class RecentExtractions extends Component {
     formatDate(dateString) {
         if (!dateString) return '';
         const date = new Date(dateString);
-        return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+        return luxon.DateTime.fromJSDate(date).toFormat('dd/MM/yyyy HH:mm')
     }
 }

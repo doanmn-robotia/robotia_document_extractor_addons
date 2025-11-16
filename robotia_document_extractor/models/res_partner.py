@@ -43,8 +43,32 @@ class ResPartner(models.Model):
         string='Fax'
     )
 
+    # Partner type for filtering
+    x_partner_type = fields.Selection(
+        selection=[
+            ('standard', 'Standard Contact'),
+            ('organization', 'Controlled Substance Organization'),
+        ],
+        string='Partner Type',
+        default='standard',
+        help='Type of partner for filtering in document extractor module'
+    )
+
     _sql_constraints = [
         ('business_license_number_unique',
          'UNIQUE(business_license_number)',
          'The business license number must be unique!')
     ]
+
+    def action_view_dashboard(self):
+        """Open company dashboard with analytics"""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'document_extractor.company_dashboard',
+            'context': {
+                'default_organization_id': self.id,
+                'default_organization_name': self.name,
+            },
+            'name': f'Dashboard - {self.name}'
+        }

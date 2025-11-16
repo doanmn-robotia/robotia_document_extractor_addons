@@ -1,0 +1,590 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ========================================== -->
+    <!-- EQUIPMENT TYPE VIEWS -->
+    <!-- ========================================== -->
+
+    <record id="view_equipment_type_list" model="ir.ui.view">
+        <field name="name">equipment.type.list</field>
+        <field name="model">equipment.type</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="sequence" widget="handle" options="{'enable_formatting': false}"/>
+                <field name="name" decoration-warning="needs_review == True"/>
+                <field name="code"/>
+                <field name="category"/>
+                <field name="min_capacity"/>
+                <field name="max_capacity"/>
+                <field name="active" invisible="1"/>
+                <field name="needs_review" invisible="1"/>
+                <button name="action_view_dashboard" type="object" string="Dashboard" icon="fa-bar-chart"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_equipment_type_form" model="ir.ui.view">
+        <field name="name">equipment.type.form</field>
+        <field name="model">equipment.type</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_view_dashboard"
+                            type="object"
+                            string="Dashboard"
+                            class="btn-primary"
+                            icon="fa-bar-chart"
+                            help="View analytics dashboard for this equipment type"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <!-- Dashboard button in header -->
+                    </div>
+                    <widget name="web_ribbon" title="Needs Review" bg_color="text-bg-warning"
+                            invisible="needs_review == False"/>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="code"/>
+                            <field name="category"/>
+                        </group>
+                        <group>
+                            <field name="sequence" options="{'enable_formatting': false}"/>
+                            <field name="min_capacity"/>
+                            <field name="max_capacity"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="description" placeholder="Description..."/>
+                    </group>
+                    <group>
+                        <group>
+                            <field name="needs_review"/>
+                            <field name="created_from_extraction"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_equipment_type_search" model="ir.ui.view">
+        <field name="name">equipment.type.search</field>
+        <field name="model">equipment.type</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="category"/>
+                <filter name="needs_review" string="Needs Review"
+                        domain="[('needs_review', '=', True)]"/>
+                <filter name="auto_created" string="Auto Created"
+                        domain="[('created_from_extraction', '=', True)]"/>
+                <separator/>
+                <filter name="active" string="Active" domain="[('active', '=', True)]"/>
+                <filter name="inactive" string="Inactive" domain="[('active', '=', False)]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_by_category" string="Category" context="{'group_by': 'category'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_equipment_type" model="ir.actions.act_window">
+        <field name="name">Equipment Types</field>
+        <field name="res_model">equipment.type</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('view_equipment_type_list')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('view_equipment_type_form')})]"/>
+        <field name="search_view_id" ref="view_equipment_type_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first Equipment Type
+            </p>
+            <p>
+                Equipment types are automatically created when you save documents.
+                Review and configure them here.
+            </p>
+        </field>
+    </record>
+
+    <!-- ========================================== -->
+    <!-- HS CODE VIEWS -->
+    <!-- ========================================== -->
+
+    <record id="view_hs_code_list" model="ir.ui.view">
+        <field name="name">hs.code.list</field>
+        <field name="model">hs.code</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="code" decoration-warning="needs_review == True"/>
+                <field name="name"/>
+                <field name="chapter"/>
+                <field name="product_category"/>
+                <field name="controlled_substance_ids" widget="many2many_tags"/>
+                <field name="active" invisible="1"/>
+                <field name="needs_review" invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_hs_code_form" model="ir.ui.view">
+        <field name="name">hs.code.form</field>
+        <field name="model">hs.code</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <widget name="web_ribbon" title="Needs Review" bg_color="text-bg-warning"
+                            invisible="needs_review == False"/>
+                    <group>
+                        <group>
+                            <field name="code"/>
+                            <field name="name"/>
+                            <field name="chapter"/>
+                        </group>
+                        <group>
+                            <field name="product_category"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="controlled_substance_ids" widget="many2many_tags"/>
+                    </group>
+                    <group>
+                        <group>
+                            <field name="needs_review"/>
+                            <field name="created_from_extraction"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_hs_code_search" model="ir.ui.view">
+        <field name="name">hs.code.search</field>
+        <field name="model">hs.code</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="code"/>
+                <field name="name"/>
+                <field name="chapter"/>
+                <filter name="needs_review" string="Needs Review"
+                        domain="[('needs_review', '=', True)]"/>
+                <filter name="auto_created" string="Auto Created"
+                        domain="[('created_from_extraction', '=', True)]"/>
+                <separator/>
+                <filter name="active" string="Active" domain="[('active', '=', True)]"/>
+                <filter name="inactive" string="Inactive" domain="[('active', '=', False)]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_by_chapter" string="Chapter" context="{'group_by': 'chapter'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_hs_code" model="ir.actions.act_window">
+        <field name="name">HS Codes</field>
+        <field name="res_model">hs.code</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first HS Code
+            </p>
+            <p>
+                HS Codes are automatically created when you save documents.
+                Review and link them to controlled substances here.
+            </p>
+        </field>
+    </record>
+
+    <!-- ========================================== -->
+    <!-- RECYCLING TECHNOLOGY VIEWS -->
+    <!-- ========================================== -->
+
+    <record id="view_recycling_technology_list" model="ir.ui.view">
+        <field name="name">recycling.technology.list</field>
+        <field name="model">recycling.technology</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="sequence" widget="handle" options="{'enable_formatting': false}"/>
+                <field name="name" decoration-warning="needs_review == True"/>
+                <field name="code"/>
+                <field name="technology_type"/>
+                <field name="efficiency_rate"/>
+                <field name="active" invisible="1"/>
+                <field name="needs_review" invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_recycling_technology_form" model="ir.ui.view">
+        <field name="name">recycling.technology.form</field>
+        <field name="model">recycling.technology</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <widget name="web_ribbon" title="Needs Review" bg_color="text-bg-warning"
+                            invisible="needs_review == False"/>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="code"/>
+                            <field name="technology_type"/>
+                        </group>
+                        <group>
+                            <field name="sequence" options="{'enable_formatting': false}"/>
+                            <field name="efficiency_rate"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="description" placeholder="Technology description..."/>
+                    </group>
+                    <group>
+                        <group>
+                            <field name="needs_review"/>
+                            <field name="created_from_extraction"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_recycling_technology_search" model="ir.ui.view">
+        <field name="name">recycling.technology.search</field>
+        <field name="model">recycling.technology</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="technology_type"/>
+                <filter name="needs_review" string="Needs Review"
+                        domain="[('needs_review', '=', True)]"/>
+                <filter name="auto_created" string="Auto Created"
+                        domain="[('created_from_extraction', '=', True)]"/>
+                <separator/>
+                <filter name="active" string="Active" domain="[('active', '=', True)]"/>
+                <filter name="inactive" string="Inactive" domain="[('active', '=', False)]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_by_type" string="Technology Type" context="{'group_by': 'technology_type'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_recycling_technology" model="ir.actions.act_window">
+        <field name="name">Recycling Technologies</field>
+        <field name="res_model">recycling.technology</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first Recycling Technology
+            </p>
+            <p>
+                Recycling technologies are automatically created when you save documents.
+                Review and configure efficiency rates here.
+            </p>
+        </field>
+    </record>
+
+    <!-- ========================================== -->
+    <!-- RECYCLING FACILITY VIEWS -->
+    <!-- ========================================== -->
+
+    <record id="view_recycling_facility_list" model="ir.ui.view">
+        <field name="name">recycling.facility.list</field>
+        <field name="model">recycling.facility</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name" decoration-warning="needs_review == True"/>
+                <field name="code"/>
+                <field name="facility_type"/>
+                <field name="partner_id"/>
+                <field name="city"/>
+                <field name="capacity"/>
+                <field name="active" invisible="1"/>
+                <field name="needs_review" invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_recycling_facility_form" model="ir.ui.view">
+        <field name="name">recycling.facility.form</field>
+        <field name="model">recycling.facility</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <widget name="web_ribbon" title="Needs Review" bg_color="text-bg-warning"
+                            invisible="needs_review == False"/>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="code"/>
+                            <field name="facility_type"/>
+                            <field name="partner_id"
+                                   domain="[('x_partner_type', '=', 'organization')]"
+                                   context="{'form_view_ref': 'robotia_document_extractor.view_partner_organization_form', 'tree_view_ref': 'robotia_document_extractor.view_partner_organization_list', 'default_x_partner_type': 'organization'}"/>
+                        </group>
+                        <group>
+                            <field name="capacity"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <group string="Location">
+                        <group>
+                            <field name="address"/>
+                            <field name="city"/>
+                        </group>
+                        <group>
+                            <field name="country_id"/>
+                        </group>
+                    </group>
+                    <group string="Technologies">
+                        <field name="technology_ids" widget="many2many_tags"/>
+                    </group>
+                    <group>
+                        <group>
+                            <field name="needs_review"/>
+                            <field name="created_from_extraction"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_recycling_facility_search" model="ir.ui.view">
+        <field name="name">recycling.facility.search</field>
+        <field name="model">recycling.facility</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="city"/>
+                <field name="partner_id"/>
+                <filter name="needs_review" string="Needs Review"
+                        domain="[('needs_review', '=', True)]"/>
+                <filter name="auto_created" string="Auto Created"
+                        domain="[('created_from_extraction', '=', True)]"/>
+                <separator/>
+                <filter name="active" string="Active" domain="[('active', '=', True)]"/>
+                <filter name="inactive" string="Inactive" domain="[('active', '=', False)]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_by_type" string="Facility Type" context="{'group_by': 'facility_type'}"/>
+                    <filter name="group_by_city" string="City" context="{'group_by': 'city'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_recycling_facility" model="ir.actions.act_window">
+        <field name="name">Recycling Facilities</field>
+        <field name="res_model">recycling.facility</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first Recycling Facility
+            </p>
+            <p>
+                Recycling facilities are automatically created when you save documents.
+                Review and configure location/capacity here.
+            </p>
+        </field>
+    </record>
+
+    <!-- ========================================== -->
+    <!-- COLLECTION LOCATION VIEWS -->
+    <!-- ========================================== -->
+
+    <record id="view_collection_location_list" model="ir.ui.view">
+        <field name="name">collection.location.list</field>
+        <field name="model">collection.location</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name" decoration-warning="needs_review == True"/>
+                <field name="code"/>
+                <field name="location_type"/>
+                <field name="city"/>
+                <field name="district"/>
+                <field name="active" invisible="1"/>
+                <field name="needs_review" invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_collection_location_form" model="ir.ui.view">
+        <field name="name">collection.location.form</field>
+        <field name="model">collection.location</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <widget name="web_ribbon" title="Needs Review" bg_color="text-bg-warning"
+                            invisible="needs_review == False"/>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="code"/>
+                            <field name="location_type"/>
+                        </group>
+                        <group>
+                            <field name="city"/>
+                            <field name="district"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="address" placeholder="Full address..."/>
+                    </group>
+                    <group>
+                        <group>
+                            <field name="country_id"/>
+                        </group>
+                        <group>
+                            <field name="needs_review"/>
+                            <field name="created_from_extraction"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_collection_location_search" model="ir.ui.view">
+        <field name="name">collection.location.search</field>
+        <field name="model">collection.location</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="city"/>
+                <field name="district"/>
+                <filter name="needs_review" string="Needs Review"
+                        domain="[('needs_review', '=', True)]"/>
+                <filter name="auto_created" string="Auto Created"
+                        domain="[('created_from_extraction', '=', True)]"/>
+                <separator/>
+                <filter name="active" string="Active" domain="[('active', '=', True)]"/>
+                <filter name="inactive" string="Inactive" domain="[('active', '=', False)]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_by_type" string="Location Type" context="{'group_by': 'location_type'}"/>
+                    <filter name="group_by_city" string="City" context="{'group_by': 'city'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_collection_location" model="ir.actions.act_window">
+        <field name="name">Collection Locations</field>
+        <field name="res_model">collection.location</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first Collection Location
+            </p>
+            <p>
+                Collection locations are automatically created when you save documents.
+                Review and configure them here.
+            </p>
+        </field>
+    </record>
+
+    <!-- ========================================== -->
+    <!-- TRADE LOCATION VIEWS -->
+    <!-- ========================================== -->
+
+    <record id="view_trade_location_list" model="ir.ui.view">
+        <field name="name">trade.location.list</field>
+        <field name="model">trade.location</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name" decoration-warning="needs_review == True"/>
+                <field name="code"/>
+                <field name="location_type"/>
+                <field name="country_id"/>
+                <field name="city"/>
+                <field name="active" invisible="1"/>
+                <field name="needs_review" invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_trade_location_form" model="ir.ui.view">
+        <field name="name">trade.location.form</field>
+        <field name="model">trade.location</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <widget name="web_ribbon" title="Needs Review" bg_color="text-bg-warning"
+                            invisible="needs_review == False"/>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="code"/>
+                            <field name="location_type"/>
+                        </group>
+                        <group>
+                            <field name="country_id"/>
+                            <field name="city"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group>
+                            <field name="needs_review"/>
+                            <field name="created_from_extraction"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_trade_location_search" model="ir.ui.view">
+        <field name="name">trade.location.search</field>
+        <field name="model">trade.location</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="country_id"/>
+                <field name="city"/>
+                <filter name="needs_review" string="Needs Review"
+                        domain="[('needs_review', '=', True)]"/>
+                <filter name="auto_created" string="Auto Created"
+                        domain="[('created_from_extraction', '=', True)]"/>
+                <separator/>
+                <filter name="active" string="Active" domain="[('active', '=', True)]"/>
+                <filter name="inactive" string="Inactive" domain="[('active', '=', False)]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_by_type" string="Location Type" context="{'group_by': 'location_type'}"/>
+                    <filter name="group_by_country" string="Country" context="{'group_by': 'country_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_trade_location" model="ir.actions.act_window">
+        <field name="name">Trade Locations</field>
+        <field name="res_model">trade.location</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first Trade Location
+            </p>
+            <p>
+                Trade locations (ports, customs) are automatically created when you save documents.
+                Review and configure them here.
+            </p>
+        </field>
+    </record>
+
+</odoo>

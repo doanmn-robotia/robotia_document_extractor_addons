@@ -50,6 +50,17 @@
                 border-style: solid;
             }
 
+            &.disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+                pointer-events: none;
+
+                &:hover {
+                    border-color: #cbd5e1; // keep original color
+                    background-color: white;
+                }
+            }
+
             .upload-content {
                 i.fa-cloud-upload {
                     color: #2563eb; // blue-600
@@ -129,6 +140,17 @@
             &:hover {
                 box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
                 transform: translateY(-2px);
+            }
+
+            &.disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+                pointer-events: none;
+
+                &:hover {
+                    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+                    transform: none;
+                }
             }
 
             .stat-card-icon {
@@ -212,6 +234,17 @@
                 &:hover {
                     background-color: #f8fafc; // slate-50
                     border-color: #e2e8f0; // slate-200
+                }
+
+                &.disabled {
+                    opacity: 0.5;
+                    cursor: not-allowed;
+                    pointer-events: none;
+
+                    &:hover {
+                        background-color: transparent;
+                        border-color: transparent;
+                    }
                 }
 
                 .recent-item-icon {
