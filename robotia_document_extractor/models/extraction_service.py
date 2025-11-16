@@ -93,7 +93,16 @@ class DocumentExtractionService(models.AbstractModel):
         # Constants
         GEMINI_POLL_INTERVAL_SECONDS = 2
         GEMINI_MAX_POLL_RETRIES = 30  # 30 * 2s = 60s timeout
-        GEMINI_MAX_TOKENS = 16000
+        GEMINI_MAX_RETRIES = 3  # Retry on incomplete responses
+
+        # Get max output tokens from config (default: 65536 for Gemini 2.0 Flash)
+        # User can adjust this in Settings if needed
+        GEMINI_MAX_TOKENS = int(
+            self.env['ir.config_parameter'].sudo().get_param(
+                'robotia_document_extractor.gemini_max_output_tokens',
+                default='65536'
+            )
+        )
 
         tmp_file_path = None
         uploaded_file = None
@@ -126,23 +135,83 @@ class DocumentExtractionService(models.AbstractModel):
 
             _logger.info(f"File processing completed: {uploaded_file.state.name}")
 
-            # Generate content with the uploaded file
-            response = client.models.generate_content(
-                model='gemini-2.0-flash-exp',
-                contents=[uploaded_file, prompt],
-                config=types.GenerateContentConfig(
-                    temperature=0.1,  # Low temperature for consistent structured output
-                    max_output_tokens=GEMINI_MAX_TOKENS,
-                    response_mime_type='application/json',  # Force JSON output
-                    top_p=0.8,
-                    top_k=40
-                )
-            )
+            # Generate content with retry logic for incomplete responses
+            extracted_text = None
+            last_error = None
 
-            # Get response text
-            extracted_text = response.text
+            for retry_attempt in range(GEMINI_MAX_RETRIES):
+                try:
+                    _logger.info(f"Gemini API call attempt {retry_attempt + 1}/{GEMINI_MAX_RETRIES}")
 
-            _logger.info(f"Gemini API response received (length: {len(extracted_text)} chars)")
+                    # Generate content with the uploaded file
+                    response = client.models.generate_content(
+                        model='gemini-2.0-flash-exp',
+                        contents=[uploaded_file, prompt],
+                        config=types.GenerateContentConfig(
+                            temperature=0.1,  # Low temperature for consistent structured output
+                            max_output_tokens=GEMINI_MAX_TOKENS,
+                            response_mime_type='application/json',  # Force JSON output
+                            top_p=0.8,
+                            top_k=40
+                        )
+                    )
+
+                    # Get response text
+                    extracted_text = response.text
+
+                    # Check finish_reason to detect truncation
+                    finish_reason = None
+                    if hasattr(response, 'candidates') and response.candidates:
+                        candidate = response.candidates[0]
+                        finish_reason = candidate.finish_reason if hasattr(candidate, 'finish_reason') else None
+
+                        # Log finish reason for debugging
+                        _logger.info(f"Gemini finish_reason: {finish_reason}")
+
+                        # Check if response was cut off due to token limit
+                        if finish_reason and str(finish_reason) in ['MAX_TOKENS', 'LENGTH']:
+                            _logger.warning(
+                                f"Response was truncated due to {finish_reason}. "
+                                f"Response length: {len(extracted_text)} chars. "
+                                f"This attempt will likely fail validation."
+                            )
+
+                    _logger.info(f"Gemini API response received (length: {len(extracted_text)} chars)")
+
+                    # Validate that response is complete (can be parsed as JSON)
+                    # This will throw JSONDecodeError if incomplete
+                    try:
+                        self._parse_json_response(extracted_text)
+                        _logger.info(f"Response validation successful on attempt {retry_attempt + 1}")
+                        break  # Success - exit retry loop
+                    except json.JSONDecodeError:
+                        # Re-raise to be caught by outer except block
+                        raise
+
+                except json.JSONDecodeError as e:
+                    last_error = e
+                    _logger.warning(f"Attempt {retry_attempt + 1} returned incomplete JSON: {str(e)}")
+                    if retry_attempt < GEMINI_MAX_RETRIES - 1:
+                        # Wait before retry (exponential backoff)
+                        wait_time = 2 ** retry_attempt  # 1s, 2s, 4s
+                        _logger.info(f"Retrying in {wait_time}s...")
+                        time.sleep(wait_time)
+                    else:
+                        # Last attempt failed - will be caught below
+                        _logger.error("All retry attempts failed - response still incomplete")
+                except Exception as e:
+                    last_error = e
+                    _logger.warning(f"Attempt {retry_attempt + 1} failed: {type(e).__name__}: {str(e)}")
+                    if retry_attempt < GEMINI_MAX_RETRIES - 1:
+                        wait_time = 2 ** retry_attempt
+                        _logger.info(f"Retrying in {wait_time}s...")
+                        time.sleep(wait_time)
+                    else:
+                        raise
+
+            # Check if we got a valid response after all retries
+            if not extracted_text:
+                raise ValueError(f"Failed to get complete response after {GEMINI_MAX_RETRIES} attempts: {last_error}")
 
         except Exception as e:
             _logger.exception(f"Extraction failed during Gemini API call")
@@ -165,26 +234,19 @@ class DocumentExtractionService(models.AbstractModel):
                 except Exception as e:
                     _logger.warning(f"Failed to delete Gemini file: {e}")
 
-        # Parse JSON from response
+        # Parse JSON from response using helper method
         try:
-            # Find JSON block in response (Gemini may wrap it in markdown)
-            if '```json' in extracted_text:
-                json_start = extracted_text.find('```json') + 7
-                json_end = extracted_text.find('```', json_start)
-                json_str = extracted_text[json_start:json_end].strip()
-            elif '```' in extracted_text:
-                json_start = extracted_text.find('```') + 3
-                json_end = extracted_text.find('```', json_start)
-                json_str = extracted_text[json_start:json_end].strip()
-            else:
-                json_str = extracted_text.strip()
-
-            extracted_data = json.loads(json_str)
+            extracted_data = self._parse_json_response(extracted_text)
             _logger.info("Successfully parsed JSON response")
 
         except json.JSONDecodeError as e:
-            _logger.error(f"Failed to parse JSON: {e}\nResponse: {extracted_text[:500]}")
-            raise ValueError(f"Failed to parse AI response as JSON: {e}")
+            _logger.error(f"Failed to parse JSON: {e}\nResponse preview: {extracted_text[:500]}...")
+            _logger.error(f"Response tail (last 500 chars): ...{extracted_text[-500:]}")
+            raise ValueError(
+                f"Failed to parse AI response as JSON. "
+                f"Response may be incomplete (length: {len(extracted_text)} chars). "
+                f"Error: {e}"
+            )
 
         # Validate and clean extracted data
         cleaned_data = self._clean_extracted_data(extracted_data, document_type)
@@ -695,6 +757,88 @@ STEP 6: OUTPUT FORMAT
    - Return ONLY valid JSON, no explanations or markdown formatting
    - Ensure all has_table_2_x fields are set correctly based on activity fields
 """
+
+    def _parse_json_response(self, response_text):
+        """
+        Robust JSON parser that handles multiple response formats from Gemini
+
+        Args:
+            response_text (str): Raw response text from Gemini API
+
+        Returns:
+            dict: Parsed JSON data
+
+        Raises:
+            json.JSONDecodeError: If response cannot be parsed as valid JSON
+        """
+        if not response_text or not response_text.strip():
+            raise json.JSONDecodeError("Empty response", "", 0)
+
+        text = response_text.strip()
+
+        # Strategy 1: Try parsing as-is (when response_mime_type='application/json')
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError:
+            pass  # Try other strategies
+
+        # Strategy 2: Extract from markdown code block ```json ... ```
+        if '```json' in text:
+            try:
+                json_start = text.find('```json') + 7
+                json_end = text.find('```', json_start)
+                if json_end == -1:
+                    # Closing ``` not found - response is incomplete
+                    raise json.JSONDecodeError(
+                        "Incomplete markdown JSON block - missing closing ```",
+                        text,
+                        json_start
+                    )
+                json_str = text[json_start:json_end].strip()
+                return json.loads(json_str)
+            except json.JSONDecodeError:
+                pass  # Try next strategy
+
+        # Strategy 3: Extract from generic code block ``` ... ```
+        if '```' in text:
+            try:
+                json_start = text.find('```') + 3
+                # Skip language identifier if present (e.g., ```javascript)
+                newline_pos = text.find('\n', json_start)
+                if newline_pos != -1 and newline_pos - json_start < 20:
+                    json_start = newline_pos + 1
+
+                json_end = text.find('```', json_start)
+                if json_end == -1:
+                    # Closing ``` not found - response is incomplete
+                    raise json.JSONDecodeError(
+                        "Incomplete markdown code block - missing closing ```",
+                        text,
+                        json_start
+                    )
+                json_str = text[json_start:json_end].strip()
+                return json.loads(json_str)
+            except json.JSONDecodeError:
+                pass  # Try next strategy
+
+        # Strategy 4: Find JSON object boundaries { ... }
+        if '{' in text and '}' in text:
+            try:
+                json_start = text.find('{')
+                json_end = text.rfind('}') + 1
+                json_str = text[json_start:json_end]
+                return json.loads(json_str)
+            except json.JSONDecodeError:
+                pass
+
+        # All strategies failed - raise detailed error
+        preview_len = min(200, len(text))
+        raise json.JSONDecodeError(
+            f"Could not parse response as JSON. Tried multiple strategies. "
+            f"Response preview: {text[:preview_len]}...",
+            text,
+            0
+        )
 
     def _clean_extracted_data(self, data, document_type):
         """

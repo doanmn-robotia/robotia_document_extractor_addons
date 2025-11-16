@@ -18,6 +18,16 @@
                                 </div>
                             </div>
                         </setting>
+                        <setting id="gemini_max_output_tokens_setting"
+                                 string="Max Output Tokens"
+                                 help="Maximum number of tokens for Gemini API response. Increase if extraction fails for very long documents.">
+                            <field name="gemini_max_output_tokens" class="oe_inline"/>
+                            <div class="content-group mt8">
+                                <div class="text-muted">
+                                    Recommended: 65536 (maximum for Gemini 2.0 Flash). Reduce if you want to limit API costs.
+                                </div>
+                            </div>
+                        </setting>
                     </block>
 
                     <block title="Document Processing">

@@ -12,6 +12,15 @@ class ResConfigSettings(models.TransientModel):
         help='Enter your Google Gemini API key for document extraction'
     )
 
+    gemini_max_output_tokens = fields.Integer(
+        string='Max Output Tokens',
+        config_parameter='robotia_document_extractor.gemini_max_output_tokens',
+        default=65536,
+        help='Maximum number of tokens for Gemini API response. '
+             'Increase this value if extraction fails for very long documents. '
+             'Default: 65536 (Gemini 2.0 Flash maximum)'
+    )
+
 
     def action_get_prompt_form_01(self):
         """Reset Form 01 prompt to default value"""
