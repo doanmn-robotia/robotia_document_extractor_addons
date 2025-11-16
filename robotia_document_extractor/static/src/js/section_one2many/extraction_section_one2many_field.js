@@ -2,7 +2,8 @@
 
 import { registry } from "@web/core/registry";
 import { X2ManyField, x2ManyField } from "@web/views/fields/x2many/x2many_field";
-import { ExtractionSectionListRenderer, ExtractionSectionListRendererEquipmentType } from "./extraction_section_list_renderer";
+import { ExtractionSectionListRenderer } from "./extraction_section_list_renderer";
+import { useSubEnv } from "@odoo/owl";
 
 /**
  * Custom One2many Field Widget for extraction tables with section/title rows
@@ -27,28 +28,38 @@ export class ExtractionSectionOneToManyField extends X2ManyField {
         ListRenderer: ExtractionSectionListRenderer,
     };
 
+    static props = {
+        ...X2ManyField.props,
+        titleField: { type: String, optional: true }
+    }
+
     static defaultProps = {
         ...X2ManyField.defaultProps,
         editable: "bottom",
     };
-}
 
-export class ExtractionSectionOneToManyFieldEquipmentType extends ExtractionSectionOneToManyField {
-    static components = {
-        ListRenderer: ExtractionSectionListRendererEquipmentType,
+    setup() {
+        super.setup()
+        useSubEnv({
+            titleField: this.props.titleField
+        })
     }
+
 }
 
 export const extractionSectionOneToManyField = {
     ...x2ManyField,
     component: ExtractionSectionOneToManyField,
     additionalClasses: [...x2ManyField.additionalClasses || [], "o_field_one2many"],
+    extractProps(args, dynamicInfo) {
+        const props = x2ManyField.extractProps(args, dynamicInfo);
+        // Extract titleField from options and pass to renderer
+        if (args.options?.titleField) {
+            props.titleField = args.options.titleField;
+        }
+        return props;
+    },
 };
 
 // Register the widget
 registry.category("fields").add("extraction_section_one2many", extractionSectionOneToManyField);
-
-registry.category('fields').add("extraction_section_one2many_equipment_type", {
-    ...extractionSectionOneToManyField,
-    component: ExtractionSectionOneToManyFieldEquipmentType
-})

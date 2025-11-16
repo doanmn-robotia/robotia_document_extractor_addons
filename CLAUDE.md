@@ -193,7 +193,7 @@ import { useService } from "@web/core/utils/hooks";
 - `controlled.substance` - Controlled substances with GWP values
 - `equipment.type` - Equipment types
 - `recycling.facility` - Recycling facilities
-- `activity.field`, `trade.location`, `collection.location`, `recycling.technology`, `hs.code`
+- `activity.field`, `collection.location`, `recycling.technology`, `hs.code`
 
 **Population Pattern**: Use One2many commands `[(0, 0, values)]` in `default_*` context to populate tables during extraction.
 

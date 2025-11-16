@@ -185,12 +185,6 @@
               action="action_collection_location"
               sequence="7"/>
 
-    <menuitem id="menu_trade_locations"
-              name="Trade Locations"
-              parent="menu_master_data"
-              action="action_trade_location"
-              sequence="8"/>
-
     <!-- Configuration Menu -->
     <menuitem id="menu_configuration"
               name="Configuration"

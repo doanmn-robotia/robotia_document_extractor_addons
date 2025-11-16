@@ -68,8 +68,19 @@ class QuotaUsage(models.Model):
     average_price = fields.Float(
         string='Average Price'
     )
-    export_import_location = fields.Char(
-        string='Export/Import Location'
+    country_id = fields.Many2one(
+        comodel_name='res.country',
+        string='Export/Import Country',
+        ondelete='restrict',
+        index=True,
+        help='Country for import/export trade (ISO code)'
+    )
+    country_code = fields.Char(
+        string='Country Code',
+        compute='_compute_country_code',
+        store=True,
+        readonly=False,
+        help='ISO 2-letter country code (e.g., VN, US, CN)'
     )
     customs_declaration_number = fields.Char(
         string='Customs Declaration Number'
@@ -82,8 +93,6 @@ class QuotaUsage(models.Model):
     next_year_quota_co2 = fields.Float(
         string='Next Year Quota (ton CO2)'
     )
-    trade_location_id = fields.Many2one('trade.location', string='Export/Import Location Link', ondelete='restrict')
-    export_import_location_text = fields.Char(compute='_compute_location_text', store=True, readonly=False)
 
     @api.depends('substance_id')
     def _compute_substance_name(self):
@@ -95,10 +104,10 @@ class QuotaUsage(models.Model):
         for r in self:
             r.hs_code = r.hs_code_id.code if r.hs_code_id else ''
 
-    @api.depends('trade_location_id')
-    def _compute_location_text(self):
+    @api.depends('country_id')
+    def _compute_country_code(self):
         for r in self:
-            r.export_import_location_text = r.trade_location_id.name if r.trade_location_id else r.export_import_location or ''
+            r.country_code = r.country_id.code if r.country_id else ''
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -109,8 +118,8 @@ class QuotaUsage(models.Model):
                 vals['substance_id'] = self._find_or_create_substance(vals['substance_name']).id
             if not vals.get('hs_code_id') and vals.get('hs_code'):
                 vals['hs_code_id'] = self._find_or_create_hs_code(vals['hs_code']).id
-            if not vals.get('trade_location_id') and vals.get('export_import_location'):
-                vals['trade_location_id'] = self._find_or_create_trade_location(vals['export_import_location']).id
+            if not vals.get('country_id') and vals.get('country_code'):
+                vals['country_id'] = self._find_country_by_code(vals['country_code']).id
         return super(QuotaUsage, self).create(vals_list)
 
     def _find_or_create_substance(self, text):
@@ -123,7 +132,27 @@ class QuotaUsage(models.Model):
         rec = self.env['hs.code'].search([('code', '=', text)], limit=1)
         return rec or self.env['hs.code'].create({'code': text, 'name': text, 'active': True, 'needs_review': True, 'created_from_extraction': True})
 
-    def _find_or_create_trade_location(self, text):
-        text = text.strip()
-        rec = self.env['trade.location'].search([('name', '=ilike', text)], limit=1)
-        return rec or self.env['trade.location'].create({'name': text, 'code': text, 'needs_review': True, 'created_from_extraction': True})
+    def _find_country_by_code(self, code):
+        """
+        Find country by ISO code (case-insensitive)
+
+        Args:
+            code (str): ISO 2-letter country code (e.g., 'VN', 'US', 'CN')
+
+        Returns:
+            res.country: Found country record or empty recordset
+        """
+        if not code:
+            return self.env['res.country']
+
+        code = code.strip().upper()
+        # Search by code (case-insensitive)
+        country = self.env['res.country'].search([('code', '=ilike', code)], limit=1)
+
+        if not country:
+            # Log warning if country code not found
+            import logging
+            _logger = logging.getLogger(__name__)
+            _logger.warning(f"Country code '{code}' not found in system. Please check ISO country codes.")
+
+        return country

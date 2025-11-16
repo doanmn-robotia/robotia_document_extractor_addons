@@ -8,7 +8,6 @@ from . import hs_code
 from . import recycling_technology
 from . import recycling_facility
 from . import collection_location
-from . import trade_location
 
 # Partner Extensions
 from . import res_partner

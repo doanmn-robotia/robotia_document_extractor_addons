@@ -13,8 +13,6 @@ access_recycling_facility_user,recycling.facility user,model_recycling_facility,
 access_recycling_facility_manager,recycling.facility manager,model_recycling_facility,base.group_system,1,1,1,1
 access_collection_location_user,collection.location user,model_collection_location,base.group_user,1,0,0,0
 access_collection_location_manager,collection.location manager,model_collection_location,base.group_system,1,1,1,1
-access_trade_location_user,trade.location user,model_trade_location,base.group_user,1,0,0,0
-access_trade_location_manager,trade.location manager,model_trade_location,base.group_system,1,1,1,1
 access_document_extraction_user,document.extraction user,model_document_extraction,base.group_user,1,1,1,1
 access_substance_usage_user,substance.usage user,model_substance_usage,base.group_user,1,1,1,1
 access_equipment_product_user,equipment.product user,model_equipment_product,base.group_user,1,1,1,1

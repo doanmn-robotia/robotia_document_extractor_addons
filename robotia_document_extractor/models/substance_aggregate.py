@@ -26,7 +26,8 @@ class SubstanceAggregate(models.Model):
         ('production', 'Production'),
         ('import', 'Import'),
         ('export', 'Export'),
-        ('equipment', 'Equipment Usage'),
+        ('equipment_manufacturing', 'Equipment Manufacturing'),
+        ('equipment_operation', 'Equipment Operation'),
         ('collection', 'Collection'),
         ('reuse', 'Reuse'),
         ('recycle', 'Recycle'),
@@ -115,6 +116,211 @@ class SubstanceAggregate(models.Model):
                 WHERE qu.substance_id IS NOT NULL
                   AND qu.is_title = False
                 GROUP BY qu.substance_id, de.year, de.organization_id, de.document_type, qu.usage_type
+
+                UNION ALL
+
+                -- From equipment_product (Form 01 - Equipment manufacturing/import)
+                SELECT
+                    ROW_NUMBER() OVER () + 2000000 as id,
+                    ep.substance_id,
+                    de.year,
+                    de.organization_id,
+                    de.document_type,
+                    'equipment_manufacturing'::text as usage_type,
+                    0 as total_production_kg,
+                    0 as total_import_kg,
+                    0 as total_export_kg,
+                    SUM(COALESCE(ep.substance_quantity_per_unit, 0) * COALESCE(ep.quantity, 0)) as total_usage_kg,
+                    SUM(COALESCE(ep.substance_quantity_per_unit, 0) * COALESCE(ep.quantity, 0) * COALESCE(cs.gwp, 0) / 1000.0) as total_co2e,
+                    COUNT(DISTINCT de.id) as document_count,
+                    COUNT(DISTINCT de.organization_id) as organization_count
+                FROM equipment_product ep
+                INNER JOIN document_extraction de ON ep.document_id = de.id
+                LEFT JOIN controlled_substance cs ON ep.substance_id = cs.id
+                WHERE ep.substance_id IS NOT NULL
+                  AND ep.is_title = False
+                GROUP BY ep.substance_id, de.year, de.organization_id, de.document_type
+
+                UNION ALL
+
+                -- From equipment_ownership (Form 01 - Equipment operation/refills)
+                SELECT
+                    ROW_NUMBER() OVER () + 3000000 as id,
+                    eo.substance_id,
+                    de.year,
+                    de.organization_id,
+                    de.document_type,
+                    'equipment_operation'::text as usage_type,
+                    0 as total_production_kg,
+                    0 as total_import_kg,
+                    0 as total_export_kg,
+                    SUM(COALESCE(eo.substance_quantity_per_refill, 0) * COALESCE(eo.equipment_quantity, 0) * COALESCE(eo.refill_frequency, 1)) as total_usage_kg,
+                    SUM(COALESCE(eo.substance_quantity_per_refill, 0) * COALESCE(eo.equipment_quantity, 0) * COALESCE(eo.refill_frequency, 1) * COALESCE(cs.gwp, 0) / 1000.0) as total_co2e,
+                    COUNT(DISTINCT de.id) as document_count,
+                    COUNT(DISTINCT de.organization_id) as organization_count
+                FROM equipment_ownership eo
+                INNER JOIN document_extraction de ON eo.document_id = de.id
+                LEFT JOIN controlled_substance cs ON eo.substance_id = cs.id
+                WHERE eo.substance_id IS NOT NULL
+                  AND eo.is_title = False
+                GROUP BY eo.substance_id, de.year, de.organization_id, de.document_type
+
+                UNION ALL
+
+                -- From collection_recycling (Form 01 - Collection, Reuse, Recycle, Disposal)
+                SELECT
+                    ROW_NUMBER() OVER () + 4000000 as id,
+                    cr.substance_id,
+                    de.year,
+                    de.organization_id,
+                    de.document_type,
+                    cr.activity_type::text as usage_type,
+                    0 as total_production_kg,
+                    0 as total_import_kg,
+                    0 as total_export_kg,
+                    SUM(COALESCE(cr.quantity_kg, 0)) as total_usage_kg,
+                    SUM(COALESCE(cr.quantity_co2, 0)) as total_co2e,
+                    COUNT(DISTINCT de.id) as document_count,
+                    COUNT(DISTINCT de.organization_id) as organization_count
+                FROM collection_recycling cr
+                INNER JOIN document_extraction de ON cr.document_id = de.id
+                WHERE cr.substance_id IS NOT NULL
+                  AND cr.is_title = False
+                GROUP BY cr.substance_id, de.year, de.organization_id, de.document_type, cr.activity_type
+
+                UNION ALL
+
+                -- From equipment_product_report (Form 02 - Equipment manufacturing/import report)
+                SELECT
+                    ROW_NUMBER() OVER () + 5000000 as id,
+                    epr.substance_id,
+                    de.year,
+                    de.organization_id,
+                    de.document_type,
+                    'equipment_manufacturing'::text as usage_type,
+                    0 as total_production_kg,
+                    0 as total_import_kg,
+                    0 as total_export_kg,
+                    SUM(COALESCE(epr.substance_quantity_per_unit, 0) * COALESCE(epr.quantity, 0)) as total_usage_kg,
+                    SUM(COALESCE(epr.substance_quantity_per_unit, 0) * COALESCE(epr.quantity, 0) * COALESCE(cs.gwp, 0) / 1000.0) as total_co2e,
+                    COUNT(DISTINCT de.id) as document_count,
+                    COUNT(DISTINCT de.organization_id) as organization_count
+                FROM equipment_product_report epr
+                INNER JOIN document_extraction de ON epr.document_id = de.id
+                LEFT JOIN controlled_substance cs ON epr.substance_id = cs.id
+                WHERE epr.substance_id IS NOT NULL
+                  AND epr.is_title = False
+                GROUP BY epr.substance_id, de.year, de.organization_id, de.document_type
+
+                UNION ALL
+
+                -- From equipment_ownership_report (Form 02 - Equipment operation report)
+                SELECT
+                    ROW_NUMBER() OVER () + 6000000 as id,
+                    eor.substance_id,
+                    de.year,
+                    de.organization_id,
+                    de.document_type,
+                    'equipment_operation'::text as usage_type,
+                    0 as total_production_kg,
+                    0 as total_import_kg,
+                    0 as total_export_kg,
+                    SUM(COALESCE(eor.substance_quantity_per_refill, 0) * COALESCE(eor.equipment_quantity, 0) * COALESCE(eor.refill_frequency, 1)) as total_usage_kg,
+                    SUM(COALESCE(eor.substance_quantity_per_refill, 0) * COALESCE(eor.equipment_quantity, 0) * COALESCE(eor.refill_frequency, 1) * COALESCE(cs.gwp, 0) / 1000.0) as total_co2e,
+                    COUNT(DISTINCT de.id) as document_count,
+                    COUNT(DISTINCT de.organization_id) as organization_count
+                FROM equipment_ownership_report eor
+                INNER JOIN document_extraction de ON eor.document_id = de.id
+                LEFT JOIN controlled_substance cs ON eor.substance_id = cs.id
+                WHERE eor.substance_id IS NOT NULL
+                  AND eor.is_title = False
+                GROUP BY eor.substance_id, de.year, de.organization_id, de.document_type
+
+                UNION ALL
+
+                -- From collection_recycling_report (Form 02 - Collection/Recycling report - unpivot 4 columns)
+                SELECT * FROM (
+                    SELECT
+                        ROW_NUMBER() OVER () + 7000000 as id,
+                        crr.substance_id,
+                        de.year,
+                        de.organization_id,
+                        de.document_type,
+                        'collection'::text as usage_type,
+                        0 as total_production_kg,
+                        0 as total_import_kg,
+                        0 as total_export_kg,
+                        SUM(COALESCE(crr.collection_quantity_kg, 0)) as total_usage_kg,
+                        SUM(COALESCE(crr.collection_quantity_kg, 0) * COALESCE(cs.gwp, 0) / 1000.0) as total_co2e,
+                        COUNT(DISTINCT de.id) as document_count,
+                        COUNT(DISTINCT de.organization_id) as organization_count
+                    FROM collection_recycling_report crr
+                    INNER JOIN document_extraction de ON crr.document_id = de.id
+                    LEFT JOIN controlled_substance cs ON crr.substance_id = cs.id
+                    WHERE crr.substance_id IS NOT NULL
+                      AND crr.collection_quantity_kg > 0
+                    GROUP BY crr.substance_id, de.year, de.organization_id, de.document_type
+
+                    UNION ALL
+
+                    SELECT
+                        ROW_NUMBER() OVER () + 7100000 as id,
+                        crr.substance_id,
+                        de.year,
+                        de.organization_id,
+                        de.document_type,
+                        'reuse'::text as usage_type,
+                        0, 0, 0,
+                        SUM(COALESCE(crr.reuse_quantity_kg, 0)) as total_usage_kg,
+                        SUM(COALESCE(crr.reuse_quantity_kg, 0) * COALESCE(cs.gwp, 0) / 1000.0) as total_co2e,
+                        COUNT(DISTINCT de.id), COUNT(DISTINCT de.organization_id)
+                    FROM collection_recycling_report crr
+                    INNER JOIN document_extraction de ON crr.document_id = de.id
+                    LEFT JOIN controlled_substance cs ON crr.substance_id = cs.id
+                    WHERE crr.substance_id IS NOT NULL
+                      AND crr.reuse_quantity_kg > 0
+                    GROUP BY crr.substance_id, de.year, de.organization_id, de.document_type
+
+                    UNION ALL
+
+                    SELECT
+                        ROW_NUMBER() OVER () + 7200000 as id,
+                        crr.substance_id,
+                        de.year,
+                        de.organization_id,
+                        de.document_type,
+                        'recycle'::text as usage_type,
+                        0, 0, 0,
+                        SUM(COALESCE(crr.recycle_quantity_kg, 0)) as total_usage_kg,
+                        SUM(COALESCE(crr.recycle_quantity_kg, 0) * COALESCE(cs.gwp, 0) / 1000.0) as total_co2e,
+                        COUNT(DISTINCT de.id), COUNT(DISTINCT de.organization_id)
+                    FROM collection_recycling_report crr
+                    INNER JOIN document_extraction de ON crr.document_id = de.id
+                    LEFT JOIN controlled_substance cs ON crr.substance_id = cs.id
+                    WHERE crr.substance_id IS NOT NULL
+                      AND crr.recycle_quantity_kg > 0
+                    GROUP BY crr.substance_id, de.year, de.organization_id, de.document_type
+
+                    UNION ALL
+
+                    SELECT
+                        ROW_NUMBER() OVER () + 7300000 as id,
+                        crr.substance_id,
+                        de.year,
+                        de.organization_id,
+                        de.document_type,
+                        'disposal'::text as usage_type,
+                        0, 0, 0,
+                        SUM(COALESCE(crr.disposal_quantity_kg, 0)) as total_usage_kg,
+                        SUM(COALESCE(crr.disposal_quantity_kg, 0) * COALESCE(cs.gwp, 0) / 1000.0) as total_co2e,
+                        COUNT(DISTINCT de.id), COUNT(DISTINCT de.organization_id)
+                    FROM collection_recycling_report crr
+                    INNER JOIN document_extraction de ON crr.document_id = de.id
+                    LEFT JOIN controlled_substance cs ON crr.substance_id = cs.id
+                    WHERE crr.substance_id IS NOT NULL
+                      AND crr.disposal_quantity_kg > 0
+                    GROUP BY crr.substance_id, de.year, de.organization_id, de.document_type
+                ) collection_report_unpivot
             )
         ''')
 
@@ -210,6 +416,8 @@ class SubstanceAggregate(models.Model):
             'production': 'Sản xuất',
             'import': 'Nhập khẩu',
             'export': 'Xuất khẩu',
+            'equipment_manufacturing': 'SX/NK Thiết bị',
+            'equipment_operation': 'Vận hành thiết bị',
             'collection': 'Thu gom',
             'reuse': 'Tái sử dụng',
             'recycle': 'Tái chế',

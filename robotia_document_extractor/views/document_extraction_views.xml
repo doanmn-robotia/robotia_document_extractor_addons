@@ -127,7 +127,7 @@
                         <!-- Page 3: Table 1.2 - Equipment/Product Info -->
                         <page string="Table 1.2: Equipment/Product" name="table_1_2"
                               invisible="document_type != '01' or not has_table_1_2">
-                            <field name="equipment_product_ids" widget="extraction_section_one2many" nolabel="1">
+                            <field name="equipment_product_ids" widget="extraction_section_one2many" options="{'titleField': 'product_type'}" nolabel="1">
                                 <list editable="bottom">
                                     <field name="sequence" widget="handle" options="{'enable_formatting': false}"/>
                                     <field name="product_type" widget="extraction_title_field"/>
@@ -150,7 +150,7 @@
                         <!-- Page 4: Table 1.3 - Equipment Ownership -->
                         <page string="Table 1.3: Equipment Ownership" name="table_1_3"
                               invisible="document_type != '01' or not has_table_1_3">
-                            <field name="equipment_ownership_ids" widget="extraction_section_one2many_equipment_type" nolabel="1">
+                            <field name="equipment_ownership_ids" widget="extraction_section_one2many" options="{'titleField': 'equipment_type'}" nolabel="1">
                                 <list editable="bottom">
                                     <field name="sequence" widget="handle" options="{'enable_formatting': false}"/>
                                     <field name="equipment_type" widget="extraction_title_field"/>
@@ -205,7 +205,7 @@
                                     <field name="total_quota_kg"/>
                                     <field name="total_quota_co2"/>
                                     <field name="average_price"/>
-                                    <field name="export_import_location"/>
+                                    <field name="country_id"/>
                                     <field name="customs_declaration_number"/>
                                     <field name="next_year_quota_kg"/>
                                     <field name="next_year_quota_co2"/>
@@ -223,7 +223,7 @@
                         <!-- Page 7: Table 2.2 - Same as Table 1.2 for Form 02 -->
                         <page string="Table 2.2: Equipment/Product Report" name="table_2_2"
                               invisible="document_type != '02' or not has_table_2_2">
-                            <field name="equipment_product_report_ids" widget="extraction_section_one2many" nolabel="1">
+                            <field name="equipment_product_report_ids" widget="extraction_section_one2many" options="{'titleField': 'product_type'}" nolabel="1">
                                 <list editable="bottom">
                                     <field name="sequence" widget="handle" options="{'enable_formatting': false}"/>
                                     <field name="product_type" widget="extraction_title_field"/>
@@ -247,7 +247,7 @@
                         <!-- Page 8: Table 2.3 - Equipment Ownership Report (Form 02) -->
                         <page string="Table 2.3: Equipment Report" name="table_2_3"
                               invisible="document_type != '02' or not has_table_2_3">
-                            <field name="equipment_ownership_report_ids" widget="extraction_section_one2many_equipment_type" nolabel="1">
+                            <field name="equipment_ownership_report_ids" widget="extraction_section_one2many" options="{'titleField': 'equipment_type'}" nolabel="1">
                                 <list editable="bottom">
                                     <field name="sequence" widget="handle" options="{'enable_formatting': false}"/>
                                     <field name="equipment_type" widget="extraction_title_field"/>

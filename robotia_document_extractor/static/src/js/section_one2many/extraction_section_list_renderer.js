@@ -25,8 +25,9 @@ export class ExtractionSectionListRenderer extends NoMagicColumnListRenderer {
         this.fieldsToShow = [];
 
         // Title field that will have colspan in section rows
-        // For substance.usage: 'substance_name' contains section title
-        this.titleField = "substance_name";
+        // Can be overridden via props.titleField (from widget options)
+        // Default: 'substance_name'
+        this.titleField = this.env.titleField || "substance_name";
 
         // Add 'o_section_list_view' class to table
         useEffect(
@@ -158,11 +159,5 @@ export class ExtractionSectionListRenderer extends NoMagicColumnListRenderer {
     }
 }
 
-export class ExtractionSectionListRendererEquipmentType extends ExtractionSectionListRenderer {
-    setup() {
-        super.setup()
-        this.titleField = 'equipment_type'
-    }
-}
 
 

@@ -350,9 +350,14 @@ msgid "Extraction Date"
 msgstr "Ngày trích xuất"
 
 #. module: robotia_document_extractor
-#: model:ir.model.fields,field_description:robotia_document_extractor.field_quota_usage__export_import_location
-msgid "Export/Import Location"
-msgstr "Nơi xuất khẩu/nhập khẩu"
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_quota_usage__country_id
+msgid "Export/Import Country"
+msgstr "Quốc gia xuất/nhập khẩu"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_quota_usage__country_code
+msgid "Country Code"
+msgstr "Mã quốc gia"
 
 #. module: robotia_document_extractor
 #: model:ir.model.fields,field_description:robotia_document_extractor.field_document_extraction__substance_usage_export_ids

@@ -505,7 +505,7 @@ Return a JSON object with this EXACT structure (all field names in English):
       "total_quota_kg": <float or null>,
       "total_quota_co2": <float or null>,
       "average_price": <float or null>,
-      "export_import_location": "<string>",
+      "country_code": "<ISO 2-letter country code, e.g., VN, US, CN, TH, JP>",
       "customs_declaration_number": "<string>",
       "next_year_quota_kg": <float or null>,
       "next_year_quota_co2": <float or null>
@@ -655,7 +655,37 @@ STEP 4: EXTRACT TABLE DATA WITH FIXED TITLES
    - For each table that exists (has_table_2_x = true), extract ALL rows completely
    - If table does not exist (has_table_2_x = false), return empty array for that table
 
-STEP 5: DATA FORMATTING
+STEP 5: COUNTRY CODE EXTRACTION (for quota_usage table)
+   ⚠️⚠️⚠️ CRITICAL: Extract ISO 2-letter country code, NOT full location name ⚠️⚠️⚠️
+
+   For the field "country_code" in quota_usage (Table 2.1):
+   - Extract ONLY the ISO 2-letter country code (e.g., "VN", "US", "CN", "TH", "JP", "KR", "SG")
+   - Common country codes:
+     * "VN" - Vietnam (Việt Nam)
+     * "US" - United States (Hoa Kỳ, Mỹ)
+     * "CN" - China (Trung Quốc)
+     * "TH" - Thailand (Thái Lan)
+     * "JP" - Japan (Nhật Bản)
+     * "KR" - South Korea (Hàn Quốc)
+     * "SG" - Singapore
+     * "MY" - Malaysia (Ma-lai-xi-a)
+     * "ID" - Indonesia
+     * "IN" - India (Ấn Độ)
+     * "DE" - Germany (Đức)
+     * "FR" - France (Pháp)
+     * "GB" - United Kingdom (Anh)
+
+   - If you see Vietnamese country names, convert to ISO code:
+     * "Việt Nam" → "VN"
+     * "Trung Quốc" → "CN"
+     * "Hoa Kỳ", "Mỹ" → "US"
+     * "Thái Lan" → "TH"
+     * "Nhật Bản" → "JP"
+
+   - If country code is not clear or not found, use null
+   - Use UPPERCASE for country codes (e.g., "VN" not "vn")
+
+STEP 6: DATA FORMATTING
    - Convert Vietnamese numbers to float/int (handle commas, dots correctly)
    - Use null for empty/missing values in numeric fields, never use empty strings
    - Preserve Vietnamese text exactly for names, addresses, and text fields
