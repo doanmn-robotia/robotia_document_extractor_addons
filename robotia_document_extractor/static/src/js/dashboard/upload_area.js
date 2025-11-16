@@ -117,12 +117,11 @@ export class UploadArea extends Component {
                     { type: 'success' }
                 );
 
-                await this.action.doAction(result);
-
                 // Notify parent to reload statistics
                 if (this.props.onExtractionComplete) {
-                    this.props.onExtractionComplete();
+                    await this.props.onExtractionComplete();
                 }
+                await this.action.doAction(result);
             } else if (result.type === 'ir.actions.client') {
                 // Error notification already displayed by controller
                 await this.action.doAction(result);
