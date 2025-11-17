@@ -19,33 +19,33 @@ export class GroupedListArchParser extends ListArchParser {
     }
 
     processGroupFields(node, fieldInfo) {
-        const optionsAttr = node.getAttribute("context");
+        const contextAttr = node.getAttribute("context");
         const text = node.getAttribute("add-label")
-        if (optionsAttr) {
-            const options = evaluateExpr(optionsAttr);
+        if (contextAttr) {
+            const context = evaluateExpr(contextAttr);
 
             // Support both static label (group_header) and dynamic label (group_label_field)
-            if (options.group_header || text) {
-                fieldInfo.groupName = options.group_header || text;
+            if (context.group_header || text) {
+                fieldInfo.groupName = context.group_header || text;
                 fieldInfo.hasGroupHeader = true;
             }
 
             // Dynamic group label from field
-            if (options.group_label_field) {
-                fieldInfo.groupLabelField = options.group_label_field;
+            if (context.group_label_field) {
+                fieldInfo.groupLabelField = context.group_label_field;
                 fieldInfo.hasGroupHeader = true;
             }
 
-            if (options.group_start) {
+            if (context.group_start) {
                 fieldInfo.groupStart = true;
             }
 
-            if (options.group_end) {
+            if (context.group_end) {
                 fieldInfo.groupEnd = true;
             }
 
-            if (options.group_class) {
-                fieldInfo.groupClass = options.group_class;
+            if (context.group_class) {
+                fieldInfo.groupClass = context.group_class;
             }
 
         }
