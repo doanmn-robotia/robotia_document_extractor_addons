@@ -37,6 +37,13 @@ class ControlledSubstance(models.Model):
         string='Global Warming Potential (GWP)',
         help='GWP value for CO2 equivalent calculation'
     )
+    substance_group_id = fields.Many2one(
+        comodel_name='substance.group',
+        string='Substance Group',
+        ondelete='restrict',
+        index=True,
+        help='Group classification (HFC, HCFC, CFC, PFC, HFO, etc.)'
+    )
     active = fields.Boolean(
         string='Active',
         default=True

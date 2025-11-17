@@ -1,0 +1,518 @@
+/**
+ * HFC Dashboard Stylesheet
+ * Responsive dashboard with sidebar filter and chart visualizations
+ */
+
+// ============= CONTAINER =============
+.hfc-dashboard-container {
+    display: flex;
+    min-height: calc(100vh - 50px);
+    background: #f5f6fa;
+    color: #222;
+}
+
+// ============= SIDEBAR FILTER =============
+.hfc-sidebar {
+    width: 280px;
+    background: #ffffff;
+    border-right: 1px solid #e0e0e0;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; // Prevent sidebar itself from scrolling
+
+    .sidebar-header {
+        padding: 16px 18px 8px;
+        flex-shrink: 0;
+
+        h2 {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #222;
+            font-weight: 600;
+        }
+    }
+
+    // Scrollable content area
+    .hfc-sidebar-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 8px 18px;
+
+        &::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 3px;
+
+            &:hover {
+                background: #aaa;
+            }
+        }
+    }
+
+    .filter-group {
+        margin-bottom: 18px;
+        padding-bottom: 12px;
+        border-bottom: 1px dashed #ddd;
+
+        &:last-of-type {
+            border-bottom: none;
+        }
+    }
+
+    .filter-group-title {
+        font-size: 13px;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: #666;
+        margin-bottom: 8px;
+    }
+
+    .filter-row {
+        margin-bottom: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+
+        label {
+            font-size: 12px;
+            color: #444;
+            font-weight: 500;
+        }
+
+        input,
+        select {
+            font-size: 12px;
+
+            &:focus {
+                border-color: #1a73e8;
+                box-shadow: 0 0 0 0.2rem rgba(26, 115, 232, 0.25);
+            }
+        }
+    }
+
+    .filter-checkbox-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        max-height: 160px;
+        overflow-y: auto;
+        padding-right: 4px;
+
+        &::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 3px;
+        }
+    }
+
+    .filter-checkbox-item {
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+        padding: 2px 0;
+
+        input[type="checkbox"] {
+            cursor: pointer;
+            width: 16px;
+            height: 16px;
+            margin: 0;
+        }
+
+        span {
+            user-select: none;
+        }
+
+        &:hover {
+            background: #f5f6fa;
+            padding-left: 4px;
+            padding-right: 4px;
+            border-radius: 4px;
+        }
+    }
+
+    .btn-filter-actions {
+        display: flex;
+        gap: 8px;
+        padding: 12px 18px;
+        background: #fff;
+        border-top: 1px solid #e0e0e0;
+        flex-shrink: 0;
+        box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+
+        .btn {
+            flex: 1;
+            font-size: 12px;
+            padding: 6px 8px;
+
+            i {
+                margin-right: 4px;
+            }
+        }
+    }
+}
+
+// ============= MAIN CONTENT =============
+.hfc-main {
+    flex: 1;
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    overflow-x: hidden;
+}
+
+.hfc-content {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+// ============= HEADER =============
+.main-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+
+    .main-header-title {
+        font-size: 20px;
+        font-weight: 600;
+        color: #222;
+
+        i {
+            margin-right: 8px;
+            color: #1a73e8;
+        }
+    }
+
+    .main-header-sub {
+        font-size: 13px;
+        color: #666;
+        margin-top: 4px;
+    }
+
+    .main-header-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        .btn i {
+            margin-right: 4px;
+        }
+    }
+}
+
+// ============= KPI CARDS =============
+.kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.kpi-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 12px 14px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border: 1px solid #e8e8e8;
+    transition: box-shadow 0.2s ease;
+
+    &:hover {
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+    }
+
+    .kpi-label {
+        font-size: 11px;
+        text-transform: uppercase;
+        color: #777;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: 600;
+    }
+
+    .kpi-value {
+        font-size: 22px;
+        font-weight: 700;
+        color: #1a73e8;
+    }
+
+    .kpi-sub {
+        font-size: 11px;
+        color: #888;
+    }
+
+    .kpi-pill {
+        font-size: 10px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: #e9f0ff;
+        color: #1a73e8;
+        font-weight: 600;
+    }
+}
+
+// ============= CHARTS & PANELS =============
+.grid-row {
+    display: grid;
+    grid-template-columns: 2fr 1.2fr;
+    gap: 12px;
+}
+
+.grid-row-2 {
+    display: grid;
+    grid-template-columns: 1.6fr 1.4fr;
+    gap: 12px;
+}
+
+.panel {
+    background: #fff;
+    border-radius: 10px;
+    padding: 12px 14px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    border: 1px solid #e8e8e8;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 240px;
+
+    .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .panel-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: #222;
+    }
+
+    .panel-subtitle {
+        font-size: 11px;
+        color: #777;
+        margin-top: 2px;
+    }
+
+    .chart-container {
+        flex: 1;
+        position: relative;
+        min-height: 200px;
+
+        canvas {
+            max-height: 100%;
+        }
+    }
+}
+
+// ============= TABLES =============
+.table-wrapper {
+    max-height: 280px;
+    overflow: auto;
+    border-radius: 6px;
+    border: 1px solid #eee;
+    background: #fff;
+
+    &::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: #ccc;
+        border-radius: 4px;
+
+        &:hover {
+            background: #aaa;
+        }
+    }
+
+    table {
+        width: 100%;
+        font-size: 11px;
+        margin-bottom: 0;
+
+        thead {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: #f5f6fa;
+
+            th {
+                background: #f5f6fa;
+                font-weight: 600;
+                color: #555;
+                padding: 8px 10px;
+                border-bottom: 2px solid #e0e0e0;
+                white-space: nowrap;
+                font-size: 11px;
+            }
+        }
+
+        tbody {
+            td {
+                padding: 6px 10px;
+                color: #333;
+                font-size: 11px;
+                vertical-align: middle;
+
+                a {
+                    color: #1a73e8;
+                    text-decoration: none;
+
+                    &:hover {
+                        text-decoration: underline;
+                    }
+                }
+            }
+
+            tr:hover {
+                background: #f9f9f9;
+            }
+        }
+    }
+}
+
+// ============= BADGES & TAGS =============
+.badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 999px;
+
+    &.badge-success {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    &.badge-warning {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    &.badge-error {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    &.bg-info {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+}
+
+.tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+// ============= LOADING & ERROR =============
+.dashboard-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    gap: 16px;
+
+    p {
+        font-size: 14px;
+        color: #666;
+        margin: 0;
+    }
+}
+
+.dashboard-error {
+    padding: 20px;
+
+    .alert {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+
+        i {
+            font-size: 18px;
+        }
+    }
+}
+
+// ============= RESPONSIVE =============
+@media (max-width: 1200px) {
+    .grid-row {
+        grid-template-columns: 1fr;
+    }
+
+    .grid-row-2 {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 1100px) {
+    .hfc-dashboard-container {
+        flex-direction: column;
+    }
+
+    .hfc-sidebar {
+        display: none; // Or convert to slide-in menu in future
+    }
+
+    .kpi-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .kpi-row {
+        grid-template-columns: 1fr;
+    }
+
+    .main-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .main-header-title {
+        font-size: 18px !important;
+    }
+
+    .panel {
+        min-height: auto;
+    }
+
+    .chart-container {
+        min-height: 180px !important;
+    }
+}
+
+// ============= UTILITIES =============
+.text-end {
+    text-align: right !important;
+}
+
+.text-center {
+    text-align: center !important;
+}
+
+.text-muted {
+    color: #6c757d !important;
+}
+
+.text-primary {
+    color: #1a73e8 !important;
+}

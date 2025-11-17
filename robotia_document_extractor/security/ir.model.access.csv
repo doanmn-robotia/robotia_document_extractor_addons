@@ -1,6 +1,8 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_controlled_substance_user,controlled.substance user,model_controlled_substance,base.group_user,1,0,0,0
 access_controlled_substance_manager,controlled.substance manager,model_controlled_substance,base.group_system,1,1,1,1
+access_substance_group_user,substance.group user,model_substance_group,base.group_user,1,0,0,0
+access_substance_group_manager,substance.group manager,model_substance_group,base.group_system,1,1,1,1
 access_activity_field_user,activity.field user,model_activity_field,base.group_user,1,0,0,0
 access_activity_field_manager,activity.field manager,model_activity_field,base.group_system,1,1,1,1
 access_equipment_type_user,equipment.type user,model_equipment_type,base.group_user,1,0,0,0

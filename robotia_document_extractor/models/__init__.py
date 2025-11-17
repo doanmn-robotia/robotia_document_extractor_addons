@@ -2,6 +2,7 @@
 
 # Master Data Models
 from . import controlled_substance
+from . import substance_group
 from . import activity_field
 from . import equipment_type
 from . import hs_code

@@ -805,6 +805,287 @@ class ExtractionController(http.Controller):
             _logger.error(f'Error fetching equipment dashboard data: {str(e)}', exc_info=True)
             return {'error': True, 'message': str(e)}
 
+    @http.route('/document_extractor/hfc_dashboard_data', type='json', auth='user', methods=['POST'])
+    def get_hfc_dashboard_data(self, filters=None):
+        """
+        Get aggregated data for HFC dashboard (all substances overview)
+
+        Args:
+            filters (dict): Filter criteria with keys:
+                - organization_search (str): Search by organization name
+                - organization_code (str): Search by business license number
+                - province (str): Filter by province/state
+                - substance_name (str): Filter by substance name
+                - hs_code (str): Filter by HS code
+                - substance_group_id (int): Filter by substance group ID
+                - activity_field_ids (list): Filter by activity field IDs
+                - year_from (int): Start year
+                - year_to (int): End year
+                - quantity_min (float): Minimum quantity
+                - quantity_max (float): Maximum quantity
+                - status (list): Document states ['draft', 'validated', 'completed']
+
+        Returns:
+            dict: Dashboard data with KPIs, charts, and tables
+        """
+        try:
+            filters = filters or {}
+            _logger.info(f"HFC Dashboard request with filters: {filters}")
+
+            # ===== PHASE 1: Pre-filter documents by state & activity_fields =====
+            Document = request.env['document.extraction'].sudo()
+            doc_domain = []
+
+            # Filter by status
+            if filters.get('status'):
+                doc_domain.append(('state', 'in', filters['status']))
+
+            # Filter by activity fields (already IDs from frontend)
+            if filters.get('activity_field_ids'):
+                activity_field_ids = filters['activity_field_ids']
+                if activity_field_ids:
+                    doc_domain.append(('activity_field_ids', 'in', activity_field_ids))
+
+            filtered_docs = Document.search(doc_domain)
+            filtered_org_ids = filtered_docs.mapped('organization_id').ids if filtered_docs else []
+
+            _logger.info(f"Phase 1: Filtered {len(filtered_docs)} documents, {len(filtered_org_ids)} organizations")
+
+            # ===== PHASE 2: Filter organizations by province, license, name =====
+            Partner = request.env['res.partner'].sudo()
+            org_domain = [('id', 'in', filtered_org_ids)] if filtered_org_ids else []
+
+            if filters.get('organization_search'):
+                org_domain.append(('name', 'ilike', filters['organization_search']))
+
+            if filters.get('organization_code'):
+                org_domain.append(('business_license_number', 'ilike', filters['organization_code']))
+
+            if filters.get('province'):
+                State = request.env['res.country.state'].sudo()
+                state_ids = State.search([('name', 'ilike', filters['province'])]).ids
+                if state_ids:
+                    org_domain.append(('state_id', 'in', state_ids))
+
+            if org_domain:
+                final_org_ids = Partner.search(org_domain).ids
+            else:
+                # No org filters applied, use all
+                final_org_ids = None
+
+            _logger.info(f"Phase 2: Final organization count: {len(final_org_ids) if final_org_ids else 'all'}")
+
+            # ===== PHASE 3: Filter substances by name, group, HS code =====
+            Substance = request.env['controlled.substance'].sudo()
+            substance_domain = []
+
+            if filters.get('substance_name'):
+                substance_domain.append(('name', 'ilike', filters['substance_name']))
+
+            if filters.get('substance_group_id'):
+                substance_domain.append(('substance_group_id', '=', filters['substance_group_id']))
+
+            if filters.get('hs_code'):
+                substance_domain.append(('hs_code', 'ilike', filters['hs_code']))
+
+            if substance_domain:
+                substance_ids = Substance.search(substance_domain).ids
+            else:
+                substance_ids = None
+
+            _logger.info(f"Phase 3: Substance filter: {len(substance_ids) if substance_ids else 'all'}")
+
+            # ===== PHASE 4: Query substance.aggregate =====
+            SubstanceAggregate = request.env['substance.aggregate'].sudo()
+            agg_domain = []
+
+            if final_org_ids is not None:
+                agg_domain.append(('organization_id', 'in', final_org_ids))
+
+            if substance_ids is not None:
+                agg_domain.append(('substance_id', 'in', substance_ids))
+
+            if filters.get('year_from'):
+                agg_domain.append(('year', '>=', filters['year_from']))
+
+            if filters.get('year_to'):
+                agg_domain.append(('year', '<=', filters['year_to']))
+
+            aggregates = SubstanceAggregate.search(agg_domain)
+
+            _logger.info(f"Phase 4: Found {len(aggregates)} aggregate records")
+
+            # ===== PHASE 5: Apply quantity filters =====
+            if filters.get('quantity_min') is not None:
+                aggregates = aggregates.filtered(lambda r: r.total_usage_kg >= filters['quantity_min'])
+
+            if filters.get('quantity_max') is not None:
+                aggregates = aggregates.filtered(lambda r: r.total_usage_kg <= filters['quantity_max'])
+
+            _logger.info(f"Phase 5: After quantity filters: {len(aggregates)} records")
+
+            # ===== PHASE 6: Calculate KPIs =====
+            total_kg = sum(aggregates.mapped('total_usage_kg'))
+            total_co2e = sum(aggregates.mapped('total_co2e'))
+            org_count = len(set(aggregates.mapped('organization_id').ids))
+
+            # Document count by unique (year, org, doc_type)
+            unique_docs = set()
+            for agg in aggregates:
+                if agg.organization_id:
+                    doc_key = (agg.year, agg.organization_id.id, agg.document_type)
+                    unique_docs.add(doc_key)
+            doc_count = len(unique_docs)
+
+            # Verified percentage (from filtered docs)
+            if filtered_docs:
+                verified_docs = filtered_docs.filtered(lambda d: d.state == 'validated')
+                verified_pct = (len(verified_docs) / len(filtered_docs) * 100)
+            else:
+                verified_pct = 0
+
+            _logger.info(f"Phase 6: KPIs - Orgs: {org_count}, Docs: {doc_count}, kg: {total_kg:.2f}, CO2e: {total_co2e:.2f}")
+
+            # ===== PHASE 7: Prepare chart data =====
+
+            # Chart 1: Trend by year & substance (for bar chart)
+            trend_data = {}
+            for agg in aggregates:
+                key = (agg.year, agg.substance_id.id, agg.substance_id.name)
+                if key not in trend_data:
+                    trend_data[key] = {
+                        'year': agg.year,
+                        'substance_id': agg.substance_id.id,
+                        'substance_name': agg.substance_id.name,
+                        'total_kg': 0,
+                        'co2e': 0
+                    }
+                trend_data[key]['total_kg'] += agg.total_usage_kg
+                trend_data[key]['co2e'] += agg.total_co2e
+
+            trend_list = sorted(trend_data.values(), key=lambda x: (x['year'], x['substance_name']))
+
+            # Chart 2: By activity type (for pie chart)
+            activity_labels = {
+                'production': 'Sản xuất',
+                'import': 'Nhập khẩu',
+                'export': 'Xuất khẩu',
+                'equipment_manufacturing': 'SX/NK Thiết bị',
+                'equipment_operation': 'Vận hành thiết bị',
+                'collection': 'Thu gom',
+                'reuse': 'Tái sử dụng',
+                'recycle': 'Tái chế',
+                'disposal': 'Tiêu hủy'
+            }
+
+            activity_data = {}
+            for agg in aggregates:
+                if agg.usage_type:
+                    usage = agg.usage_type
+                    if usage not in activity_data:
+                        activity_data[usage] = {
+                            'activity_type': usage,
+                            'activity_label': activity_labels.get(usage, usage.title()),
+                            'total_kg': 0,
+                            'co2e': 0
+                        }
+                    activity_data[usage]['total_kg'] += agg.total_usage_kg
+                    activity_data[usage]['co2e'] += agg.total_co2e
+
+            activity_list = sorted(activity_data.values(), key=lambda x: x['total_kg'], reverse=True)
+
+            # Table 1: Top 10 records by (org, year, substance)
+            top_records = {}
+            for agg in aggregates:
+                if not agg.organization_id:
+                    continue
+
+                key = (agg.organization_id.id, agg.year, agg.substance_id.id)
+                if key not in top_records:
+                    # Get activity tags from document
+                    doc = Document.search([
+                        ('organization_id', '=', agg.organization_id.id),
+                        ('year', '=', agg.year),
+                        ('document_type', '=', agg.document_type)
+                    ], limit=1)
+
+                    activity_tags = []
+                    if doc and doc.activity_field_ids:
+                        activity_tags = doc.activity_field_ids.mapped('name')
+
+                    top_records[key] = {
+                        'organization_id': agg.organization_id.id,
+                        'organization_name': agg.organization_id.name,
+                        'substance_id': agg.substance_id.id,
+                        'substance_name': agg.substance_id.name,
+                        'year': agg.year,
+                        'total_kg': 0,
+                        'co2e': 0,
+                        'activity_tags': activity_tags,
+                        'status': doc.state if doc else 'draft'
+                    }
+                top_records[key]['total_kg'] += agg.total_usage_kg
+                top_records[key]['co2e'] += agg.total_co2e
+
+            top_10 = sorted(top_records.values(), key=lambda x: x['total_kg'], reverse=True)[:10]
+
+            # Table 2: Pivot data (DN × Chất, columns: Years)
+            pivot_data = {}
+            for agg in aggregates:
+                if not agg.organization_id:
+                    continue
+
+                key = (agg.organization_id.id, agg.substance_id.id)
+                if key not in pivot_data:
+                    pivot_data[key] = {
+                        'organization_id': agg.organization_id.id,
+                        'organization_name': agg.organization_id.name,
+                        'substance_id': agg.substance_id.id,
+                        'substance_name': agg.substance_id.name,
+                        'year_2021_kg': 0,
+                        'year_2022_kg': 0,
+                        'year_2023_kg': 0,
+                        'year_2024_kg': 0,
+                        'total_co2e': 0
+                    }
+
+                year_key = f'year_{agg.year}_kg'
+                if year_key in pivot_data[key]:
+                    pivot_data[key][year_key] += agg.total_usage_kg
+                pivot_data[key]['total_co2e'] += agg.total_co2e
+
+            pivot_list = sorted(pivot_data.values(),
+                               key=lambda x: (x['organization_name'], x['substance_name']))[:50]
+
+            _logger.info(f"Phase 7: Charts prepared - Trend: {len(trend_list)}, Activity: {len(activity_list)}, Top10: {len(top_10)}, Pivot: {len(pivot_list)}")
+
+            # ===== PHASE 8: Return response =====
+            return {
+                'error': False,
+                'kpis': {
+                    'total_organizations': org_count,
+                    'total_kg': total_kg,
+                    'total_co2e': total_co2e,
+                    'verified_percentage': verified_pct
+                },
+                'charts': {
+                    'trend_by_year_substance': trend_list,
+                    'by_activity_type': activity_list,
+                    'top_10_records': top_10,
+                    'pivot_data': pivot_list
+                },
+                'filter_metadata': {
+                    'available_years': sorted(set(aggregates.mapped('year')), reverse=True) if aggregates else []
+                }
+            }
+
+        except Exception as e:
+            _logger.error(f'Error fetching HFC dashboard data: {str(e)}', exc_info=True)
+            return {
+                'error': True,
+                'message': str(e)
+            }
+
     @http.route('/document_extractor/recovery_dashboard_data', type='json', auth='user', methods=['POST'])
     def get_recovery_dashboard_data(self, substance_id=None, organization_id=None, year_from=None, year_to=None):
         """

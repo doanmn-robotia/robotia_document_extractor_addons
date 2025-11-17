@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- HFC (Hydrofluorocarbons) -->
+        <record id="substance_group_hfc" model="substance.group">
+            <field name="name">HFC</field>
+            <field name="code">HFC</field>
+            <field name="sequence">10</field>
+            <field name="description">Hydrofluorocarbons - Chất thay thế HCFC, không chứa clo, được sử dụng rộng rãi trong làm lạnh và điều hòa không khí</field>
+            <field name="color">1</field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- HCFC (Hydrochlorofluorocarbons) -->
+        <record id="substance_group_hcfc" model="substance.group">
+            <field name="name">HCFC</field>
+            <field name="code">HCFC</field>
+            <field name="sequence">20</field>
+            <field name="description">Hydrochlorofluorocarbons - Chất chuyển tiếp, đang được loại bỏ dần theo Nghị định thư Montreal</field>
+            <field name="color">3</field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- CFC (Chlorofluorocarbons) -->
+        <record id="substance_group_cfc" model="substance.group">
+            <field name="name">CFC</field>
+            <field name="code">CFC</field>
+            <field name="sequence">30</field>
+            <field name="description">Chlorofluorocarbons - Đã bị cấm sử dụng theo Nghị định thư Montreal do gây hại tầng ozone</field>
+            <field name="color">9</field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- PFC (Perfluorocarbons) -->
+        <record id="substance_group_pfc" model="substance.group">
+            <field name="name">PFC</field>
+            <field name="code">PFC</field>
+            <field name="sequence">40</field>
+            <field name="description">Perfluorocarbons - Chất gây hiệu ứng nhà kính rất mạnh, có thời gian tồn tại lâu trong khí quyển</field>
+            <field name="color">5</field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- HFO (Hydrofluoroolefins) -->
+        <record id="substance_group_hfo" model="substance.group">
+            <field name="name">HFO</field>
+            <field name="code">HFO</field>
+            <field name="sequence">50</field>
+            <field name="description">Hydrofluoroolefins - Thế hệ mới, thân thiện với môi trường hơn, có GWP thấp và thời gian phân hủy nhanh</field>
+            <field name="color">10</field>
+            <field name="active">True</field>
+        </record>
+
+    </data>
+</odoo>
