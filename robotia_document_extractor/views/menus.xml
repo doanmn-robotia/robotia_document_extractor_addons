@@ -95,6 +95,12 @@
         <field name="tag">document_extractor.hfc_dashboard</field>
     </record>
 
+    <!-- ChatBot -->
+    <record id="action_chatbot" model="ir.actions.client">
+        <field name="name">Trợ lý AI</field>
+        <field name="tag">document_extractor.chatbot</field>
+    </record>
+
     <!-- ========================================== -->
     <!-- Settings Action (Placeholder) -->
     <!-- ========================================== -->
@@ -110,6 +116,7 @@
         <!-- Root Menu -->
     <menuitem id="menu_document_extractor_root"
               name="Document Extractor"
+              web_icon="robotia_document_extractor,static/description/icon.png"
               sequence="10"/>
 
     <!-- Dashboard Menu -->
@@ -125,6 +132,13 @@
               parent="menu_document_extractor_root"
               action="action_hfc_dashboard"
               sequence="2"/>
+
+    <!-- ChatBot Menu -->
+    <menuitem id="menu_chatbot"
+              name="Trợ lý AI"
+              parent="menu_document_extractor_root"
+              action="action_chatbot"
+              sequence="3"/>
 
     <!-- Documents Menu -->
     <menuitem id="menu_documents"
@@ -152,7 +166,7 @@
 
     <!-- Master Data Menu -->
     <menuitem id="menu_master_data"
-              name="Master Data"
+              name="Lookup &amp; Summary"
               parent="menu_document_extractor_root"
               sequence="20"/>
 

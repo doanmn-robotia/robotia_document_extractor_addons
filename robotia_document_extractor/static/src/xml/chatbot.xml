@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <!-- ChatBot Main Template -->
+    <t t-name="robotia_document_extractor.ChatBot">
+        <div class="chatbot-dashboard-page">
+            <div class="page">
+                <!-- Header -->
+                <div class="header">
+                    <div>
+                        <div class="header-title">Trợ lý AI</div>
+                        <div class="header-sub">Hỗ trợ trích xuất và phân tích tài liệu tự động</div>
+                    </div>
+                </div>
+
+                <!-- Chat Container -->
+                <div class="chat-container">
+                    <!-- Chat Messages Area -->
+                    <div class="chat-messages" t-ref="chatMessages">
+                        <!-- Welcome Screen -->
+                        <div t-if="state.messages.length === 0" class="chat-welcome">
+                            <div class="welcome-content">
+                                <h3>Chào mừng bạn đến với Trợ lý AI</h3>
+                                <p class="text-muted">Hỏi tôi bất cứ điều gì về trích xuất tài liệu, biểu mẫu hoặc phân tích dữ liệu.</p>
+                            </div>
+
+                            <!-- Quick Actions Grid -->
+                            <div class="quick-actions-grid">
+                                <div class="quick-action-card" t-on-click="() => this.sendQuickAction('Hướng dẫn trích xuất Mẫu 01')">
+                                    <div class="quick-action-icon">📄</div>
+                                    <h6>Hỗ trợ Mẫu 01</h6>
+                                    <p>Hướng dẫn trích xuất Mẫu đăng ký</p>
+                                </div>
+                                <div class="quick-action-card" t-on-click="() => this.sendQuickAction('Hướng dẫn trích xuất Mẫu 02')">
+                                    <div class="quick-action-icon">📊</div>
+                                    <h6>Hỗ trợ Mẫu 02</h6>
+                                    <p>Hướng dẫn trích xuất Mẫu báo cáo</p>
+                                </div>
+                                <div class="quick-action-card" t-on-click="() => this.sendQuickAction('Xem tài liệu gần đây')">
+                                    <div class="quick-action-icon">🕒</div>
+                                    <h6>Tài liệu gần đây</h6>
+                                    <p>Xem lịch sử trích xuất</p>
+                                </div>
+                                <div class="quick-action-card" t-on-click="() => this.sendQuickAction('Chất kiểm soát là gì?')">
+                                    <div class="quick-action-icon">🧪</div>
+                                    <h6>Thông tin chất</h6>
+                                    <p>Tìm hiểu về chất kiểm soát</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Chat Messages List -->
+                        <div t-else="" class="messages-list">
+                            <div t-foreach="state.messages" t-as="message" t-key="message.id"
+                                 class="message-wrapper"
+                                 t-att-class="message.role === 'user' ? 'message-user' : 'message-bot'">
+
+                                <div class="message-bubble">
+                                    <div class="message-text">
+                                        <t t-esc="message.text"/>
+                                    </div>
+                                    <div class="message-time">
+                                        <t t-esc="formatTime(message.timestamp)"/>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Typing Indicator -->
+                            <div t-if="state.isTyping" class="message-wrapper message-bot">
+                                <div class="message-bubble">
+                                    <div class="typing-indicator">
+                                        <span></span>
+                                        <span></span>
+                                        <span></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chat Input Area -->
+                    <div class="chat-input-area">
+                        <div class="input-wrapper">
+                            <input
+                                type="text"
+                                class="chat-input"
+                                placeholder="Nhập tin nhắn của bạn..."
+                                t-model="state.inputMessage"
+                                t-on-keydown="onInputKeydown"
+                                t-att-disabled="state.isTyping"
+                                t-ref="chatInput"/>
+
+                            <button
+                                class="send-btn"
+                                t-on-click="sendMessage"
+                                t-att-disabled="state.isTyping or !state.inputMessage.trim()">
+                                <i class="fa fa-paper-plane"/>
+                            </button>
+                        </div>
+
+                        <!-- Suggestions -->
+                        <div t-if="state.messages.length > 0 and state.suggestions.length > 0" class="suggestions">
+                            <div class="suggestions-chips">
+                                <button
+                                    t-foreach="state.suggestions"
+                                    t-as="suggestion"
+                                    t-key="suggestion"
+                                    class="suggestion-chip"
+                                    t-on-click="() => this.sendQuickAction(suggestion)"
+                                    t-att-disabled="state.isTyping">
+                                    <t t-esc="suggestion"/>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+
+</templates>

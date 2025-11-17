@@ -30,6 +30,11 @@
             'robotia_document_extractor/static/src/js/dashboard/recovery_dashboard.js',
             'robotia_document_extractor/static/src/js/dashboard/hfc_dashboard.js',
 
+            # ChatBot
+            'robotia_document_extractor/static/src/js/chatbot/chatbot.js',
+            'robotia_document_extractor/static/src/xml/chatbot.xml',
+            'robotia_document_extractor/static/src/scss/chatbot.scss',
+
             # Templates (XML)
             'robotia_document_extractor/static/src/xml/substance_dashboard.xml',
             'robotia_document_extractor/static/src/xml/company_dashboard.xml',

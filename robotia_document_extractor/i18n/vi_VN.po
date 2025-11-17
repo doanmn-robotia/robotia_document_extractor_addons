@@ -434,8 +434,8 @@ msgstr "Chức vụ người đại diện"
 
 #. module: robotia_document_extractor
 #: model:ir.ui.menu,name:robotia_document_extractor.menu_master_data
-msgid "Master Data"
-msgstr "Dữ liệu chính"
+msgid "Look up & sumary"
+msgstr "Tra cứu & Tổng hợp"
 
 #. module: robotia_document_extractor
 #: model:ir.model.fields,field_description:robotia_document_extractor.field_quota_usage__next_year_quota_kg
