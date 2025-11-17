@@ -1284,3 +1284,481 @@ class ExtractionController(http.Controller):
         except Exception as e:
             _logger.error(f'Error fetching recovery dashboard data: {str(e)}', exc_info=True)
             return {'error': True, 'message': str(e)}
+
+    @http.route('/document_extractor/export_hfc_report', type='http', auth='user', methods=['POST'], csrf=False)
+    def export_hfc_report(self, filters='{}', **kwargs):
+        """
+        Export HFC dashboard data to Excel using template
+
+        Args:
+            filters (str): JSON string of filter criteria (same as get_hfc_dashboard_data)
+
+        Returns:
+            HTTP response with Excel file attachment
+        """
+        import json
+        import openpyxl
+        from io import BytesIO
+        from datetime import datetime
+        import os
+
+        try:
+            # Parse filters
+            filters_dict = json.loads(filters) if isinstance(filters, str) else filters
+            _logger.info(f"Export HFC report with filters: {filters_dict}")
+
+            # Get template path
+            module_path = os.path.dirname(os.path.dirname(__file__))
+            template_path = os.path.join(module_path, 'static', 'templates', 'HFC_REPORT.xlsx')
+
+            if not os.path.exists(template_path):
+                _logger.error(f"Template not found at: {template_path}")
+                return request.make_response(
+                    json.dumps({'error': True, 'message': 'Template file not found'}),
+                    headers=[('Content-Type', 'application/json')]
+                )
+
+            # Load template
+            wb = openpyxl.load_workbook(template_path)
+
+            # Query data using same logic as dashboard
+            data = self._get_export_data(filters_dict)
+
+            # Fill each sheet
+            self._fill_sheet1_company(wb, data['companies'])
+            self._fill_sheet2_equipment_ownership(wb, data['equipment_ownership'])
+            self._fill_sheet3_equipment_production(wb, data['equipment_production'])
+            self._fill_sheet4_eol_substances(wb, data['eol_substances'])
+            self._fill_sheet5_bulk_substances(wb, data['bulk_substances'])
+
+            # Save to BytesIO
+            output = BytesIO()
+            wb.save(output)
+            output.seek(0)
+
+            # Generate filename with timestamp
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            filename = f'HFC_Report_{timestamp}.xlsx'
+
+            # Return as HTTP response
+            return request.make_response(
+                output.read(),
+                headers=[
+                    ('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'),
+                    ('Content-Disposition', f'attachment; filename="{filename}"'),
+                ]
+            )
+
+        except Exception as e:
+            _logger.error(f'Error exporting HFC report: {str(e)}', exc_info=True)
+            return request.make_response(
+                json.dumps({'error': True, 'message': str(e)}),
+                headers=[('Content-Type', 'application/json')]
+            )
+
+    def _get_export_data(self, filters):
+        """
+        Query all data needed for export based on filters
+        Similar to get_hfc_dashboard_data but returns raw records
+        """
+        # Phase 1: Filter documents
+        Document = request.env['document.extraction'].sudo()
+        doc_domain = []
+
+        if filters.get('status'):
+            doc_domain.append(('state', 'in', filters['status']))
+
+        if filters.get('activity_field_ids'):
+            activity_field_ids = filters['activity_field_ids']
+            if activity_field_ids:
+                doc_domain.append(('activity_field_ids', 'in', activity_field_ids))
+
+        filtered_docs = Document.search(doc_domain)
+        filtered_org_ids = filtered_docs.mapped('organization_id').ids if filtered_docs else []
+
+        # Phase 2: Filter organizations
+        Partner = request.env['res.partner'].sudo()
+        org_domain = [('id', 'in', filtered_org_ids)] if filtered_org_ids else []
+
+        if filters.get('organization_search'):
+            org_domain.append(('name', 'ilike', filters['organization_search']))
+
+        if filters.get('organization_code'):
+            org_domain.append(('business_license_number', 'ilike', filters['organization_code']))
+
+        if filters.get('province'):
+            State = request.env['res.country.state'].sudo()
+            state_ids = State.search([('name', 'ilike', filters['province'])]).ids
+            if state_ids:
+                org_domain.append(('state_id', 'in', state_ids))
+
+        if org_domain:
+            final_orgs = Partner.search(org_domain)
+            final_org_ids = final_orgs.ids
+        else:
+            final_orgs = Partner.browse([])
+            final_org_ids = None
+
+        # Phase 3: Filter by substance
+        Substance = request.env['controlled.substance'].sudo()
+        substance_domain = []
+
+        if filters.get('substance_name'):
+            substance_domain.append(('name', 'ilike', filters['substance_name']))
+
+        if filters.get('substance_group_id'):
+            substance_domain.append(('substance_group_id', '=', filters['substance_group_id']))
+
+        if filters.get('hs_code'):
+            substance_domain.append(('hs_code', 'ilike', filters['hs_code']))
+
+        if substance_domain:
+            substance_ids = Substance.search(substance_domain).ids
+        else:
+            substance_ids = None
+
+        # Phase 4: Get documents in scope
+        final_doc_domain = []
+        if final_org_ids is not None:
+            final_doc_domain.append(('organization_id', 'in', final_org_ids))
+
+        if filters.get('year_from'):
+            final_doc_domain.append(('year', '>=', filters['year_from']))
+
+        if filters.get('year_to'):
+            final_doc_domain.append(('year', '<=', filters['year_to']))
+
+        documents = Document.search(final_doc_domain, limit=10000)  # Limit to prevent huge exports
+
+        # Phase 5: Extract data for each sheet
+        companies_data = []
+        equipment_ownership_data = []
+        equipment_production_data = []
+        eol_substances_data = []
+        bulk_substances_data = []
+
+        for doc in documents:
+            org = doc.organization_id
+            if not org:
+                continue
+
+            # Sheet 1: Company info (one row per company)
+            if org.id not in [c['org_id'] for c in companies_data]:
+                companies_data.append({
+                    'org_id': org.id,
+                    'name': org.name or '',
+                    'license_number': org.business_license_number or '',
+                    'legal_representative': org.legal_representative_name or '',
+                    'legal_representative_position': org.legal_representative_position or '',
+                    'contact_person': org.contact_person_name or '',
+                    'address': org.contact_address or org.street or '',
+                    'phone': org.phone or '',
+                    'fax': org.fax or '',
+                    'email': org.email or '',
+                    'activity_fields': doc.activity_field_ids.mapped('name'),
+                })
+
+            # Sheet 2: Equipment ownership (Form 01)
+            if doc.document_type == '01':
+                for eq in doc.equipment_ownership_ids:
+                    # Apply substance filter
+                    if substance_ids and eq.substance_id.id not in substance_ids:
+                        continue
+
+                    equipment_ownership_data.append({
+                        'license_number': org.business_license_number or '',
+                        'year': doc.year,
+                        'data_source': 'Mẫu 01',
+                        'equipment_category': '',  # Field doesn't exist in model
+                        'equipment_type': eq.equipment_type_id.name if eq.equipment_type_id else '',
+                        'substance_name': eq.substance_id.name if eq.substance_id else '',
+                        'capacity': eq.capacity or 0,
+                        'year_in_use': eq.start_year or 0,
+                        'quantity': eq.equipment_quantity or 0,
+                        'refill_frequency': eq.refill_frequency or 0,
+                        'refill_quantity_kg': eq.substance_quantity_per_refill or 0,
+                        'note': '',  # Field doesn't exist in model
+                    })
+
+            # Sheet 2: Equipment ownership report (Form 02)
+            if doc.document_type == '02':
+                for eq in doc.equipment_ownership_report_ids:
+                    if substance_ids and eq.substance_id.id not in substance_ids:
+                        continue
+
+                    equipment_ownership_data.append({
+                        'license_number': org.business_license_number or '',
+                        'year': doc.year,
+                        'data_source': 'Mẫu 02',
+                        'equipment_category': '',  # Field doesn't exist in model
+                        'equipment_type': eq.equipment_type_id.name if eq.equipment_type_id else '',
+                        'substance_name': eq.substance_id.name if eq.substance_id else '',
+                        'capacity': eq.capacity or 0,
+                        'year_in_use': eq.start_year or 0,
+                        'quantity': eq.equipment_quantity or 0,
+                        'refill_frequency': eq.refill_frequency or 0,
+                        'refill_quantity_kg': eq.substance_quantity_per_refill or 0,
+                        'note': eq.notes or '',
+                    })
+
+            # Sheet 3: Equipment production/import (Form 01)
+            if doc.document_type == '01':
+                for eq in doc.equipment_product_ids:
+                    if substance_ids and eq.substance_id.id not in substance_ids:
+                        continue
+
+                    equipment_production_data.append({
+                        'license_number': org.business_license_number or '',
+                        'year': doc.year,
+                        'data_source': 'Mẫu 01',
+                        'activity': '',  # Field doesn't exist in equipment.product
+                        'product_type': eq.product_type or '',
+                        'hs_code': eq.hs_code_id.code if eq.hs_code_id else '',
+                        'capacity': eq.capacity or 0,
+                        'quantity': eq.quantity or 0,
+                        'substance_name': eq.substance_id.name if eq.substance_id else '',
+                        'substance_quantity_kg': eq.substance_quantity_per_unit or 0,
+                    })
+
+            # Sheet 3: Equipment production report (Form 02)
+            if doc.document_type == '02':
+                for eq in doc.equipment_product_report_ids:
+                    if substance_ids and eq.substance_id.id not in substance_ids:
+                        continue
+
+                    equipment_production_data.append({
+                        'license_number': org.business_license_number or '',
+                        'year': doc.year,
+                        'data_source': 'Mẫu 02',
+                        'activity': eq.production_type or '',
+                        'product_type': eq.product_type or '',
+                        'hs_code': eq.hs_code_id.code if eq.hs_code_id else '',
+                        'capacity': eq.capacity or 0,
+                        'quantity': eq.quantity or 0,
+                        'substance_name': eq.substance_id.name if eq.substance_id else '',
+                        'substance_quantity_kg': eq.substance_quantity_per_unit or 0,
+                    })
+
+            # Sheet 4: EoL substances (collection/recycling)
+            if doc.document_type == '01':
+                for rec in doc.collection_recycling_ids:
+                    if substance_ids and rec.substance_id.id not in substance_ids:
+                        continue
+
+                    eol_substances_data.append({
+                        'license_number': org.business_license_number or '',
+                        'year': doc.year,
+                        'substance_name': rec.substance_id.name if rec.substance_id else rec.substance_name or '',
+                        'activity': rec.activity_type or '',
+                        'quantity_kg': rec.quantity_kg or 0,
+                        'detail_1': '',  # Field doesn't exist in collection.recycling
+                        'detail_2': '',  # Field doesn't exist in collection.recycling
+                    })
+
+            if doc.document_type == '02':
+                for rep in doc.collection_recycling_report_ids:
+                    if substance_ids and rep.substance_id.id not in substance_ids:
+                        continue
+
+                    # Create separate rows for each activity type
+                    substance_name = rep.substance_id.name if rep.substance_id else rep.substance_name or ''
+
+                    if rep.collection_quantity_kg:
+                        eol_substances_data.append({
+                            'license_number': org.business_license_number or '',
+                            'year': doc.year,
+                            'substance_name': substance_name,
+                            'activity': 'Thu gom',
+                            'quantity_kg': rep.collection_quantity_kg or 0,
+                            'detail_1': rep.collection_location or '',
+                            'detail_2': '',
+                        })
+
+                    if rep.reuse_quantity_kg:
+                        eol_substances_data.append({
+                            'license_number': org.business_license_number or '',
+                            'year': doc.year,
+                            'substance_name': substance_name,
+                            'activity': 'Tái sử dụng',
+                            'quantity_kg': rep.reuse_quantity_kg or 0,
+                            'detail_1': '',
+                            'detail_2': '',
+                        })
+
+                    if rep.recycle_quantity_kg:
+                        eol_substances_data.append({
+                            'license_number': org.business_license_number or '',
+                            'year': doc.year,
+                            'substance_name': substance_name,
+                            'activity': 'Tái chế',
+                            'quantity_kg': rep.recycle_quantity_kg or 0,
+                            'detail_1': rep.recycle_technology or '',
+                            'detail_2': rep.recycle_facility_id.name if rep.recycle_facility_id else '',
+                        })
+
+                    if rep.disposal_quantity_kg:
+                        eol_substances_data.append({
+                            'license_number': org.business_license_number or '',
+                            'year': doc.year,
+                            'substance_name': substance_name,
+                            'activity': 'Tiêu hủy',
+                            'quantity_kg': rep.disposal_quantity_kg or 0,
+                            'detail_1': rep.disposal_technology or '',
+                            'detail_2': rep.disposal_facility or '',
+                        })
+
+            # Sheet 5: Bulk substances (production/import/export)
+            if doc.document_type == '01':
+                for usage in doc.substance_usage_ids:
+                    if substance_ids and usage.substance_id.id not in substance_ids:
+                        continue
+
+                    # Determine activity type from usage_type field
+                    if usage.usage_type == 'production':
+                        activity = 'Sản xuất'
+                    elif usage.usage_type == 'import':
+                        activity = 'Nhập khẩu'
+                    elif usage.usage_type == 'export':
+                        activity = 'Xuất khẩu'
+                    else:
+                        activity = ''
+
+                    bulk_substances_data.append({
+                        'license_number': org.business_license_number or '',
+                        'data_source': 'Mẫu 01',
+                        'activity': activity,
+                        'substance_name': usage.substance_id.name if usage.substance_id else usage.substance_name or '',
+                        'year': doc.year,
+                        'quantity_kg': usage.year_2_quantity_kg or 0,  # Use year 2 as requested
+                        'co2e_tons': usage.year_2_quantity_co2 or 0,
+                        'hs_code': '',  # substance.usage doesn't have hs_code field
+                    })
+
+            if doc.document_type == '02':
+                for quota in doc.quota_usage_ids:
+                    if substance_ids and quota.substance_id.id not in substance_ids:
+                        continue
+
+                    bulk_substances_data.append({
+                        'license_number': org.business_license_number or '',
+                        'data_source': 'Mẫu 02',
+                        'activity': quota.usage_type or 'Sử dụng hạn ngạch',
+                        'substance_name': quota.substance_id.name if quota.substance_id else quota.substance_name or '',
+                        'year': doc.year,
+                        'quantity_kg': quota.total_quota_kg or 0,
+                        'co2e_tons': quota.total_quota_co2 or 0,  # Now using correct field
+                        'hs_code': quota.hs_code or '',
+                    })
+
+        return {
+            'companies': companies_data,
+            'equipment_ownership': equipment_ownership_data,
+            'equipment_production': equipment_production_data,
+            'eol_substances': eol_substances_data,
+            'bulk_substances': bulk_substances_data,
+        }
+
+    def _fill_sheet1_company(self, wb, companies_data):
+        """Fill Sheet 1: Company/Document info"""
+        ws = wb['1_Hoso_DoanhNhiep']
+
+        # Activity field column mapping
+        activity_field_cols = {
+            'Sản xuất chất': 'K',
+            'Nhập khẩu chất': 'L',
+            'Xuất khẩu chất': 'M',
+            'Sản xuất thiết bị': 'N',
+            'Nhập khẩu thiết bị': 'O',
+            'Sở hữu điều hòa': 'P',
+            'Sở hữu thiết bị lạnh': 'Q',
+            'Thu gom xử lý': 'R',
+        }
+
+        row_idx = 2  # Start after header
+        for idx, company in enumerate(companies_data, start=1):
+            ws[f'A{row_idx}'] = idx
+            ws[f'B{row_idx}'] = company['name']
+            ws[f'C{row_idx}'] = company['license_number']
+            ws[f'D{row_idx}'] = company['legal_representative']
+            ws[f'E{row_idx}'] = company['legal_representative_position']
+            ws[f'F{row_idx}'] = company['contact_person']
+            ws[f'G{row_idx}'] = company['address']
+            ws[f'H{row_idx}'] = company['phone']
+            ws[f'I{row_idx}'] = company['fax']
+            ws[f'J{row_idx}'] = company['email']
+
+            # Activity fields - mark with 'X' if present
+            for field_name, col in activity_field_cols.items():
+                if any(field_name.lower() in af.lower() for af in company['activity_fields']):
+                    ws[f'{col}{row_idx}'] = 'X'
+
+            row_idx += 1
+
+    def _fill_sheet2_equipment_ownership(self, wb, equipment_ownership_data):
+        """Fill Sheet 2: Equipment Ownership"""
+        ws = wb['2_DL_ThietBi_SoHuu']
+
+        row_idx = 2  # Start after header
+        for eq in equipment_ownership_data:
+            ws[f'A{row_idx}'] = eq['license_number']
+            ws[f'B{row_idx}'] = eq['year']
+            ws[f'C{row_idx}'] = eq['data_source']
+            ws[f'D{row_idx}'] = eq['equipment_category']
+            ws[f'E{row_idx}'] = eq['equipment_type']
+            ws[f'F{row_idx}'] = eq['substance_name']
+            ws[f'G{row_idx}'] = eq['capacity']
+            ws[f'H{row_idx}'] = eq['year_in_use']
+            ws[f'I{row_idx}'] = eq['quantity']
+            ws[f'J{row_idx}'] = eq['refill_frequency']
+            ws[f'K{row_idx}'] = eq['refill_quantity_kg']
+            ws[f'L{row_idx}'] = eq['note']
+            row_idx += 1
+
+    def _fill_sheet3_equipment_production(self, wb, equipment_production_data):
+        """Fill Sheet 3: Equipment Production/Import"""
+        ws = wb['3_DL_ThietBi_SX_NK']
+
+        row_idx = 2  # Start after header
+        for eq in equipment_production_data:
+            ws[f'A{row_idx}'] = eq['license_number']
+            ws[f'B{row_idx}'] = eq['year']
+            ws[f'C{row_idx}'] = eq['data_source']
+            ws[f'D{row_idx}'] = eq['activity']
+            ws[f'E{row_idx}'] = eq['product_type']
+            ws[f'F{row_idx}'] = eq['hs_code']
+            ws[f'G{row_idx}'] = eq['capacity']
+            ws[f'H{row_idx}'] = eq['quantity']
+            ws[f'I{row_idx}'] = eq['substance_name']
+            ws[f'J{row_idx}'] = eq['substance_quantity_kg']
+            row_idx += 1
+
+    def _fill_sheet4_eol_substances(self, wb, eol_substances_data):
+        """Fill Sheet 4: EoL Substances (Collection/Recycling)"""
+        ws = wb['4_DL_MoiChat_EoL']
+
+        row_idx = 2  # Start after header
+        for rec in eol_substances_data:
+            ws[f'A{row_idx}'] = rec['license_number']
+            ws[f'B{row_idx}'] = rec['year']
+            ws[f'C{row_idx}'] = rec['substance_name']
+            ws[f'D{row_idx}'] = rec['activity']
+            ws[f'E{row_idx}'] = rec['quantity_kg']
+            ws[f'F{row_idx}'] = rec['detail_1']
+            ws[f'G{row_idx}'] = rec['detail_2']
+            row_idx += 1
+
+    def _fill_sheet5_bulk_substances(self, wb, bulk_substances_data):
+        """Fill Sheet 5: Bulk Substances (Production/Import/Export)"""
+        ws = wb['5. DL_MoiChat_Bulk']
+
+        row_idx = 2  # Start after header
+        for usage in bulk_substances_data:
+            ws[f'A{row_idx}'] = usage['license_number']
+            ws[f'B{row_idx}'] = usage['data_source']
+            ws[f'C{row_idx}'] = usage['activity']
+            ws[f'D{row_idx}'] = usage['substance_name']
+            ws[f'E{row_idx}'] = usage['year']
+            ws[f'F{row_idx}'] = usage['quantity_kg']
+            ws[f'G{row_idx}'] = usage['co2e_tons']
+            ws[f'H{row_idx}'] = usage['hs_code']
+            row_idx += 1

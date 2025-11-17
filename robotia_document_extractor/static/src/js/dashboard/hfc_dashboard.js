@@ -447,21 +447,92 @@ export class HfcDashboard extends Component {
     }
 
     /**
-     * Export report (placeholder)
+     * Export report to Excel
      */
-    exportReport() {
-        // TODO: Implement export functionality
-        console.log("Export report clicked");
-        this.action.doAction({
-            type: 'ir.actions.client',
-            tag: 'display_notification',
-            params: {
-                title: 'Export Report',
-                message: 'Export functionality coming soon',
-                type: 'info',
-                sticky: false,
+    async exportReport() {
+        try {
+            // Show loading notification
+            this.action.doAction({
+                type: 'ir.actions.client',
+                tag: 'display_notification',
+                params: {
+                    title: 'Đang xuất báo cáo...',
+                    message: 'Vui lòng đợi trong giây lát',
+                    type: 'info',
+                    sticky: false,
+                }
+            });
+
+            console.log("Exporting HFC report with filters:", this.state.filters);
+
+            // Prepare form data
+            const formData = new FormData();
+            formData.append('filters', JSON.stringify(this.state.filters));
+
+            // Call backend via HTTP POST (not RPC because we need binary response)
+            const response = await fetch('/document_extractor/export_hfc_report', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
-        });
+
+            // Check if response is JSON (error) or Excel file
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                const error = await response.json();
+                throw new Error(error.message || 'Unknown error');
+            }
+
+            // Get the blob (Excel file)
+            const blob = await response.blob();
+
+            // Generate filename with timestamp
+            const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-').replace('T', '_');
+            const filename = `HFC_Report_${timestamp}.xlsx`;
+
+            // Create download link
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+
+            // Cleanup
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+
+            // Show success notification
+            this.action.doAction({
+                type: 'ir.actions.client',
+                tag: 'display_notification',
+                params: {
+                    title: 'Xuất báo cáo thành công',
+                    message: `File ${filename} đã được tải xuống`,
+                    type: 'success',
+                    sticky: false,
+                }
+            });
+
+            console.log("Export completed successfully");
+
+        } catch (error) {
+            console.error("Error exporting report:", error);
+            this.action.doAction({
+                type: 'ir.actions.client',
+                tag: 'display_notification',
+                params: {
+                    title: 'Lỗi xuất báo cáo',
+                    message: error.message || 'Đã xảy ra lỗi khi xuất báo cáo',
+                    type: 'danger',
+                    sticky: true,
+                }
+            });
+        }
     }
 
     /**
