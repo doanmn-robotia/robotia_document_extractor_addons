@@ -24,15 +24,22 @@ export class GroupedListArchParser extends ListArchParser {
         if (optionsAttr) {
             const options = evaluateExpr(optionsAttr);
 
+            // Support both static label (group_header) and dynamic label (group_label_field)
             if (options.group_header || text) {
                 fieldInfo.groupName = options.group_header || text;
                 fieldInfo.hasGroupHeader = true;
             }
-            
+
+            // Dynamic group label from field
+            if (options.group_label_field) {
+                fieldInfo.groupLabelField = options.group_label_field;
+                fieldInfo.hasGroupHeader = true;
+            }
+
             if (options.group_start) {
                 fieldInfo.groupStart = true;
             }
-            
+
             if (options.group_end) {
                 fieldInfo.groupEnd = true;
             }
@@ -40,7 +47,7 @@ export class GroupedListArchParser extends ListArchParser {
             if (options.group_class) {
                 fieldInfo.groupClass = options.group_class;
             }
-        
+
         }
     }
 
