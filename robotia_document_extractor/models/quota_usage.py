@@ -114,18 +114,11 @@ class QuotaUsage(models.Model):
         for vals in vals_list:
             if vals.get('is_title'):
                 continue
-            if not vals.get('substance_id') and vals.get('substance_name'):
-                vals['substance_id'] = self._find_or_create_substance(vals['substance_name']).id
             if not vals.get('hs_code_id') and vals.get('hs_code'):
                 vals['hs_code_id'] = self._find_or_create_hs_code(vals['hs_code']).id
             if not vals.get('country_id') and vals.get('country_code'):
                 vals['country_id'] = self._find_country_by_code(vals['country_code']).id
         return super(QuotaUsage, self).create(vals_list)
-
-    def _find_or_create_substance(self, text):
-        text = text.strip()
-        rec = self.env['controlled.substance'].search(['|', ('name', '=ilike', text), ('code', '=ilike', text)], limit=1)
-        return rec or self.env['controlled.substance'].create({'name': text, 'code': text, 'active': True, 'needs_review': True, 'created_from_extraction': True})
 
     def _find_or_create_hs_code(self, text):
         text = text.strip()
