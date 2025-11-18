@@ -168,10 +168,13 @@ export class ChatBot extends Component {
 
                     const dashboardTag = dashboardMap[action.params.dashboard];
                     if (dashboardTag) {
+                        // Pass only relevant params (exclude 'dashboard' key)
+                        const { dashboard, ...dashboardParams } = action.params;
+
                         await this.action.doAction({
                             type: 'ir.actions.client',
                             tag: dashboardTag,
-                            params: action.params
+                            params: dashboardParams  // Pass substance_id, organization_id, etc.
                         });
                     }
                     break;
@@ -193,6 +196,7 @@ export class ChatBot extends Component {
                     // Open documents list with search filter
                     await this.action.doAction({
                         type: 'ir.actions.act_window',
+                        name: 'Search Results',
                         res_model: 'document.extraction',
                         views: [[false, 'list'], [false, 'form']],
                         domain: action.params.domain || [],
@@ -201,14 +205,15 @@ export class ChatBot extends Component {
                     });
                     break;
 
-                case 'upload_form':
-                    // Navigate to main dashboard for upload
-                    await this.action.doAction({
-                        type: 'ir.actions.client',
-                        tag: 'robotia_document_extractor.dashboard_action',
-                        params: {
-                            highlight_upload: true,
-                            default_form_type: action.params.form_type || '01'
+                case 'create_document':
+                    // Open form to create new document
+                    const docType = action.params.document_type || '01';
+                    const actionName = docType === '01' ? 'action_document_extraction_registration' : 'action_document_extraction_report';
+
+                    // Open the predefined action (has correct context)
+                    await this.action.doAction(actionName, {
+                        additionalContext: {
+                            default_document_type: docType
                         }
                     });
                     break;

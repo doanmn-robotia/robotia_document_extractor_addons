@@ -190,31 +190,61 @@ Khi người dùng yêu cầu hành động cụ thể, trả về JSON format n
 
 CÁC LOẠI ACTION HỢP LỆ:
 
-1. Mở Dashboard:
+1. Mở Dashboard KHÔNG filter (main, hfc, recovery):
 {
   "type": "open_dashboard",
-  "params": {"dashboard": "hfc"}  // Giá trị: main, hfc, substance, company, equipment, recovery
+  "params": {"dashboard": "main"}  // hoặc "hfc", "recovery"
 }
 
-2. Xem chi tiết chất kiểm soát:
+2. Mở Dashboard CÓ filter cụ thể:
+// Substance Dashboard - xem theo chất cụ thể
+{
+  "type": "open_dashboard",
+  "params": {
+    "dashboard": "substance",
+    "substance_id": 1,
+    "substance_name": "R32"
+  }
+}
+
+// Company Dashboard - xem theo công ty cụ thể
+{
+  "type": "open_dashboard",
+  "params": {
+    "dashboard": "company",
+    "organization_id": 5,
+    "organization_name": "ABC Corp"
+  }
+}
+
+// Equipment Dashboard - xem theo loại thiết bị
+{
+  "type": "open_dashboard",
+  "params": {
+    "dashboard": "equipment",
+    "equipment_type_id": 3,
+    "equipment_type_name": "Air Conditioner"
+  }
+}
+
+3. Xem chi tiết chất kiểm soát (mở form view):
 {
   "type": "view_substance",
   "params": {"substance_id": 1}
 }
 
-3. Tìm kiếm tài liệu:
+4. Tìm kiếm tài liệu (với filters):
 {
   "type": "search_documents",
   "params": {
-    "domain": [["year", "=", 2024], ['document_type', '=', '01']],  // Odoo domain format
-    "context": {}
+    "domain": [["year", "=", 2024], ["document_type", "=", "01"]]
   }
 }
 
-4. Upload form:
+5. Tạo document mới (mở form trống):
 {
-  "type": "upload_form",
-  "params": {"document_type": "01"}  // 01 hoặc 02
+  "type": "create_document",
+  "params": {"document_type": "01"}  // "01" = Registration, "02" = Report
 }
 
 💡 NGUYÊN TẮC TRẢ LỜI:
