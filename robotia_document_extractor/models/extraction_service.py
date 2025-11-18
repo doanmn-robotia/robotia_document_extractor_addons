@@ -362,34 +362,38 @@ class DocumentExtractionService(models.AbstractModel):
 
 ⚠️ CRITICAL: SUBSTANCE NAME STANDARDIZATION REQUIRED ⚠️
 
-When extracting substance names from documents, you MUST:
-1. Map all substance names to the EXACT standardized names from the official list below
-2. Handle non-standard formatting (missing hyphens, spaces, case variations)
-3. Use fuzzy matching for common typos and variations
+You have access to the OFFICIAL LIST of {len(substances)} controlled substances below.
+
+When you extract a substance name from the document, you MUST:
+1. Compare it against the official list (both "Name" and "Code" columns)
+2. Find the BEST MATCH using intelligent fuzzy matching
+3. Return the EXACT standardized name from the official list
+4. If no reasonable match exists, prefix with "[UNKNOWN] "
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📋 SUBSTANCE NAME MAPPING RULES
+🧠 INTELLIGENT MATCHING STRATEGY
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Rule 1: MISSING HYPHENS
-  "HFC134a"  → "HFC-134a"
-  "R410A"    → "R-410A"
-  "HCFC22"   → "HCFC-22"
+You should be flexible and intelligent when matching substance names. Consider:
 
-Rule 2: EXTRA SPACES
-  "HFC - 134a" → "HFC-134a"
-  "R - 410A"   → "R-410A"
+Common Variations:
+  - Missing hyphens: "HFC134a" matches "HFC-134a"
+  - Extra spaces: "HFC - 134a" matches "HFC-134a"
+  - Case differences: "hfc-134a" matches "HFC-134a"
+  - Code vs Name: "R-22" (code) matches "HCFC-22" (name)
+  - Partial matches: "R410" might match "R-410A"
 
-Rule 3: CASE VARIATIONS
-  "hfc-134a" → "HFC-134a"
-  "r-410a"   → "R-410A"
+Vietnamese Documents May Use:
+  - Alternative notations
+  - Abbreviated forms
+  - Mixed nomenclature (switching between name and code)
+  - Non-standard punctuation
 
-Rule 4: CODE MATCHING (Common in Vietnamese documents)
-  If document shows "R-22"    → Map to "HCFC-22" (R-22 is code)
-  If document shows "R-134a"  → Map to "HFC-134a" (R-134a is code)
-
-Rule 5: UNKNOWN SUBSTANCES
-  If NOT in official list → Prefix with "[UNKNOWN] "
+Your Task:
+  → Use your intelligence to find the closest match in the official list
+  → Consider both semantic meaning and pattern similarity
+  → Don't be limited by specific rules - think flexibly!
+  → When in doubt, match to the most similar substance
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📚 OFFICIAL CONTROLLED SUBSTANCES LIST ({len(substances)} substances)
@@ -405,7 +409,22 @@ HCFC - Hydrochlorofluorocarbons:
 {chr(10).join(hcfc_list) if hcfc_list else '  (None)'}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-✅ APPLY STANDARDIZATION TO ALL SUBSTANCE NAMES IN YOUR EXTRACTION
+💡 MATCHING EXAMPLES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Document Says        → Your Output (matched from list above)
+────────────────────────────────────────────────────────────
+"HFC-134a"          → "HFC-134a" ✓ (exact match)
+"HFC134a"           → "HFC-134a" ✓ (missing hyphen)
+"R-134a"            → "HFC-134a" ✓ (code to name)
+"R410A"             → "R-410A" ✓ (missing hyphens)
+"r 22"              → "HCFC-22" ✓ (case + spaces, match code R-22)
+"Freon 22"          → Check if similar to any substance, possibly "HCFC-22"
+"134a"              → "HFC-134a" ✓ (partial, obvious match)
+"XYZ-999"           → "[UNKNOWN] XYZ-999" ⚠️ (not in list)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ USE YOUR AI INTELLIGENCE TO MATCH INTELLIGENTLY
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 """
 
