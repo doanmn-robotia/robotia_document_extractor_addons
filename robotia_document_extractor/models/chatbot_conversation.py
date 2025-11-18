@@ -61,9 +61,10 @@ class ChatbotConversation(models.Model):
         for record in self:
             if record.message_ids:
                 first_user_msg = record.message_ids.filtered(lambda m: m.role == 'user')
-                if first_user_msg:
+                if first_user_msg and len(first_user_msg) > 0:
                     # Use first 50 chars of first user message
-                    record.title = first_user_msg[0].content[:50] + ('...' if len(first_user_msg[0].content) > 50 else '')
+                    content = first_user_msg[0].content
+                    record.title = content[:50] + ('...' if len(content) > 50 else '')
                 else:
                     record.title = 'New Conversation'
             else:

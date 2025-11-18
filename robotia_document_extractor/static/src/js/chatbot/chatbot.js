@@ -148,6 +148,12 @@ export class ChatBot extends Component {
      */
     async executeAction(action) {
         try {
+            // Validate action has required fields
+            if (!action || !action.type || !action.params) {
+                console.warn('Invalid action format:', action);
+                return;
+            }
+
             switch (action.type) {
                 case 'open_dashboard':
                     // Map dashboard names to action tags
@@ -172,13 +178,15 @@ export class ChatBot extends Component {
 
                 case 'view_substance':
                     // Open substance form view
-                    await this.action.doAction({
-                        type: 'ir.actions.act_window',
-                        res_model: 'controlled.substance',
-                        res_id: action.params.substance_id,
-                        views: [[false, 'form']],
-                        target: 'current'
-                    });
+                    if (action.params.substance_id) {
+                        await this.action.doAction({
+                            type: 'ir.actions.act_window',
+                            res_model: 'controlled.substance',
+                            res_id: action.params.substance_id,
+                            views: [[false, 'form']],
+                            target: 'current'
+                        });
+                    }
                     break;
 
                 case 'search_documents':
@@ -200,7 +208,7 @@ export class ChatBot extends Component {
                         tag: 'robotia_document_extractor.dashboard_action',
                         params: {
                             highlight_upload: true,
-                            default_form_type: action.params.form_type
+                            default_form_type: action.params.form_type || '01'
                         }
                     });
                     break;

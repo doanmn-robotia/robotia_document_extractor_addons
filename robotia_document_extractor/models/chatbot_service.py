@@ -308,6 +308,10 @@ CÁC LOẠI ACTION HỢP LỆ:
                 # Extract JSON from ```json ... ``` block
                 start = ai_response.find('```json') + 7
                 end = ai_response.find('```', start)
+                if end == -1:
+                    # Malformed markdown block, skip
+                    raise json.JSONDecodeError("No closing ```", ai_response, 0)
+
                 json_str = ai_response[start:end].strip()
                 parsed = json.loads(json_str)
 
