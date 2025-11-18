@@ -3,6 +3,7 @@
 import { Component, useState, useRef, onMounted } from "@odoo/owl";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
+import { rpc } from "@web/core/network/rpc";
 
 export class ChatBot extends Component {
     static template = "robotia_document_extractor.ChatBot";
@@ -14,6 +15,9 @@ export class ChatBot extends Component {
 
         this.chatMessages = useRef("chatMessages");
         this.chatInput = useRef("chatInput");
+
+        // Track conversation ID for multi-turn chat
+        this.conversationId = null;
 
         this.state = useState({
             messages: [],
@@ -98,68 +102,117 @@ export class ChatBot extends Component {
     }
 
     /**
-     * Get bot response (placeholder - will integrate with AI later)
+     * Get bot response from AI service using Gemini Chat API
      */
     async getBotResponse(userMessage) {
-        // Simulate network delay
-        await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
+        try {
+            // Call real API endpoint
+            const result = await rpc("/chatbot/message", {
+                message: userMessage,
+                conversation_id: this.conversationId
+            });
 
-        let response = "";
+            // Store conversation ID for multi-turn chat
+            if (result.conversation_id) {
+                this.conversationId = result.conversation_id;
+            }
 
-        // Simple keyword-based responses (placeholder)
-        const lowerMessage = userMessage.toLowerCase();
+            // Hide typing indicator
+            this.state.isTyping = false;
 
-        if (lowerMessage.includes("form 01") || lowerMessage.includes("registration")) {
-            response = "Form 01 là mẫu đăng ký sử dụng chất kiểm soát. Bạn có thể upload file PDF và hệ thống sẽ tự động trích xuất thông tin bằng AI. Bạn có muốn tôi hướng dẫn chi tiết không?";
-        } else if (lowerMessage.includes("form 02") || lowerMessage.includes("report")) {
-            response = "Form 02 là mẫu báo cáo sử dụng chất kiểm soát. Tương tự Form 01, bạn chỉ cần upload PDF và hệ thống sẽ xử lý tự động. Bạn cần giúp gì về Form 02?";
-        } else if (lowerMessage.includes("recent") || lowerMessage.includes("history")) {
-            response = "Bạn có thể xem các tài liệu gần đây nhất trong phần Dashboard hoặc vào menu Documents > All Documents. Bạn muốn tôi mở trang đó cho bạn không?";
-        } else if (lowerMessage.includes("substance") || lowerMessage.includes("chất")) {
-            response = "Chất kiểm soát là các chất được quy định trong Nghị định thư Montreal. Hệ thống có danh sách đầy đủ các chất này trong Lookup & Summary > Controlled Substances. Bạn có muốn xem danh sách không?";
-        } else if (lowerMessage.includes("help") || lowerMessage.includes("giúp")) {
-            response = "Tôi có thể giúp bạn:\n• Hướng dẫn trích xuất Form 01/02\n• Giải thích về các chất kiểm soát\n• Xem thống kê và báo cáo\n• Tìm kiếm tài liệu\n\nBạn cần giúp gì cụ thể?";
-        } else if (lowerMessage.includes("statistics") || lowerMessage.includes("thống kê")) {
-            response = "Bạn có thể xem thống kê chi tiết tại:\n• Main Dashboard - tổng quan\n• HFC Dashboard - phân tích HFC\n• Thu gom - Tái chế - dữ liệu thu gom\n\nBạn muốn xem dashboard nào?";
-        } else {
-            response = `Cảm ơn bạn đã nhắn tin! Hiện tại tôi đang trong giai đoạn phát triển. Tôi có thể giúp bạn về:\n• Trích xuất Form 01/02\n• Thông tin về chất kiểm soát\n• Xem thống kê và dashboard\n\nBạn có câu hỏi gì khác không?`;
+            // Add assistant message
+            this.addMessage(result.message, 'bot');
+
+            // Update suggestions from AI
+            if (result.suggestions && result.suggestions.length > 0) {
+                this.state.suggestions = result.suggestions;
+            }
+
+            // Execute action if present
+            if (result.action) {
+                await this.executeAction(result.action);
+            }
+
+        } catch (error) {
+            console.error("Error getting bot response:", error);
+            this.state.isTyping = false;
+            this.addMessage("Xin lỗi, đã có lỗi xảy ra. Vui lòng thử lại.", 'bot');
+            this.notification.add("Không thể kết nối với Trợ lý AI", {
+                type: "danger"
+            });
         }
-
-        this.state.isTyping = false;
-        this.addMessage(response, 'bot');
-
-        // Update suggestions based on context
-        this.updateSuggestions(lowerMessage);
     }
 
     /**
-     * Update suggestions based on context
+     * Execute action returned by AI
      */
-    updateSuggestions(userMessage) {
-        if (userMessage.includes("mẫu 01") || userMessage.includes("form 01")) {
-            this.state.suggestions = [
-                "Upload Mẫu 01",
-                "Ví dụ Mẫu 01",
-                "Các trường trong Mẫu 01"
-            ];
-        } else if (userMessage.includes("mẫu 02") || userMessage.includes("form 02")) {
-            this.state.suggestions = [
-                "Upload Mẫu 02",
-                "Ví dụ Mẫu 02",
-                "So sánh Mẫu 01 và 02"
-            ];
-        } else if (userMessage.includes("chất")) {
-            this.state.suggestions = [
-                "Danh sách chất",
-                "Giá trị GWP",
-                "Xem dashboard"
-            ];
-        } else {
-            this.state.suggestions = [
-                "Xem thống kê",
-                "Tài liệu gần đây",
-                "Hỗ trợ chất kiểm soát"
-            ];
+    async executeAction(action) {
+        try {
+            switch (action.type) {
+                case 'open_dashboard':
+                    // Map dashboard names to action tags
+                    const dashboardMap = {
+                        'main': 'robotia_document_extractor.dashboard_action',
+                        'hfc': 'robotia_document_extractor.hfc_dashboard_action',
+                        'substance': 'robotia_document_extractor.substance_dashboard_action',
+                        'company': 'robotia_document_extractor.company_dashboard_action',
+                        'equipment': 'robotia_document_extractor.equipment_dashboard_action',
+                        'recovery': 'robotia_document_extractor.recovery_dashboard_action',
+                    };
+
+                    const dashboardTag = dashboardMap[action.params.dashboard];
+                    if (dashboardTag) {
+                        await this.action.doAction({
+                            type: 'ir.actions.client',
+                            tag: dashboardTag,
+                            params: action.params
+                        });
+                    }
+                    break;
+
+                case 'view_substance':
+                    // Open substance form view
+                    await this.action.doAction({
+                        type: 'ir.actions.act_window',
+                        res_model: 'controlled.substance',
+                        res_id: action.params.substance_id,
+                        views: [[false, 'form']],
+                        target: 'current'
+                    });
+                    break;
+
+                case 'search_documents':
+                    // Open documents list with search filter
+                    await this.action.doAction({
+                        type: 'ir.actions.act_window',
+                        res_model: 'document.extraction',
+                        views: [[false, 'list'], [false, 'form']],
+                        domain: action.params.domain || [],
+                        context: action.params.context || {},
+                        target: 'current'
+                    });
+                    break;
+
+                case 'upload_form':
+                    // Navigate to main dashboard for upload
+                    await this.action.doAction({
+                        type: 'ir.actions.client',
+                        tag: 'robotia_document_extractor.dashboard_action',
+                        params: {
+                            highlight_upload: true,
+                            default_form_type: action.params.form_type
+                        }
+                    });
+                    break;
+
+                default:
+                    console.warn('Unknown action type:', action.type);
+            }
+        } catch (error) {
+            console.error('Error executing action:', error);
+            this.notification.add(`Không thể thực hiện hành động: ${action.type}`, {
+                type: 'warning'
+            });
         }
     }
 

@@ -395,4 +395,75 @@
             padding: 8px 14px;
         }
     }
+
+    // ============= SMOOTH ANIMATIONS =============
+
+    // Message appear animation
+    .message-wrapper {
+        animation: messageAppear 0.3s ease-out;
+    }
+
+    @keyframes messageAppear {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    // Button hover animations with smooth transitions
+    .send-btn,
+    .suggestion-chip,
+    .quick-action-card {
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    // Enhanced typing indicator animation
+    .typing-indicator {
+        span {
+            animation: typingBounce 1.4s infinite ease-in-out;
+        }
+    }
+
+    @keyframes typingBounce {
+        0%, 60%, 100% {
+            transform: translateY(0);
+            opacity: 0.5;
+        }
+        30% {
+            transform: translateY(-6px);
+            opacity: 1;
+        }
+    }
+
+    // Smooth scroll behavior
+    .chat-messages {
+        scroll-behavior: smooth;
+    }
+
+    // Input focus animation
+    .chat-input {
+        transition: all 0.2s ease;
+
+        &:focus {
+            transform: scale(1.01);
+        }
+    }
+
+    // Fade in animation for suggestions
+    .suggestions {
+        animation: fadeIn 0.3s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
 }
