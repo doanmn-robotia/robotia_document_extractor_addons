@@ -158,12 +158,12 @@ export class ChatBot extends Component {
                 case 'open_dashboard':
                     // Map dashboard names to action tags
                     const dashboardMap = {
-                        'main': 'robotia_document_extractor.dashboard_action',
-                        'hfc': 'robotia_document_extractor.hfc_dashboard_action',
-                        'substance': 'robotia_document_extractor.substance_dashboard_action',
-                        'company': 'robotia_document_extractor.company_dashboard_action',
-                        'equipment': 'robotia_document_extractor.equipment_dashboard_action',
-                        'recovery': 'robotia_document_extractor.recovery_dashboard_action',
+                        'main': 'document_extractor.dashboard',
+                        'hfc': 'document_extractor.hfc_dashboard',
+                        'substance': 'document_extractor.substance_dashboard',
+                        'company': 'document_extractor.company_dashboard',
+                        'equipment': 'document_extractor.equipment_dashboard',
+                        'recovery': 'document_extractor.recovery_dashboard',
                     };
 
                     const dashboardTag = dashboardMap[action.params.dashboard];

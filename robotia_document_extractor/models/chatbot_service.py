@@ -97,7 +97,7 @@ class ChatbotService(models.AbstractModel):
             if substances:
                 substance_info = ["DANH SÁCH CHẤT KIỂM SOÁT:"]
                 for s in substances:
-                    substance_info.append(f"  • {s.name} ({s.formula}): GWP = {s.gwp_value}, Type = {s.substance_type}")
+                    substance_info.append(f"  • {s.name} ({s.formula}): GWP = {s.gwp}, Type = {s.substance_group_id.name}")
                 context_parts.append("\n".join(substance_info))
 
         # 2. Get recent documents if asked
@@ -107,7 +107,7 @@ class ChatbotService(models.AbstractModel):
                 doc_info = ["TÀI LIỆU GẦN ĐÂY:"]
                 for d in docs:
                     org_name = d.organization_id.name if d.organization_id else 'N/A'
-                    doc_info.append(f"  • {d.document_type_display} - {org_name} - Năm {d.year} - Ngày tạo: {d.create_date.strftime('%d/%m/%Y')}")
+                    doc_info.append(f"  • {d.fields_get(['document_type'], ['string'])['document_type']['string']} - {org_name} - Năm {d.year} - Ngày tạo: {d.create_date.strftime('%d/%m/%Y')}")
                 context_parts.append("\n".join(doc_info))
 
         # 3. Get statistics if asked
@@ -206,7 +206,7 @@ CÁC LOẠI ACTION HỢP LỆ:
 {
   "type": "search_documents",
   "params": {
-    "domain": [["year", "=", 2024]],  // Odoo domain format
+    "domain": [["year", "=", 2024], ['document_type', '=', '01']],  // Odoo domain format
     "context": {}
   }
 }
@@ -214,7 +214,7 @@ CÁC LOẠI ACTION HỢP LỆ:
 4. Upload form:
 {
   "type": "upload_form",
-  "params": {"form_type": "01"}  // 01 hoặc 02
+  "params": {"document_type": "01"}  // 01 hoặc 02
 }
 
 💡 NGUYÊN TẮC TRẢ LỜI:
