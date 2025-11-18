@@ -11,6 +11,12 @@
                         <div class="header-title">Trợ lý AI</div>
                         <div class="header-sub">Hỗ trợ trích xuất và phân tích tài liệu tự động</div>
                     </div>
+                    <button
+                        t-if="state.messages.length > 0"
+                        class="btn btn-outline-primary new-chat-btn"
+                        t-on-click="startNewChat">
+                        <i class="fa fa-plus-circle"/> Tạo đoạn chat mới
+                    </button>
                 </div>
 
                 <!-- Chat Container -->

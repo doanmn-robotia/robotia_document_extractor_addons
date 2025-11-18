@@ -287,6 +287,36 @@ export class ChatBot extends Component {
     }
 
     /**
+     * Start a new chat conversation
+     */
+    startNewChat() {
+        // Clear conversation ID
+        this.conversationId = null;
+        localStorage.removeItem('chatbot_conversation_id');
+
+        // Clear messages
+        this.state.messages = [];
+
+        // Reset input
+        this.state.inputMessage = "";
+
+        // Reset typing state
+        this.state.isTyping = false;
+
+        // Reset suggestions to default
+        this.state.suggestions = [
+            "Xem thống kê",
+            "Tài liệu gần đây",
+            "Hỗ trợ chất kiểm soát"
+        ];
+
+        // Focus input
+        if (this.chatInput.el) {
+            this.chatInput.el.focus();
+        }
+    }
+
+    /**
      * Send quick action message
      */
     sendQuickAction(message) {
