@@ -458,8 +458,64 @@ Document Says        → Your Output (matched from list above)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 """
 
+        # Query all active activity fields from database
+        activity_fields = self.env['activity.field'].search([
+            ('active', '=', True)
+        ], order='sequence')
+
+        # Build activity fields context
+        activity_fields_text = f"""
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🏢 ACTIVITY FIELDS STANDARDIZATION CONTEXT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ CRITICAL: ACTIVITY FIELD CODE MAPPING REQUIRED ⚠️
+
+You have access to the OFFICIAL LIST of {len(activity_fields)} activity fields below.
+
+When you extract activity fields from the document, you MUST:
+1. Identify checked/selected activities from section "2. Nội dung đăng ký" (Form 01)
+   or "b) Thông tin về lĩnh vực hoạt động" (Form 02)
+2. Match each activity to the EXACT code from the official list below
+3. Return ONLY the codes in the "activity_field_codes" array
+4. If an activity doesn't match any official field, skip it (do NOT create unknown codes)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 OFFICIAL ACTIVITY FIELDS LIST ({len(activity_fields)} fields)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Code                    | Activity Field Name
+────────────────────────────────────────────────────────────────────────
+{chr(10).join([f'{field.code:23s} | {field.name}' for field in activity_fields])}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🧠 MATCHING EXAMPLES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Document Shows (checkbox checked)           → Code to Return
+────────────────────────────────────────────────────────────────────────
+"Sản xuất chất được kiểm soát"              → "production"
+"Nhập khẩu chất được kiểm soát"             → "import"
+"Xuất khẩu chất được kiểm soát"             → "export"
+"Sản xuất thiết bị chứa chất..."            → "equipment_production"
+"Nhập khẩu thiết bị chứa chất..."           → "equipment_import"
+"Sở hữu hệ thống điều hòa..."               → "ac_ownership"
+"Sở hữu thiết bị làm lạnh công nghiệp..."   → "refrigeration_ownership"
+"Thu gom, tái chế, tái sử dụng..."          → "collection_recycling"
+
+⚠️ IMPORTANT:
+- ONLY return codes that are checked/selected in the document!
+- Do NOT return codes that are not checked
+- Return as array: "activity_field_codes": ["production", "import"]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+"""
+
         # Return as list of types.Text (can add more context items in the future)
-        return [types.Text(text=mega_prompt_text)]
+        return [
+            types.Text(text=mega_prompt_text),      # Substances context
+            types.Text(text=activity_fields_text)   # Activity fields context
+        ]
 
     def _build_extraction_prompt(self, document_type):
         """
