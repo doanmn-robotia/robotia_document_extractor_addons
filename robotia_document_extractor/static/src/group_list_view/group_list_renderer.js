@@ -34,10 +34,16 @@ export class GroupedListRenderer extends ListRenderer {
                     colspan += 1
                 }
 
+                // Get label: use dynamic field label if groupLabelField is set, otherwise use groupName
+                let groupLabel = col.groupName;
+                if (col.groupLabelField && this.props.list.fields[col.groupLabelField]) {
+                    groupLabel = this.props.list.fields[col.groupLabelField].string;
+                }
+
                 columns.push({
                     colspan: colspan,
                     type: "field_group",
-                    label: col.groupName,
+                    label: groupLabel,
                     groupClass: col.groupClass || "",
                     id: `column_group_${index}`
                 })
