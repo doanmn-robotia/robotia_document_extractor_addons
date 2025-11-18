@@ -30,7 +30,14 @@ export class ChatBot extends Component {
             ]
         });
 
-        onMounted(() => {
+        onMounted(async () => {
+            // Load conversation ID from localStorage
+            const savedConversationId = localStorage.getItem('chatbot_conversation_id');
+            if (savedConversationId) {
+                this.conversationId = parseInt(savedConversationId);
+                await this.loadConversationHistory();
+            }
+
             // Focus input on mount
             if (this.chatInput.el) {
                 this.chatInput.el.focus();
@@ -62,16 +69,18 @@ export class ChatBot extends Component {
     /**
      * Add message to chat
      */
-    addMessage(text, role = 'user') {
+    addMessage(text, role = 'user', action = null) {
         const message = {
             id: Date.now(),
             text: text,
             role: role,
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            action: action  // Store action data if present
         };
 
         this.state.messages.push(message);
         this.scrollToBottom();
+        return message;
     }
 
     /**
@@ -115,22 +124,19 @@ export class ChatBot extends Component {
             // Store conversation ID for multi-turn chat
             if (result.conversation_id) {
                 this.conversationId = result.conversation_id;
+                // Save to localStorage for persistence
+                localStorage.setItem('chatbot_conversation_id', result.conversation_id);
             }
 
             // Hide typing indicator
             this.state.isTyping = false;
 
-            // Add assistant message
-            this.addMessage(result.message, 'bot');
+            // Add assistant message with action data (don't execute yet)
+            this.addMessage(result.message, 'bot', result.action);
 
             // Update suggestions from AI
             if (result.suggestions && result.suggestions.length > 0) {
                 this.state.suggestions = result.suggestions;
-            }
-
-            // Execute action if present
-            if (result.action) {
-                await this.executeAction(result.action);
             }
 
         } catch (error) {
@@ -139,6 +145,57 @@ export class ChatBot extends Component {
             this.addMessage("Xin lỗi, đã có lỗi xảy ra. Vui lòng thử lại.", 'bot');
             this.notification.add("Không thể kết nối với Trợ lý AI", {
                 type: "danger"
+            });
+        }
+    }
+
+    /**
+     * Load conversation history from backend
+     */
+    async loadConversationHistory() {
+        try {
+            const result = await rpc("/chatbot/conversation/history", {
+                conversation_id: this.conversationId
+            });
+
+            if (result.error) {
+                console.warn("Could not load conversation history:", result.error);
+                // Clear invalid conversation ID
+                this.conversationId = null;
+                localStorage.removeItem('chatbot_conversation_id');
+                return;
+            }
+
+            // Restore messages
+            this.state.messages = result.messages.map(msg => ({
+                id: msg.id,
+                text: msg.content,
+                role: msg.role,
+                timestamp: new Date(msg.timestamp).getTime(),
+                action: msg.action
+            }));
+
+            this.scrollToBottom();
+        } catch (error) {
+            console.error("Error loading conversation history:", error);
+            // Clear invalid conversation ID on error
+            this.conversationId = null;
+            localStorage.removeItem('chatbot_conversation_id');
+        }
+    }
+
+    /**
+     * Execute action from button click
+     */
+    async executeActionFromButton(action) {
+        if (!action) return;
+
+        try {
+            await this.executeAction(action);
+        } catch (error) {
+            console.error('Error executing action from button:', error);
+            this.notification.add('Không thể thực hiện hành động', {
+                type: 'warning'
             });
         }
     }

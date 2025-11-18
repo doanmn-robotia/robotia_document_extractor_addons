@@ -206,6 +206,35 @@
         text-align: right;
     }
 
+    // ============= MESSAGE ACTION BUTTON =============
+    .message-action {
+        margin-top: 6px;
+
+        .action-btn {
+            font-size: 12px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+            border: none;
+
+            i {
+                font-size: 12px;
+            }
+
+            &:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 2px 6px rgba(26, 115, 232, 0.3);
+            }
+
+            &:active {
+                transform: translateY(0);
+            }
+        }
+    }
+
     // ============= TYPING INDICATOR =============
     .typing-indicator {
         display: flex;

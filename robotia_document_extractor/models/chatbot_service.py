@@ -95,9 +95,9 @@ class ChatbotService(models.AbstractModel):
         if any(keyword in message_lower for keyword in ['chất', 'substance', 'hfc', 'cfc', 'gwp', 'r-', 'r32', 'r410']):
             substances = self.env['controlled.substance'].search([], limit=15, order='name')
             if substances:
-                substance_info = ["DANH SÁCH CHẤT KIỂM SOÁT:"]
+                substance_info = ["DANH SÁCH CHẤT KIỂM SOÁT (có ID để mở dashboard):"]
                 for s in substances:
-                    substance_info.append(f"  • {s.name} ({s.formula}): GWP = {s.gwp}, Type = {s.substance_group_id.name}")
+                    substance_info.append(f"  • ID={s.id}, Tên={s.name}, Formula={s.formula}, GWP={s.gwp}, Type={s.substance_group_id.name}")
                 context_parts.append("\n".join(substance_info))
 
         # 2. Get recent documents if asked
@@ -128,18 +128,18 @@ class ChatbotService(models.AbstractModel):
         if any(keyword in message_lower for keyword in ['công ty', 'company', 'tổ chức', 'organization', 'doanh nghiệp']):
             companies = self.env['res.partner'].search([('is_company', '=', True)], limit=10)
             if companies:
-                company_info = ["CÁC CÔNG TY/TỔ CHỨC:"]
+                company_info = ["CÁC CÔNG TY/TỔ CHỨC (có ID để mở dashboard):"]
                 for c in companies:
-                    company_info.append(f"  • {c.name}")
+                    company_info.append(f"  • ID={c.id}, Tên={c.name}")
                 context_parts.append("\n".join(company_info))
 
         # 5. Equipment types if mentioned
         if any(keyword in message_lower for keyword in ['thiết bị', 'equipment', 'máy', 'machine']):
             equipment_types = self.env['equipment.type'].search([], limit=10)
             if equipment_types:
-                eq_info = ["LOẠI THIẾT BỊ:"]
+                eq_info = ["LOẠI THIẾT BỊ (có ID để mở dashboard):"]
                 for eq in equipment_types:
-                    eq_info.append(f"  • {eq.name}")
+                    eq_info.append(f"  • ID={eq.id}, Tên={eq.name}")
                 context_parts.append("\n".join(eq_info))
 
         return "\n\n".join(context_parts) if context_parts else ""
@@ -196,13 +196,13 @@ CÁC LOẠI ACTION HỢP LỆ:
   "params": {"dashboard": "main"}  // hoặc "hfc", "recovery"
 }
 
-2. Mở Dashboard CÓ filter cụ thể:
+2. Mở Dashboard CÓ filter cụ thể (PHẢI lấy ID từ DỮ LIỆU TỪ DATABASE):
 // Substance Dashboard - xem theo chất cụ thể
 {
   "type": "open_dashboard",
   "params": {
     "dashboard": "substance",
-    "substance_id": 1,
+    "substance_id": 1,  // ⚠️ Lấy ID từ "DANH SÁCH CHẤT KIỂM SOÁT" ở trên
     "substance_name": "R32"
   }
 }
@@ -212,7 +212,7 @@ CÁC LOẠI ACTION HỢP LỆ:
   "type": "open_dashboard",
   "params": {
     "dashboard": "company",
-    "organization_id": 5,
+    "organization_id": 5,  // ⚠️ Lấy ID từ "CÁC CÔNG TY/TỔ CHỨC" ở trên
     "organization_name": "ABC Corp"
   }
 }
@@ -222,7 +222,7 @@ CÁC LOẠI ACTION HỢP LỆ:
   "type": "open_dashboard",
   "params": {
     "dashboard": "equipment",
-    "equipment_type_id": 3,
+    "equipment_type_id": 3,  // ⚠️ Lấy ID từ "LOẠI THIẾT BỊ" ở trên
     "equipment_type_name": "Air Conditioner"
   }
 }

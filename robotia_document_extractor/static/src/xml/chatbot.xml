@@ -59,6 +59,31 @@
                                     <div class="message-text">
                                         <t t-esc="message.text"/>
                                     </div>
+
+                                    <!-- Action Button -->
+                                    <div t-if="message.action" class="message-action">
+                                        <button
+                                            class="btn btn-primary btn-sm action-btn"
+                                            t-on-click="() => this.executeActionFromButton(message.action)">
+                                            <i class="fa fa-external-link-square"/>
+                                            <t t-if="message.action.type === 'open_dashboard'">
+                                                Mở Dashboard
+                                            </t>
+                                            <t t-elif="message.action.type === 'view_substance'">
+                                                Xem Chi Tiết
+                                            </t>
+                                            <t t-elif="message.action.type === 'search_documents'">
+                                                Tìm Kiếm
+                                            </t>
+                                            <t t-elif="message.action.type === 'create_document'">
+                                                Tạo Tài Liệu
+                                            </t>
+                                            <t t-else="">
+                                                Thực Hiện
+                                            </t>
+                                        </button>
+                                    </div>
+
                                     <div class="message-time">
                                         <t t-esc="formatTime(message.timestamp)"/>
                                     </div>
