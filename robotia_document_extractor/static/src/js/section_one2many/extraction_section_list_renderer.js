@@ -82,16 +82,101 @@ export class ExtractionSectionListRenderer extends NoMagicColumnListRenderer {
 
     /**
      * Modify columns for section rows:
-     * - Find title column
+     * - Find column with extraction_title_field widget (substance_id)
+     * - Find column with name=titleField (substance_name, invisible)
+     * - Replace the widget column with titleField column properties
      * - Add colspan to span across hidden columns
      * - Hide data columns that don't make sense for title rows
      */
     getSectionColumns(columns) {
+        let titleWidgetColumnIndex = -1;  // Column with extraction_title_field widget
+        let titleFieldColumnIndex = -1;   // Column with name=titleField (invisible)
+
+        // Step 1: Find both columns
+        for (let i = 0; i < columns.length; i++) {
+            const col = columns[i];
+
+            // Find column with extraction_title_field widget
+            if (col.widget === 'extraction_title_field') {
+                titleWidgetColumnIndex = i;
+            }
+
+            // Find column with name=titleField
+            if (col.name === this.titleField) {
+                titleFieldColumnIndex = i;
+            }
+        }
+
+        // Step 2: If both found, replace widget column with titleField column
+        if (titleWidgetColumnIndex >= 0 && titleFieldColumnIndex >= 0) {
+            // Calculate colspan (count visible columns from widget position)
+            let colspan = 1;
+            for (let i = titleWidgetColumnIndex + 1; i < columns.length; i++) {
+                const col = columns[i];
+                // Stop at non-data columns (buttons, handle, etc.)
+                if (col.type !== "field" || this.fieldsToShow.includes(col.name)) {
+                    break;
+                }
+                // Only count visible columns
+                if (!col.invisible) {
+                    colspan += 1;
+                }
+            }
+
+            // Clone columns array
+            const sectionColumns = [...columns];
+
+            // Replace widget column with titleField column properties
+            sectionColumns[titleWidgetColumnIndex] = {
+                ...columns[titleFieldColumnIndex],  // Use titleField column properties
+                colspan: colspan                     // Add colspan
+            };
+
+            // Remove columns that are spanned (only visible ones after widget column)
+            let removed = 0;
+            const finalColumns = [];
+            for (let i = 0; i < sectionColumns.length; i++) {
+                const col = sectionColumns[i];
+
+                // Keep columns before widget column
+                if (i < titleWidgetColumnIndex) {
+                    finalColumns.push(col);
+                    continue;
+                }
+
+                // Keep widget column (already replaced)
+                if (i === titleWidgetColumnIndex) {
+                    finalColumns.push(col);
+                    continue;
+                }
+
+                // After widget column: skip visible data columns up to colspan
+                if (i > titleWidgetColumnIndex && removed < colspan - 1) {
+                    if (col.type === "field" && !this.fieldsToShow.includes(col.name) && !col.invisible) {
+                        removed++;
+                        continue;  // Skip this column (it's spanned)
+                    } else if (col.type !== "field" || this.fieldsToShow.includes(col.name)) {
+                        // Hit non-data column, stop removing
+                        finalColumns.push(col);
+                    } else {
+                        // Invisible column, keep it
+                        finalColumns.push(col);
+                    }
+                } else {
+                    // After colspan, keep all columns
+                    finalColumns.push(col);
+                }
+            }
+
+            return finalColumns;
+        }
+
+        // Step 3: Fallback to old logic if titleField not found
+        // (Keep old code for backward compatibility)
         let titleColumnIndex = 0;
         let found = false;
         let colspan = 1;
 
-        // Find title column and calculate colspan
         for (let index = 0; index < columns.length; index++) {
             const col = columns[index];
             if (!found && col.name !== this.titleField) {
@@ -102,19 +187,16 @@ export class ExtractionSectionListRenderer extends NoMagicColumnListRenderer {
                 titleColumnIndex = index;
                 continue;
             }
-            // Skip columns that should be shown in section rows
             if (col.type !== "field" || this.fieldsToShow.includes(col.name)) {
                 break;
             }
             colspan += 1;
         }
 
-        // Create new columns array with modified title column
         const sectionColumns = columns
             .slice(0, titleColumnIndex + 1)
             .concat(columns.slice(titleColumnIndex + colspan));
 
-        // Add colspan to title column
         sectionColumns[titleColumnIndex] = { ...sectionColumns[titleColumnIndex], colspan };
         return sectionColumns;
     }
