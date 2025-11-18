@@ -196,6 +196,9 @@ class DocumentExtractionService(models.AbstractModel):
 
             _logger.info(f"File processing completed: {uploaded_file.state.name}")
 
+            # Build mega prompt context (substances list + mapping rules)
+            mega_context = self._build_mega_prompt_context()
+
             # Generate content with retry logic for incomplete responses
             extracted_text = None
             last_error = None
@@ -204,10 +207,10 @@ class DocumentExtractionService(models.AbstractModel):
                 try:
                     _logger.info(f"Gemini API call attempt {retry_attempt + 1}/{GEMINI_MAX_RETRIES}")
 
-                    # Generate content with the uploaded file
+                    # Generate content with mega context + uploaded file + prompt
                     response = client.models.generate_content(
                         model='gemini-2.0-flash-exp',
-                        contents=[uploaded_file, prompt],
+                        contents=mega_context + [uploaded_file, prompt],
                         config=types.GenerateContentConfig(
                             temperature=0.1,  # Low temperature for consistent structured output
                             max_output_tokens=GEMINI_MAX_TOKENS,
@@ -313,6 +316,101 @@ class DocumentExtractionService(models.AbstractModel):
         cleaned_data = self._clean_extracted_data(extracted_data, document_type)
 
         return cleaned_data
+
+    def _build_mega_prompt_context(self):
+        """
+        Build mega prompt context with all controlled substances from database
+
+        Returns a list of types.Text objects that serve as system context for AI extraction.
+        This context includes:
+        - List of all controlled substances with names, codes, and GWP values
+        - Standardization rules for substance name mapping
+        - Examples of common format variations
+
+        Returns:
+            list: List containing types.Text with mega prompt context
+                  Can be extended with additional context prompts in the future
+        """
+        # Query all active controlled substances from database
+        substances = self.env['controlled.substance'].search([
+            ('active', '=', True)
+        ], order='code')
+
+        # Group substances by type for better organization
+        hfc_singles = []
+        hfc_blends = []
+        hcfc_list = []
+
+        for substance in substances:
+            line = f"  - {substance.name:20s} | Code: {substance.code:15s} | GWP: {substance.gwp}"
+
+            # Categorize by name/code pattern
+            if substance.code.startswith('R-') and not substance.code.startswith('R-1') and not substance.code.startswith('R-2'):
+                hfc_blends.append(line)
+            elif substance.name.startswith('HCFC'):
+                hcfc_list.append(line)
+            elif substance.name.startswith('HFC'):
+                hfc_singles.append(line)
+            else:
+                hfc_blends.append(line)
+
+        # Build mega prompt text
+        mega_prompt_text = f"""
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔬 REFRIGERANT STANDARDIZATION CONTEXT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ CRITICAL: SUBSTANCE NAME STANDARDIZATION REQUIRED ⚠️
+
+When extracting substance names from documents, you MUST:
+1. Map all substance names to the EXACT standardized names from the official list below
+2. Handle non-standard formatting (missing hyphens, spaces, case variations)
+3. Use fuzzy matching for common typos and variations
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 SUBSTANCE NAME MAPPING RULES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Rule 1: MISSING HYPHENS
+  "HFC134a"  → "HFC-134a"
+  "R410A"    → "R-410A"
+  "HCFC22"   → "HCFC-22"
+
+Rule 2: EXTRA SPACES
+  "HFC - 134a" → "HFC-134a"
+  "R - 410A"   → "R-410A"
+
+Rule 3: CASE VARIATIONS
+  "hfc-134a" → "HFC-134a"
+  "r-410a"   → "R-410A"
+
+Rule 4: CODE MATCHING (Common in Vietnamese documents)
+  If document shows "R-22"    → Map to "HCFC-22" (R-22 is code)
+  If document shows "R-134a"  → Map to "HFC-134a" (R-134a is code)
+
+Rule 5: UNKNOWN SUBSTANCES
+  If NOT in official list → Prefix with "[UNKNOWN] "
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📚 OFFICIAL CONTROLLED SUBSTANCES LIST ({len(substances)} substances)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+HFC - Hydrofluorocarbons (Single Components):
+{chr(10).join(hfc_singles) if hfc_singles else '  (None)'}
+
+HFC Blends / Refrigerant Mixtures:
+{chr(10).join(hfc_blends) if hfc_blends else '  (None)'}
+
+HCFC - Hydrochlorofluorocarbons:
+{chr(10).join(hcfc_list) if hcfc_list else '  (None)'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ APPLY STANDARDIZATION TO ALL SUBSTANCE NAMES IN YOUR EXTRACTION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+"""
+
+        # Return as list of types.Text (can add more context items in the future)
+        return [types.Text(text=mega_prompt_text)]
 
     def _build_extraction_prompt(self, document_type):
         """
@@ -1045,10 +1143,13 @@ STEP 6: OUTPUT FORMAT
 
             _logger.info(f"File processing completed: {uploaded_file.state.name}")
 
-            # Generate text content (using higher token limit for text)
+            # Build mega prompt context
+            mega_context = self._build_mega_prompt_context()
+
+            # Generate text content with mega context (using higher token limit for text)
             response = client.models.generate_content(
                 model='gemini-2.0-flash-exp',
-                contents=[uploaded_file, prompt],
+                contents=mega_context + [uploaded_file, prompt],
                 config=types.GenerateContentConfig(
                     temperature=0.1,
                     max_output_tokens=65536,  # Max tokens for text extraction
@@ -1116,14 +1217,17 @@ STEP 6: OUTPUT FORMAT
         extracted_json = None
         last_error = None
 
+        # Build mega prompt context
+        mega_context = self._build_mega_prompt_context()
+
         for retry_attempt in range(GEMINI_MAX_RETRIES):
             try:
                 _logger.info(f"JSON conversion attempt {retry_attempt + 1}/{GEMINI_MAX_RETRIES}")
 
-                # Generate JSON from text (no file upload needed - just text)
+                # Generate JSON from text with mega context (no file upload needed)
                 response = client.models.generate_content(
                     model='gemini-2.0-flash-exp',
-                    contents=[prompt],
+                    contents=mega_context + [prompt],
                     config=types.GenerateContentConfig(
                         temperature=0.1,
                         max_output_tokens=GEMINI_MAX_TOKENS,
