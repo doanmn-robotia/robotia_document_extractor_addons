@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <!-- Main template inheriting from web.ListRenderer -->
+    <t t-name="robotia_document_extractor.X2ManyNumberedListRenderer" t-inherit="web.ListRenderer">
+        <!-- Keep default behavior from parent ListRenderer -->
+        <!-- The sequence column is added via getColumns() override in JS -->
+        <!-- The cell values are provided via evalInContext() override in JS -->
+    </t>
+
+</templates>
