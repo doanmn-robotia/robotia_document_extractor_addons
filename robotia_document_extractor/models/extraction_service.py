@@ -52,7 +52,10 @@ class DocumentExtractionService(models.AbstractModel):
 
     def extract_pdf(self, pdf_binary, document_type, filename):
         """
-        Extract structured data from PDF using Gemini AI
+        Extract structured data from PDF using Gemini AI with 2-tier fallback strategy
+
+        Strategy 1 (Primary): Direct PDF → JSON extraction
+        Strategy 2 (Fallback): 2-step extraction (PDF → Text → JSON) if Strategy 1 fails
 
         Args:
             pdf_binary (bytes): Binary PDF data
@@ -79,6 +82,64 @@ class DocumentExtractionService(models.AbstractModel):
         # Configure Gemini
         client = genai.Client(api_key=api_key)
 
+        # Strategy 1: Try direct PDF → JSON extraction (existing method)
+        try:
+            _logger.info("=" * 70)
+            _logger.info("STRATEGY 1: Direct PDF → JSON extraction")
+            _logger.info("=" * 70)
+            extracted_data = self._extract_direct_pdf_to_json(client, pdf_binary, document_type, filename)
+            _logger.info("✓ Strategy 1 succeeded - Direct extraction successful")
+            return extracted_data
+
+        except Exception as e:
+            _logger.warning("✗ Strategy 1 failed - Direct extraction unsuccessful")
+            _logger.warning(f"Error: {type(e).__name__}: {str(e)}")
+            _logger.info("Falling back to Strategy 2...")
+
+            # Strategy 2: Fallback to 2-step extraction (PDF → Text → JSON)
+            try:
+                _logger.info("=" * 70)
+                _logger.info("STRATEGY 2: 2-Step extraction (PDF → Text → JSON)")
+                _logger.info("=" * 70)
+
+                # Step 1: Extract PDF to plain text
+                _logger.info("Step 1/2: Extracting PDF to plain text...")
+                extracted_text = self._extract_pdf_to_text(client, pdf_binary, document_type, filename)
+                _logger.info(f"✓ Step 1 complete - Extracted {len(extracted_text)} chars of text")
+
+                # Step 2: Convert text to structured JSON
+                _logger.info("Step 2/2: Converting text to structured JSON...")
+                extracted_data = self._convert_text_to_json(client, extracted_text, document_type)
+                _logger.info("✓ Step 2 complete - JSON conversion successful")
+
+                _logger.info("✓ Strategy 2 succeeded - 2-step extraction successful")
+                return extracted_data
+
+            except Exception as e2:
+                _logger.error("✗ Strategy 2 also failed - All extraction strategies exhausted")
+                _logger.exception(f"Final error: {type(e2).__name__}: {str(e2)}")
+                raise ValueError(
+                    f"All extraction strategies failed. "
+                    f"Strategy 1 error: {str(e)}. "
+                    f"Strategy 2 error: {str(e2)}"
+                )
+
+    def _extract_direct_pdf_to_json(self, client, pdf_binary, document_type, filename):
+        """
+        Strategy 1: Direct PDF → JSON extraction (original method)
+
+        Args:
+            client: Gemini client instance
+            pdf_binary (bytes): Binary PDF data
+            document_type (str): '01' or '02'
+            filename (str): Original filename for logging
+
+        Returns:
+            dict: Extracted and cleaned data
+
+        Raises:
+            ValueError: If extraction fails after all retries
+        """
         # Build extraction prompt based on document type
         prompt = self._build_extraction_prompt(document_type)
 
@@ -93,7 +154,16 @@ class DocumentExtractionService(models.AbstractModel):
         # Constants
         GEMINI_POLL_INTERVAL_SECONDS = 2
         GEMINI_MAX_POLL_RETRIES = 30  # 30 * 2s = 60s timeout
-        GEMINI_MAX_TOKENS = 16000
+        GEMINI_MAX_RETRIES = 3  # Retry on incomplete responses
+
+        # Get max output tokens from config (default: 65536 for Gemini 2.0 Flash)
+        # User can adjust this in Settings if needed
+        GEMINI_MAX_TOKENS = int(
+            self.env['ir.config_parameter'].sudo().get_param(
+                'robotia_document_extractor.gemini_max_output_tokens',
+                default='65536'
+            )
+        )
 
         tmp_file_path = None
         uploaded_file = None
@@ -126,23 +196,83 @@ class DocumentExtractionService(models.AbstractModel):
 
             _logger.info(f"File processing completed: {uploaded_file.state.name}")
 
-            # Generate content with the uploaded file
-            response = client.models.generate_content(
-                model='gemini-2.0-flash-exp',
-                contents=[uploaded_file, prompt],
-                config=types.GenerateContentConfig(
-                    temperature=0.1,  # Low temperature for consistent structured output
-                    max_output_tokens=GEMINI_MAX_TOKENS,
-                    response_mime_type='application/json',  # Force JSON output
-                    top_p=0.8,
-                    top_k=40
-                )
-            )
+            # Generate content with retry logic for incomplete responses
+            extracted_text = None
+            last_error = None
 
-            # Get response text
-            extracted_text = response.text
+            for retry_attempt in range(GEMINI_MAX_RETRIES):
+                try:
+                    _logger.info(f"Gemini API call attempt {retry_attempt + 1}/{GEMINI_MAX_RETRIES}")
 
-            _logger.info(f"Gemini API response received (length: {len(extracted_text)} chars)")
+                    # Generate content with the uploaded file
+                    response = client.models.generate_content(
+                        model='gemini-2.0-flash-exp',
+                        contents=[uploaded_file, prompt],
+                        config=types.GenerateContentConfig(
+                            temperature=0.1,  # Low temperature for consistent structured output
+                            max_output_tokens=GEMINI_MAX_TOKENS,
+                            response_mime_type='application/json',  # Force JSON output
+                            top_p=0.8,
+                            top_k=40
+                        )
+                    )
+
+                    # Get response text
+                    extracted_text = response.text
+
+                    # Check finish_reason to detect truncation
+                    finish_reason = None
+                    if hasattr(response, 'candidates') and response.candidates:
+                        candidate = response.candidates[0]
+                        finish_reason = candidate.finish_reason if hasattr(candidate, 'finish_reason') else None
+
+                        # Log finish reason for debugging
+                        _logger.info(f"Gemini finish_reason: {finish_reason}")
+
+                        # Check if response was cut off due to token limit
+                        if finish_reason and str(finish_reason) in ['MAX_TOKENS', 'LENGTH']:
+                            _logger.warning(
+                                f"Response was truncated due to {finish_reason}. "
+                                f"Response length: {len(extracted_text)} chars. "
+                                f"This attempt will likely fail validation."
+                            )
+
+                    _logger.info(f"Gemini API response received (length: {len(extracted_text)} chars)")
+
+                    # Validate that response is complete (can be parsed as JSON)
+                    # This will throw JSONDecodeError if incomplete
+                    try:
+                        self._parse_json_response(extracted_text)
+                        _logger.info(f"Response validation successful on attempt {retry_attempt + 1}")
+                        break  # Success - exit retry loop
+                    except json.JSONDecodeError:
+                        # Re-raise to be caught by outer except block
+                        raise
+
+                except json.JSONDecodeError as e:
+                    last_error = e
+                    _logger.warning(f"Attempt {retry_attempt + 1} returned incomplete JSON: {str(e)}")
+                    if retry_attempt < GEMINI_MAX_RETRIES - 1:
+                        # Wait before retry (exponential backoff)
+                        wait_time = 2 ** retry_attempt  # 1s, 2s, 4s
+                        _logger.info(f"Retrying in {wait_time}s...")
+                        time.sleep(wait_time)
+                    else:
+                        # Last attempt failed - will be caught below
+                        _logger.error("All retry attempts failed - response still incomplete")
+                except Exception as e:
+                    last_error = e
+                    _logger.warning(f"Attempt {retry_attempt + 1} failed: {type(e).__name__}: {str(e)}")
+                    if retry_attempt < GEMINI_MAX_RETRIES - 1:
+                        wait_time = 2 ** retry_attempt
+                        _logger.info(f"Retrying in {wait_time}s...")
+                        time.sleep(wait_time)
+                    else:
+                        raise
+
+            # Check if we got a valid response after all retries
+            if not extracted_text:
+                raise ValueError(f"Failed to get complete response after {GEMINI_MAX_RETRIES} attempts: {last_error}")
 
         except Exception as e:
             _logger.exception(f"Extraction failed during Gemini API call")
@@ -165,26 +295,19 @@ class DocumentExtractionService(models.AbstractModel):
                 except Exception as e:
                     _logger.warning(f"Failed to delete Gemini file: {e}")
 
-        # Parse JSON from response
+        # Parse JSON from response using helper method
         try:
-            # Find JSON block in response (Gemini may wrap it in markdown)
-            if '```json' in extracted_text:
-                json_start = extracted_text.find('```json') + 7
-                json_end = extracted_text.find('```', json_start)
-                json_str = extracted_text[json_start:json_end].strip()
-            elif '```' in extracted_text:
-                json_start = extracted_text.find('```') + 3
-                json_end = extracted_text.find('```', json_start)
-                json_str = extracted_text[json_start:json_end].strip()
-            else:
-                json_str = extracted_text.strip()
-
-            extracted_data = json.loads(json_str)
+            extracted_data = self._parse_json_response(extracted_text)
             _logger.info("Successfully parsed JSON response")
 
         except json.JSONDecodeError as e:
-            _logger.error(f"Failed to parse JSON: {e}\nResponse: {extracted_text[:500]}")
-            raise ValueError(f"Failed to parse AI response as JSON: {e}")
+            _logger.error(f"Failed to parse JSON: {e}\nResponse preview: {extracted_text[:500]}...")
+            _logger.error(f"Response tail (last 500 chars): ...{extracted_text[-500:]}")
+            raise ValueError(
+                f"Failed to parse AI response as JSON. "
+                f"Response may be incomplete (length: {len(extracted_text)} chars). "
+                f"Error: {e}"
+            )
 
         # Validate and clean extracted data
         cleaned_data = self._clean_extracted_data(extracted_data, document_type)
@@ -215,6 +338,90 @@ class DocumentExtractionService(models.AbstractModel):
             return self._get_default_prompt_form_01()
         else:
             return self._get_default_prompt_form_02()
+
+    def _build_text_extraction_prompt(self, document_type):
+        """
+        Build simple text extraction prompt (Strategy 2 - Step 1)
+
+        This prompt asks AI to extract PDF content as plain text,
+        without JSON structure. Simpler = less likely to be truncated.
+
+        Args:
+            document_type (str): '01' or '02'
+
+        Returns:
+            str: Text extraction prompt
+        """
+        form_name = "Form 01 (Registration)" if document_type == '01' else "Form 02 (Report)"
+
+        return f"""
+Read this Vietnamese {form_name} PDF document and extract ALL the text content.
+
+INSTRUCTIONS:
+1. Extract ALL text from the document, preserving the structure as much as possible
+2. Include section headers, table headers, and all data rows
+3. Preserve Vietnamese text exactly as it appears
+4. For tables, indicate rows clearly (use "Row N:" prefix)
+5. For sections, use clear separators like "=== Section Name ==="
+6. Extract ALL numerical values (preserve commas, dots as they appear)
+7. DO NOT summarize - extract EVERYTHING verbatim
+
+OUTPUT FORMAT:
+- Plain text format
+- Preserve document structure
+- One line per data row in tables
+- Clear section separators
+
+Example format:
+=== Organization Information ===
+Name: [organization name]
+License Number: [number]
+...
+
+=== Table 1.1: Substance Usage ===
+HEADER: Substance Name | Year 1 (kg) | Year 2 (kg) | Year 3 (kg) | Average (kg)
+Row 1: R-22 | 100.5 | 120.0 | 110.5 | 110.33
+Row 2: R-410A | 200.0 | 210.0 | 205.0 | 205.00
+...
+
+Extract ALL content from this document now.
+"""
+
+    def _build_text_to_json_prompt(self, document_type, extracted_text):
+        """
+        Build prompt to convert text to JSON (Strategy 2 - Step 2)
+
+        This prompt takes the plain text and asks AI to structure it as JSON.
+
+        Args:
+            document_type (str): '01' or '02'
+            extracted_text (str): Plain text from Step 1
+
+        Returns:
+            str: JSON conversion prompt
+        """
+        # Get the structured prompt template (reuse existing JSON structure)
+        structured_prompt = self._build_extraction_prompt(document_type)
+
+        # Prepend instructions to work with text instead of PDF
+        return f"""
+You are given extracted text from a Vietnamese document. Convert this text into structured JSON.
+
+EXTRACTED TEXT:
+{extracted_text}
+
+---
+
+Now convert the above text into JSON following these exact specifications:
+
+{structured_prompt}
+
+IMPORTANT:
+- Use the text provided above, NOT a PDF
+- Follow the JSON structure EXACTLY as specified
+- Preserve all Vietnamese text from the extracted text
+- Convert all numeric values correctly
+"""
 
     def _get_default_prompt_form_01(self):
         """
@@ -695,6 +902,274 @@ STEP 6: OUTPUT FORMAT
    - Return ONLY valid JSON, no explanations or markdown formatting
    - Ensure all has_table_2_x fields are set correctly based on activity fields
 """
+
+    def _parse_json_response(self, response_text):
+        """
+        Robust JSON parser that handles multiple response formats from Gemini
+
+        Args:
+            response_text (str): Raw response text from Gemini API
+
+        Returns:
+            dict: Parsed JSON data
+
+        Raises:
+            json.JSONDecodeError: If response cannot be parsed as valid JSON
+        """
+        if not response_text or not response_text.strip():
+            raise json.JSONDecodeError("Empty response", "", 0)
+
+        text = response_text.strip()
+
+        # Strategy 1: Try parsing as-is (when response_mime_type='application/json')
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError:
+            pass  # Try other strategies
+
+        # Strategy 2: Extract from markdown code block ```json ... ```
+        if '```json' in text:
+            try:
+                json_start = text.find('```json') + 7
+                json_end = text.find('```', json_start)
+                if json_end == -1:
+                    # Closing ``` not found - response is incomplete
+                    raise json.JSONDecodeError(
+                        "Incomplete markdown JSON block - missing closing ```",
+                        text,
+                        json_start
+                    )
+                json_str = text[json_start:json_end].strip()
+                return json.loads(json_str)
+            except json.JSONDecodeError:
+                pass  # Try next strategy
+
+        # Strategy 3: Extract from generic code block ``` ... ```
+        if '```' in text:
+            try:
+                json_start = text.find('```') + 3
+                # Skip language identifier if present (e.g., ```javascript)
+                newline_pos = text.find('\n', json_start)
+                if newline_pos != -1 and newline_pos - json_start < 20:
+                    json_start = newline_pos + 1
+
+                json_end = text.find('```', json_start)
+                if json_end == -1:
+                    # Closing ``` not found - response is incomplete
+                    raise json.JSONDecodeError(
+                        "Incomplete markdown code block - missing closing ```",
+                        text,
+                        json_start
+                    )
+                json_str = text[json_start:json_end].strip()
+                return json.loads(json_str)
+            except json.JSONDecodeError:
+                pass  # Try next strategy
+
+        # Strategy 4: Find JSON object boundaries { ... }
+        if '{' in text and '}' in text:
+            try:
+                json_start = text.find('{')
+                json_end = text.rfind('}') + 1
+                json_str = text[json_start:json_end]
+                return json.loads(json_str)
+            except json.JSONDecodeError:
+                pass
+
+        # All strategies failed - raise detailed error
+        preview_len = min(200, len(text))
+        raise json.JSONDecodeError(
+            f"Could not parse response as JSON. Tried multiple strategies. "
+            f"Response preview: {text[:preview_len]}...",
+            text,
+            0
+        )
+
+    def _extract_pdf_to_text(self, client, pdf_binary, document_type, filename):
+        """
+        Strategy 2 - Step 1: Extract PDF content to plain text
+
+        This is a simpler extraction that focuses on getting raw text data
+        without worrying about JSON structure. Less likely to be truncated.
+
+        Args:
+            client: Gemini client instance
+            pdf_binary (bytes): Binary PDF data
+            document_type (str): '01' or '02'
+            filename (str): Original filename for logging
+
+        Returns:
+            str: Plain text extracted from PDF
+
+        Raises:
+            ValueError: If extraction fails
+        """
+        import tempfile
+        import os
+        import time
+
+        # Constants
+        GEMINI_POLL_INTERVAL_SECONDS = 2
+        GEMINI_MAX_POLL_RETRIES = 30
+
+        # Build simple text extraction prompt
+        prompt = self._build_text_extraction_prompt(document_type)
+
+        tmp_file_path = None
+        uploaded_file = None
+
+        try:
+            # Create temporary file
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
+                tmp_file.write(pdf_binary)
+                tmp_file_path = tmp_file.name
+
+            _logger.info(f"Created temp file for text extraction: {tmp_file_path}")
+
+            # Upload file to Gemini
+            uploaded_file = client.files.upload(file=tmp_file_path)
+            _logger.info(f"File uploaded to Gemini: {uploaded_file.name}")
+
+            # Wait for file to be processed
+            poll_count = 0
+            while uploaded_file.state.name == "PROCESSING":
+                if poll_count >= GEMINI_MAX_POLL_RETRIES:
+                    raise TimeoutError(f"Gemini file processing timeout after {GEMINI_MAX_POLL_RETRIES * GEMINI_POLL_INTERVAL_SECONDS}s")
+
+                time.sleep(GEMINI_POLL_INTERVAL_SECONDS)
+                uploaded_file = client.files.get(name=uploaded_file.name)
+                poll_count += 1
+
+            if uploaded_file.state.name == "FAILED":
+                raise ValueError("File processing failed in Gemini")
+
+            _logger.info(f"File processing completed: {uploaded_file.state.name}")
+
+            # Generate text content (using higher token limit for text)
+            response = client.models.generate_content(
+                model='gemini-2.0-flash-exp',
+                contents=[uploaded_file, prompt],
+                config=types.GenerateContentConfig(
+                    temperature=0.1,
+                    max_output_tokens=65536,  # Max tokens for text extraction
+                    response_mime_type='text/plain',  # Plain text output
+                )
+            )
+
+            extracted_text = response.text.strip()
+            _logger.info(f"Text extraction successful (length: {len(extracted_text)} chars)")
+
+            return extracted_text
+
+        except Exception as e:
+            _logger.exception(f"Text extraction failed")
+            raise ValueError(f"Text extraction failed: {type(e).__name__}: {str(e)}")
+
+        finally:
+            # Cleanup temporary file
+            if tmp_file_path and os.path.exists(tmp_file_path):
+                try:
+                    os.unlink(tmp_file_path)
+                    _logger.info(f"Cleaned up temp file: {tmp_file_path}")
+                except Exception as e:
+                    _logger.warning(f"Failed to cleanup temp file: {e}")
+
+            # Cleanup Gemini uploaded file
+            if uploaded_file:
+                try:
+                    client.files.delete(name=uploaded_file.name)
+                    _logger.info(f"Deleted Gemini file: {uploaded_file.name}")
+                except Exception as e:
+                    _logger.warning(f"Failed to delete Gemini file: {e}")
+
+    def _convert_text_to_json(self, client, extracted_text, document_type):
+        """
+        Strategy 2 - Step 2: Convert plain text to structured JSON
+
+        Takes the plain text from Step 1 and converts it to structured JSON.
+        This is lighter weight than direct PDF→JSON extraction.
+
+        Args:
+            client: Gemini client instance
+            extracted_text (str): Plain text from Step 1
+            document_type (str): '01' or '02'
+
+        Returns:
+            dict: Structured data
+
+        Raises:
+            ValueError: If conversion fails
+        """
+        # Build JSON conversion prompt
+        prompt = self._build_text_to_json_prompt(document_type, extracted_text)
+
+        # Get max output tokens from config
+        GEMINI_MAX_TOKENS = int(
+            self.env['ir.config_parameter'].sudo().get_param(
+                'robotia_document_extractor.gemini_max_output_tokens',
+                default='65536'
+            )
+        )
+
+        GEMINI_MAX_RETRIES = 3
+
+        extracted_json = None
+        last_error = None
+
+        for retry_attempt in range(GEMINI_MAX_RETRIES):
+            try:
+                _logger.info(f"JSON conversion attempt {retry_attempt + 1}/{GEMINI_MAX_RETRIES}")
+
+                # Generate JSON from text (no file upload needed - just text)
+                response = client.models.generate_content(
+                    model='gemini-2.0-flash-exp',
+                    contents=[prompt],
+                    config=types.GenerateContentConfig(
+                        temperature=0.1,
+                        max_output_tokens=GEMINI_MAX_TOKENS,
+                        response_mime_type='application/json',
+                        top_p=0.8,
+                        top_k=40
+                    )
+                )
+
+                extracted_json = response.text
+
+                # Validate JSON
+                try:
+                    parsed_data = self._parse_json_response(extracted_json)
+                    _logger.info(f"JSON conversion successful on attempt {retry_attempt + 1}")
+
+                    # Clean and return
+                    cleaned_data = self._clean_extracted_data(parsed_data, document_type)
+                    return cleaned_data
+
+                except json.JSONDecodeError:
+                    raise
+
+            except json.JSONDecodeError as e:
+                last_error = e
+                _logger.warning(f"Attempt {retry_attempt + 1} returned incomplete JSON: {str(e)}")
+                if retry_attempt < GEMINI_MAX_RETRIES - 1:
+                    wait_time = 2 ** retry_attempt
+                    _logger.info(f"Retrying in {wait_time}s...")
+                    import time
+                    time.sleep(wait_time)
+                else:
+                    _logger.error("All JSON conversion attempts failed")
+
+            except Exception as e:
+                last_error = e
+                _logger.warning(f"Attempt {retry_attempt + 1} failed: {type(e).__name__}: {str(e)}")
+                if retry_attempt < GEMINI_MAX_RETRIES - 1:
+                    wait_time = 2 ** retry_attempt
+                    import time
+                    time.sleep(wait_time)
+                else:
+                    raise
+
+        # All retries failed
+        raise ValueError(f"JSON conversion failed after {GEMINI_MAX_RETRIES} attempts: {last_error}")
 
     def _clean_extracted_data(self, data, document_type):
         """
