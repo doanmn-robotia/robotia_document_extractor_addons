@@ -11,6 +11,12 @@
                         <div class="header-title">Trợ lý AI</div>
                         <div class="header-sub">Hỗ trợ trích xuất và phân tích tài liệu tự động</div>
                     </div>
+                    <button
+                        t-if="state.messages.length > 0"
+                        class="btn btn-outline-primary new-chat-btn"
+                        t-on-click="startNewChat">
+                        <i class="fa fa-plus-circle"/> Tạo đoạn chat mới
+                    </button>
                 </div>
 
                 <!-- Chat Container -->
@@ -59,6 +65,31 @@
                                     <div class="message-text">
                                         <t t-esc="message.text"/>
                                     </div>
+
+                                    <!-- Action Button -->
+                                    <div t-if="message.action" class="message-action">
+                                        <button
+                                            class="btn btn-primary btn-sm action-btn"
+                                            t-on-click="() => this.executeActionFromButton(message.action)">
+                                            <i class="fa fa-external-link-square"/>
+                                            <t t-if="message.action.type === 'open_dashboard'">
+                                                Mở Dashboard
+                                            </t>
+                                            <t t-elif="message.action.type === 'view_substance'">
+                                                Xem Chi Tiết
+                                            </t>
+                                            <t t-elif="message.action.type === 'search_documents'">
+                                                Tìm Kiếm
+                                            </t>
+                                            <t t-elif="message.action.type === 'create_document'">
+                                                Tạo Tài Liệu
+                                            </t>
+                                            <t t-else="">
+                                                Thực Hiện
+                                            </t>
+                                        </button>
+                                    </div>
+
                                     <div class="message-time">
                                         <t t-esc="formatTime(message.timestamp)"/>
                                     </div>

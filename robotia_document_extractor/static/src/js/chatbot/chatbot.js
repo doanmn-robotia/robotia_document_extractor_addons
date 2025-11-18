@@ -3,6 +3,7 @@
 import { Component, useState, useRef, onMounted } from "@odoo/owl";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
+import { rpc } from "@web/core/network/rpc";
 
 export class ChatBot extends Component {
     static template = "robotia_document_extractor.ChatBot";
@@ -15,6 +16,9 @@ export class ChatBot extends Component {
         this.chatMessages = useRef("chatMessages");
         this.chatInput = useRef("chatInput");
 
+        // Track conversation ID for multi-turn chat
+        this.conversationId = null;
+
         this.state = useState({
             messages: [],
             inputMessage: "",
@@ -26,7 +30,14 @@ export class ChatBot extends Component {
             ]
         });
 
-        onMounted(() => {
+        onMounted(async () => {
+            // Load conversation ID from localStorage
+            const savedConversationId = localStorage.getItem('chatbot_conversation_id');
+            if (savedConversationId) {
+                this.conversationId = parseInt(savedConversationId);
+                await this.loadConversationHistory();
+            }
+
             // Focus input on mount
             if (this.chatInput.el) {
                 this.chatInput.el.focus();
@@ -58,16 +69,18 @@ export class ChatBot extends Component {
     /**
      * Add message to chat
      */
-    addMessage(text, role = 'user') {
+    addMessage(text, role = 'user', action = null) {
         const message = {
             id: Date.now(),
             text: text,
             role: role,
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            action: action  // Store action data if present
         };
 
         this.state.messages.push(message);
         this.scrollToBottom();
+        return message;
     }
 
     /**
@@ -98,68 +111,208 @@ export class ChatBot extends Component {
     }
 
     /**
-     * Get bot response (placeholder - will integrate with AI later)
+     * Get bot response from AI service using Gemini Chat API
      */
     async getBotResponse(userMessage) {
-        // Simulate network delay
-        await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
+        try {
+            // Call real API endpoint
+            const result = await rpc("/chatbot/message", {
+                message: userMessage,
+                conversation_id: this.conversationId
+            });
 
-        let response = "";
+            // Store conversation ID for multi-turn chat
+            if (result.conversation_id) {
+                this.conversationId = result.conversation_id;
+                // Save to localStorage for persistence
+                localStorage.setItem('chatbot_conversation_id', result.conversation_id);
+            }
 
-        // Simple keyword-based responses (placeholder)
-        const lowerMessage = userMessage.toLowerCase();
+            // Hide typing indicator
+            this.state.isTyping = false;
 
-        if (lowerMessage.includes("form 01") || lowerMessage.includes("registration")) {
-            response = "Form 01 là mẫu đăng ký sử dụng chất kiểm soát. Bạn có thể upload file PDF và hệ thống sẽ tự động trích xuất thông tin bằng AI. Bạn có muốn tôi hướng dẫn chi tiết không?";
-        } else if (lowerMessage.includes("form 02") || lowerMessage.includes("report")) {
-            response = "Form 02 là mẫu báo cáo sử dụng chất kiểm soát. Tương tự Form 01, bạn chỉ cần upload PDF và hệ thống sẽ xử lý tự động. Bạn cần giúp gì về Form 02?";
-        } else if (lowerMessage.includes("recent") || lowerMessage.includes("history")) {
-            response = "Bạn có thể xem các tài liệu gần đây nhất trong phần Dashboard hoặc vào menu Documents > All Documents. Bạn muốn tôi mở trang đó cho bạn không?";
-        } else if (lowerMessage.includes("substance") || lowerMessage.includes("chất")) {
-            response = "Chất kiểm soát là các chất được quy định trong Nghị định thư Montreal. Hệ thống có danh sách đầy đủ các chất này trong Lookup & Summary > Controlled Substances. Bạn có muốn xem danh sách không?";
-        } else if (lowerMessage.includes("help") || lowerMessage.includes("giúp")) {
-            response = "Tôi có thể giúp bạn:\n• Hướng dẫn trích xuất Form 01/02\n• Giải thích về các chất kiểm soát\n• Xem thống kê và báo cáo\n• Tìm kiếm tài liệu\n\nBạn cần giúp gì cụ thể?";
-        } else if (lowerMessage.includes("statistics") || lowerMessage.includes("thống kê")) {
-            response = "Bạn có thể xem thống kê chi tiết tại:\n• Main Dashboard - tổng quan\n• HFC Dashboard - phân tích HFC\n• Thu gom - Tái chế - dữ liệu thu gom\n\nBạn muốn xem dashboard nào?";
-        } else {
-            response = `Cảm ơn bạn đã nhắn tin! Hiện tại tôi đang trong giai đoạn phát triển. Tôi có thể giúp bạn về:\n• Trích xuất Form 01/02\n• Thông tin về chất kiểm soát\n• Xem thống kê và dashboard\n\nBạn có câu hỏi gì khác không?`;
+            // Add assistant message with action data (don't execute yet)
+            this.addMessage(result.message, 'bot', result.action);
+
+            // Update suggestions from AI
+            if (result.suggestions && result.suggestions.length > 0) {
+                this.state.suggestions = result.suggestions;
+            }
+
+        } catch (error) {
+            console.error("Error getting bot response:", error);
+            this.state.isTyping = false;
+            this.addMessage("Xin lỗi, đã có lỗi xảy ra. Vui lòng thử lại.", 'bot');
+            this.notification.add("Không thể kết nối với Trợ lý AI", {
+                type: "danger"
+            });
         }
-
-        this.state.isTyping = false;
-        this.addMessage(response, 'bot');
-
-        // Update suggestions based on context
-        this.updateSuggestions(lowerMessage);
     }
 
     /**
-     * Update suggestions based on context
+     * Load conversation history from backend
      */
-    updateSuggestions(userMessage) {
-        if (userMessage.includes("mẫu 01") || userMessage.includes("form 01")) {
-            this.state.suggestions = [
-                "Upload Mẫu 01",
-                "Ví dụ Mẫu 01",
-                "Các trường trong Mẫu 01"
-            ];
-        } else if (userMessage.includes("mẫu 02") || userMessage.includes("form 02")) {
-            this.state.suggestions = [
-                "Upload Mẫu 02",
-                "Ví dụ Mẫu 02",
-                "So sánh Mẫu 01 và 02"
-            ];
-        } else if (userMessage.includes("chất")) {
-            this.state.suggestions = [
-                "Danh sách chất",
-                "Giá trị GWP",
-                "Xem dashboard"
-            ];
-        } else {
-            this.state.suggestions = [
-                "Xem thống kê",
-                "Tài liệu gần đây",
-                "Hỗ trợ chất kiểm soát"
-            ];
+    async loadConversationHistory() {
+        try {
+            const result = await rpc("/chatbot/conversation/history", {
+                conversation_id: this.conversationId
+            });
+
+            if (result.error) {
+                console.warn("Could not load conversation history:", result.error);
+                // Clear invalid conversation ID
+                this.conversationId = null;
+                localStorage.removeItem('chatbot_conversation_id');
+                return;
+            }
+
+            // Restore messages
+            this.state.messages = result.messages.map(msg => ({
+                id: msg.id,
+                text: msg.content,
+                role: msg.role,
+                timestamp: new Date(msg.timestamp).getTime(),
+                action: msg.action
+            }));
+
+            this.scrollToBottom();
+        } catch (error) {
+            console.error("Error loading conversation history:", error);
+            // Clear invalid conversation ID on error
+            this.conversationId = null;
+            localStorage.removeItem('chatbot_conversation_id');
+        }
+    }
+
+    /**
+     * Execute action from button click
+     */
+    async executeActionFromButton(action) {
+        if (!action) return;
+
+        try {
+            await this.executeAction(action);
+        } catch (error) {
+            console.error('Error executing action from button:', error);
+            this.notification.add('Không thể thực hiện hành động', {
+                type: 'warning'
+            });
+        }
+    }
+
+    /**
+     * Execute action returned by AI
+     */
+    async executeAction(action) {
+        try {
+            // Validate action has required fields
+            if (!action || !action.type || !action.params) {
+                console.warn('Invalid action format:', action);
+                return;
+            }
+
+            switch (action.type) {
+                case 'open_dashboard':
+                    // Map dashboard names to action tags
+                    const dashboardMap = {
+                        'main': 'document_extractor.dashboard',
+                        'hfc': 'document_extractor.hfc_dashboard',
+                        'substance': 'document_extractor.substance_dashboard',
+                        'company': 'document_extractor.company_dashboard',
+                        'equipment': 'document_extractor.equipment_dashboard',
+                        'recovery': 'document_extractor.recovery_dashboard',
+                    };
+
+                    const dashboardTag = dashboardMap[action.params.dashboard];
+                    if (dashboardTag) {
+                        // Pass only relevant params (exclude 'dashboard' key)
+                        const { dashboard, ...dashboardParams } = action.params;
+
+                        await this.action.doAction({
+                            type: 'ir.actions.client',
+                            tag: dashboardTag,
+                            params: dashboardParams  // Pass substance_id, organization_id, etc.
+                        });
+                    }
+                    break;
+
+                case 'view_substance':
+                    // Open substance form view
+                    if (action.params.substance_id) {
+                        await this.action.doAction({
+                            type: 'ir.actions.act_window',
+                            res_model: 'controlled.substance',
+                            res_id: action.params.substance_id,
+                            views: [[false, 'form']],
+                            target: 'current'
+                        });
+                    }
+                    break;
+
+                case 'search_documents':
+                    // Open documents list with search filter
+                    await this.action.doAction({
+                        type: 'ir.actions.act_window',
+                        name: 'Search Results',
+                        res_model: 'document.extraction',
+                        views: [[false, 'list'], [false, 'form']],
+                        domain: action.params.domain || [],
+                        context: action.params.context || {},
+                        target: 'current'
+                    });
+                    break;
+
+                case 'create_document':
+                    // Open form to create new document
+                    const docType = action.params.document_type || '01';
+                    const actionName = docType === '01' ? 'action_document_extraction_registration' : 'action_document_extraction_report';
+
+                    // Open the predefined action (has correct context)
+                    await this.action.doAction(actionName, {
+                        additionalContext: {
+                            default_document_type: docType
+                        }
+                    });
+                    break;
+
+                default:
+                    console.warn('Unknown action type:', action.type);
+            }
+        } catch (error) {
+            console.error('Error executing action:', error);
+            this.notification.add(`Không thể thực hiện hành động: ${action.type}`, {
+                type: 'warning'
+            });
+        }
+    }
+
+    /**
+     * Start a new chat conversation
+     */
+    startNewChat() {
+        // Clear conversation ID
+        this.conversationId = null;
+        localStorage.removeItem('chatbot_conversation_id');
+
+        // Clear messages
+        this.state.messages = [];
+
+        // Reset input
+        this.state.inputMessage = "";
+
+        // Reset typing state
+        this.state.isTyping = false;
+
+        // Reset suggestions to default
+        this.state.suggestions = [
+            "Xem thống kê",
+            "Tài liệu gần đây",
+            "Hỗ trợ chất kiểm soát"
+        ];
+
+        // Focus input
+        if (this.chatInput.el) {
+            this.chatInput.el.focus();
         }
     }
 

@@ -31,6 +31,25 @@
             color: #666;
             margin-top: 4px;
         }
+
+        .new-chat-btn {
+            font-size: 13px;
+            padding: 8px 16px;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+
+            i {
+                font-size: 14px;
+            }
+
+            &:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 2px 6px rgba(26, 115, 232, 0.2);
+            }
+        }
     }
 
     // ============= CHAT CONTAINER =============
@@ -206,6 +225,35 @@
         text-align: right;
     }
 
+    // ============= MESSAGE ACTION BUTTON =============
+    .message-action {
+        margin-top: 6px;
+
+        .action-btn {
+            font-size: 12px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+            border: none;
+
+            i {
+                font-size: 12px;
+            }
+
+            &:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 2px 6px rgba(26, 115, 232, 0.3);
+            }
+
+            &:active {
+                transform: translateY(0);
+            }
+        }
+    }
+
     // ============= TYPING INDICATOR =============
     .typing-indicator {
         display: flex;
@@ -356,12 +404,23 @@
         }
 
         .header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+
             .header-title {
                 font-size: 20px;
             }
 
             .header-sub {
                 font-size: 12px;
+            }
+
+            .new-chat-btn {
+                font-size: 12px;
+                padding: 6px 12px;
+                width: 100%;
+                justify-content: center;
             }
         }
 
@@ -393,6 +452,77 @@
 
         .send-btn {
             padding: 8px 14px;
+        }
+    }
+
+    // ============= SMOOTH ANIMATIONS =============
+
+    // Message appear animation
+    .message-wrapper {
+        animation: messageAppear 0.3s ease-out;
+    }
+
+    @keyframes messageAppear {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    // Button hover animations with smooth transitions
+    .send-btn,
+    .suggestion-chip,
+    .quick-action-card {
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    // Enhanced typing indicator animation
+    .typing-indicator {
+        span {
+            animation: typingBounce 1.4s infinite ease-in-out;
+        }
+    }
+
+    @keyframes typingBounce {
+        0%, 60%, 100% {
+            transform: translateY(0);
+            opacity: 0.5;
+        }
+        30% {
+            transform: translateY(-6px);
+            opacity: 1;
+        }
+    }
+
+    // Smooth scroll behavior
+    .chat-messages {
+        scroll-behavior: smooth;
+    }
+
+    // Input focus animation
+    .chat-input {
+        transition: all 0.2s ease;
+
+        &:focus {
+            transform: scale(1.01);
+        }
+    }
+
+    // Fade in animation for suggestions
+    .suggestions {
+        animation: fadeIn 0.3s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
         }
     }
 }

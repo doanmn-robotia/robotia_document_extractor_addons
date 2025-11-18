@@ -28,5 +28,10 @@ from . import collection_recycling_report
 from . import extraction_service
 from . import res_config_settings
 
+# Chatbot
+from . import chatbot_conversation
+from . import chatbot_message
+from . import chatbot_service
+
 # Aggregation Models (SQL Views)
 from . import substance_aggregate
