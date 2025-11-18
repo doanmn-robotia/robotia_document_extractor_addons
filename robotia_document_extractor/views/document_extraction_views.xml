@@ -105,6 +105,7 @@
                                 <list editable="bottom">
                                     <field name="sequence" widget="handle" options="{'enable_formatting': false}"/>
                                     <field name="substance_name" widget="extraction_title_field"/>
+                                    <field name="substance_id" required="1" options="{'no_create': True, 'no_quick_create': True}"/>
                                     <field name="year_1_quantity_kg"/>
                                     <field name="year_1_quantity_co2"/>
                                     <field name="year_2_quantity_kg"/>
@@ -134,7 +135,7 @@
                                     <field name="hs_code"/>
                                     <field name="capacity"/>
                                     <field name="quantity"/>
-                                    <field name="substance_name"/>
+                                    <field name="substance_id" required="1" options="{'no_create': True, 'no_quick_create': True}"/>
                                     <field name="substance_quantity_per_unit"/>
                                     <field name="notes"/>
                                     <field name="is_title" column_invisible="1"/>
@@ -156,7 +157,7 @@
                                     <field name="equipment_type" widget="extraction_title_field"/>
                                     <field name="start_year" options="{'enable_formatting': false}"/>
                                     <field name="capacity"/>
-                                    <field name="substance_name"/>
+                                    <field name="substance_id" required="1" options="{'no_create': True, 'no_quick_create': True}"/>
                                     <field name="equipment_quantity" options="{'enable_formatting': false}"/>
                                     <field name="refill_frequency"/>
                                     <field name="substance_quantity_per_refill"/>
@@ -178,6 +179,7 @@
                                     <field name="sequence" widget="handle" options="{'enable_formatting': false}"/>
                                     <field name="activity_type" column_invisible="1"/>
                                     <field name="substance_name" widget="extraction_title_field"/>
+                                    <field name="substance_id" required="1" options="{'no_create': True, 'no_quick_create': True}"/>
                                     <field name="quantity_kg"/>
                                     <field name="quantity_co2"/>
                                     <field name="is_title" column_invisible="1"/>
@@ -197,6 +199,7 @@
                                 <list editable="bottom">
                                     <field name="sequence" widget="handle" options="{'enable_formatting': false}"/>
                                     <field name="substance_name" widget="extraction_title_field"/>
+                                    <field name="substance_id" required="1" options="{'no_create': True, 'no_quick_create': True}"/>
                                     <field name="hs_code"/>
                                     <field name="allocated_quota_kg"/>
                                     <field name="allocated_quota_co2"/>
@@ -230,7 +233,7 @@
                                     <field name="hs_code"/>
                                     <field name="capacity"/>
                                     <field name="quantity"/>
-                                    <field name="substance_name"/>
+                                    <field name="substance_id" required="1" options="{'no_create': True, 'no_quick_create': True}"/>
                                     <field name="substance_quantity_per_unit"/>
                                     <field name="notes"/>
                                     <field name="is_title" column_invisible="1"/>
@@ -252,7 +255,7 @@
                                     <field name="sequence" widget="handle" options="{'enable_formatting': false}"/>
                                     <field name="equipment_type" widget="extraction_title_field"/>
                                     <field name="equipment_quantity" options="{'enable_formatting': false}"/>
-                                    <field name="substance_name"/>
+                                    <field name="substance_id" required="1" options="{'no_create': True, 'no_quick_create': True}"/>
                                     <field name="capacity"/>
                                     <field name="start_year" options="{'enable_formatting': false}"/>
                                     <field name="refill_frequency"/>
@@ -274,7 +277,7 @@
                               invisible="document_type != '02' or not has_table_2_4">
                             <field widget="x2many_no_magic_width_list" name="collection_recycling_report_ids">
                                 <list editable="bottom">
-                                    <field name="substance_name"/>
+                                    <field name="substance_id" required="1" options="{'no_create': True, 'no_quick_create': True}"/>
                                     <!-- Collection -->
                                     <field name="collection_quantity_kg"/>
                                     <field name="collection_location"/>

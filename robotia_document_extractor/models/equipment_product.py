@@ -109,42 +109,17 @@ class EquipmentProduct(models.Model):
             if vals.get('is_title'):
                 continue
 
-            # 1. Handle Substance
-            if not vals.get('substance_id') and vals.get('substance_name'):
-                substance = self._find_or_create_substance(vals.get('substance_name'))
-                vals['substance_id'] = substance.id
-
-            # 2. Handle Equipment Type
+            # 1. Handle Equipment Type
             if not vals.get('equipment_type_id') and vals.get('product_type'):
                 equipment_type = self._find_or_create_equipment_type(vals.get('product_type'))
                 vals['equipment_type_id'] = equipment_type.id
 
-            # 3. Handle HS Code
+            # 2. Handle HS Code
             if not vals.get('hs_code_id') and vals.get('hs_code'):
                 hs_code = self._find_or_create_hs_code(vals.get('hs_code'))
                 vals['hs_code_id'] = hs_code.id
 
         return super(EquipmentProduct, self).create(vals_list)
-
-    def _find_or_create_substance(self, substance_text):
-        """Search for substance, create if not found"""
-        substance_text = substance_text.strip()
-        substance = self.env['controlled.substance'].search([
-            '|',
-            ('name', '=ilike', substance_text),
-            ('code', '=ilike', substance_text)
-        ], limit=1)
-
-        if substance:
-            return substance
-
-        return self.env['controlled.substance'].create({
-            'name': substance_text,
-            'code': substance_text,
-            'active': True,
-            'needs_review': True,
-            'created_from_extraction': True
-        })
 
     def _find_or_create_equipment_type(self, type_text):
         """Search for equipment type, create if not found"""
