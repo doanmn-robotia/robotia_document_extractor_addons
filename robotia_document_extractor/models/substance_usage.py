@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from odoo import models, fields, api
+from odoo.exceptions import ValidationError
 
 
 class SubstanceUsage(models.Model):
@@ -83,6 +84,34 @@ class SubstanceUsage(models.Model):
     avg_quantity_co2 = fields.Float(
         string='Average Quantity (ton CO2)'
     )
+
+    # SQL Constraints for data validation
+    _sql_constraints = [
+        ('year_1_quantity_kg_positive',
+         'CHECK(year_1_quantity_kg IS NULL OR year_1_quantity_kg >= 0)',
+         'Year 1 quantity (kg) must be positive or null'),
+        ('year_2_quantity_kg_positive',
+         'CHECK(year_2_quantity_kg IS NULL OR year_2_quantity_kg >= 0)',
+         'Year 2 quantity (kg) must be positive or null'),
+        ('year_3_quantity_kg_positive',
+         'CHECK(year_3_quantity_kg IS NULL OR year_3_quantity_kg >= 0)',
+         'Year 3 quantity (kg) must be positive or null'),
+        ('avg_quantity_kg_positive',
+         'CHECK(avg_quantity_kg IS NULL OR avg_quantity_kg >= 0)',
+         'Average quantity (kg) must be positive or null'),
+        ('year_1_quantity_co2_positive',
+         'CHECK(year_1_quantity_co2 IS NULL OR year_1_quantity_co2 >= 0)',
+         'Year 1 quantity (CO2) must be positive or null'),
+        ('year_2_quantity_co2_positive',
+         'CHECK(year_2_quantity_co2 IS NULL OR year_2_quantity_co2 >= 0)',
+         'Year 2 quantity (CO2) must be positive or null'),
+        ('year_3_quantity_co2_positive',
+         'CHECK(year_3_quantity_co2 IS NULL OR year_3_quantity_co2 >= 0)',
+         'Year 3 quantity (CO2) must be positive or null'),
+        ('avg_quantity_co2_positive',
+         'CHECK(avg_quantity_co2 IS NULL OR avg_quantity_co2 >= 0)',
+         'Average quantity (CO2) must be positive or null'),
+    ]
 
     @api.depends('substance_id')
     def _compute_substance_name(self):

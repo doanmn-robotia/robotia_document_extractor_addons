@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 
 from odoo import models, fields, tools
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 class SubstanceAggregate(models.Model):
@@ -49,6 +52,7 @@ class SubstanceAggregate(models.Model):
         self.env.cr.execute('''
             CREATE OR REPLACE VIEW substance_aggregate AS (
                 -- From substance_usage (Form 01 - 3 years data)
+                -- FIX: Calculate correct average (divide by count of non-null years, not always 3)
                 SELECT
                     ROW_NUMBER() OVER () as id,
                     su.substance_id,
@@ -60,28 +64,43 @@ class SubstanceAggregate(models.Model):
                         COALESCE(su.avg_quantity_kg,
                             (COALESCE(su.year_1_quantity_kg, 0) +
                              COALESCE(su.year_2_quantity_kg, 0) +
-                             COALESCE(su.year_3_quantity_kg, 0)) / 3.0)
+                             COALESCE(su.year_3_quantity_kg, 0)) /
+                            NULLIF((CASE WHEN su.year_1_quantity_kg IS NOT NULL THEN 1 ELSE 0 END +
+                                    CASE WHEN su.year_2_quantity_kg IS NOT NULL THEN 1 ELSE 0 END +
+                                    CASE WHEN su.year_3_quantity_kg IS NOT NULL THEN 1 ELSE 0 END), 0)::float)
                         ELSE 0 END) as total_production_kg,
                     SUM(CASE WHEN su.usage_type = 'import' THEN
                         COALESCE(su.avg_quantity_kg,
                             (COALESCE(su.year_1_quantity_kg, 0) +
                              COALESCE(su.year_2_quantity_kg, 0) +
-                             COALESCE(su.year_3_quantity_kg, 0)) / 3.0)
+                             COALESCE(su.year_3_quantity_kg, 0)) /
+                            NULLIF((CASE WHEN su.year_1_quantity_kg IS NOT NULL THEN 1 ELSE 0 END +
+                                    CASE WHEN su.year_2_quantity_kg IS NOT NULL THEN 1 ELSE 0 END +
+                                    CASE WHEN su.year_3_quantity_kg IS NOT NULL THEN 1 ELSE 0 END), 0)::float)
                         ELSE 0 END) as total_import_kg,
                     SUM(CASE WHEN su.usage_type = 'export' THEN
                         COALESCE(su.avg_quantity_kg,
                             (COALESCE(su.year_1_quantity_kg, 0) +
                              COALESCE(su.year_2_quantity_kg, 0) +
-                             COALESCE(su.year_3_quantity_kg, 0)) / 3.0)
+                             COALESCE(su.year_3_quantity_kg, 0)) /
+                            NULLIF((CASE WHEN su.year_1_quantity_kg IS NOT NULL THEN 1 ELSE 0 END +
+                                    CASE WHEN su.year_2_quantity_kg IS NOT NULL THEN 1 ELSE 0 END +
+                                    CASE WHEN su.year_3_quantity_kg IS NOT NULL THEN 1 ELSE 0 END), 0)::float)
                         ELSE 0 END) as total_export_kg,
                     SUM(COALESCE(su.avg_quantity_kg,
                             (COALESCE(su.year_1_quantity_kg, 0) +
                              COALESCE(su.year_2_quantity_kg, 0) +
-                             COALESCE(su.year_3_quantity_kg, 0)) / 3.0)) as total_usage_kg,
+                             COALESCE(su.year_3_quantity_kg, 0)) /
+                            NULLIF((CASE WHEN su.year_1_quantity_kg IS NOT NULL THEN 1 ELSE 0 END +
+                                    CASE WHEN su.year_2_quantity_kg IS NOT NULL THEN 1 ELSE 0 END +
+                                    CASE WHEN su.year_3_quantity_kg IS NOT NULL THEN 1 ELSE 0 END), 0)::float)) as total_usage_kg,
                     SUM(COALESCE(su.avg_quantity_co2,
                             (COALESCE(su.year_1_quantity_co2, 0) +
                              COALESCE(su.year_2_quantity_co2, 0) +
-                             COALESCE(su.year_3_quantity_co2, 0)) / 3.0)) as total_co2e,
+                             COALESCE(su.year_3_quantity_co2, 0)) /
+                            NULLIF((CASE WHEN su.year_1_quantity_co2 IS NOT NULL THEN 1 ELSE 0 END +
+                                    CASE WHEN su.year_2_quantity_co2 IS NOT NULL THEN 1 ELSE 0 END +
+                                    CASE WHEN su.year_3_quantity_co2 IS NOT NULL THEN 1 ELSE 0 END), 0)::float)) as total_co2e,
                     COUNT(DISTINCT de.id) as document_count,
                     COUNT(DISTINCT de.organization_id) as organization_count
                 FROM substance_usage su
@@ -323,6 +342,23 @@ class SubstanceAggregate(models.Model):
                 ) collection_report_unpivot
             )
         ''')
+
+        # Create indexes for performance (3000+ records optimization)
+        _logger.info("Creating indexes on substance_aggregate view for performance...")
+        self.env.cr.execute('''
+            CREATE INDEX IF NOT EXISTS substance_aggregate_substance_year_idx
+            ON substance_aggregate(substance_id, year);
+
+            CREATE INDEX IF NOT EXISTS substance_aggregate_org_year_idx
+            ON substance_aggregate(organization_id, year);
+
+            CREATE INDEX IF NOT EXISTS substance_aggregate_usage_type_idx
+            ON substance_aggregate(usage_type);
+
+            CREATE INDEX IF NOT EXISTS substance_aggregate_doc_type_idx
+            ON substance_aggregate(document_type);
+        ''')
+        _logger.info("Indexes created successfully on substance_aggregate view")
 
     def get_dashboard_data(self, substance_id=None, organization_id=None, year_from=None, year_to=None):
         """

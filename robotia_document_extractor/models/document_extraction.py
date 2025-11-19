@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from odoo import models, fields, api
+from odoo.exceptions import ValidationError
 
 
 class DocumentExtraction(models.Model):
@@ -65,7 +66,8 @@ class DocumentExtraction(models.Model):
         string='Status',
         default='draft',
         required=True,
-        tracking=True
+        tracking=True,
+        index=True  # Performance: frequently filtered in dashboards
     )
 
     # ===== Organization Information (4.1.1 & 4.2.1) =====
@@ -293,6 +295,19 @@ class DocumentExtraction(models.Model):
             self.contact_fax = partner.fax
             self.contact_email = partner.email
 
+    # ===== Constraints =====
+    @api.constrains('year')
+    def _check_year(self):
+        """Validate that year is within reasonable range"""
+        for record in self:
+            if record.year:
+                current_year = fields.Date.today().year
+                # Allow years from 2000 to current year + 5
+                if record.year < 2000 or record.year > current_year + 5:
+                    raise ValidationError(
+                        f'Year must be between 2000 and {current_year + 5}. '
+                        f'Got: {record.year}'
+                    )
     @api.onchange('activity_field_ids', 'document_type')
     def _onchange_activity_fields(self):
         """
@@ -332,7 +347,12 @@ class DocumentExtraction(models.Model):
           - If found → set organization_id
           - If not found → create new partner → set organization_id
         - If pdf_attachment_id exists, update it with the new res_id
+
+        FIX: Handle race condition - if another transaction creates the organization
+        between our search and create, retry the search
         """
+        import psycopg2
+
         for vals in vals_list:
             if not vals.get('organization_id') and vals.get('business_license_number'):
                 # Search existing partner by business license number
@@ -361,8 +381,23 @@ class DocumentExtraction(models.Model):
                         'company_type': 'company',
                         'x_partner_type': 'organization'
                     }
-                    new_partner = self.env['res.partner'].create(partner_vals)
-                    vals['organization_id'] = new_partner.id
+
+                    try:
+                        # Try to create new partner
+                        new_partner = self.env['res.partner'].create(partner_vals)
+                        vals['organization_id'] = new_partner.id
+                    except psycopg2.IntegrityError:
+                        # Race condition: Another transaction created it between search and create
+                        # Rollback and retry search
+                        self.env.cr.rollback()
+                        partner = self.env['res.partner'].search([
+                            ('business_license_number', '=', vals.get('business_license_number'))
+                        ], limit=1)
+                        if partner:
+                            vals['organization_id'] = partner.id
+                        else:
+                            # Still not found (shouldn't happen), re-raise
+                            raise
 
         # Create records
         records = super(DocumentExtraction, self).create(vals_list)
