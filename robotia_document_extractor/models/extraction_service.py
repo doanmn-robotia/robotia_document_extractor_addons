@@ -321,14 +321,14 @@ class DocumentExtractionService(models.AbstractModel):
         """
         Build mega prompt context with all controlled substances from database
 
-        Returns a list of types.Text objects that serve as system context for AI extraction.
+        Returns a list of types.Part.from_text objects that serve as system context for AI extraction.
         This context includes:
         - List of all controlled substances with names, codes, and GWP values
         - Standardization rules for substance name mapping
         - Examples of common format variations
 
         Returns:
-            list: List containing types.Text with mega prompt context
+            list: List containing types.Part.from_text with mega prompt context
                   Can be extended with additional context prompts in the future
         """
         # Query all active controlled substances from database
@@ -511,10 +511,10 @@ Document Shows (checkbox checked)           → Code to Return
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 """
 
-        # Return as list of types.Text (can add more context items in the future)
+        # Return as list of types.Part.from_text (can add more context items in the future)
         return [
-            types.Text(text=mega_prompt_text),      # Substances context
-            types.Text(text=activity_fields_text)   # Activity fields context
+            types.Part.from_text(text=mega_prompt_text),      # Substances context
+            types.Part.from_text(text=activity_fields_text)   # Activity fields context
         ]
 
     def _build_extraction_prompt(self, document_type):
