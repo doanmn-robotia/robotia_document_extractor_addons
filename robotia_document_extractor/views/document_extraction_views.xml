@@ -25,8 +25,12 @@
                             <field name="document_type" required="1"/>
                             <field name="year" required="1" options="{'enable_formatting': false}"/>
                             <field name="extraction_date" readonly="1"/>
+                            <field name="source"/>
                         </group>
                         <group>
+                            <field name="ocr_status" invisible="source != 'from_external_source'"/>
+                            <field name="ocr_error_message" invisible="ocr_status != 'error'" readonly="1"/>
+                            <field name="gdrive_file_id" invisible="source != 'from_external_source'" readonly="1"/>
                             <field name="pdf_filename" invisible="1"/>
                             <field name="state" invisible="1"/>
                         </group>
@@ -338,6 +342,12 @@
                 <field name="year_1" optional="hide" options="{'enable_formatting': false}"/>
                 <field name="year_2" optional="hide" options="{'enable_formatting': false}"/>
                 <field name="year_3" optional="hide" options="{'enable_formatting': false}"/>
+                <field name="source"/>
+                <field name="ocr_status" optional="show"
+                       decoration-muted="ocr_status == 'pending'"
+                       decoration-warning="ocr_status == 'processing'"
+                       decoration-success="ocr_status == 'completed'"
+                       decoration-danger="ocr_status == 'error'"/>
                 <field name="extraction_date"/>
                 <field name="state" widget="badge" decoration-info="state == 'draft'"
                        decoration-warning="state == 'validated'"
@@ -357,6 +367,8 @@
                 <field name="document_type"/>
                 <field name="year" options="{'enable_formatting': false}"/>
                 <field name="state"/>
+                <field name="source"/>
+                <field name="ocr_status"/>
                 <field name="extraction_date"/>
 
                 <!-- Search Fields - Organization -->
@@ -409,6 +421,24 @@
                         domain="[('state', '=', 'validated')]"/>
                 <filter string="Completed" name="filter_completed"
                         domain="[('state', '=', 'completed')]"/>
+
+                <separator/>
+
+                <filter string="User Upload" name="filter_user_upload"
+                        domain="[('source', '=', 'from_user_upload')]"/>
+                <filter string="External Source (Google Drive)" name="filter_external_source"
+                        domain="[('source', '=', 'from_external_source')]"/>
+
+                <separator/>
+
+                <filter string="OCR Pending" name="filter_ocr_pending"
+                        domain="[('ocr_status', '=', 'pending')]"/>
+                <filter string="OCR Processing" name="filter_ocr_processing"
+                        domain="[('ocr_status', '=', 'processing')]"/>
+                <filter string="OCR Completed" name="filter_ocr_completed"
+                        domain="[('ocr_status', '=', 'completed')]"/>
+                <filter string="OCR Error" name="filter_ocr_error"
+                        domain="[('ocr_status', '=', 'error')]"/>
 
                 <separator/>
 
