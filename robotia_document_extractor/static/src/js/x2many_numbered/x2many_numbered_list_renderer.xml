@@ -3,9 +3,17 @@
 
     <!-- Main template inheriting from web.ListRenderer -->
     <t t-name="robotia_document_extractor.X2ManyNumberedListRenderer" t-inherit="web.ListRenderer">
-        <!-- Keep default behavior from parent ListRenderer -->
-        <!-- The sequence column is added via getColumns() override in JS -->
-        <!-- The cell values are provided via evalInContext() override in JS -->
+        <xpath expr="//th[@t-if='hasSelectors']" position="after">
+            <th>#</th>
+        </xpath>
+    </t>
+
+    <t t-name="robotia_document_extractor.X2ManyNumberedListRendererRecordRow" t-inherit="web.ListRenderer.RecordRow">
+        <xpath expr="//tr[hasclass('o_data_row')]/t[@t-foreach='getColumns(record)']" position="inside">
+            <th t-if="column.type == '__sequence_number__'">
+                <t t-esc="getSequenceNumber(record)"/>
+            </th>
+        </xpath>
     </t>
 
 </templates>

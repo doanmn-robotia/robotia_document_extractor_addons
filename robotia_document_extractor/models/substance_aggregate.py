@@ -343,23 +343,6 @@ class SubstanceAggregate(models.Model):
             )
         ''')
 
-        # Create indexes for performance (3000+ records optimization)
-        _logger.info("Creating indexes on substance_aggregate view for performance...")
-        self.env.cr.execute('''
-            CREATE INDEX IF NOT EXISTS substance_aggregate_substance_year_idx
-            ON substance_aggregate(substance_id, year);
-
-            CREATE INDEX IF NOT EXISTS substance_aggregate_org_year_idx
-            ON substance_aggregate(organization_id, year);
-
-            CREATE INDEX IF NOT EXISTS substance_aggregate_usage_type_idx
-            ON substance_aggregate(usage_type);
-
-            CREATE INDEX IF NOT EXISTS substance_aggregate_doc_type_idx
-            ON substance_aggregate(document_type);
-        ''')
-        _logger.info("Indexes created successfully on substance_aggregate view")
-
     def get_dashboard_data(self, substance_id=None, organization_id=None, year_from=None, year_to=None):
         """
         Get aggregated data for dashboards

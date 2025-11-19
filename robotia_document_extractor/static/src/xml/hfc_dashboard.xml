@@ -35,7 +35,7 @@
                         <label>Tỉnh/Thành phố</label>
                         <select class="form-select form-select-sm" t-model="state.filters.province">
                             <option value="">-- Tất cả --</option>
-                            <t t-foreach="state.filterMetadata.provinces" t-as="province" t-key="province">
+                            <t t-foreach="state.filterMetadata.provinces" t-as="province" t-key="province_index">
                                 <option t-att-value="province" t-esc="province"/>
                             </t>
                         </select>

@@ -3,6 +3,7 @@
 import { makeContext } from "@web/core/context";
 import { useEffect } from "@odoo/owl";
 import { NoMagicColumnListRenderer } from "../../no_magic_width_list/no_magic_width_list";
+import { X2ManyNumberedListRenderer } from "../x2many_numbered/x2many_numbered_list_renderer";
 
 /**
  * Custom List Renderer for extraction tables with section/title rows
@@ -14,7 +15,7 @@ import { NoMagicColumnListRenderer } from "../../no_magic_width_list/no_magic_wi
  *
  * Used for tables: substance.usage, equipment.product, equipment.ownership, collection.recycling
  */
-export class ExtractionSectionListRenderer extends NoMagicColumnListRenderer {
+export class ExtractionSectionListRenderer extends X2ManyNumberedListRenderer {
     setup() {
         super.setup();
 

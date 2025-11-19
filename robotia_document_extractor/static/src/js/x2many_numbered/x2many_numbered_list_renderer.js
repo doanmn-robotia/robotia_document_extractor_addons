@@ -16,7 +16,8 @@ import { ListRenderer } from "@web/views/list/list_renderer";
  */
 export class X2ManyNumberedListRenderer extends ListRenderer {
     static template = "robotia_document_extractor.X2ManyNumberedListRenderer";
-
+    static useMagicColumnWidths = false
+    static recordRowTemplate = "robotia_document_extractor.X2ManyNumberedListRendererRecordRow"
     /**
      * Override getColumns to inject the "#" column at the beginning
      */
@@ -27,7 +28,7 @@ export class X2ManyNumberedListRenderer extends ListRenderer {
         const sequenceColumn = {
             id: '__sequence_number__',
             name: '__sequence_number__',
-            type: 'sequence',
+            type: '__sequence_number__',
             label: '#',
             width: '50px',
             className: 'o_list_number_th text-center',
@@ -60,22 +61,5 @@ export class X2ManyNumberedListRenderer extends ListRenderer {
         const records = this.props.list.records;
         const index = records.indexOf(record);
         return index + 1;
-    }
-
-    /**
-     * Override evalInContext to provide sequence number value for rendering
-     */
-    evalInContext(record, column) {
-        if (column.name === '__sequence_number__') {
-            return this.getSequenceNumber(record);
-        }
-        return super.evalInContext(...arguments);
-    }
-
-    /**
-     * Check if this is the sequence number column
-     */
-    isSequenceColumn(column) {
-        return column.name === '__sequence_number__';
     }
 }
