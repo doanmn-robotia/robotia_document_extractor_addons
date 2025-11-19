@@ -62,10 +62,12 @@ export class ExtractionSectionListRenderer extends NoMagicColumnListRenderer {
      * Get columns for a record - section rows have modified columns with colspan
      */
     getColumns(record) {
-        const columns = super.getColumns(record);
+        let columns = super.getColumns(record);
         if (this.isSection(record)) {
-            return this.getSectionColumns(columns);
+            columns = this.getSectionColumns(columns);
         }
+        console.log(columns);
+        
         return columns;
     }
 
@@ -127,13 +129,12 @@ export class ExtractionSectionListRenderer extends NoMagicColumnListRenderer {
 
             // Clone columns array
             const sectionColumns = [...columns];
-
             // Replace widget column: keep substance_id column structure but change data source
             sectionColumns[titleWidgetColumnIndex] = {
                 ...columns[titleWidgetColumnIndex],  // Keep original substance_id column properties
                 name: this.titleField,                // Change name to substance_name to get data
-                widget: undefined,                    // Remove widget to show plain text
-                colspan: colspan                      // Add colspan
+                colspan: colspan,                     // Add colspan
+                fieldType: 'char'
             };
 
             // Remove columns that are spanned (visible ones after widget column)

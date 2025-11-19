@@ -2,7 +2,8 @@
 
 import { CharField, charField } from "@web/views/fields/char/char_field";
 import { registry } from "@web/core/registry";
-import { useEffect, useRef } from "@odoo/owl";
+import { Component } from "@odoo/owl";
+import { many2OneField, Many2OneField } from "@web/views/fields/many2one/many2one_field";
 
 /**
  * Custom CharField for title/section fields in extraction tables
@@ -13,31 +14,26 @@ import { useEffect, useRef } from "@odoo/owl";
  *
  * Used for: substance_name, equipment_type, product_type fields
  */
-class ExtractionTitleField extends CharField {
+class ExtractionTitleField extends Component {
     static template = "robotia_document_extractor.ExtractionTitleField";
 
+    static props = {"*": {optional: true}}
+
+    static components = { CharField, Many2OneField }
+
     setup() {
-        super.setup();
-        const inputRef = useRef("input");
-        useEffect(
-            (input) => {
-                if (input) {
-                    input.classList.add("col");
-                }
-            },
-            () => [inputRef.el]
-        );
+        
     }
 
-    /**
-     * Open record in form view when external button is clicked
-     */
-    onExternalBtnClick() {
-        this.env.openRecord(this.props.record);
-    }
 }
 
 registry.category("fields").add("extraction_title_field", {
     ...charField,
     component: ExtractionTitleField,
+    extractProps(options, dynamicInfo) {
+        return {
+            ...charField.extractProps(options, dynamicInfo),
+            ...many2OneField.extractProps(options, dynamicInfo)
+        }
+    }
 });
