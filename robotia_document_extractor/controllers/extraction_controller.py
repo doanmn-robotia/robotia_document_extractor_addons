@@ -132,23 +132,25 @@ class ExtractionController(http.Controller):
                     }
                 }
 
-            # Simple rate limiting
-            import time
-            last_extract_time = request.session.get('last_extract_time', 0)
-            current_time = time.time()
-            if current_time - last_extract_time < EXTRACTION_RATE_LIMIT_SECONDS:
-                wait_seconds = int(EXTRACTION_RATE_LIMIT_SECONDS - (current_time - last_extract_time))
+            # FIX: Database-based rate limiting (thread-safe, prevents race conditions)
+            RateLimit = request.env['rate.limit'].sudo()
+            rate_check = RateLimit.check_rate_limit(
+                user_id=request.env.uid,
+                action='extract_document',
+                limit_seconds=EXTRACTION_RATE_LIMIT_SECONDS
+            )
+
+            if not rate_check['allowed']:
                 return {
                     'type': 'ir.actions.client',
                     'tag': 'display_notification',
                     'params': {
                         'title': 'Please Wait',
-                        'message': f'Please wait {wait_seconds} seconds before extracting another document',
+                        'message': rate_check['message'],
                         'type': 'warning',
                         'sticky': False,
                     }
                 }
-            request.session['last_extract_time'] = current_time
 
             # Call extraction service
             extraction_service = request.env['document.extraction.service']
