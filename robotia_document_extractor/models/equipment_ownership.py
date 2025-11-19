@@ -88,29 +88,12 @@ class EquipmentOwnership(models.Model):
             if vals.get('is_title'):
                 continue
 
-            # Handle Substance
-            if not vals.get('substance_id') and vals.get('substance_name'):
-                substance = self._find_or_create_substance(vals.get('substance_name'))
-                vals['substance_id'] = substance.id
-
             # Handle Equipment Type
             if not vals.get('equipment_type_id') and vals.get('equipment_type'):
                 equipment_type = self._find_or_create_equipment_type(vals.get('equipment_type'))
                 vals['equipment_type_id'] = equipment_type.id
 
         return super(EquipmentOwnership, self).create(vals_list)
-
-    def _find_or_create_substance(self, substance_text):
-        substance_text = substance_text.strip()
-        substance = self.env['controlled.substance'].search([
-            '|', ('name', '=ilike', substance_text), ('code', '=ilike', substance_text)
-        ], limit=1)
-        if substance:
-            return substance
-        return self.env['controlled.substance'].create({
-            'name': substance_text, 'code': substance_text, 'active': True,
-            'needs_review': True, 'created_from_extraction': True
-        })
 
     def _find_or_create_equipment_type(self, type_text):
         type_text = type_text.strip()

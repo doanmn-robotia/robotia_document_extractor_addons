@@ -92,9 +92,6 @@ class CollectionRecyclingReport(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
-            # Substance
-            if not vals.get('substance_id') and vals.get('substance_name'):
-                vals['substance_id'] = self._find_or_create('controlled.substance', vals['substance_name']).id
             # Collection locations
             if not vals.get('collection_location_id') and vals.get('collection_location'):
                 vals['collection_location_id'] = self._find_or_create('collection.location', vals['collection_location'], {'location_type': 'collection'}).id

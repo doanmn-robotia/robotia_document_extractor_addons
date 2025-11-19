@@ -1,0 +1,49 @@
+// Styling for X2Many Numbered Widget
+// Adds visual styling to the sequence number column
+
+.o_field_x2many_numbered {
+    // Header styling for sequence column
+    .o_list_number_th {
+        width: 50px !important;
+        min-width: 50px !important;
+        max-width: 50px !important;
+        text-align: center;
+        vertical-align: middle;
+        font-weight: 600;
+        background-color: rgba(0, 0, 0, 0.02);
+        border-right: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    // Cell styling for sequence numbers
+    .o_list_number {
+        width: 50px !important;
+        min-width: 50px !important;
+        max-width: 50px !important;
+        text-align: center;
+        vertical-align: middle;
+        padding: 4px 8px;
+        background-color: rgba(0, 0, 0, 0.015);
+        border-right: 1px solid rgba(0, 0, 0, 0.08);
+        user-select: none;
+
+        span {
+            font-size: 0.9em;
+            font-weight: 600;
+            color: #6c757d;
+        }
+    }
+
+    // Hover effect for rows
+    tbody tr:hover .o_list_number {
+        background-color: rgba(0, 0, 0, 0.03);
+    }
+
+    // Selected row styling
+    tbody tr.o_data_row.o_selected_row .o_list_number {
+        background-color: rgba(var(--we-cp-primary-rgb), 0.1);
+
+        span {
+            color: var(--we-cp-primary);
+        }
+    }
+}

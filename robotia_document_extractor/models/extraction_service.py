@@ -196,6 +196,9 @@ class DocumentExtractionService(models.AbstractModel):
 
             _logger.info(f"File processing completed: {uploaded_file.state.name}")
 
+            # Build mega prompt context (substances list + mapping rules)
+            mega_context = self._build_mega_prompt_context()
+
             # Generate content with retry logic for incomplete responses
             extracted_text = None
             last_error = None
@@ -204,10 +207,10 @@ class DocumentExtractionService(models.AbstractModel):
                 try:
                     _logger.info(f"Gemini API call attempt {retry_attempt + 1}/{GEMINI_MAX_RETRIES}")
 
-                    # Generate content with the uploaded file
+                    # Generate content with mega context + uploaded file + prompt
                     response = client.models.generate_content(
                         model='gemini-2.0-flash-exp',
-                        contents=[uploaded_file, prompt],
+                        contents=mega_context + [uploaded_file, prompt],
                         config=types.GenerateContentConfig(
                             temperature=0.1,  # Low temperature for consistent structured output
                             max_output_tokens=GEMINI_MAX_TOKENS,
@@ -313,6 +316,206 @@ class DocumentExtractionService(models.AbstractModel):
         cleaned_data = self._clean_extracted_data(extracted_data, document_type)
 
         return cleaned_data
+
+    def _build_mega_prompt_context(self):
+        """
+        Build mega prompt context with all controlled substances from database
+
+        Returns a list of types.Text objects that serve as system context for AI extraction.
+        This context includes:
+        - List of all controlled substances with names, codes, and GWP values
+        - Standardization rules for substance name mapping
+        - Examples of common format variations
+
+        Returns:
+            list: List containing types.Text with mega prompt context
+                  Can be extended with additional context prompts in the future
+        """
+        # Query all active controlled substances from database
+        substances = self.env['controlled.substance'].search([
+            ('active', '=', True)
+        ], order='code')
+
+        # Group substances by type for better organization
+        hfc_singles = []
+        hfc_blends = []
+        hcfc_list = []
+
+        for substance in substances:
+            line = f"  - {substance.name:20s} | Code: {substance.code:15s} | GWP: {substance.gwp}"
+
+            # Categorize by name/code pattern
+            if substance.code.startswith('R-') and not substance.code.startswith('R-1') and not substance.code.startswith('R-2'):
+                hfc_blends.append(line)
+            elif substance.name.startswith('HCFC'):
+                hcfc_list.append(line)
+            elif substance.name.startswith('HFC'):
+                hfc_singles.append(line)
+            else:
+                hfc_blends.append(line)
+
+        # Build mega prompt text
+        mega_prompt_text = f"""
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔬 REFRIGERANT STANDARDIZATION CONTEXT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ CRITICAL: SUBSTANCE NAME STANDARDIZATION REQUIRED ⚠️
+
+You have access to the OFFICIAL LIST of {len(substances)} controlled substances below.
+
+When you extract a substance name from the document, you MUST:
+1. Compare it against the official list (both "Name" and "Code" columns)
+2. Find the BEST MATCH using intelligent fuzzy matching
+3. Return the EXACT standardized name from the official list
+4. If no reasonable match exists, prefix with "[UNKNOWN] "
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🧠 INTELLIGENT MATCHING STRATEGY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+You should be flexible and intelligent when matching substance names. Consider:
+
+Common Variations:
+  - Missing hyphens: "HFC134a" matches "HFC-134a"
+  - Extra spaces: "HFC - 134a" matches "HFC-134a"
+  - Case differences: "hfc-134a" matches "HFC-134a"
+  - Code vs Name: "R-22" (code) matches "HCFC-22" (name)
+  - Partial matches: "R410" might match "R-410A"
+
+Vietnamese Documents May Use:
+  - Alternative notations
+  - Abbreviated forms
+  - Mixed nomenclature (switching between name and code)
+  - Non-standard punctuation
+
+Your Task:
+  → Use your intelligence to find the closest match in the official list
+  → Consider both semantic meaning and pattern similarity
+  → Don't be limited by specific rules - think flexibly!
+  → When in doubt, match to the most similar substance
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚫 ROWS TO EXCLUDE FROM EXTRACTION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ CRITICAL: DO NOT extract the following types of rows:
+
+1. TOTAL/SUM ROWS:
+   ❌ Rows labeled "Tổng", "Tổng cộng", "Total", "Sum", or similar
+   ❌ These are summary rows that aggregate values from rows above
+   ❌ Skip these entirely - they are calculated values, not source data
+
+2. BLANK/PLACEHOLDER ROWS:
+   ❌ Rows with "..." or "…" placeholders
+   ❌ Rows like "HFC...", "HCFC...", "R-..." (meant to be left blank)
+   ❌ Empty template rows without actual substance data
+   ❌ Rows that are clearly just form templates
+
+Examples of rows to SKIP:
+  ❌ "Tổng" | 1000.0 | ... (Total row - skip this!)
+  ❌ "Tổng cộng" | 500.0 | ... (Sum row - skip this!)
+  ❌ "HFC..." | ... | ... (Blank placeholder - skip this!)
+  ❌ "..." | ... | ... (Empty row - skip this!)
+
+Examples of rows to INCLUDE:
+  ✓ "HFC-134a" | 100.5 | ... (Actual substance data)
+  ✓ "R-410A" | 250.0 | ... (Actual substance data)
+  ✓ "HCFC-22" | 50.0 | ... (Actual substance data)
+
+ONLY extract rows with real substance names and actual data values!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📚 OFFICIAL CONTROLLED SUBSTANCES LIST ({len(substances)} substances)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+HFC - Hydrofluorocarbons (Single Components):
+{chr(10).join(hfc_singles) if hfc_singles else '  (None)'}
+
+HFC Blends / Refrigerant Mixtures:
+{chr(10).join(hfc_blends) if hfc_blends else '  (None)'}
+
+HCFC - Hydrochlorofluorocarbons:
+{chr(10).join(hcfc_list) if hcfc_list else '  (None)'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 MATCHING EXAMPLES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Document Says        → Your Output (matched from list above)
+────────────────────────────────────────────────────────────
+"HFC-134a"          → "HFC-134a" ✓ (exact match)
+"HFC134a"           → "HFC-134a" ✓ (missing hyphen)
+"R-134a"            → "HFC-134a" ✓ (code to name)
+"R410A"             → "R-410A" ✓ (missing hyphens)
+"r 22"              → "HCFC-22" ✓ (case + spaces, match code R-22)
+"Freon 22"          → Check if similar to any substance, possibly "HCFC-22"
+"134a"              → "HFC-134a" ✓ (partial, obvious match)
+"XYZ-999"           → "[UNKNOWN] XYZ-999" ⚠️ (not in list)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ USE YOUR AI INTELLIGENCE TO MATCH INTELLIGENTLY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+"""
+
+        # Query all active activity fields from database
+        activity_fields = self.env['activity.field'].search([
+            ('active', '=', True)
+        ], order='sequence')
+
+        # Build activity fields context
+        activity_fields_text = f"""
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🏢 ACTIVITY FIELDS STANDARDIZATION CONTEXT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ CRITICAL: ACTIVITY FIELD CODE MAPPING REQUIRED ⚠️
+
+You have access to the OFFICIAL LIST of {len(activity_fields)} activity fields below.
+
+When you extract activity fields from the document, you MUST:
+1. Identify checked/selected activities from section "2. Nội dung đăng ký" (Form 01)
+   or "b) Thông tin về lĩnh vực hoạt động" (Form 02)
+2. Match each activity to the EXACT code from the official list below
+3. Return ONLY the codes in the "activity_field_codes" array
+4. If an activity doesn't match any official field, skip it (do NOT create unknown codes)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 OFFICIAL ACTIVITY FIELDS LIST ({len(activity_fields)} fields)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Code                    | Activity Field Name
+────────────────────────────────────────────────────────────────────────
+{chr(10).join([f'{field.code:23s} | {field.name}' for field in activity_fields])}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🧠 MATCHING EXAMPLES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Document Shows (checkbox checked)           → Code to Return
+────────────────────────────────────────────────────────────────────────
+"Sản xuất chất được kiểm soát"              → "production"
+"Nhập khẩu chất được kiểm soát"             → "import"
+"Xuất khẩu chất được kiểm soát"             → "export"
+"Sản xuất thiết bị chứa chất..."            → "equipment_production"
+"Nhập khẩu thiết bị chứa chất..."           → "equipment_import"
+"Sở hữu hệ thống điều hòa..."               → "ac_ownership"
+"Sở hữu thiết bị làm lạnh công nghiệp..."   → "refrigeration_ownership"
+"Thu gom, tái chế, tái sử dụng..."          → "collection_recycling"
+
+⚠️ IMPORTANT:
+- ONLY return codes that are checked/selected in the document!
+- Do NOT return codes that are not checked
+- Return as array: "activity_field_codes": ["production", "import"]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+"""
+
+        # Return as list of types.Text (can add more context items in the future)
+        return [
+            types.Text(text=mega_prompt_text),      # Substances context
+            types.Text(text=activity_fields_text)   # Activity fields context
+        ]
 
     def _build_extraction_prompt(self, document_type):
         """
@@ -1045,10 +1248,13 @@ STEP 6: OUTPUT FORMAT
 
             _logger.info(f"File processing completed: {uploaded_file.state.name}")
 
-            # Generate text content (using higher token limit for text)
+            # Build mega prompt context
+            mega_context = self._build_mega_prompt_context()
+
+            # Generate text content with mega context (using higher token limit for text)
             response = client.models.generate_content(
                 model='gemini-2.0-flash-exp',
-                contents=[uploaded_file, prompt],
+                contents=mega_context + [uploaded_file, prompt],
                 config=types.GenerateContentConfig(
                     temperature=0.1,
                     max_output_tokens=65536,  # Max tokens for text extraction
@@ -1116,14 +1322,17 @@ STEP 6: OUTPUT FORMAT
         extracted_json = None
         last_error = None
 
+        # Build mega prompt context
+        mega_context = self._build_mega_prompt_context()
+
         for retry_attempt in range(GEMINI_MAX_RETRIES):
             try:
                 _logger.info(f"JSON conversion attempt {retry_attempt + 1}/{GEMINI_MAX_RETRIES}")
 
-                # Generate JSON from text (no file upload needed - just text)
+                # Generate JSON from text with mega context (no file upload needed)
                 response = client.models.generate_content(
                     model='gemini-2.0-flash-exp',
-                    contents=[prompt],
+                    contents=mega_context + [prompt],
                     config=types.GenerateContentConfig(
                         temperature=0.1,
                         max_output_tokens=GEMINI_MAX_TOKENS,

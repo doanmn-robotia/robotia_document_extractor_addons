@@ -61,8 +61,6 @@ class EquipmentOwnershipReport(models.Model):
         for vals in vals_list:
             if vals.get('is_title'):
                 continue
-            if not vals.get('substance_id') and vals.get('substance_name'):
-                vals['substance_id'] = self._find_or_create('controlled.substance', vals['substance_name']).id
             if not vals.get('equipment_type_id') and vals.get('equipment_type'):
                 vals['equipment_type_id'] = self._find_or_create('equipment.type', vals['equipment_type']).id
         return super(EquipmentOwnershipReport, self).create(vals_list)

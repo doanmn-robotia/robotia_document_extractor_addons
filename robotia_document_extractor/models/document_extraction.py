@@ -308,6 +308,30 @@ class DocumentExtraction(models.Model):
                         f'Year must be between 2000 and {current_year + 5}. '
                         f'Got: {record.year}'
                     )
+    @api.onchange('activity_field_ids', 'document_type')
+    def _onchange_activity_fields(self):
+        """
+        Auto-update has_table_x flags when activity_field_ids changes
+
+        This provides real-time UI feedback when user adds/removes activity fields
+        """
+        if not self.activity_field_ids or not self.document_type:
+            return
+
+        # Get activity field codes
+        codes = self.activity_field_ids.mapped('code')
+
+        # Update has_table flags based on document type
+        if self.document_type == '01':
+            self.has_table_1_1 = any(code in codes for code in ['production', 'import', 'export'])
+            self.has_table_1_2 = any(code in codes for code in ['equipment_production', 'equipment_import'])
+            self.has_table_1_3 = any(code in codes for code in ['ac_ownership', 'refrigeration_ownership'])
+            self.has_table_1_4 = 'collection_recycling' in codes
+        elif self.document_type == '02':
+            self.has_table_2_1 = any(code in codes for code in ['production', 'import', 'export'])
+            self.has_table_2_2 = any(code in codes for code in ['equipment_production', 'equipment_import'])
+            self.has_table_2_3 = any(code in codes for code in ['ac_ownership', 'refrigeration_ownership'])
+            self.has_table_2_4 = 'collection_recycling' in codes
 
     # ===== Override Create =====
     @api.model_create_multi
@@ -387,7 +411,67 @@ class DocumentExtraction(models.Model):
                     'public': False,  # Make private now that it's linked to a record
                 })
 
+        # Auto-update has_table_x flags based on activity_field_ids
+        for record in records:
+            if record.activity_field_ids:
+                codes = record.activity_field_ids.mapped('code')
+
+                update_vals = {}
+                if record.document_type == '01':
+                    update_vals.update({
+                        'has_table_1_1': any(code in codes for code in ['production', 'import', 'export']),
+                        'has_table_1_2': any(code in codes for code in ['equipment_production', 'equipment_import']),
+                        'has_table_1_3': any(code in codes for code in ['ac_ownership', 'refrigeration_ownership']),
+                        'has_table_1_4': 'collection_recycling' in codes,
+                    })
+                elif record.document_type == '02':
+                    update_vals.update({
+                        'has_table_2_1': any(code in codes for code in ['production', 'import', 'export']),
+                        'has_table_2_2': any(code in codes for code in ['equipment_production', 'equipment_import']),
+                        'has_table_2_3': any(code in codes for code in ['ac_ownership', 'refrigeration_ownership']),
+                        'has_table_2_4': 'collection_recycling' in codes,
+                    })
+
+                if update_vals:
+                    # Use super().write() to avoid triggering our custom write() logic
+                    super(DocumentExtraction, record).write(update_vals)
+
         return records
+
+    def write(self, vals):
+        """
+        Override write to auto-update has_table_x when activity_field_ids changes
+
+        This ensures has_table flags are always in sync when saving
+        """
+        result = super(DocumentExtraction, self).write(vals)
+
+        # If activity_field_ids changed, update has_table_x
+        if 'activity_field_ids' in vals:
+            for record in self:
+                codes = record.activity_field_ids.mapped('code')
+
+                update_vals = {}
+                if record.document_type == '01':
+                    update_vals.update({
+                        'has_table_1_1': any(code in codes for code in ['production', 'import', 'export']),
+                        'has_table_1_2': any(code in codes for code in ['equipment_production', 'equipment_import']),
+                        'has_table_1_3': any(code in codes for code in ['ac_ownership', 'refrigeration_ownership']),
+                        'has_table_1_4': 'collection_recycling' in codes,
+                    })
+                elif record.document_type == '02':
+                    update_vals.update({
+                        'has_table_2_1': any(code in codes for code in ['production', 'import', 'export']),
+                        'has_table_2_2': any(code in codes for code in ['equipment_production', 'equipment_import']),
+                        'has_table_2_3': any(code in codes for code in ['ac_ownership', 'refrigeration_ownership']),
+                        'has_table_2_4': 'collection_recycling' in codes,
+                    })
+
+                if update_vals:
+                    # Use super().write() to avoid recursion
+                    super(DocumentExtraction, record).write(update_vals)
+
+        return result
 
     # ===== Validation Methods =====
     def action_validate(self):
