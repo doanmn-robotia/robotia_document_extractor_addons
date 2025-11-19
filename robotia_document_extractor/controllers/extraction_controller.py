@@ -150,12 +150,25 @@ class ExtractionController(http.Controller):
                     return []
                 return [(0, 0, item) for item in data_list]
 
+            # Auto-calculate year_1, year_2, year_3 if not extracted by AI
+            year = extracted_data.get('year')
+            if year:
+                if not extracted_data.get('year_1'):
+                    extracted_data['year_1'] = year - 1
+                if not extracted_data.get('year_2'):
+                    extracted_data['year_2'] = year
+                if not extracted_data.get('year_3'):
+                    extracted_data['year_3'] = year + 1
+
             # Prepare context with default values
             context = {
                 'default_document_type': document_type,
                 'default_pdf_attachment_id': attachment.id,  # Pass attachment ID instead of base64
                 'default_pdf_filename': filename,
                 'default_year': extracted_data.get('year'),
+                'default_year_1': extracted_data.get('year_1'),
+                'default_year_2': extracted_data.get('year_2'),
+                'default_year_3': extracted_data.get('year_3'),
 
                 # Organization info
                 'default_business_license_number': extracted_data.get('business_license_number'),

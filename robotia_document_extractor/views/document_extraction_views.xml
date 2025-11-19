@@ -32,6 +32,16 @@
                         </group>
                     </group>
 
+                    <group string="Year Information (Table Columns)">
+                        <group>
+                            <field name="year_1" options="{'enable_formatting': false}"/>
+                            <field name="year_2" options="{'enable_formatting': false}"/>
+                        </group>
+                        <group>
+                            <field name="year_3" options="{'enable_formatting': false}"/>
+                        </group>
+                    </group>
+
                     <notebook>
                         <!-- Page 2: Organization Information (4.1.1 & 4.2.1) -->
                         <page string="Organization Info" name="organization_info">
@@ -322,6 +332,9 @@
                 <field name="document_type"/>
                 <field name="organization_id"/>
                 <field name="year" options="{'enable_formatting': false}"/>
+                <field name="year_1" optional="hide" options="{'enable_formatting': false}"/>
+                <field name="year_2" optional="hide" options="{'enable_formatting': false}"/>
+                <field name="year_3" optional="hide" options="{'enable_formatting': false}"/>
                 <field name="extraction_date"/>
                 <field name="state" widget="badge" decoration-info="state == 'draft'"
                        decoration-warning="state == 'validated'"

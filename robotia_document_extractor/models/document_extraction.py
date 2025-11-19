@@ -56,6 +56,18 @@ class DocumentExtraction(models.Model):
         required=True,
         index=True
     )
+    year_1 = fields.Integer(
+        string='Year 1 (Past Year)',
+        help='Actual year represented by year_1 column (e.g., 2023)'
+    )
+    year_2 = fields.Integer(
+        string='Year 2 (Current Year)',
+        help='Actual year represented by year_2 column (e.g., 2024)'
+    )
+    year_3 = fields.Integer(
+        string='Year 3 (Next Year)',
+        help='Actual year represented by year_3 column (e.g., 2025)'
+    )
     state = fields.Selection(
         selection=[
             ('draft', 'Draft'),
