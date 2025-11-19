@@ -2,7 +2,7 @@
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 {
     'name': 'Robotia Document Extractor',
-    'version': '1.4.0',
+    'version': '1.5.0',
     'sequence': 10,
     'description': "",
     'depends': ['web'],
@@ -11,6 +11,7 @@
         'data/master_data.xml',
         'data/substance_groups_data.xml',
         'data/default_prompts.xml',
+        'data/gdrive_cron.xml',
         'views/document_extraction_views.xml',
         'views/master_data_views.xml',
         'views/res_config_settings_views.xml',
@@ -60,7 +61,11 @@
         ],
     },
     'external_dependencies': {
-        'python': ['google-genai']
+        'python': [
+            'google-genai',
+            'google-api-python-client',
+            'google-auth'
+        ]
     },
     'license': 'LGPL-3',
 }

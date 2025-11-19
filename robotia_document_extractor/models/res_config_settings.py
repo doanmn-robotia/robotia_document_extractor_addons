@@ -21,6 +21,39 @@ class ResConfigSettings(models.TransientModel):
              'Default: 65536 (Gemini 2.0 Flash maximum)'
     )
 
+    # ===== Google Drive Integration Settings =====
+    gdrive_enabled = fields.Boolean(
+        string='Enable Google Drive Integration',
+        config_parameter='robotia_document_extractor.gdrive_enabled',
+        default=False,
+        help='Enable automatic fetching of PDF files from Google Drive'
+    )
+    gdrive_folder_id = fields.Char(
+        string='Google Drive Folder ID',
+        config_parameter='robotia_document_extractor.gdrive_folder_id',
+        help='Google Drive folder ID to fetch PDF files from. '
+             'You can find this in the folder URL: https://drive.google.com/drive/folders/FOLDER_ID'
+    )
+    gdrive_credentials_json = fields.Text(
+        string='Google Drive Service Account JSON',
+        config_parameter='robotia_document_extractor.gdrive_credentials_json',
+        help='Service Account credentials JSON from Google Cloud Console. '
+             'Create a service account at https://console.cloud.google.com/iam-admin/serviceaccounts '
+             'and share the Google Drive folder with the service account email.'
+    )
+    gdrive_cron_interval = fields.Integer(
+        string='Fetch Interval (minutes)',
+        config_parameter='robotia_document_extractor.gdrive_cron_interval',
+        default=30,
+        help='Interval in minutes between automatic fetches from Google Drive. Default: 30 minutes'
+    )
+    gdrive_ocr_batch_size = fields.Integer(
+        string='OCR Batch Size',
+        config_parameter='robotia_document_extractor.gdrive_ocr_batch_size',
+        default=3,
+        help='Number of documents to process in each OCR cron run. Default: 3'
+    )
+
 
     def action_get_prompt_form_01(self):
         """Reset Form 01 prompt to default value"""
