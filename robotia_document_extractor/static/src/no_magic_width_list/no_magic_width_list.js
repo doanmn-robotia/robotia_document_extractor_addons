@@ -8,7 +8,6 @@ export class NoMagicColumnListRenderer extends ListRenderer {
 
     setup() {
         super.setup()
-        console.log("OKKKK");
     }
 
 }

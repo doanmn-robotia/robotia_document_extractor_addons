@@ -4,10 +4,11 @@
     <t t-name="robotia_document_extractor.ExtractionTitleField" t-inherit="web.CharField">
         <!-- Replace the else block to add external link button -->
         <xpath expr="//t[@t-else='']" position="replace">
+            <t t-if="this.props.record.fields[this.props.name].type == 'many2one'">
+                <Many2OneField record="this.props.record" readonly="this.props.readonly" name="this.props.name" canQuickCreate="false" canCreateEdit="false" canCreate="this.props.canCreate"/>
+            </t>
             <t t-else="">
-                <div class="input-group">
-                    <t t-call="web.CharField"/>
-                </div>
+                <CharField record="this.props.record" readonly="this.props.readonly" name="this.props.name"/>
             </t>
         </xpath>
 
