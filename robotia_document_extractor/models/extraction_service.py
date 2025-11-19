@@ -653,6 +653,9 @@ Return a JSON object with this structure (all field names in English):
 
 {
   "year": <integer>,
+  "year_1": <integer - actual year for year_1 column, e.g., 2023>,
+  "year_2": <integer - actual year for year_2 column, e.g., 2024>,
+  "year_3": <integer - actual year for year_3 column, e.g., 2025>,
   "organization_name": "<string>",
   "business_license_number": "<string>",
   "business_license_date": "<YYYY-MM-DD or null>",
@@ -733,7 +736,27 @@ Return a JSON object with this structure (all field names in English):
 EXTRACTION RULES:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-STEP 1: EXTRACT ACTIVITY FIELD CODES (Section "2. Nội dung đăng ký")
+STEP 1: EXTRACT YEAR INFORMATION
+
+   ⚠️ CRITICAL: Look at Table 1.1 column headers to identify the actual years:
+
+   The table has columns like "Năm trước (year_1)", "Năm hiện tại (year_2)", "Năm sau (year_3)"
+
+   - Find the ACTUAL YEAR NUMBER in each column header (e.g., "2023", "2024", "2025")
+   - Extract these as integer values:
+     * year_1: The year shown in the first quantity column (past year)
+     * year_2: The year shown in the second quantity column (current year)
+     * year_3: The year shown in the third quantity column (next year)
+
+   Example:
+   - If headers show "Năm 2023", "Năm 2024", "Năm 2025"
+   - Then: year_1 = 2023, year_2 = 2024, year_3 = 2025
+
+   If year values are not explicitly shown in table headers, infer from:
+   - The "year" field (main reporting year, typically equals year_2)
+   - year_1 = year - 1, year_2 = year, year_3 = year + 1
+
+STEP 2: EXTRACT ACTIVITY FIELD CODES (Section "2. Nội dung đăng ký")
 
    Look for checkboxes (☑ or ☐) in section "2.a) Lĩnh vực sử dụng chất được kiểm soát"
 
@@ -749,7 +772,7 @@ STEP 1: EXTRACT ACTIVITY FIELD CODES (Section "2. Nội dung đăng ký")
 
    Return array of checked codes, empty array [] if none checked.
 
-STEP 2: DETERMINE TABLE PRESENCE based on activity fields
+STEP 3: DETERMINE TABLE PRESENCE based on activity fields
 
    **Activity Fields → Tables Mapping:**
 
@@ -765,7 +788,7 @@ STEP 2: DETERMINE TABLE PRESENCE based on activity fields
    has_table_1_4 = true IF this is checked:
      - "collection_recycling"
 
-STEP 3: CONDITIONAL EXTRACTION - Extract ONLY relevant sub-sections
+STEP 4: CONDITIONAL EXTRACTION - Extract ONLY relevant sub-sections
 
    For Table 1.1 (Bảng 1.1: Substance Usage):
    - IF "production" checked → include title + data rows
@@ -785,7 +808,7 @@ STEP 3: CONDITIONAL EXTRACTION - Extract ONLY relevant sub-sections
    - ALWAYS has 4 sub-sections if table exists
    - Include all 4 title rows + their data rows
 
-STEP 4: EXTRACT TABLE DATA WITH FIXED TITLES
+STEP 5: EXTRACT TABLE DATA WITH FIXED TITLES
 
    ⚠️⚠️⚠️ CRITICAL: USE EXACT TITLE TEXT FROM TEMPLATE ⚠️⚠️⚠️
 
@@ -856,13 +879,13 @@ STEP 4: EXTRACT TABLE DATA WITH FIXED TITLES
    - Title rows: ALL numeric/data fields MUST be null
    - Data rows: Fill actual values from PDF
 
-STEP 5: DATA CONVERSION
+STEP 6: DATA CONVERSION
 
    - Convert Vietnamese numbers to float/int (handle commas "," and dots "." correctly)
    - Use null for empty/missing numeric values (NEVER empty string or 0)
    - Preserve Vietnamese text EXACTLY for names, addresses, text fields
 
-STEP 6: OUTPUT FORMAT
+STEP 7: OUTPUT FORMAT
 
    - Return ONLY valid JSON, no explanations or markdown code blocks
    - Use "null" for missing values (not "None", not empty string)
@@ -882,6 +905,9 @@ Return a JSON object with this EXACT structure (all field names in English):
 
 {
   "year": <integer>,
+  "year_1": <integer - actual year for year_1 column, e.g., 2023>,
+  "year_2": <integer - actual year for year_2 column, e.g., 2024>,
+  "year_3": <integer - actual year for year_3 column, e.g., 2025>,
   "organization_name": "<string>",
   "business_license_number": "<string>",
   "business_license_date": "<YYYY-MM-DD or null>",
@@ -973,7 +999,27 @@ Return a JSON object with this EXACT structure (all field names in English):
 
 CRITICAL INSTRUCTIONS:
 
-STEP 1: EXTRACT ACTIVITY FIELD CODES from section "b) Thông tin về lĩnh vực hoạt động sử dụng chất được kiểm soát"
+STEP 1: EXTRACT YEAR INFORMATION
+
+   ⚠️ CRITICAL: Look at Table 2.1 column headers to identify the actual years:
+
+   The table may have year-specific columns in quota usage or other tables.
+
+   - Find the ACTUAL YEAR NUMBER in column headers if present
+   - Extract these as integer values:
+     * year_1: The year shown in the first year column (past year)
+     * year_2: The year shown in the second year column (current year)
+     * year_3: The year shown in the third year column (next year)
+
+   Example:
+   - If headers show "Năm 2023", "Năm 2024", "Năm 2025"
+   - Then: year_1 = 2023, year_2 = 2024, year_3 = 2025
+
+   If year values are not explicitly shown in table headers, infer from:
+   - The "year" field (main reporting year, typically equals year_2)
+   - year_1 = year - 1, year_2 = year, year_3 = year + 1
+
+STEP 2: EXTRACT ACTIVITY FIELD CODES from section "b) Thông tin về lĩnh vực hoạt động sử dụng chất được kiểm soát"
    Map Vietnamese labels to codes (same as Form 01):
    - "Sản xuất chất được kiểm soát" → "production"
    - "Nhập khẩu chất được kiểm soát" → "import"
@@ -985,7 +1031,7 @@ STEP 1: EXTRACT ACTIVITY FIELD CODES from section "b) Thông tin về lĩnh vự
    - "Thu gom, tái chế, tái sử dụng và xử lý..." → "collection_recycling"
    Return as array where checkbox is checked or text is present
 
-STEP 2: DETERMINE TABLE PRESENCE based on activity fields
+STEP 3: DETERMINE TABLE PRESENCE based on activity fields
 
    **Activity Fields → Tables Mapping:**
 
