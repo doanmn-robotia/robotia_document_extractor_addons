@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from odoo import models, fields, api
+from odoo.exceptions import ValidationError
 
 
 class QuotaUsage(models.Model):
@@ -94,6 +95,28 @@ class QuotaUsage(models.Model):
         string='Next Year Quota (ton CO2)'
     )
 
+    # SQL Constraints for data validation
+    _sql_constraints = [
+        ('allocated_quota_kg_positive',
+         'CHECK(allocated_quota_kg IS NULL OR allocated_quota_kg >= 0)',
+         'Allocated quota (kg) must be positive or null'),
+        ('adjusted_quota_kg_check',
+         'CHECK(adjusted_quota_kg IS NULL OR TRUE)',  # Can be positive or negative
+         'Adjusted quota (kg) must be a valid number'),
+        ('total_quota_kg_positive',
+         'CHECK(total_quota_kg IS NULL OR total_quota_kg >= 0)',
+         'Total quota (kg) must be positive or null'),
+        ('allocated_quota_co2_positive',
+         'CHECK(allocated_quota_co2 IS NULL OR allocated_quota_co2 >= 0)',
+         'Allocated quota (CO2) must be positive or null'),
+        ('total_quota_co2_positive',
+         'CHECK(total_quota_co2 IS NULL OR total_quota_co2 >= 0)',
+         'Total quota (CO2) must be positive or null'),
+        ('average_price_positive',
+         'CHECK(average_price IS NULL OR average_price >= 0)',
+         'Average price must be positive or null'),
+    ]
+
     @api.depends('substance_id')
     def _compute_substance_name(self):
         for r in self:
@@ -156,3 +179,32 @@ class QuotaUsage(models.Model):
             _logger.warning(f"Country code '{code}' not found in system. Please check ISO country codes.")
 
         return country
+
+    @api.constrains('allocated_quota_kg', 'adjusted_quota_kg', 'total_quota_kg')
+    def _check_quota_logic(self):
+        """
+        Validate that total quota = allocated + adjusted (with 1% tolerance)
+        Skip validation for title rows
+        """
+        for record in self:
+            # Skip title rows (they don't have actual data)
+            if record.is_title:
+                continue
+
+            # Skip if all values are None/0
+            if not any([record.allocated_quota_kg, record.adjusted_quota_kg, record.total_quota_kg]):
+                continue
+
+            expected = (record.allocated_quota_kg or 0) + (record.adjusted_quota_kg or 0)
+            actual = record.total_quota_kg or 0
+
+            # Allow 1% tolerance for rounding errors, minimum 0.1kg
+            tolerance = max(abs(expected) * 0.01, 0.1)
+
+            if abs(expected - actual) > tolerance:
+                raise ValidationError(
+                    f'Quota logic error: Total quota ({actual:.2f} kg) does not match '
+                    f'Allocated ({record.allocated_quota_kg or 0:.2f}) + '
+                    f'Adjusted ({record.adjusted_quota_kg or 0:.2f}) = {expected:.2f} kg. '
+                    f'Difference: {abs(expected - actual):.2f} kg (tolerance: {tolerance:.2f} kg)'
+                )

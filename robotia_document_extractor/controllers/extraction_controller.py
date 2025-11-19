@@ -16,6 +16,44 @@ class ExtractionController(http.Controller):
     It extracts data and returns an action to open form in CREATE mode.
     """
 
+    @staticmethod
+    def _calculate_avg_quantity(usage_record):
+        """
+        Calculate correct average quantity from 3-year data
+
+        FIX: Divide by count of non-null years, not always 3
+
+        Args:
+            usage_record: substance.usage record with year_1/2/3 fields
+
+        Returns:
+            tuple: (avg_kg, avg_co2)
+        """
+        # If avg fields already computed, use them
+        if usage_record.avg_quantity_kg is not None and usage_record.avg_quantity_co2 is not None:
+            return (usage_record.avg_quantity_kg, usage_record.avg_quantity_co2)
+
+        # Count non-null years for kg
+        kg_values = [
+            usage_record.year_1_quantity_kg,
+            usage_record.year_2_quantity_kg,
+            usage_record.year_3_quantity_kg
+        ]
+        co2_values = [
+            usage_record.year_1_quantity_co2,
+            usage_record.year_2_quantity_co2,
+            usage_record.year_3_quantity_co2
+        ]
+
+        kg_count = sum(1 for v in kg_values if v is not None)
+        co2_count = sum(1 for v in co2_values if v is not None)
+
+        # Calculate average (divide by actual count, not 3)
+        avg_kg = sum(v for v in kg_values if v is not None) / kg_count if kg_count > 0 else 0
+        avg_co2 = sum(v for v in co2_values if v is not None) / co2_count if co2_count > 0 else 0
+
+        return (avg_kg, avg_co2)
+
     @http.route('/document_extractor/extract', type='json', auth='user', methods=['POST'])
     def extract_document(self, pdf_data, filename, document_type):
         """
@@ -384,26 +422,12 @@ class ExtractionController(http.Controller):
                 list(all_quota_usage.mapped('substance_name'))
             ))
 
-            # substance.usage has year_1/2/3_quantity_kg and avg_quantity_kg
-            # We use avg_quantity_kg if available, otherwise sum year fields
+            # Calculate total kg and CO2e from substance usage
+            # FIX: Use correct average calculation (divide by count of non-null years)
             total_kg = 0
             total_co2e = 0
             for usage in all_substance_usage:
-                # Use avg if available (check for None, not falsy), else calculate from years
-                if usage.avg_quantity_kg is not None:
-                    kg = usage.avg_quantity_kg
-                else:
-                    kg = (usage.year_1_quantity_kg or 0) + \
-                         (usage.year_2_quantity_kg or 0) + \
-                         (usage.year_3_quantity_kg or 0)
-
-                if usage.avg_quantity_co2 is not None:
-                    co2 = usage.avg_quantity_co2
-                else:
-                    co2 = (usage.year_1_quantity_co2 or 0) + \
-                          (usage.year_2_quantity_co2 or 0) + \
-                          (usage.year_3_quantity_co2 or 0)
-
+                kg, co2 = self._calculate_avg_quantity(usage)
                 total_kg += kg
                 total_co2e += co2
 
@@ -435,13 +459,8 @@ class ExtractionController(http.Controller):
                     if substance not in trend_data[year]:
                         trend_data[year][substance] = 0
 
-                    # Use avg or sum of years (check for None, not falsy)
-                    if usage.avg_quantity_kg is not None:
-                        kg = usage.avg_quantity_kg
-                    else:
-                        kg = (usage.year_1_quantity_kg or 0) + \
-                             (usage.year_2_quantity_kg or 0) + \
-                             (usage.year_3_quantity_kg or 0)
+                    # FIX: Use correct average calculation
+                    kg, _ = self._calculate_avg_quantity(usage)
                     trend_data[year][substance] += kg
 
             # Quota allocated vs used
@@ -499,20 +518,8 @@ class ExtractionController(http.Controller):
         records = []
         for doc in documents.filtered(lambda d: d.has_table_1_1):
             for usage in doc.substance_usage_ids.filtered(lambda r: not r.is_title):
-                # Calculate total kg from year fields or avg (check for None, not falsy)
-                if usage.avg_quantity_kg is not None:
-                    kg = usage.avg_quantity_kg
-                else:
-                    kg = (usage.year_1_quantity_kg or 0) + \
-                         (usage.year_2_quantity_kg or 0) + \
-                         (usage.year_3_quantity_kg or 0)
-
-                if usage.avg_quantity_co2 is not None:
-                    co2 = usage.avg_quantity_co2
-                else:
-                    co2 = (usage.year_1_quantity_co2 or 0) + \
-                          (usage.year_2_quantity_co2 or 0) + \
-                          (usage.year_3_quantity_co2 or 0)
+                # FIX: Calculate correct average
+                kg, co2 = self._calculate_avg_quantity(usage)
 
                 records.append({
                     'year': doc.year,
