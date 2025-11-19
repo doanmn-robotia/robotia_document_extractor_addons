@@ -27,7 +27,6 @@ from . import collection_recycling_report
 # Services
 from . import extraction_service
 from . import res_config_settings
-from . import rate_limit
 
 # Chatbot
 from . import chatbot_conversation
