@@ -128,10 +128,12 @@ export class ExtractionSectionListRenderer extends NoMagicColumnListRenderer {
             // Clone columns array
             const sectionColumns = [...columns];
 
-            // Replace widget column with titleField column properties
+            // Replace widget column: keep substance_id column structure but change data source
             sectionColumns[titleWidgetColumnIndex] = {
-                ...titleFieldColumn,  // Use titleField column properties from allColumns
-                colspan: colspan      // Add colspan
+                ...columns[titleWidgetColumnIndex],  // Keep original substance_id column properties
+                name: this.titleField,                // Change name to substance_name to get data
+                widget: undefined,                    // Remove widget to show plain text
+                colspan: colspan                      // Add colspan
             };
 
             // Remove columns that are spanned (visible ones after widget column)
