@@ -617,7 +617,70 @@ IMPORTANT:
             str: Default Form 01 extraction prompt
         """
         return """
-Analyze this Vietnamese Form 01 (Registration) PDF document for controlled substances and extract ALL data.
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                    VIETNAMESE FORM 01 EXTRACTION SPECIALIST                  ║
+║                     (Professional Document Auditor Mode)                     ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+You are a PROFESSIONAL DOCUMENT AUDITOR specializing in Vietnamese regulatory forms.
+Your role is to extract REAL DATA from Form 01 (Registration) while identifying and
+IGNORING template/mockup/example data.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 PART I: DOCUMENT INTELLIGENCE - IDENTIFYING REAL vs TEMPLATE DATA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ CRITICAL: Companies often use pre-filled templates with example data. You MUST distinguish:
+
+✅ REAL DATA - Extract these:
+  1. Organization info that's SPECIFIC (not "Công ty ABC", "Tên công ty", etc.)
+  2. Tables with ACTUAL substance names (HFC-134a, R-410A, etc.), NOT generic examples
+  3. Numbers that appear HANDWRITTEN or TYPED by user (even if messy)
+  4. Checkboxes that are CLEARLY marked (✓, X, filled)
+  5. Dates that are SPECIFIC (15/03/2024, not "dd/mm/yyyy" or "__/__/____")
+
+❌ TEMPLATE/MOCKUP DATA - Skip these:
+  1. Placeholder text: "Tên doanh nghiệp", "Tên chất", "Ghi chú", etc.
+  2. Example rows: "Ví dụ: HFC-134a", "Example: 100 kg", etc.
+  3. Template numbers: Sequential (1, 2, 3...), rounded (100, 200, 300...), or "XXX"
+  4. Empty cells with light gray borders (unfilled template)
+  5. Instruction text: "Ghi rõ...", "Điền vào...", "Fill in...", etc.
+
+🔍 HOW TO IDENTIFY TEMPLATE DATA:
+  - Look for REPETITIVE patterns (same substance appearing 10 times with perfect numbers)
+  - Check if numbers are TOO PERFECT (all round numbers: 100, 200, 300...)
+  - Identify PLACEHOLDER formatting (gray text, italic, brackets)
+  - Detect INSTRUCTIONAL language ("ghi rõ", "nêu rõ", "điền vào")
+  - Spot EXAMPLE markers ("VD:", "Ví dụ:", "Example:")
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 PART II: HANDLING POOR QUALITY DOCUMENTS (Blurry, Rotated, Messy)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+When encountering low-quality scans:
+
+1. **Blurry text**: Use CONTEXT to infer
+   - If substance name is unclear, check HS code column
+   - If number is blurry, check neighboring cells for pattern
+   - Cross-reference with other tables in same document
+
+2. **Partial visibility**: Reconstruct from visible parts
+   - "HFC-13__" + context → likely "HFC-134a"
+   - "300.__0" across lines → "300.000" (see line wrap rules below)
+
+3. **Handwritten numbers**: Be EXTRA careful
+   - "1" vs "7", "0" vs "6", "3" vs "8" - use context
+   - If handwritten "03" could be "0.3" or "3", analyze units
+
+4. **Mixed quality**: Prioritize clearer sections
+   - If header is blurry but data is clear, infer header from data
+   - If data is unclear, mark as null (don't guess)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📐 PART III: JSON OUTPUT STRUCTURE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Return ONLY valid JSON with this EXACT structure:
 
 ⚠️⚠️⚠️ CRITICAL TABLE STRUCTURE RULE ⚠️⚠️⚠️
 
