@@ -39,7 +39,7 @@ custom_addons/
 │   │   │   └── utils/              # Chart utilities (Chart.js helpers)
 │   │   ├── xml/                    # OWL templates for components
 │   │   ├── scss/                   # Component styles
-│   │   └── group_list_view/        # Auto-applied grouped headers (patches default list view)
+│   │   └── group_list_view/        # Custom grouped list view
 │   ├── security/                   # Access control (ir.model.access.csv)
 │   ├── data/                       # Master data & default prompts
 │   └── i18n/                       # Vietnamese translations (vi_VN.po)
@@ -207,11 +207,10 @@ The module implements several custom view types registered in `registry.category
    - Custom Compiler, Renderer, and Controller
    - Used in `document_extraction_views.xml` via `js_class="document_extraction_form"`
 
-2. **Grouped List Headers** (`group_list_view/`) - **AUTO-APPLIED**:
-   - Patches default "list" view and all X2Many fields (One2many/Many2many)
-   - Automatically renders two-level headers when `group_start`/`group_end` context detected
-   - No widget specification needed - works globally on all list views
-   - See `group_list_view/README.md` for detailed usage guide
+2. **`grouped_list`** (`group_list_view/`):
+   - List view with custom grouping behavior
+   - Custom ArchParser and Renderer
+   - Used for displaying grouped data with special rendering
 
 ### Custom Field Widgets
 Registered in `registry.category('fields')`:
@@ -233,44 +232,6 @@ Dashboard components registered in `registry.category('actions')`:
 - **Analytics Dashboards**: `substance_dashboard_action`, `company_dashboard_action`, `equipment_dashboard_action`, `recovery_dashboard_action`
 
 **Usage in XML**: Define actions with `tag="robotia_document_extractor.dashboard_action"` and pass context for filtering.
-
-### Grouped List Headers (Auto-Applied)
-
-The module **automatically patches all list views and X2Many fields** to support grouped column headers with colspan. No widget specification is required - simply add context attributes to fields.
-
-**Usage Example**:
-```xml
-<field name="revenue_ids">
-  <list editable="bottom">
-    <field name="product"/>
-    <field name="q1_value" context="{'group_start': True, 'group_header': 'Q1 2024'}"/>
-    <field name="q1_target" context="{'group_end': True}"/>
-    <field name="q2_value" context="{'group_start': True, 'group_header': 'Q2 2024'}"/>
-    <field name="q2_target" context="{'group_end': True}"/>
-  </list>
-</field>
-```
-
-**Renders as**:
-```
-┌──────────┬─────────────────┬─────────────────┐
-│ Product  │    Q1 2024      │    Q2 2024      │
-├──────────┼────────┬────────┼────────┬────────┤
-│          │ Value  │ Target │ Value  │ Target │
-```
-
-**Context Attributes**:
-- `group_start` (bool): Marks first column in group (required)
-- `group_end` (bool): Marks last column in group (required)
-- `group_header` (str): Static label for group header
-- `group_label_field` (str): Field name to get label from (dynamic, alternative to `group_header`)
-- `group_class` (str): CSS class(es) to apply to grouped columns
-
-**Important Notes**:
-- Works on ALL list views, One2many, and Many2many fields automatically
-- No `widget="grouped_list"` or `js_class="grouped_list"` needed (old approach removed)
-- Backward compatible: Ungrouped columns still render normally with `rowspan=2`
-- See `static/src/group_list_view/README.md` for comprehensive documentation
 
 ## Translation Files
 

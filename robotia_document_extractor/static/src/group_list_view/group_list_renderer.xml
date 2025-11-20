@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
 
-    <t t-name="company_management.GroupedListRenderer" t-inherit="web.ListRenderer" t-inherit-mode="extension">
+    <t t-name="company_management.GroupedListRenderer" t-inherit="web.ListRenderer" t-inherit-mode="primary">
 
         <!-- Replace entire thead when we have grouped headers -->
         <xpath expr="//thead" position="replace">
