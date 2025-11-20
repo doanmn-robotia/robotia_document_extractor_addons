@@ -26,8 +26,8 @@ from . import collection_recycling_report
 
 # Services
 from . import extraction_service
-from . import gdrive_service
 from . import res_config_settings
+from . import google_drive_service
 
 # Chatbot
 from . import chatbot_conversation

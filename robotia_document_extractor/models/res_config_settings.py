@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from odoo import models, fields, api
+import json
+from odoo import api, models, fields, _
+from odoo.exceptions import UserError
 
 
 class ResConfigSettings(models.TransientModel):
@@ -30,37 +32,49 @@ class ResConfigSettings(models.TransientModel):
              'See Google AI documentation for available models.'
     )
     # ===== Google Drive Integration Settings =====
-    gdrive_enabled = fields.Boolean(
+    google_drive_enabled = fields.Boolean(
         string='Enable Google Drive Integration',
-        config_parameter='robotia_document_extractor.gdrive_enabled',
+        config_parameter='google_drive_enabled',
         default=False,
-        help='Enable automatic fetching of PDF files from Google Drive'
+        help='Enable or disable Google Drive integration for document extraction'
     )
-    gdrive_folder_id = fields.Char(
-        string='Google Drive Folder ID',
-        config_parameter='robotia_document_extractor.gdrive_folder_id',
-        help='Google Drive folder ID to fetch PDF files from. '
-             'You can find this in the folder URL: https://drive.google.com/drive/folders/FOLDER_ID'
+
+    google_drive_service_account_json = fields.Char(
+        string='Service Account JSON (Hidden)',
+        config_parameter='google_drive_service_account_json',
+        help='Internal field - Service account JSON stored in config parameter'
     )
-    gdrive_credentials_json = fields.Text(
-        string='Google Drive Service Account JSON',
-        config_parameter='robotia_document_extractor.gdrive_credentials_json',
-        help='Service Account credentials JSON from Google Cloud Console. '
-             'Create a service account at https://console.cloud.google.com/iam-admin/serviceaccounts '
-             'and share the Google Drive folder with the service account email.'
+
+    google_drive_configured = fields.Boolean(
+        string='Drive Configured',
+        compute='_compute_google_drive_configured',
+        help='Whether Google Drive service account is configured'
     )
-    gdrive_cron_interval = fields.Integer(
-        string='Fetch Interval (minutes)',
-        config_parameter='robotia_document_extractor.gdrive_cron_interval',
-        default=30,
-        help='Interval in minutes between automatic fetches from Google Drive. Default: 30 minutes'
+
+    google_drive_service_account_email = fields.Char(
+        string='Service Account Email',
+        compute='_compute_google_drive_service_account_email',
+        help='Service account email (read-only, extracted from uploaded JSON)'
     )
-    gdrive_ocr_batch_size = fields.Integer(
-        string='OCR Batch Size',
-        config_parameter='robotia_document_extractor.gdrive_ocr_batch_size',
-        default=3,
-        help='Number of documents to process in each OCR cron run. Default: 3'
-    )
+
+    @api.depends('google_drive_service_account_json')
+    def _compute_google_drive_configured(self):
+        """Check if Google Drive is configured"""
+        for record in self:
+            record.google_drive_configured = bool(record.google_drive_service_account_json)
+
+    @api.depends('google_drive_service_account_json')
+    def _compute_google_drive_service_account_email(self):
+        """Get service account email from stored JSON"""
+        for record in self:
+            if record.google_drive_service_account_json:
+                try:
+                    credentials = json.loads(record.google_drive_service_account_json)
+                    record.google_drive_service_account_email = credentials.get('client_email', 'N/A')
+                except:
+                    record.google_drive_service_account_email = 'Invalid configuration'
+            else:
+                record.google_drive_service_account_email = 'Not configured'
 
 
     def action_get_prompt_form_01(self):
@@ -88,3 +102,47 @@ class ResConfigSettings(models.TransientModel):
             'type': 'ir.actions.client',
             'tag': 'reload',
         }
+
+    def action_open_google_drive_config_wizard(self):
+        """Open Google Drive configuration wizard"""
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Configure Google Drive'),
+            'res_model': 'google.drive.config.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': self.env.context,
+        }
+
+    def action_test_google_drive_connection(self):
+        """Test Google Drive connection with configured credentials"""
+        ICP = self.env['ir.config_parameter'].sudo()
+        service_account_json = ICP.get_param('google_drive_service_account_json', '')
+
+        # Validate that credentials are configured
+        if not service_account_json:
+            raise UserError(_('Please configure the Service Account first using "Configure Service Account" button.'))
+
+        # Test connection using the Google Drive service
+        try:
+            drive_service = self.env['google.drive.service']
+            result = drive_service.test_connection()
+
+            if result['success']:
+                return {
+                    'type': 'ir.actions.client',
+                    'tag': 'display_notification',
+                    'params': {
+                        'title': _('Connection Successful'),
+                        'message': result['message'],
+                        'type': 'success',
+                        'sticky': False,
+                    }
+                }
+            else:
+                raise UserError(_('Connection Failed:\n\n%s') % result['message'])
+
+        except UserError:
+            raise
+        except Exception as e:
+            raise UserError(_('Connection Test Failed:\n\n%s') % str(e))

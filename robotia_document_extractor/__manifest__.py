@@ -11,7 +11,7 @@
         'data/master_data.xml',
         'data/substance_groups_data.xml',
         'data/default_prompts.xml',
-        'data/gdrive_cron.xml',
+        'wizard/google_drive_config_wizard_views.xml',
         'views/document_extraction_views.xml',
         'views/master_data_views.xml',
         'views/res_config_settings_views.xml',
@@ -64,7 +64,6 @@
         'python': [
             'google-genai',
             'google-api-python-client',
-            'google-auth'
         ]
     },
     'license': 'LGPL-3',

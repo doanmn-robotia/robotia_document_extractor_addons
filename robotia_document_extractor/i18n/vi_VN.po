@@ -911,6 +911,11 @@ msgstr "Cấu hình mẫu trích xuất AI"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "Integrations"
+msgstr "Tích hợp"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
 msgid "Configure AI Extraction Prompts"
 msgstr "Cấu hình mẫu trích xuất AI"
 
@@ -2289,7 +2294,7 @@ msgid "Document Extractor: Process Pending OCR"
 msgstr "Trích xuất tài liệu: Xử lý OCR đang chờ"
 
 #. module: robotia_document_extractor
-#: model:ir.model.fields,field_description:robotia_document_extractor.field_res_config_settings__gdrive_enabled
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_res_config_settings__google_drive_enabled
 msgid "Enable Google Drive Integration"
 msgstr "Bật tích hợp Google Drive"
 
@@ -2472,4 +2477,197 @@ msgstr "OCR hoàn thành"
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_search
 msgid "OCR Error"
 msgstr "Lỗi OCR"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_google_drive_config_wizard__service_account_file
+msgid "Service Account JSON File"
+msgstr "File JSON Tài khoản Dịch vụ"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_google_drive_config_wizard__service_account_file
+msgid "Upload the JSON key file downloaded from Google Cloud Console"
+msgstr "Tải lên file JSON key đã tải về từ Google Cloud Console"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_google_drive_config_wizard__service_account_filename
+msgid "Filename"
+msgstr "Tên file"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_google_drive_config_wizard__folder_id
+msgid "Google Drive Folder ID"
+msgstr "ID Thư mục Google Drive"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_google_drive_config_wizard__folder_id
+msgid "Optional: Folder ID to sync from. Leave empty to access all Drive."
+msgstr "Tùy chọn: ID thư mục để đồng bộ. Để trống để truy cập toàn bộ Drive."
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/wizard/google_drive_config_wizard.py:0
+msgid "Please upload a service account JSON file."
+msgstr "Vui lòng tải lên file JSON tài khoản dịch vụ."
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/wizard/google_drive_config_wizard.py:0
+msgid "Invalid service account file. Missing fields: %s"
+msgstr "File tài khoản dịch vụ không hợp lệ. Thiếu các trường: %s"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/wizard/google_drive_config_wizard.py:0
+msgid "Invalid service account file. Expected type \"service_account\", got \"%s\""
+msgstr "File tài khoản dịch vụ không hợp lệ. Loại mong đợi \"service_account\", nhận được \"%s\""
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/wizard/google_drive_config_wizard.py:0
+msgid "Configuration Saved"
+msgstr "Cấu hình Đã lưu"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/wizard/google_drive_config_wizard.py:0
+msgid "Service account configured successfully!\n\nService Account: %s\n\nYou can now test the connection in Settings."
+msgstr "Cấu hình tài khoản dịch vụ thành công!\n\nTài khoản Dịch vụ: %s\n\nBạn có thể kiểm tra kết nối trong Cài đặt."
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/wizard/google_drive_config_wizard.py:0
+msgid "Invalid JSON file format: %s"
+msgstr "Định dạng file JSON không hợp lệ: %s"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/wizard/google_drive_config_wizard.py:0
+msgid "Failed to configure Google Drive: %s"
+msgstr "Không thể cấu hình Google Drive: %s"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/wizard/google_drive_config_wizard.py:0
+msgid "Connection Successful"
+msgstr "Kết nối Thành công"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/wizard/google_drive_config_wizard.py:0
+msgid "Connection Failed:\n\n%s"
+msgstr "Kết nối Thất bại:\n\n%s"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/wizard/google_drive_config_wizard.py:0
+msgid "Connection Test Failed:\n\n%s"
+msgstr "Kiểm tra Kết nối Thất bại:\n\n%s"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/wizard/google_drive_config_wizard.py:0
+msgid "Configuration Cleared"
+msgstr "Cấu hình Đã xóa"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/wizard/google_drive_config_wizard.py:0
+msgid "Google Drive configuration has been removed."
+msgstr "Cấu hình Google Drive đã được xóa bỏ."
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.google_drive_config_wizard_form
+msgid "Configure Google Drive"
+msgstr "Cấu hình Google Drive"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.google_drive_config_wizard_form
+msgid "Leave empty for all Drive"
+msgstr "Để trống để truy cập toàn bộ Drive"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.google_drive_config_wizard_form
+msgid "How to get your Service Account JSON file:"
+msgstr "Cách lấy file JSON Tài khoản Dịch vụ:"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.google_drive_config_wizard_form
+msgid "Save Configuration"
+msgstr "Lưu Cấu hình"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.google_drive_config_wizard_form
+msgid "Save &amp; Test Connection"
+msgstr "Lưu &amp; Kiểm tra Kết nối"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.google_drive_config_wizard_form
+msgid "Clear Config"
+msgstr "Xóa Cấu hình"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.google_drive_config_wizard_form
+msgid "Are you sure you want to clear the Google Drive configuration?"
+msgstr "Bạn có chắc chắn muốn xóa cấu hình Google Drive?"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.google_drive_config_wizard_form
+msgid "Cancel"
+msgstr "Hủy"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_res_config_settings__google_drive_service_account_json
+msgid "Service Account JSON (Hidden)"
+msgstr "JSON Tài khoản Dịch vụ (Ẩn)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_res_config_settings__google_drive_service_account_json
+msgid "Internal field - Service account JSON stored in config parameter"
+msgstr "Trường nội bộ - JSON tài khoản dịch vụ được lưu trong tham số cấu hình"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_res_config_settings__google_drive_configured
+msgid "Drive Configured"
+msgstr "Drive Đã cấu hình"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_res_config_settings__google_drive_configured
+msgid "Whether Google Drive service account is configured"
+msgstr "Liệu tài khoản dịch vụ Google Drive đã được cấu hình hay chưa"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_res_config_settings__google_drive_service_account_email
+msgid "Service Account Email"
+msgstr "Email Tài khoản Dịch vụ"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_res_config_settings__google_drive_service_account_email
+msgid "Service account email (read-only, extracted from uploaded JSON)"
+msgstr "Email tài khoản dịch vụ (chỉ đọc, được trích xuất từ JSON đã tải lên)"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/models/res_config_settings.py:0
+msgid "Please configure the Service Account first using \"Configure Service Account\" button."
+msgstr "Vui lòng cấu hình Tài khoản Dịch vụ trước bằng nút \"Cấu hình Tài khoản Dịch vụ\"."
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "Service Account"
+msgstr "Tài khoản Dịch vụ"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "Configure Service Account"
+msgstr "Cấu hình Tài khoản Dịch vụ"
+
+#. module: robotia_document_extractor
+#: model:ir.actions.act_window,name:robotia_document_extractor.action_google_drive_config_wizard
+msgid "Configure Google Drive"
+msgstr "Cấu hình Google Drive"
+
+#. module: robotia_document_extractor
+#: model:ir.model,name:robotia_document_extractor.model_google_drive_config_wizard
+msgid "Google Drive Configuration Wizard"
+msgstr "Trình hướng dẫn Cấu hình Google Drive"
 
