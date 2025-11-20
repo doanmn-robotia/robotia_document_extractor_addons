@@ -396,36 +396,6 @@ Your Task:
   → When in doubt, match to the most similar substance
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🚫 ROWS TO EXCLUDE FROM EXTRACTION
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-⚠️ CRITICAL: DO NOT extract the following types of rows:
-
-1. TOTAL/SUM ROWS:
-   ❌ Rows labeled "Tổng", "Tổng cộng", "Total", "Sum", or similar
-   ❌ These are summary rows that aggregate values from rows above
-   ❌ Skip these entirely - they are calculated values, not source data
-
-2. BLANK/PLACEHOLDER ROWS:
-   ❌ Rows with "..." or "…" placeholders
-   ❌ Rows like "HFC...", "HCFC...", "R-..." (meant to be left blank)
-   ❌ Empty template rows without actual substance data
-   ❌ Rows that are clearly just form templates
-
-Examples of rows to SKIP:
-  ❌ "Tổng" | 1000.0 | ... (Total row - skip this!)
-  ❌ "Tổng cộng" | 500.0 | ... (Sum row - skip this!)
-  ❌ "HFC..." | ... | ... (Blank placeholder - skip this!)
-  ❌ "..." | ... | ... (Empty row - skip this!)
-
-Examples of rows to INCLUDE:
-  ✓ "HFC-134a" | 100.5 | ... (Actual substance data)
-  ✓ "R-410A" | 250.0 | ... (Actual substance data)
-  ✓ "HCFC-22" | 50.0 | ... (Actual substance data)
-
-ONLY extract rows with real substance names and actual data values!
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📚 OFFICIAL CONTROLLED SUBSTANCES LIST ({len(substances)} substances)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 

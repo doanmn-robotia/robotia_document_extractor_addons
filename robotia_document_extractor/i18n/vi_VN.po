@@ -547,6 +547,19 @@ msgid "Production"
 msgstr "Sản xuất"
 
 #. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_substance_usage__substance_id
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_collection_recycling__substance_id
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_collection_recycling_report__substance_id
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_ownership__substance_id
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_ownership_report__substance_id
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_product__substance_id
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_product_report__substance_id
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_quota_usage__substance_id
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_substance_aggregate__substance_id
+msgid "Controlled Substance"
+msgstr "Chất được kiểm soát"
+
+#. module: robotia_document_extractor
 #: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_product__product_type
 #: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_product_report__product_type
 msgid "Product/Equipment Type"
@@ -995,6 +1008,16 @@ msgstr "Thêm thiết bị"
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_form
 msgid "Add section title"
 msgstr "Thêm đầu mục"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_form
+msgid "Add substance"
+msgstr "Thêm chất được kiểm soát"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_form
+msgid "Add equipment/product"
+msgstr "Thêm thiết bị/sản phẩm"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_form

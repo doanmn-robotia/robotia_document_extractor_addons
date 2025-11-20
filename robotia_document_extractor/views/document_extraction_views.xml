@@ -32,7 +32,7 @@
                         </group>
                     </group>
 
-                    <group string="Year Information (Table Columns)">
+                    <group string="Year Information (Table Columns)" invisible="1">
                         <group>
                             <field name="year_1" options="{'enable_formatting': false}"/>
                             <field name="year_2" options="{'enable_formatting': false}"/>

@@ -181,6 +181,63 @@ class ExtractionController(http.Controller):
             })
             _logger.info(f"Created public attachment ID {attachment.id} for PDF preview")
 
+            # Helper function to clean empty sections from AI response
+            def clean_empty_sections(data_list):
+                """
+                Remove section title rows that have no data rows following them
+
+                This ensures the database only contains sections with actual data,
+                not relying on AI to make this decision correctly.
+
+                Logic:
+                - Section 1 (title, is_title=true) → NO data rows → REMOVE Section 1
+                - Section 2 (title, is_title=true) → Row 1, Row 2 → KEEP Section 2 + Rows
+                - Section 3 (title, is_title=true) → NO data rows → REMOVE Section 3
+
+                Args:
+                    data_list: List of dicts from AI (may contain is_title=true rows)
+
+                Returns:
+                    Cleaned list with empty sections removed and sequence renumbered
+                """
+                if not data_list:
+                    return []
+
+                result = []
+                i = 0
+
+                while i < len(data_list):
+                    item = data_list[i]
+
+                    if item.get('is_title'):
+                        # This is a section title - look ahead for data rows
+                        has_data = False
+                        j = i + 1
+
+                        # Count data rows until next title or end of list
+                        while j < len(data_list) and not data_list[j].get('is_title'):
+                            has_data = True
+                            j += 1
+
+                        if has_data:
+                            # Section has data - include title + all data rows
+                            result.append(item)
+                            for k in range(i + 1, j):
+                                result.append(data_list[k])
+                        # else: Empty section - skip title and continue
+
+                        i = j  # Jump to next section
+                    else:
+                        # Orphan data row (no title before it) - include it anyway
+                        result.append(item)
+                        i += 1
+
+                # Renumber sequence field for consistency
+                for idx, item in enumerate(result):
+                    item['sequence'] = idx + 1
+
+                return result
+
             # Helper function to build One2many commands
             def build_o2m_commands(data_list):
                 """Convert list of dicts to Odoo One2many commands: [(0, 0, values)]"""
@@ -229,25 +286,17 @@ class ExtractionController(http.Controller):
                 context['default_has_table_1_3'] = extracted_data.get('has_table_1_3', False)
                 context['default_has_table_1_4'] = extracted_data.get('has_table_1_4', False)
 
-                # Table 1.1 - Substance Usage (already has is_title, sequence, usage_type from AI)
-                context['default_substance_usage_ids'] = build_o2m_commands(
-                    extracted_data.get('substance_usage', [])
-                )
+                # Table 1.1 - Substance Usage (clean empty sections before creating commands)
+                context['default_substance_usage_ids'] = build_o2m_commands(extracted_data.get('substance_usage', []))
 
-                # Table 1.2 - Equipment/Product
-                context['default_equipment_product_ids'] = build_o2m_commands(
-                    extracted_data.get('equipment_product', [])
-                )
+                # Table 1.2 - Equipment/Product (clean empty sections)
+                context['default_equipment_product_ids'] = build_o2m_commands(extracted_data.get('equipment_product', []))
 
-                # Table 1.3 - Equipment Ownership
-                context['default_equipment_ownership_ids'] = build_o2m_commands(
-                    extracted_data.get('equipment_ownership', [])
-                )
+                # Table 1.3 - Equipment Ownership (clean empty sections)
+                context['default_equipment_ownership_ids'] = build_o2m_commands(extracted_data.get('equipment_ownership', []))
 
-                # Table 1.4 - Collection & Recycling (already has is_title, sequence, activity_type from AI)
-                context['default_collection_recycling_ids'] = build_o2m_commands(
-                    extracted_data.get('collection_recycling', [])
-                )
+                # Table 1.4 - Collection & Recycling (clean empty sections)
+                context['default_collection_recycling_ids'] = build_o2m_commands(extracted_data.get('collection_recycling', []))
 
             # Add One2many table data (Form 02)
             elif document_type == '02':
@@ -257,20 +306,14 @@ class ExtractionController(http.Controller):
                 context['default_has_table_2_3'] = extracted_data.get('has_table_2_3', False)
                 context['default_has_table_2_4'] = extracted_data.get('has_table_2_4', False)
 
-                # Table 2.1 - Quota Usage
-                context['default_quota_usage_ids'] = build_o2m_commands(
-                    extracted_data.get('quota_usage', [])
-                )
+                # Table 2.1 - Quota Usage (clean empty sections)
+                context['default_quota_usage_ids'] = build_o2m_commands(extracted_data.get('quota_usage', []))
 
-                # Table 2.2 - Equipment/Product Report
-                context['default_equipment_product_report_ids'] = build_o2m_commands(
-                    extracted_data.get('equipment_product_report', [])
-                )
+                # Table 2.2 - Equipment/Product Report (clean empty sections)
+                context['default_equipment_product_report_ids'] = build_o2m_commands(extracted_data.get('equipment_product_report', []))
 
-                # Table 2.3 - Equipment Ownership Report
-                context['default_equipment_ownership_report_ids'] = build_o2m_commands(
-                    extracted_data.get('equipment_ownership_report', [])
-                )
+                # Table 2.3 - Equipment Ownership Report (clean empty sections)
+                context['default_equipment_ownership_report_ids'] = build_o2m_commands(extracted_data.get('equipment_ownership_report', []))
 
                 # Table 2.4 - Collection & Recycling Report
                 context['default_collection_recycling_report_ids'] = build_o2m_commands(
