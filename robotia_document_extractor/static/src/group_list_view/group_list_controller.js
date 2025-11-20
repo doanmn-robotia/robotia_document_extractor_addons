@@ -1,16 +1,13 @@
-/** @odoo-module **/
-
+import { ListController } from "@web/views/list/list_controller";
 import { GroupedListArchParser } from "./group_list_arch_parser";
 import { GroupedListRenderer } from "./group_list_renderer";
 import { listView } from "@web/views/list/list_view";
 import { registry } from "@web/core/registry";
 
-// Patch the default list view to support grouped headers
-const patchedListView = {
+export const groupedListView = {
     ...listView,
     ArchParser: GroupedListArchParser,
     Renderer: GroupedListRenderer
 };
 
-// Override the default "list" view registration
-registry.category("views").add("list", patchedListView, { force: true });
+registry.category("views").add("grouped_list", groupedListView);

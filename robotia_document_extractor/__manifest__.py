@@ -23,13 +23,6 @@
             # Utilities (must load first)
             'robotia_document_extractor/static/src/js/utils/chart_utils.js',
 
-            # CRITICAL: Grouped List View Patches (must load early to patch default list view and X2Many)
-            'robotia_document_extractor/static/src/group_list_view/group_list_arch_parser.js',
-            'robotia_document_extractor/static/src/group_list_view/group_list_renderer.js',
-            'robotia_document_extractor/static/src/group_list_view/group_list_renderer.xml',
-            'robotia_document_extractor/static/src/group_list_view/group_list_controller.js',
-            'robotia_document_extractor/static/src/group_list_view/grouped_x2many_field.js',
-
             # Dashboards (JS)
             'robotia_document_extractor/static/src/js/dashboard/substance_dashboard.js',
             'robotia_document_extractor/static/src/js/dashboard/company_dashboard.js',
@@ -62,7 +55,7 @@
             'robotia_document_extractor/static/src/js/x2many_numbered/x2many_numbered_list_renderer.xml',
             'robotia_document_extractor/static/src/js/x2many_numbered/x2many_numbered.scss',
 
-            # Other existing files (group_list_view already loaded explicitly above)
+            # Other existing files
             'robotia_document_extractor/static/src/**/*'
         ],
     },
