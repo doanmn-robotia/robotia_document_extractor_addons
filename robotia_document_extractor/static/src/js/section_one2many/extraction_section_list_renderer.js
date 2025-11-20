@@ -8,21 +8,12 @@ import { X2ManyNumberedListRenderer } from "../x2many_numbered/x2many_numbered_l
 /**
  * Custom List Renderer for extraction tables with section/title rows
  *
- * Toggles column visibility based on row type:
- * - Title rows (is_title=True): Show titleField (Char), hide removeField (Many2one)
- * - Data rows (is_title=False): Hide titleField (Char), show removeField (Many2one)
- *
- * Features:
- * - Uses 'is_title' as discriminant to identify title/data rows
- * - Title rows displayed with bold text and special styling (o_is_section, fw-bold)
+ * Similar to survey's QuestionPageListRenderer but adapted for document extraction:
+ * - Uses 'is_title' as discriminant to identify title rows
+ * - Title rows are displayed with bold text and colspan
  * - Adds 'o_section_list_view' class to table
- * - Extends X2ManyNumberedListRenderer (includes row numbers)
  *
- * Configuration via environment:
- * - this.titleField: Name of Char field (default: 'substance_name')
- * - this.removeField: Name of Many2one field to hide in title rows
- *
- * Used for tables: substance.usage, equipment.product, equipment.ownership, collection.recycling, quota.usage
+ * Used for tables: substance.usage, equipment.product, equipment.ownership, collection.recycling
  */
 export class ExtractionSectionListRenderer extends X2ManyNumberedListRenderer {
     setup() {
@@ -31,13 +22,13 @@ export class ExtractionSectionListRenderer extends X2ManyNumberedListRenderer {
         // Discriminant field to identify title/section rows
         this.discriminant = "is_title";
 
-        // Title field (Char field shown in section rows, hidden in data rows)
-        // Examples: 'substance_name', 'product_type', 'equipment_type'
-        this.titleField = this.env.titleField || "substance_name";
+        // Fields to show in section rows (if any special handling needed)
+        this.fieldsToShow = [];
 
-        // Remove field (Many2one field hidden in section rows, shown in data rows)
-        // Examples: 'substance_id', 'equipment_type_id'
-        this.removeField = this.env.removeField;
+        // Title field that will have colspan in section rows
+        // Can be overridden via props.titleField (from widget options)
+        // Default: 'substance_name'
+        this.titleField = this.env.titleField || "substance_name";
 
         // Add 'o_section_list_view' class to table
         useEffect(
@@ -69,15 +60,15 @@ export class ExtractionSectionListRenderer extends X2ManyNumberedListRenderer {
     }
 
     /**
-     * Get columns for a record - toggle visibility based on row type
+     * Get columns for a record - section rows have modified columns with colspan
      */
     getColumns(record) {
         let columns = super.getColumns(record);
         if (this.isSection(record)) {
             columns = this.getSectionColumns(columns);
-        } else {
-            columns = this.getDataColumns(columns);
         }
+        console.log(columns);
+        
         return columns;
     }
 
@@ -93,42 +84,97 @@ export class ExtractionSectionListRenderer extends X2ManyNumberedListRenderer {
     }
 
     /**
-     * Get columns for section/title rows
-     * Hide the removeField column (usually Many2one like substance_id)
-     * Show the titleField column (usually Char like substance_name)
+     * Modify columns for section rows:
+     * - Find column with extraction_title_field widget (substance_id) in visible columns
+     * - Find column with name=titleField (substance_name) in allColumns (may be invisible)
+     * - Replace the widget column with titleField column properties
+     * - Add colspan to span across hidden columns
+     * - Hide data columns that don't make sense for title rows
      */
     getSectionColumns(columns) {
-        if (!this.removeField) {
-            return columns; // No removeField specified, return as-is
+        let titleWidgetColumnIndex = -1;  // Column with extraction_title_field widget in visible columns
+        let titleFieldColumn = null;       // Column with name=titleField from allColumns (may be invisible)
+
+        // Step 1: Find widget column in visible columns array
+        for (let i = 0; i < columns.length; i++) {
+            const col = columns[i];
+            // Find column with extraction_title_field widget
+            if (col.widget === 'extraction_title_field') {
+                titleWidgetColumnIndex = i;
+                break;
+            }
         }
 
-        return columns.map(col => {
-            if (col.name === this.removeField) {
-                // Hide the removeField column (e.g., substance_id)
-                return { ...col, type: 'invisible' };
+        // Step 2: Find titleField column in allColumns (includes invisible columns)
+        if (this.allColumns) {
+            for (const col of this.allColumns) {
+                if (col.name === this.titleField) {
+                    titleFieldColumn = col;
+                    break;
+                }
             }
-            return col;
-        });
-    }
-
-    /**
-     * Get columns for data rows
-     * Hide the titleField column (usually Char like substance_name)
-     * Show the removeField column (usually Many2one like substance_id)
-     */
-    getDataColumns(columns) {
-        const titleField = this.titleField;
-        if (!titleField) {
-            return columns; // No titleField specified, return as-is
         }
 
-        return columns.map(col => {
-            if (col.name === titleField) {
-                // Hide the titleField column (e.g., substance_name)
-                return { ...col, type: 'invisible' };
+        // Step 3: If both found, replace widget column with titleField column
+        if (titleWidgetColumnIndex >= 0 && titleFieldColumn) {
+            // Calculate colspan (count visible columns from widget position)
+            let colspan = 1;
+            for (let i = titleWidgetColumnIndex + 1; i < columns.length; i++) {
+                const col = columns[i];
+                // Stop at non-data columns (buttons, handle, etc.)
+                if (col.type !== "field" || this.fieldsToShow.includes(col.name)) {
+                    break;
+                }
+                colspan += 1;
             }
-            return col;
-        });
+
+            // Clone columns array
+            const sectionColumns = [...columns];
+            // Replace widget column: keep substance_id column structure but change data source
+            sectionColumns[titleWidgetColumnIndex] = {
+                ...columns[titleWidgetColumnIndex],  // Keep original substance_id column properties
+                name: this.titleField,                // Change name to substance_name to get data
+                colspan: colspan,                     // Add colspan
+                fieldType: 'char'
+            };
+
+            // Remove columns that are spanned (visible ones after widget column)
+            const finalColumns = [
+                ...sectionColumns.slice(0, titleWidgetColumnIndex + 1),  // Keep up to and including replaced column
+                ...sectionColumns.slice(titleWidgetColumnIndex + colspan) // Keep after spanned columns
+            ];
+
+            return finalColumns;
+        }
+
+        // Step 4: Fallback to old logic if titleField not found
+        // (Keep old code for backward compatibility)
+        let titleColumnIndex = 0;
+        let found = false;
+        let colspan = 1;
+
+        for (let index = 0; index < columns.length; index++) {
+            const col = columns[index];
+            if (!found && col.name !== this.titleField) {
+                continue;
+            }
+            if (!found) {
+                found = true;
+                titleColumnIndex = index;
+                continue;
+            }
+            if (col.type !== "field" || this.fieldsToShow.includes(col.name)) {
+                break;
+            }
+            colspan += 1;
+        }
+
+        const sectionColumns = columns
+            .slice(0, titleColumnIndex + 1)
+            .concat(columns.slice(titleColumnIndex + colspan));
+
+        sectionColumns[titleColumnIndex] = { ...sectionColumns[titleColumnIndex], colspan };
+        return sectionColumns;
     }
 
     /**
