@@ -2208,3 +2208,268 @@ msgstr "Lỗi không xác định"
 msgid "HFC Dashboard"
 msgstr "Dashboard HFC Tổng hợp"
 
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_document_extraction__source
+msgid "Source"
+msgstr "Nguồn"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_document_extraction__source
+msgid "Source of the document: manually uploaded by user or fetched from external source"
+msgstr "Nguồn gốc của tài liệu: được tải lên thủ công bởi người dùng hoặc tự động lấy từ nguồn bên ngoài"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__document_extraction__source__from_user_upload
+msgid "User Upload"
+msgstr "Tải lên thủ công"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__document_extraction__source__from_external_source
+msgid "External Source (Google Drive)"
+msgstr "Nguồn ngoài (Google Drive)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_document_extraction__ocr_status
+msgid "OCR Status"
+msgstr "Trạng thái OCR"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_document_extraction__ocr_status
+msgid "Status of OCR processing for documents from external sources"
+msgstr "Trạng thái xử lý OCR cho các tài liệu từ nguồn bên ngoài"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__document_extraction__ocr_status__pending
+msgid "Pending OCR"
+msgstr "Chờ xử lý OCR"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__document_extraction__ocr_status__processing
+msgid "Processing"
+msgstr "Đang xử lý"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__document_extraction__ocr_status__completed
+msgid "OCR Completed"
+msgstr "OCR hoàn thành"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__document_extraction__ocr_status__error
+msgid "OCR Error"
+msgstr "Lỗi OCR"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_document_extraction__ocr_error_message
+msgid "OCR Error Message"
+msgstr "Thông báo lỗi OCR"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_document_extraction__ocr_error_message
+msgid "Error message if OCR processing failed"
+msgstr "Thông báo lỗi nếu xử lý OCR thất bại"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_document_extraction__gdrive_file_id
+msgid "Google Drive File ID"
+msgstr "ID File Google Drive"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_document_extraction__gdrive_file_id
+msgid "Google Drive file ID for documents fetched from Drive"
+msgstr "ID file Google Drive cho các tài liệu lấy từ Drive"
+
+#. module: robotia_document_extractor
+#: model:ir.cron,name:robotia_document_extractor.ir_cron_gdrive_fetch_files
+msgid "Document Extractor: Fetch Files from Google Drive"
+msgstr "Trích xuất tài liệu: Lấy file từ Google Drive"
+
+#. module: robotia_document_extractor
+#: model:ir.cron,name:robotia_document_extractor.ir_cron_gdrive_process_ocr
+msgid "Document Extractor: Process Pending OCR"
+msgstr "Trích xuất tài liệu: Xử lý OCR đang chờ"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_res_config_settings__gdrive_enabled
+msgid "Enable Google Drive Integration"
+msgstr "Bật tích hợp Google Drive"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_res_config_settings__gdrive_enabled
+msgid "Enable automatic fetching of PDF files from Google Drive"
+msgstr "Bật tính năng tự động lấy file PDF từ Google Drive"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_res_config_settings__gdrive_folder_id
+msgid "Google Drive Folder ID"
+msgstr "ID Thư mục Google Drive"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_res_config_settings__gdrive_folder_id
+msgid "Google Drive folder ID to fetch PDF files from. You can find this in the folder URL: https://drive.google.com/drive/folders/FOLDER_ID"
+msgstr "ID thư mục Google Drive để lấy file PDF. Bạn có thể tìm thấy trong URL của thư mục: https://drive.google.com/drive/folders/FOLDER_ID"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_res_config_settings__gdrive_credentials_json
+msgid "Google Drive Service Account JSON"
+msgstr "JSON Service Account Google Drive"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_res_config_settings__gdrive_credentials_json
+msgid "Service Account credentials JSON from Google Cloud Console. Create a service account at https://console.cloud.google.com/iam-admin/serviceaccounts and share the Google Drive folder with the service account email."
+msgstr "Thông tin xác thực Service Account dạng JSON từ Google Cloud Console. Tạo service account tại https://console.cloud.google.com/iam-admin/serviceaccounts và chia sẻ thư mục Google Drive với email của service account."
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_res_config_settings__gdrive_cron_interval
+msgid "Fetch Interval (minutes)"
+msgstr "Khoảng thời gian lấy file (phút)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_res_config_settings__gdrive_cron_interval
+msgid "Interval in minutes between automatic fetches from Google Drive. Default: 30 minutes"
+msgstr "Khoảng thời gian tính bằng phút giữa các lần tự động lấy file từ Google Drive. Mặc định: 30 phút"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_res_config_settings__gdrive_ocr_batch_size
+msgid "OCR Batch Size"
+msgstr "Số lượng OCR mỗi lần"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_res_config_settings__gdrive_ocr_batch_size
+msgid "Number of documents to process in each OCR cron run. Default: 3"
+msgstr "Số lượng tài liệu được xử lý trong mỗi lần chạy OCR tự động. Mặc định: 3"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "Google Drive Integration"
+msgstr "Tích hợp Google Drive"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "Enable automatic fetching and processing of PDF files from Google Drive"
+msgstr "Bật tự động lấy và xử lý file PDF từ Google Drive"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "The folder ID from which to fetch PDF files"
+msgstr "ID thư mục để lấy file PDF"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "You can find the folder ID in the URL: https://drive.google.com/drive/folders/<b>FOLDER_ID</b>"
+msgstr "Bạn có thể tìm thấy ID thư mục trong URL: https://drive.google.com/drive/folders/<b>FOLDER_ID</b>"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "Service Account JSON"
+msgstr "JSON Service Account"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "Google Cloud Service Account credentials in JSON format"
+msgstr "Thông tin xác thực Service Account Google Cloud dạng JSON"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "Create a service account at <a href=\"https://console.cloud.google.com/iam-admin/serviceaccounts\" target=\"_blank\">Google Cloud Console</a>"
+msgstr "Tạo service account tại <a href=\"https://console.cloud.google.com/iam-admin/serviceaccounts\" target=\"_blank\">Google Cloud Console</a>"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "Enable Google Drive API for your project"
+msgstr "Bật Google Drive API cho dự án của bạn"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "Create and download the JSON key file"
+msgstr "Tạo và tải xuống file khóa JSON"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "Share your Google Drive folder with the service account email"
+msgstr "Chia sẻ thư mục Google Drive của bạn với email service account"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "Paste the JSON content here"
+msgstr "Dán nội dung JSON vào đây"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "How often to check Google Drive for new files"
+msgstr "Tần suất kiểm tra file mới trên Google Drive"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "Default: 30 minutes. Both fetch and OCR cron jobs run at this interval."
+msgstr "Mặc định: 30 phút. Cả hai tác vụ tự động lấy file và OCR đều chạy với khoảng thời gian này."
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "Number of documents to process in each OCR run"
+msgstr "Số lượng tài liệu xử lý trong mỗi lần chạy OCR"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "Default: 3 documents per run. Adjust based on your API limits and processing capacity."
+msgstr "Mặc định: 3 tài liệu mỗi lần. Điều chỉnh dựa trên giới hạn API và khả năng xử lý của bạn."
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/models/gdrive_service.py:0
+msgid "Google Drive API libraries not installed. Please install: pip install google-api-python-client google-auth"
+msgstr "Chưa cài đặt thư viện Google Drive API. Vui lòng cài đặt: pip install google-api-python-client google-auth"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/models/gdrive_service.py:0
+msgid "Google Drive credentials not configured. Please configure Service Account JSON in Settings > Document Extractor."
+msgstr "Chưa cấu hình thông tin xác thực Google Drive. Vui lòng cấu hình Service Account JSON trong Cài đặt > Trích xuất tài liệu."
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/models/gdrive_service.py:0
+msgid "Invalid Google Drive credentials JSON format."
+msgstr "Định dạng JSON thông tin xác thực Google Drive không hợp lệ."
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/models/gdrive_service.py:0
+msgid "Failed to initialize Google Drive service: %s"
+msgstr "Không thể khởi tạo dịch vụ Google Drive: %s"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/models/gdrive_service.py:0
+msgid "No PDF attachment found"
+msgstr "Không tìm thấy file PDF đính kèm"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_search
+msgid "User Upload"
+msgstr "Tải lên thủ công"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_search
+msgid "External Source (Google Drive)"
+msgstr "Nguồn ngoài (Google Drive)"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_search
+msgid "OCR Pending"
+msgstr "Chờ OCR"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_search
+msgid "OCR Processing"
+msgstr "Đang xử lý OCR"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_search
+msgid "OCR Completed"
+msgstr "OCR hoàn thành"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_search
+msgid "OCR Error"
+msgstr "Lỗi OCR"
+

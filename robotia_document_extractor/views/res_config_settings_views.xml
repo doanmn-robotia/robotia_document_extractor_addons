@@ -63,6 +63,70 @@
                             </div>
                         </setting>
                     </block>
+
+                    <block title="Google Drive Integration">
+                        <setting id="gdrive_enabled_setting"
+                                 help="Enable automatic fetching and processing of PDF files from Google Drive">
+                            <field name="gdrive_enabled"/>
+                            <div class="content-group">
+                                <label for="gdrive_enabled" string="Enable Google Drive Integration"/>
+                            </div>
+                        </setting>
+
+                        <setting id="gdrive_folder_id_setting"
+                                 string="Google Drive Folder ID"
+                                 help="The folder ID from which to fetch PDF files"
+                                 invisible="not gdrive_enabled">
+                            <field name="gdrive_folder_id" placeholder="1A2B3C4D5E6F7G8H9I0J" class="oe_inline"/>
+                            <div class="content-group mt8">
+                                <div class="text-muted">
+                                    You can find the folder ID in the URL: https://drive.google.com/drive/folders/<b>FOLDER_ID</b>
+                                </div>
+                            </div>
+                        </setting>
+
+                        <setting id="gdrive_credentials_json_setting"
+                                 string="Service Account JSON"
+                                 help="Google Cloud Service Account credentials in JSON format"
+                                 invisible="not gdrive_enabled">
+                            <field name="gdrive_credentials_json" placeholder='{"type": "service_account", "project_id": "...", ...}' class="oe_inline"/>
+                            <div class="content-group mt8">
+                                <div class="text-muted">
+                                    <ol>
+                                        <li>Create a service account at <a href="https://console.cloud.google.com/iam-admin/serviceaccounts" target="_blank">Google Cloud Console</a></li>
+                                        <li>Enable Google Drive API for your project</li>
+                                        <li>Create and download the JSON key file</li>
+                                        <li>Share your Google Drive folder with the service account email</li>
+                                        <li>Paste the JSON content here</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </setting>
+
+                        <setting id="gdrive_cron_interval_setting"
+                                 string="Fetch Interval (minutes)"
+                                 help="How often to check Google Drive for new files"
+                                 invisible="not gdrive_enabled">
+                            <field name="gdrive_cron_interval" class="oe_inline"/>
+                            <div class="content-group mt8">
+                                <div class="text-muted">
+                                    Default: 30 minutes. Both fetch and OCR cron jobs run at this interval.
+                                </div>
+                            </div>
+                        </setting>
+
+                        <setting id="gdrive_ocr_batch_size_setting"
+                                 string="OCR Batch Size"
+                                 help="Number of documents to process in each OCR run"
+                                 invisible="not gdrive_enabled">
+                            <field name="gdrive_ocr_batch_size" class="oe_inline"/>
+                            <div class="content-group mt8">
+                                <div class="text-muted">
+                                    Default: 3 documents per run. Adjust based on your API limits and processing capacity.
+                                </div>
+                            </div>
+                        </setting>
+                    </block>
                 </app>
             </xpath>
         </field>

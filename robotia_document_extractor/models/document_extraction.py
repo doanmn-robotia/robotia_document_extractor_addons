@@ -91,6 +91,38 @@ class DocumentExtraction(models.Model):
         string='Review Notes',
         help='Notes about extraction issues that need manual review'
     )
+    source = fields.Selection(
+        selection=[
+            ('from_user_upload', 'User Upload'),
+            ('from_external_source', 'External Source (Google Drive)')
+        ],
+        string='Source',
+        default='from_user_upload',
+        required=True,
+        index=True,
+        help='Source of the document: manually uploaded by user or fetched from external source'
+    )
+    ocr_status = fields.Selection(
+        selection=[
+            ('pending', 'Pending OCR'),
+            ('processing', 'Processing'),
+            ('completed', 'OCR Completed'),
+            ('error', 'OCR Error')
+        ],
+        string='OCR Status',
+        default='pending',
+        index=True,
+        help='Status of OCR processing for documents from external sources'
+    )
+    ocr_error_message = fields.Text(
+        string='OCR Error Message',
+        help='Error message if OCR processing failed'
+    )
+    gdrive_file_id = fields.Char(
+        string='Google Drive File ID',
+        index=True,
+        help='Google Drive file ID for documents fetched from Drive'
+    )
 
     # ===== Organization Information (4.1.1 & 4.2.1) =====
     organization_id = fields.Many2one(
@@ -372,6 +404,7 @@ class DocumentExtraction(models.Model):
         Override create to:
         1. Auto-create organization if not exists
         2. Link PDF attachment to the newly created record
+        3. Set OCR status based on source
 
         Logic:
         - If organization_id empty but business_license_number exists:
@@ -379,6 +412,8 @@ class DocumentExtraction(models.Model):
           - If found → set organization_id
           - If not found → create new partner → set organization_id
         - If pdf_attachment_id exists, update it with the new res_id
+        - If source is 'from_user_upload', set ocr_status to 'completed'
+        - If source is 'from_external_source' and ocr_status not set, keep as 'pending'
 
         FIX: Handle race condition - if another transaction creates the organization
         between our search and create, retry the search
@@ -386,6 +421,10 @@ class DocumentExtraction(models.Model):
         import psycopg2
 
         for vals in vals_list:
+            # Set OCR status based on source
+            if vals.get('source') == 'from_user_upload' and 'ocr_status' not in vals:
+                vals['ocr_status'] = 'completed'
+
             if not vals.get('organization_id') and vals.get('business_license_number'):
                 # Search existing partner by business license number
                 partner = self.env['res.partner'].search([
