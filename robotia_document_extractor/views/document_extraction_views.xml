@@ -111,11 +111,11 @@
                         <!-- Page 2: Table 1.1 - Substance Usage (Production, Import, Export) -->
                         <page string="Table 1.1: Substance Usage" name="table_1_1"
                               invisible="document_type != '01' or not has_table_1_1">
-                            <field name="substance_usage_ids" widget="extraction_section_one2many" options="{'titleField': 'substance_name', 'removeField': 'substance_id'}" nolabel="1">
+                            <field name="substance_usage_ids" widget="extraction_section_one2many" options="{'titleField': 'substance_name'}" nolabel="1">
                                 <list editable="bottom">
                                     <field name="sequence" widget="handle" options="{'enable_formatting': false}"/>
-                                    <field name="substance_name" widget="extraction_title_field"/>
-                                    <field name="substance_id" required="1" options="{'no_create': True, 'no_quick_create': True}"/>
+                                    <field name="substance_name" column_invisible="1"/>
+                                    <field name="substance_id" required="1" widget="extraction_title_field" options="{'no_create': True, 'no_quick_create': True}"/>
                                     <field name="year_1_quantity_kg"/>
                                     <field name="year_1_quantity_co2"/>
                                     <field name="year_2_quantity_kg"/>
@@ -138,11 +138,10 @@
                         <!-- Page 3: Table 1.2 - Equipment/Product Info -->
                         <page string="Table 1.2: Equipment/Product" name="table_1_2"
                               invisible="document_type != '01' or not has_table_1_2">
-                            <field name="equipment_product_ids" widget="extraction_section_one2many" options="{'titleField': 'product_type', 'removeField': 'equipment_type_id'}" nolabel="1">
+                            <field name="equipment_product_ids" widget="extraction_section_one2many" options="{'titleField': 'product_type'}" nolabel="1">
                                 <list editable="bottom">
                                     <field name="sequence" widget="handle" options="{'enable_formatting': false}"/>
                                     <field name="product_type" widget="extraction_title_field"/>
-                                    <field name="equipment_type_id" options="{'no_create': True, 'no_quick_create': True}"/>
                                     <field name="hs_code"/>
                                     <field name="capacity"/>
                                     <field name="quantity"/>
@@ -162,11 +161,10 @@
                         <!-- Page 4: Table 1.3 - Equipment Ownership -->
                         <page string="Table 1.3: Equipment Ownership" name="table_1_3"
                               invisible="document_type != '01' or not has_table_1_3">
-                            <field name="equipment_ownership_ids" widget="extraction_section_one2many" options="{'titleField': 'equipment_type', 'removeField': 'equipment_type_id'}" nolabel="1">
+                            <field name="equipment_ownership_ids" widget="extraction_section_one2many" options="{'titleField': 'equipment_type'}" nolabel="1">
                                 <list editable="bottom">
                                     <field name="sequence" widget="handle" options="{'enable_formatting': false}"/>
                                     <field name="equipment_type" widget="extraction_title_field"/>
-                                    <field name="equipment_type_id" options="{'no_create': True, 'no_quick_create': True}"/>
                                     <field name="start_year" options="{'enable_formatting': false}"/>
                                     <field name="capacity"/>
                                     <field name="substance_id" required="1" options="{'no_create': True, 'no_quick_create': True}"/>
@@ -186,12 +184,12 @@
                         <!-- Page 5: Table 1.4 - Collection, Recycling, Reuse, Disposal -->
                         <page string="Table 1.4: Collection &amp; Recycling" name="table_1_4"
                               invisible="document_type != '01' or not has_table_1_4">
-                            <field name="collection_recycling_ids" widget="extraction_section_one2many" options="{'titleField': 'substance_name', 'removeField': 'substance_id'}" nolabel="1">
+                            <field name="collection_recycling_ids" widget="extraction_section_one2many" options="{'titleField': 'substance_name'}" nolabel="1">
                                 <list editable="bottom">
                                     <field name="sequence" widget="handle" options="{'enable_formatting': false}"/>
                                     <field name="activity_type" column_invisible="1"/>
-                                    <field name="substance_name" widget="extraction_title_field"/>
-                                    <field name="substance_id" required="1" options="{'no_create': True, 'no_quick_create': True}"/>
+                                    <field name="substance_name" column_invisible="1"/>
+                                    <field name="substance_id" required="1" widget="extraction_title_field" options="{'no_create': True, 'no_quick_create': True}"/>
                                     <field name="quantity_kg"/>
                                     <field name="quantity_co2"/>
                                     <field name="is_title" column_invisible="1"/>
@@ -207,11 +205,11 @@
                         <!-- Page 6: Table 2.1 - Quota Usage Report (Form 02 only) -->
                         <page string="Table 2.1: Quota Usage" name="table_2_1"
                               invisible="document_type != '02' or not has_table_2_1">
-                            <field name="quota_usage_ids" widget="extraction_section_one2many" options="{'titleField': 'substance_name', 'removeField': 'substance_id'}" nolabel="1">
+                            <field name="quota_usage_ids" widget="extraction_section_one2many" options="{'titleField': 'substance_name'}" nolabel="1">
                                 <list editable="bottom">
                                     <field name="sequence" widget="handle" options="{'enable_formatting': false}"/>
-                                    <field name="substance_name" widget="extraction_title_field"/>
-                                    <field name="substance_id" required="1" options="{'no_create': True, 'no_quick_create': True}"/>
+                                    <field name="substance_name" column_invisible="1"/>
+                                    <field name="substance_id" required="1" widget="extraction_title_field" options="{'no_create': True, 'no_quick_create': True}"/>
                                     <field name="hs_code"/>
                                     <field name="allocated_quota_kg"/>
                                     <field name="allocated_quota_co2"/>
@@ -238,11 +236,10 @@
                         <!-- Page 7: Table 2.2 - Same as Table 1.2 for Form 02 -->
                         <page string="Table 2.2: Equipment/Product Report" name="table_2_2"
                               invisible="document_type != '02' or not has_table_2_2">
-                            <field name="equipment_product_report_ids" widget="extraction_section_one2many" options="{'titleField': 'product_type', 'removeField': 'equipment_type_id'}" nolabel="1">
+                            <field name="equipment_product_report_ids" widget="extraction_section_one2many" options="{'titleField': 'product_type'}" nolabel="1">
                                 <list editable="bottom">
                                     <field name="sequence" widget="handle" options="{'enable_formatting': false}"/>
                                     <field name="product_type" widget="extraction_title_field"/>
-                                    <field name="equipment_type_id" options="{'no_create': True, 'no_quick_create': True}"/>
                                     <field name="hs_code"/>
                                     <field name="capacity"/>
                                     <field name="quantity"/>
@@ -263,11 +260,10 @@
                         <!-- Page 8: Table 2.3 - Equipment Ownership Report (Form 02) -->
                         <page string="Table 2.3: Equipment Report" name="table_2_3"
                               invisible="document_type != '02' or not has_table_2_3">
-                            <field name="equipment_ownership_report_ids" widget="extraction_section_one2many" options="{'titleField': 'equipment_type', 'removeField': 'equipment_type_id'}" nolabel="1">
+                            <field name="equipment_ownership_report_ids" widget="extraction_section_one2many" options="{'titleField': 'equipment_type'}" nolabel="1">
                                 <list editable="bottom">
                                     <field name="sequence" widget="handle" options="{'enable_formatting': false}"/>
                                     <field name="equipment_type" widget="extraction_title_field"/>
-                                    <field name="equipment_type_id" options="{'no_create': True, 'no_quick_create': True}"/>
                                     <field name="equipment_quantity" options="{'enable_formatting': false}"/>
                                     <field name="substance_id" required="1" options="{'no_create': True, 'no_quick_create': True}"/>
                                     <field name="capacity"/>
