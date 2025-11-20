@@ -8,19 +8,25 @@ import { useSubEnv } from "@odoo/owl";
 /**
  * Custom One2many Field Widget for extraction tables with section/title rows
  *
- * Uses ExtractionSectionListRenderer to display title rows with special styling
+ * Uses ExtractionSectionListRenderer to toggle visibility between two fields:
+ * - Title rows (is_title=True): Show titleField (Char), hide removeField (Many2one)
+ * - Data rows (is_title=False): Show removeField (Many2one), hide titleField (Char)
  *
  * Usage in XML views:
- * <field name="substance_usage_ids" widget="extraction_section_one2many">
+ * <field name="substance_usage_ids" widget="extraction_section_one2many"
+ *        options="{'titleField': 'substance_name', 'removeField': 'substance_id'}">
  *   <list editable="bottom">
  *     <field name="is_title" column_invisible="1"/>
- *     <field name="sequence" column_invisible="1"/>
- *     <field name="usage_type" column_invisible="1"/>
- *     <field name="substance_name"/>
+ *     <field name="substance_name" widget="extraction_title_field"/>  <!-- Shown in title rows -->
+ *     <field name="substance_id" required="1"/>                       <!-- Shown in data rows -->
  *     <field name="year_1_quantity_kg"/>
  *     ...
  *   </list>
  * </field>
+ *
+ * Options:
+ * - titleField: Name of Char field to show in title rows (e.g., 'substance_name')
+ * - removeField: Name of Many2one field to hide in title rows (e.g., 'substance_id')
  */
 export class ExtractionSectionOneToManyField extends X2ManyField {
     static components = {
@@ -30,7 +36,8 @@ export class ExtractionSectionOneToManyField extends X2ManyField {
 
     static props = {
         ...X2ManyField.props,
-        titleField: { type: String, optional: true }
+        titleField: { type: String, optional: true },
+        removeField: { type: String, optional: true }
     }
 
     static defaultProps = {
@@ -41,7 +48,8 @@ export class ExtractionSectionOneToManyField extends X2ManyField {
     setup() {
         super.setup()
         useSubEnv({
-            titleField: this.props.titleField
+            titleField: this.props.titleField,
+            removeField: this.props.removeField
         })
     }
 
@@ -53,9 +61,12 @@ export const extractionSectionOneToManyField = {
     additionalClasses: [...x2ManyField.additionalClasses || [], "o_field_one2many"],
     extractProps(args, dynamicInfo) {
         const props = x2ManyField.extractProps(args, dynamicInfo);
-        // Extract titleField from options and pass to renderer
+        // Extract titleField and removeField from options
         if (args.options?.titleField) {
             props.titleField = args.options.titleField;
+        }
+        if (args.options?.removeField) {
+            props.removeField = args.options.removeField;
         }
         return props;
     },
