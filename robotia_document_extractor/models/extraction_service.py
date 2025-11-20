@@ -165,6 +165,12 @@ class DocumentExtractionService(models.AbstractModel):
             )
         )
 
+        # Get Gemini model from config (default: gemini-2.0-flash-exp)
+        GEMINI_MODEL = self.env['ir.config_parameter'].sudo().get_param(
+            'robotia_document_extractor.gemini_model',
+            default='gemini-2.0-flash-exp'
+        )
+
         tmp_file_path = None
         uploaded_file = None
 
@@ -209,7 +215,7 @@ class DocumentExtractionService(models.AbstractModel):
 
                     # Generate content with mega context + uploaded file + prompt
                     response = client.models.generate_content(
-                        model='gemini-2.0-flash-exp',
+                        model=GEMINI_MODEL,
                         contents=mega_context + [uploaded_file, prompt],
                         config=types.GenerateContentConfig(
                             temperature=0.1,  # Low temperature for consistent structured output
@@ -369,6 +375,13 @@ When you extract a substance name from the document, you MUST:
 2. Find the BEST MATCH using intelligent fuzzy matching
 3. Return the EXACT standardized name from the official list
 4. If no reasonable match exists, prefix with "[UNKNOWN] "
+
+⚠️ HS CODE LOGIC - IMPORTANT:
+- If substance name is empty, generic (e.g., "HFC"), or unclear
+- AND an HS code is provided in the document
+- Extract the HS code accurately - the system will use it to lookup the substance
+- Common HS codes for refrigerants: 2903.39, 2903.41, 3824.78, etc.
+- HS code can help identify the exact substance when name is ambiguous
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🧠 INTELLIGENT MATCHING STRATEGY
@@ -604,28 +617,77 @@ IMPORTANT:
             str: Default Form 01 extraction prompt
         """
         return """
-Analyze this Vietnamese Form 01 (Registration) PDF document for controlled substances and extract ALL data.
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                    VIETNAMESE FORM 01 EXTRACTION SPECIALIST                  ║
+║                     (Professional Document Auditor Mode)                     ║
+╚══════════════════════════════════════════════════════════════════════════════╝
 
-⚠️⚠️⚠️ CRITICAL TABLE STRUCTURE RULE ⚠️⚠️⚠️
+You are a PROFESSIONAL DOCUMENT AUDITOR specializing in Vietnamese regulatory forms.
+Your role is to extract REAL DATA from Form 01 (Registration) while identifying and
+IGNORING template/mockup/example data.
 
-**HOW TO IDENTIFY TITLE vs DATA ROWS:**
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 PART I: DOCUMENT INTELLIGENCE - REAL DATA vs TEMPLATE/MOCKUP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-✅ TITLE ROW = Row with MERGED CELLS spanning across multiple columns
-   - Contains section names (often bold): "Sản xuất chất được kiểm soát", "Nhập khẩu chất được kiểm soát", etc.
-   - Does NOT contain specific substance/equipment names or quantity data
-   - Mark as: is_title=true, all numeric fields=null
+⚠️ CRITICAL: Many companies submit PARTIALLY FILLED templates with mockup data.
 
-❌ DATA ROW = Row with SEPARATE CELLS (not merged)
-   - Contains specific substance names, equipment models, or actual data values
-   - Mark as: is_title=false, fill in actual data
+✅ EXTRACT ONLY REAL DATA:
+  1. Organization name that's SPECIFIC (not "Công ty ABC", "Tên công ty")
+  2. Actual substance names (HFC-134a, R-410A, R-32), NOT examples
+  3. Numbers that are HANDWRITTEN/TYPED by user (even if messy)
+  4. Checkboxes CLEARLY marked (✓, X, filled box)
+  5. Specific dates (15/03/2024), NOT placeholders (dd/mm/yyyy, __/__/____)
 
-Return a JSON object with this structure (all field names in English):
+❌ IGNORE TEMPLATE/MOCKUP DATA:
+  1. **Placeholder text**: "Tên doanh nghiệp", "Tên chất", "Ghi chú"
+  2. **Example markers**: "Ví dụ:", "VD:", "Example:", "(mẫu)"
+  3. **Instruction text**: "Ghi rõ...", "Điền vào...", "Nêu rõ..."
+  4. **Template numbers**: Perfect sequences (1, 2, 3) or round numbers (100, 200, 300)
+  5. **Empty template cells**: Unfilled rows with only borders
+
+🔍 TEMPLATE DETECTION RULES:
+  - **Repetition test**: Same substance 5+ times with perfect round numbers → TEMPLATE
+  - **Number pattern**: All values are multiples of 100 → TEMPLATE
+  - **Gray text/Italic**: Often indicates placeholder → SKIP
+  - **Brackets/parentheses**: "(Tên chất)", "[Ghi rõ]" → TEMPLATE
+  - **Cross-validation**: If organization name is template, ENTIRE form is likely template
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 PART II: HANDLING POOR QUALITY DOCUMENTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+For blurry, rotated, or messy documents:
+
+1. **Context-based inference**:
+   - Blurry substance name? → Check HS code column for clues
+   - Unclear number? → Look at neighboring cells for patterns
+   - Missing data? → Cross-reference with other sections
+
+2. **Line wrap reconstruction** (CRITICAL):
+   - "300.0" (line 1) + "00" (line 2) = 300000 (NOT 30000!)
+   - Always concatenate multi-line cell content BEFORE parsing
+
+3. **Handwritten ambiguity**:
+   - "1" vs "7": Use unit context (1 ton vs 7 kg makes sense?)
+   - "0" vs "6": Check if surrounding numbers follow pattern
+   - When unclear: Mark as null, DON'T guess
+
+4. **Bilingual forms**:
+   - Vietnamese + English side-by-side
+   - Don't confuse English section headers with checkmarks
+   - Prioritize Vietnamese text for substance names
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📐 PART III: JSON OUTPUT STRUCTURE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 {
   "year": <integer>,
-  "year_1": <integer - actual year for year_1 column, e.g., 2023>,
-  "year_2": <integer - actual year for year_2 column, e.g., 2024>,
-  "year_3": <integer - actual year for year_3 column, e.g., 2025>,
+  "year_1": <integer - actual year from column header, e.g., 2023>,
+  "year_2": <integer - actual year from column header, e.g., 2024>,
+  "year_3": <integer - actual year from column header, e.g., 2025>,
+
   "organization_name": "<string>",
   "business_license_number": "<string>",
   "business_license_date": "<YYYY-MM-DD or null>",
@@ -637,8 +699,10 @@ Return a JSON object with this structure (all field names in English):
   "contact_phone": "<string>",
   "contact_fax": "<string>",
   "contact_email": "<string>",
+  "contact_country_code": "<ISO 2-letter, e.g., VN>",
+  "contact_state_code": "<Province code, e.g., HN, SG, BD>",
 
-  "activity_field_codes": [<array of codes from section "2. Nội dung đăng ký" - see mapping below>],
+  "activity_field_codes": ["production", "import", "export", ...],
 
   "has_table_1_1": <boolean>,
   "has_table_1_2": <boolean>,
@@ -647,10 +711,10 @@ Return a JSON object with this structure (all field names in English):
 
   "substance_usage": [
     {
-      "is_title": <true for merged cell rows, false for data rows>,
+      "is_title": <true for section headers, false for data>,
       "sequence": <incremental number>,
-      "usage_type": "<production|import|export>",
-      "substance_name": "<string>",
+      "usage_type": "production|import|export",
+      "substance_name": "<standardized name from official list>",
       "year_1_quantity_kg": <float or null>,
       "year_1_quantity_co2": <float or null>,
       "year_2_quantity_kg": <float or null>,
@@ -662,203 +726,166 @@ Return a JSON object with this structure (all field names in English):
     }
   ],
 
-  "equipment_product": [
-    {
-      "is_title": <true for merged cell rows, false for data rows>,
-      "sequence": <incremental number>,
-      "product_type": "<string>",
-      "hs_code": "<string>",
-      "capacity": "<string>",
-      "quantity": <float or null>,
-      "substance_name": "<string>",
-      "substance_quantity_per_unit": <float or null>,
-      "notes": "<string>"
-    }
-  ],
-
-  "equipment_ownership": [
-    {
-      "is_title": <true for merged cell rows, false for data rows>,
-      "sequence": <incremental number>,
-      "equipment_type": "<string>",
-      "start_year": <integer or null>,
-      "capacity": "<string>",
-      "equipment_quantity": <integer or null>,
-      "substance_name": "<string>",
-      "refill_frequency": <float or null>,
-      "substance_quantity_per_refill": <float or null>
-    }
-  ],
-
-  "collection_recycling": [
-    {
-      "is_title": <true for merged cell rows, false for data rows>,
-      "sequence": <incremental number>,
-      "activity_type": "<collection|reuse|recycle|disposal>",
-      "substance_name": "<string>",
-      "quantity_kg": <float or null>,
-      "quantity_co2": <float or null>
-    }
-  ]
+  "equipment_product": [...],
+  "equipment_ownership": [...],
+  "collection_recycling": [...]
 }
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-EXTRACTION RULES:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔄 PART IV: EXTRACTION WORKFLOW (Follow this order)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-STEP 1: EXTRACT YEAR INFORMATION
+STEP 1: DOCUMENT QUALITY ASSESSMENT
+  → Scan entire document for template indicators
+  → Check if organization name is real or placeholder
+  → Identify which sections are filled vs empty template
 
-   ⚠️ CRITICAL: Look at Table 1.1 column headers to identify the actual years:
+STEP 2: ORGANIZATION INFORMATION
+  → Extract company name, license, contact info
+  → **Country code**: Use ISO 3166-1 (VN for Vietnam)
+  → **State code**: Extract province (HN, SG, DN, BD...) from address end
 
-   The table has columns like "Năm trước (year_1)", "Năm hiện tại (year_2)", "Năm sau (year_3)"
+STEP 3: YEAR EXTRACTION (Critical for multi-year data)
+  → Look at Table 1.1 column headers for ACTUAL years
+  → Example: "Năm 2023" → year_1=2023, "Năm 2024" → year_2=2024
+  → If not shown: infer from main year field (year_1 = year-1, etc.)
 
-   - Find the ACTUAL YEAR NUMBER in each column header (e.g., "2023", "2024", "2025")
-   - Extract these as integer values:
-     * year_1: The year shown in the first quantity column (past year)
-     * year_2: The year shown in the second quantity column (current year)
-     * year_3: The year shown in the third quantity column (next year)
+STEP 4: ACTIVITY FIELD RECOGNITION
+  → Check Section "2. Nội dung đăng ký" for checkboxes
+  → ⚠️ CAREFUL: Don't confuse bilingual text with checkmarks
+  → Only mark as checked if CLEAR visual indication (✓, X, filled)
+  → Map to codes:
+    * "Sản xuất chất..." → "production"
+    * "Nhập khẩu chất..." → "import"
+    * "Xuất khẩu chất..." → "export"
+    * "Sản xuất thiết bị..." → "equipment_production"
+    * "Nhập khẩu thiết bị..." → "equipment_import"
+    * "Sở hữu máy điều hòa..." → "ac_ownership"
+    * "Sở hữu thiết bị lạnh..." → "refrigeration_ownership"
+    * "Thu gom, tái chế..." → "collection_recycling"
 
-   Example:
-   - If headers show "Năm 2023", "Năm 2024", "Năm 2025"
-   - Then: year_1 = 2023, year_2 = 2024, year_3 = 2025
+STEP 5: TABLE PRESENCE DETERMINATION
+  → has_table_1_1 = true IF any("production", "import", "export") checked
+  → has_table_1_2 = true IF any("equipment_production", "equipment_import") checked
+  → has_table_1_3 = true IF any("ac_ownership", "refrigeration_ownership") checked
+  → has_table_1_4 = true IF "collection_recycling" checked
 
-   If year values are not explicitly shown in table headers, infer from:
-   - The "year" field (main reporting year, typically equals year_2)
-   - year_1 = year - 1, year_2 = year, year_3 = year + 1
+STEP 6: TABLE EXTRACTION (ONLY extract checked tables)
+  → For each table, apply REAL vs TEMPLATE filter
+  → Extract ONLY rows with real data
+  → Skip template rows with placeholder text
 
-STEP 2: EXTRACT ACTIVITY FIELD CODES (Section "2. Nội dung đăng ký")
+STEP 7: DATA VALIDATION & STANDARDIZATION
+  → Substance names → Match to official list (see PART V below)
+  → Numbers → Standardize format (see NUMBER RULES below)
+  → Dates → Convert to YYYY-MM-DD
+  → Province codes → Convert to ISO codes
 
-   Look for checkboxes (☑ or ☐) in section "2.a) Lĩnh vực sử dụng chất được kiểm soát"
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 PART V: TABLE STRUCTURE RULES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-   Map Vietnamese labels to codes:
-   - "Sản xuất chất được kiểm soát" → "production"
-   - "Nhập khẩu chất được kiểm soát" → "import"
-   - "Xuất khẩu chất được kiểm soát" → "export"
-   - "Sản xuất thiết bị, sản phẩm..." → "equipment_production"
-   - "Nhập khẩu thiết bị, sản phẩm..." → "equipment_import"
-   - "Sở hữu máy điều hòa không khí..." → "ac_ownership"
-   - "Sở hữu thiết bị lạnh công nghiệp..." → "refrigeration_ownership"
-   - "Thu gom, tái chế, tái sử dụng..." → "collection_recycling"
+**TITLE ROW vs DATA ROW:**
 
-   Return array of checked codes, empty array [] if none checked.
+✅ TITLE ROW (is_title=true):
+  - MERGED CELLS spanning multiple columns
+  - Contains section names: "Sản xuất chất được kiểm soát"
+  - NO specific substance names or quantities
+  - ALL numeric fields = null
 
-STEP 3: DETERMINE TABLE PRESENCE based on activity fields
+❌ DATA ROW (is_title=false):
+  - SEPARATE CELLS (not merged)
+  - Contains actual substance names (HFC-134a, R-410A)
+  - Has numeric values
 
-   **Activity Fields → Tables Mapping:**
+**COMMON PARSING ERRORS TO AVOID:**
 
-   has_table_1_1 = true IF any of these is checked:
-     - "production" OR "import" OR "export"
+1. **Header/Data Confusion** (FORD case):
+   - If "Điều hòa không khí" appears on SAME LINE as "FORD RANGER"
+   - SPLIT into 2 rows: Title row + Data row
 
-   has_table_1_2 = true IF any of these is checked:
-     - "equipment_production" OR "equipment_import"
+2. **Column Overflow** (BKRE, HOÀNG BÁCH cases):
+   - "Nhập khẩu chất..." written in WRONG column (Substance Name column)
+   - RECOGNIZE as descriptive text, NOT substance name
+   - Don't push HS code into Substance Name field
 
-   has_table_1_3 = true IF any of these is checked:
-     - "ac_ownership" OR "refrigeration_ownership"
+3. **Duplicate Spillover** (HOÀNG BÁCH case):
+   - Data from row N appearing in row N+1
+   - CHECK for exact duplicates, keep only ONE instance
 
-   has_table_1_4 = true IF this is checked:
-     - "collection_recycling"
+4. **Missing Sections** (Viễn Nam case):
+   - Table completely missing → set has_table_X = false
+   - Return empty array for that table
 
-STEP 4: CONDITIONAL EXTRACTION - Extract ONLY relevant sub-sections
+**CONDITIONAL EXTRACTION:**
+  - ONLY include section titles for CHECKED activities
+  - Example: If "production" NOT checked → DON'T create "Sản xuất chất..." title row
+  - For Table 1.4: ALWAYS include all 4 sections (collection, reuse, recycle, disposal)
 
-   For Table 1.1 (Bảng 1.1: Substance Usage):
-   - IF "production" checked → include title + data rows
-   - IF "import" checked → include title + data rows
-   - IF "export" checked → include title + data rows
-   - DO NOT create title rows for unchecked activities
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔢 PART VI: NUMBER FORMATTING RULES (CRITICAL)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-   For Table 1.2 (Bảng 1.2: Equipment/Product):
-   - IF "equipment_production" checked → include title + data rows
-   - IF "equipment_import" checked → include title + data rows
+Vietnamese documents use BOTH formats inconsistently:
+  - European: "1.000,5" (dot=thousands, comma=decimal) → 1000.5
+  - US: "1,000.5" (comma=thousands, dot=decimal) → 1000.5
 
-   For Table 1.3 (Bảng 1.3: Equipment Ownership):
-   - IF "ac_ownership" checked → include title + data rows
-   - IF "refrigeration_ownership" checked → include title + data rows
+**DETECTION STRATEGY:**
+  1. Look for decimal patterns: "100,25" vs "100.25"
+  2. If you see "X.XXX,X" → comma is decimal
+  3. If you see "X,XXX.X" → dot is decimal
 
-   For Table 1.4 (Bảng 1.4: Collection & Recycling):
-   - ALWAYS has 4 sub-sections if table exists
-   - Include all 4 title rows + their data rows
+**LINE WRAP HANDLING** (⚠️ MOST CRITICAL BUG):
+  - Numbers often wrap to next line in small cells
+  - "300.0" (line 1) + "00" (line 2) = 300000 (NOT 30000!)
+  - "180.0" (line 1) + "00" (line 2) = 180000 (NOT 18000!)
+  - "500.0" (line 1) + "00" (line 2) = 500000 (NOT 50000!)
+  - **Rule**: ALWAYS concatenate ALL parts before parsing
 
-STEP 5: EXTRACT TABLE DATA WITH FIXED TITLES
+**FINAL CONVERSION:**
+  1. Remove ALL thousands separators (both comma AND dot)
+  2. Convert decimal separator to dot "."
+  3. Return as float/int: 300000.5 or 300000
 
-   ⚠️⚠️⚠️ CRITICAL: USE EXACT TITLE TEXT FROM TEMPLATE ⚠️⚠️⚠️
+**NULL HANDLING:**
+  - Empty cell → null (NOT 0, NOT "")
+  - Missing data → null
+  - 0 is a VALID value (different from missing!)
 
-   For Table 1.1 (Substance Usage) - Include only checked sections:
-   [
-     // IF "production" is checked:
-     {"is_title": true, "sequence": 1, "usage_type": "production", "substance_name": "Sản xuất chất được kiểm soát",
-      "year_1_quantity_kg": null, "year_1_quantity_co2": null, ...all numeric fields: null},
-     ...data rows for production with is_title=false, usage_type="production", sequence=2,3,4...
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🧪 PART VII: SUBSTANCE NAME STANDARDIZATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-     // IF "import" is checked:
-     {"is_title": true, "sequence": X, "usage_type": "import", "substance_name": "Nhập khẩu chất được kiểm soát",
-      "year_1_quantity_kg": null, ...all numeric fields: null},
-     ...data rows for import with is_title=false, usage_type="import"...
+You have access to the OFFICIAL LIST of controlled substances (see context above).
 
-     // IF "export" is checked:
-     {"is_title": true, "sequence": Y, "usage_type": "export", "substance_name": "Xuất khẩu chất được kiểm soát",
-      "year_1_quantity_kg": null, ...all numeric fields: null},
-     ...data rows for export with is_title=false, usage_type="export"...
-   ]
+**MATCHING STRATEGY:**
+  1. Extract raw name from document
+  2. Apply FUZZY MATCHING to official list:
+     - "HFC134a" → "HFC-134a" (missing hyphen)
+     - "R410A" → "R-410A" (missing hyphens)
+     - "r-22" → "HCFC-22" (case + code-to-name)
+  3. Return EXACT standardized name from official list
+  4. If NO match: prefix with "[UNKNOWN] "
 
-   For Table 1.2 (Equipment/Product) - Include only checked sections:
-   [
-     // IF "equipment_production" is checked:
-     {"is_title": true, "sequence": 1, "product_type": "Sản xuất thiết bị, sản phẩm có chứa hoặc sản xuất từ chất được kiểm soát",
-      "hs_code": null, "capacity": null, "quantity": null, ...all other fields: null},
-     ...data rows for production with is_title=false...
+**HS CODE FALLBACK:**
+  - If substance name is unclear/generic ("HFC" only)
+  - AND HS code is provided
+  - Extract HS code accurately - system will lookup substance
+  - Common HS codes: 2903.39, 2903.41, 3824.78
 
-     // IF "equipment_import" is checked:
-     {"is_title": true, "sequence": X, "product_type": "Nhập khẩu thiết bị, sản phẩm có chứa hoặc sản xuất từ chất được kiểm soát",
-      "hs_code": null, ...all fields: null},
-     ...data rows for import with is_title=false...
-   ]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ PART VIII: OUTPUT REQUIREMENTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-   For Table 1.3 (Equipment Ownership) - Include only checked sections:
-   [
-     // IF "ac_ownership" is checked:
-     {"is_title": true, "sequence": 1, "equipment_type": "Máy điều hòa không khí có năng suất lạnh danh định lớn hơn 26,5 kW (90.000 BTU/h) và có tổng năng suất lạnh danh định của các thiết bị lớn hơn 586 kW (2.000.000 BTU/h)",
-      "start_year": null, "capacity": null, "equipment_quantity": null, ...all other fields: null},
-     ...data rows for air conditioner with is_title=false...
+1. Return ONLY valid JSON (no markdown, no explanations)
+2. Use null for missing values (NOT "None", NOT empty string "")
+3. Preserve Vietnamese characters EXACTLY
+4. Extract ONLY real data (skip all template/mockup rows)
+5. Apply ALL formatting rules (numbers, dates, codes)
 
-     // IF "refrigeration_ownership" is checked:
-     {"is_title": true, "sequence": X, "equipment_type": "Thiết bị lạnh công nghiệp có công suất điện lớn hơn 40 kW",
-      "start_year": null, ...all fields: null},
-     ...data rows for refrigeration with is_title=false...
-   ]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-   For Table 1.4 (Collection & Recycling) - ALWAYS include all 4 sections:
-   [
-     {"is_title": true, "sequence": 1, "activity_type": "collection", "substance_name": "Thu gom chất được kiểm soát",
-      "quantity_kg": null, "quantity_co2": null},
-     ...data rows for collection with is_title=false, activity_type="collection"...
-
-     {"is_title": true, "sequence": X, "activity_type": "reuse", "substance_name": "Tái sử dụng chất được kiểm soát sau thu gom",
-      "quantity_kg": null, "quantity_co2": null},
-     ...data rows for reuse with is_title=false, activity_type="reuse"...
-
-     {"is_title": true, "sequence": Y, "activity_type": "recycle", "substance_name": "Tái chế chất sau thu gom",
-      "quantity_kg": null, "quantity_co2": null},
-     ...data rows for recycle with is_title=false, activity_type="recycle"...
-
-     {"is_title": true, "sequence": Z, "activity_type": "disposal", "substance_name": "Xử lý chất được kiểm soát",
-      "quantity_kg": null, "quantity_co2": null},
-     ...data rows for disposal with is_title=false, activity_type="disposal"...
-   ]
-
-   - Use sequential numbering for "sequence" field
-   - Title rows: ALL numeric/data fields MUST be null
-   - Data rows: Fill actual values from PDF
-
-STEP 6: DATA CONVERSION
-
-   - Convert Vietnamese numbers to float/int (handle commas "," and dots "." correctly)
-   - Use null for empty/missing numeric values (NEVER empty string or 0)
-   - Preserve Vietnamese text EXACTLY for names, addresses, text fields
-
-STEP 7: OUTPUT FORMAT
-
-   - Return ONLY valid JSON, no explanations or markdown code blocks
-   - Use "null" for missing values (not "None", not empty string)
+BEGIN EXTRACTION NOW.
 """
 
     def _get_default_prompt_form_02(self):
@@ -869,7 +896,71 @@ STEP 7: OUTPUT FORMAT
             str: Default Form 02 extraction prompt
         """
         return """
-Analyze this Vietnamese Form 02 (Report) PDF document for controlled substances and extract ALL data.
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                    VIETNAMESE FORM 02 EXTRACTION SPECIALIST                  ║
+║                     (Professional Document Auditor Mode)                     ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+You are a PROFESSIONAL DOCUMENT AUDITOR specializing in Vietnamese regulatory forms.
+Your role is to extract REAL DATA from Form 02 (Report) while identifying and
+IGNORING template/mockup/example data.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 PART I: DOCUMENT INTELLIGENCE - REAL DATA vs TEMPLATE/MOCKUP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ CRITICAL: Many companies submit PARTIALLY FILLED templates with mockup data.
+
+✅ EXTRACT ONLY REAL DATA:
+  1. Organization name that's SPECIFIC (not "Công ty ABC", "Tên công ty")
+  2. Actual substance names (HFC-134a, R-410A, R-32), NOT examples
+  3. Numbers that are HANDWRITTEN/TYPED by user (even if messy)
+  4. Specific dates (15/03/2024), NOT placeholders (dd/mm/yyyy, __/__/____)
+  5. Country codes that are REAL (VN, CN, TH), NOT template "(Mã nước)"
+
+❌ IGNORE TEMPLATE/MOCKUP DATA:
+  1. **Placeholder text**: "Tên doanh nghiệp", "Tên chất", "Ghi chú"
+  2. **Example markers**: "Ví dụ:", "VD:", "Example:", "(mẫu)"
+  3. **Instruction text**: "Ghi rõ...", "Điền vào...", "Nêu rõ..."
+  4. **Template numbers**: Perfect sequences (1, 2, 3) or round numbers (100, 200, 300)
+  5. **Empty template cells**: Unfilled rows with only borders
+
+🔍 TEMPLATE DETECTION RULES:
+  - **Repetition test**: Same substance 5+ times with perfect round numbers → TEMPLATE
+  - **Number pattern**: All values are multiples of 100 → TEMPLATE
+  - **Gray text/Italic**: Often indicates placeholder → SKIP
+  - **Brackets/parentheses**: "(Tên chất)", "[Ghi rõ]" → TEMPLATE
+  - **Cross-validation**: If organization name is template, ENTIRE form is likely template
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 PART II: HANDLING POOR QUALITY DOCUMENTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+For blurry, rotated, or messy documents:
+
+1. **Context-based inference**:
+   - Blurry substance name? → Check HS code column for clues
+   - Unclear number? → Look at neighboring cells for patterns
+   - Missing data? → Cross-reference with other sections
+
+2. **Line wrap reconstruction** (CRITICAL):
+   - "300.0" (line 1) + "00" (line 2) = 300000 (NOT 30000!)
+   - Always concatenate multi-line cell content BEFORE parsing
+   - Table 2.1 is especially prone to this bug!
+
+3. **Handwritten ambiguity**:
+   - "1" vs "7": Use unit context (1 ton vs 7 kg makes sense?)
+   - "0" vs "6": Check if surrounding numbers follow pattern
+   - When unclear: Mark as null, DON'T guess
+
+4. **Bilingual forms**:
+   - Vietnamese + English side-by-side
+   - Don't confuse English section headers with data
+   - Prioritize Vietnamese text for substance names
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📐 PART III: JSON OUTPUT STRUCTURE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Return a JSON object with this EXACT structure (all field names in English):
 
@@ -889,6 +980,8 @@ Return a JSON object with this EXACT structure (all field names in English):
   "contact_phone": "<string>",
   "contact_fax": "<string>",
   "contact_email": "<string>",
+  "contact_country_code": "<ISO 2-letter country code, e.g., VN>",
+  "contact_state_code": "<State/Province code for Vietnam, see list below>",
 
   "activity_field_codes": [<array of codes from section "b) Thông tin về lĩnh vực hoạt động sử dụng chất được kiểm soát">],
 
@@ -967,159 +1060,156 @@ Return a JSON object with this EXACT structure (all field names in English):
   ]
 }
 
-CRITICAL INSTRUCTIONS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔄 PART IV: EXTRACTION WORKFLOW (Follow this order)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-STEP 1: EXTRACT YEAR INFORMATION
+STEP 1: DOCUMENT QUALITY ASSESSMENT
+  → Scan entire document for template indicators
+  → Check if organization name is real or placeholder
+  → Identify which sections are filled vs empty template
 
-   ⚠️ CRITICAL: Look at Table 2.1 column headers to identify the actual years:
+STEP 2: ORGANIZATION INFORMATION
+  → Extract company name, license, contact info
+  → **Country code**: Use ISO 3166-1 (VN for Vietnam)
+  → **State code**: Extract province (HN, SG, DN, BD...) from address end
 
-   The table may have year-specific columns in quota usage or other tables.
+STEP 3: YEAR EXTRACTION (Critical for multi-year data)
+  → Look at Table 2.1 column headers for ACTUAL years (if present)
+  → Example: "Năm 2023" → year_1=2023, "Năm 2024" → year_2=2024
+  → If not shown: infer from main year field (year_1 = year-1, etc.)
 
-   - Find the ACTUAL YEAR NUMBER in column headers if present
-   - Extract these as integer values:
-     * year_1: The year shown in the first year column (past year)
-     * year_2: The year shown in the second year column (current year)
-     * year_3: The year shown in the third year column (next year)
+STEP 4: ACTIVITY FIELD RECOGNITION
+  → Check Section "b) Thông tin về lĩnh vực hoạt động" for activity types
+  → Map to codes:
+    * "Sản xuất chất..." → "production"
+    * "Nhập khẩu chất..." → "import"
+    * "Xuất khẩu chất..." → "export"
+    * "Sản xuất thiết bị..." → "equipment_production"
+    * "Nhập khẩu thiết bị..." → "equipment_import"
+    * "Sở hữu máy điều hòa..." → "ac_ownership"
+    * "Sở hữu thiết bị lạnh..." → "refrigeration_ownership"
+    * "Thu gom, tái chế..." → "collection_recycling"
 
-   Example:
-   - If headers show "Năm 2023", "Năm 2024", "Năm 2025"
-   - Then: year_1 = 2023, year_2 = 2024, year_3 = 2025
+STEP 5: TABLE PRESENCE DETERMINATION
+  → has_table_2_1 = true IF any("production", "import", "export") exists
+  → has_table_2_2 = true IF any("equipment_production", "equipment_import") exists
+  → has_table_2_3 = true IF any("ac_ownership", "refrigeration_ownership") exists
+  → has_table_2_4 = true IF "collection_recycling" exists
 
-   If year values are not explicitly shown in table headers, infer from:
-   - The "year" field (main reporting year, typically equals year_2)
-   - year_1 = year - 1, year_2 = year, year_3 = year + 1
+STEP 6: TABLE EXTRACTION (ONLY extract existing tables)
+  → For each table, apply REAL vs TEMPLATE filter
+  → Extract ONLY rows with real data
+  → Skip template rows with placeholder text
+  → For Table 2.4: NO title rows, extract substance data with all columns
 
-STEP 2: EXTRACT ACTIVITY FIELD CODES from section "b) Thông tin về lĩnh vực hoạt động sử dụng chất được kiểm soát"
-   Map Vietnamese labels to codes (same as Form 01):
-   - "Sản xuất chất được kiểm soát" → "production"
-   - "Nhập khẩu chất được kiểm soát" → "import"
-   - "Xuất khẩu chất được kiểm soát" → "export"
-   - "Sản xuất thiết bị, sản phẩm có chứa..." → "equipment_production"
-   - "Nhập khẩu thiết bị, sản phẩm có chứa..." → "equipment_import"
-   - "Sở hữu máy điều hòa không khí..." → "ac_ownership"
-   - "Sở hữu thiết bị lạnh công nghiệp..." → "refrigeration_ownership"
-   - "Thu gom, tái chế, tái sử dụng và xử lý..." → "collection_recycling"
-   Return as array where checkbox is checked or text is present
+STEP 7: DATA VALIDATION & STANDARDIZATION
+  → Substance names → Match to official list (see PART VII)
+  → Numbers → Standardize format (see PART VI)
+  → Country codes → Convert Vietnamese names to ISO codes (see PART V)
+  → Dates → Convert to YYYY-MM-DD
 
-STEP 3: DETERMINE TABLE PRESENCE based on activity fields
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 PART V: TABLE STRUCTURE RULES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-   **Activity Fields → Tables Mapping:**
+**TITLE ROW vs DATA ROW:**
 
-   has_table_2_1 = true IF any of these is checked:
-     - "production" OR "import" OR "export"
+✅ TITLE ROW (is_title=true) - For Tables 2.1, 2.2, 2.3 ONLY:
+  - MERGED CELLS spanning multiple columns
+  - Contains section names: "Sản xuất chất được kiểm soát", "Nhập khẩu chất được kiểm soát"
+  - NO specific substance names or quantities
+  - ALL numeric fields = null
 
-   has_table_2_2 = true IF any of these is checked:
-     - "equipment_production" OR "equipment_import"
+❌ DATA ROW (is_title=false):
+  - SEPARATE CELLS (not merged)
+  - Contains actual substance names, equipment models, quantities
+  - Has numeric values
 
-   has_table_2_3 = true IF any of these is checked:
-     - "ac_ownership" OR "refrigeration_ownership"
+**TABLE 2.4 SPECIAL RULE:**
+  - NO title rows at all
+  - Extract ONLY substance data rows with all columns filled
+  - Each row = one substance with collection/reuse/recycle/disposal data
 
-   has_table_2_4 = true IF this is checked:
-     - "collection_recycling"
+**COUNTRY CODE EXTRACTION (Table 2.1 quota_usage):**
+  ⚠️ Extract ONLY ISO 2-letter codes (VN, US, CN, TH, JP, KR, SG)
+  - "Việt Nam" → "VN"
+  - "Trung Quốc" → "CN"
+  - "Hoa Kỳ", "Mỹ" → "US"
+  - "Thái Lan" → "TH"
+  - "Nhật Bản" → "JP"
+  - Use UPPERCASE, return null if unclear
 
-STEP 3: CONDITIONAL EXTRACTION - Extract ONLY relevant tables
+**CONDITIONAL EXTRACTION:**
+  - Tables 2.1, 2.2, 2.3: ALWAYS include title rows for ALL sections
+  - Table 2.4: NO title rows, just data
+  - If table doesn't exist → set has_table_2_x = false, return empty array
 
-   For Table 2.1 (Bảng 2.1: Quota Usage):
-   - Extract ONLY if has_table_2_1 = true
-   - Extract ALL rows for production, import, export with quota information
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔢 PART VI: NUMBER FORMATTING RULES (CRITICAL)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-   For Table 2.2 (Bảng 2.2: Equipment/Product Report):
-   - Extract ONLY if has_table_2_2 = true
-   - Extract ALL equipment/product rows
+Vietnamese documents use BOTH formats inconsistently:
+  - European: "1.000,5" (dot=thousands, comma=decimal) → 1000.5
+  - US: "1,000.5" (comma=thousands, dot=decimal) → 1000.5
 
-   For Table 2.3 (Bảng 2.3: Equipment Ownership Report):
-   - Extract ONLY if has_table_2_3 = true
-   - Extract ALL equipment ownership rows
+**DETECTION STRATEGY:**
+  1. Look for decimal patterns: "100,25" vs "100.25"
+  2. If you see "X.XXX,X" → comma is decimal
+  3. If you see "X,XXX.X" → dot is decimal
 
-   For Table 2.4 (Bảng 2.4: Collection & Recycling Report):
-   - Extract ONLY if has_table_2_4 = true
-   - Extract ALL substance rows with collection, reuse, recycle, disposal data
+**LINE WRAP HANDLING** (⚠️ MOST CRITICAL BUG - ESPECIALLY IN TABLE 2.1):
+  - Numbers often wrap to next line in small cells
+  - "300.0" (line 1) + "00" (line 2) = 300000 (NOT 30000!)
+  - "180.0" (line 1) + "00" (line 2) = 180000 (NOT 18000!)
+  - "500.0" (line 1) + "00" (line 2) = 500000 (NOT 50000!)
+  - "219.0" (line 1) + "00" (line 2) = 219000 (NOT 21900!)
+  - **Rule**: ALWAYS concatenate ALL parts before parsing
 
-STEP 4: EXTRACT TABLE DATA WITH FIXED TITLES
+**FINAL CONVERSION:**
+  1. Remove ALL thousands separators (both comma AND dot)
+  2. Convert decimal separator to dot "."
+  3. Return as float/int: 300000.5 or 300000
 
-   ⚠️⚠️⚠️ CRITICAL: ALWAYS INCLUDE TITLE ROWS FOR TABLES 2.1, 2.2, 2.3 ⚠️⚠️⚠️
+**NULL HANDLING:**
+  - Empty cell → null (NOT 0, NOT "")
+  - Missing data → null
+  - 0 is a VALID value (different from missing!)
 
-   For Table 2.1 (Quota Usage Report) - ALWAYS include 3 title rows:
-   [
-     {"is_title": true, "sequence": 1, "usage_type": "production", "substance_name": "Sản xuất chất được kiểm soát",
-      "hs_code": null, "allocated_quota_kg": null, ...all other numeric fields: null},
-     ...data rows for production with is_title=false, usage_type="production", sequence=2,3,4...
-     {"is_title": true, "sequence": X, "usage_type": "import", "substance_name": "Nhập khẩu chất được kiểm soát",
-      "hs_code": null, ...all numeric fields: null},
-     ...data rows for import with is_title=false, usage_type="import"...
-     {"is_title": true, "sequence": Y, "usage_type": "export", "substance_name": "Xuất khẩu chất được kiểm soát",
-      "hs_code": null, ...all numeric fields: null},
-     ...data rows for export with is_title=false, usage_type="export"...
-   ]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🧪 PART VII: SUBSTANCE NAME STANDARDIZATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-   For Table 2.2 (Equipment/Product Report) - ALWAYS include 2 title rows:
-   [
-     {"is_title": true, "sequence": 1, "production_type": "production",
-      "product_type": "Sản xuất thiết bị, sản phẩm có chứa hoặc sản xuất từ chất được kiểm soát",
-      "hs_code": null, "capacity": null, ...all other fields: null},
-     ...data rows for production with is_title=false, production_type="production"...
-     {"is_title": true, "sequence": X, "production_type": "import",
-      "product_type": "Nhập khẩu thiết bị, sản phẩm có chứa hoặc sản xuất từ chất được kiểm soát",
-      "hs_code": null, ...all fields: null},
-     ...data rows for import with is_title=false, production_type="import"...
-   ]
+You have access to the OFFICIAL LIST of controlled substances (see context above).
 
-   For Table 2.3 (Equipment Ownership Report) - ALWAYS include 2 title rows:
-   [
-     {"is_title": true, "sequence": 1, "ownership_type": "air_conditioner",
-      "equipment_type": "Máy điều hòa không khí có năng suất lạnh danh định lớn hơn 26,5 kW (90.000 BTU/h) và có tổng năng suất lạnh danh định của các thiết bị lớn hơn 586 kW (2.000.000 BTU/h)",
-      "equipment_quantity": null, "substance_name": null, ...all other fields: null},
-     ...data rows for air conditioner with is_title=false, ownership_type="air_conditioner"...
-     {"is_title": true, "sequence": X, "ownership_type": "refrigeration",
-      "equipment_type": "Thiết bị lạnh công nghiệp có công suất điện lớn hơn 40 kW",
-      "equipment_quantity": null, ...all fields: null},
-     ...data rows for refrigeration with is_title=false, ownership_type="refrigeration"...
-   ]
+**MATCHING STRATEGY:**
+  1. Extract raw name from document
+  2. Apply FUZZY MATCHING to official list:
+     - "HFC134a" → "HFC-134a" (missing hyphen)
+     - "R410A" → "R-410A" (missing hyphens)
+     - "r-22" → "HCFC-22" (case + code-to-name)
+  3. Return EXACT standardized name from official list
+  4. If NO match: prefix with "[UNKNOWN] "
 
-   For Table 2.4 (Collection & Recycling Report) - NO title rows, just substance data rows with all columns filled
+**HS CODE FALLBACK:**
+  - If substance name is unclear/generic ("HFC" only)
+  - AND HS code is provided
+  - Extract HS code accurately - system will lookup substance
+  - Common HS codes: 2903.39, 2903.41, 3824.78
 
-   - For each table that exists (has_table_2_x = true), extract ALL rows completely
-   - If table does not exist (has_table_2_x = false), return empty array for that table
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ PART VIII: OUTPUT REQUIREMENTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-STEP 5: COUNTRY CODE EXTRACTION (for quota_usage table)
-   ⚠️⚠️⚠️ CRITICAL: Extract ISO 2-letter country code, NOT full location name ⚠️⚠️⚠️
+1. Return ONLY valid JSON (no markdown, no explanations)
+2. Use null for missing values (NOT "None", NOT empty string "")
+3. Preserve Vietnamese characters EXACTLY
+4. Extract ONLY real data (skip all template/mockup rows)
+5. Apply ALL formatting rules (numbers, dates, codes)
 
-   For the field "country_code" in quota_usage (Table 2.1):
-   - Extract ONLY the ISO 2-letter country code (e.g., "VN", "US", "CN", "TH", "JP", "KR", "SG")
-   - Common country codes:
-     * "VN" - Vietnam (Việt Nam)
-     * "US" - United States (Hoa Kỳ, Mỹ)
-     * "CN" - China (Trung Quốc)
-     * "TH" - Thailand (Thái Lan)
-     * "JP" - Japan (Nhật Bản)
-     * "KR" - South Korea (Hàn Quốc)
-     * "SG" - Singapore
-     * "MY" - Malaysia (Ma-lai-xi-a)
-     * "ID" - Indonesia
-     * "IN" - India (Ấn Độ)
-     * "DE" - Germany (Đức)
-     * "FR" - France (Pháp)
-     * "GB" - United Kingdom (Anh)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-   - If you see Vietnamese country names, convert to ISO code:
-     * "Việt Nam" → "VN"
-     * "Trung Quốc" → "CN"
-     * "Hoa Kỳ", "Mỹ" → "US"
-     * "Thái Lan" → "TH"
-     * "Nhật Bản" → "JP"
-
-   - If country code is not clear or not found, use null
-   - Use UPPERCASE for country codes (e.g., "VN" not "vn")
-
-STEP 6: DATA FORMATTING
-   - Convert Vietnamese numbers to float/int (handle commas, dots correctly)
-   - Use null for empty/missing values in numeric fields, never use empty strings
-   - Preserve Vietnamese text exactly for names, addresses, and text fields
-   - Table 2.4 has complex structure with multiple columns per substance - read carefully
-
-STEP 6: OUTPUT FORMAT
-   - Return ONLY valid JSON, no explanations or markdown formatting
-   - Ensure all has_table_2_x fields are set correctly based on activity fields
+BEGIN EXTRACTION NOW.
 """
 
     def _parse_json_response(self, response_text):
@@ -1267,9 +1357,15 @@ STEP 6: OUTPUT FORMAT
             # Build mega prompt context
             mega_context = self._build_mega_prompt_context()
 
+            # Get Gemini model from config
+            GEMINI_MODEL = self.env['ir.config_parameter'].sudo().get_param(
+                'robotia_document_extractor.gemini_model',
+                default='gemini-2.0-flash-exp'
+            )
+
             # Generate text content with mega context (using higher token limit for text)
             response = client.models.generate_content(
-                model='gemini-2.0-flash-exp',
+                model=GEMINI_MODEL,
                 contents=mega_context + [uploaded_file, prompt],
                 config=types.GenerateContentConfig(
                     temperature=0.1,
@@ -1333,6 +1429,12 @@ STEP 6: OUTPUT FORMAT
             )
         )
 
+        # Get Gemini model from config
+        GEMINI_MODEL = self.env['ir.config_parameter'].sudo().get_param(
+            'robotia_document_extractor.gemini_model',
+            default='gemini-2.0-flash-exp'
+        )
+
         GEMINI_MAX_RETRIES = 3
 
         extracted_json = None
@@ -1347,7 +1449,7 @@ STEP 6: OUTPUT FORMAT
 
                 # Generate JSON from text with mega context (no file upload needed)
                 response = client.models.generate_content(
-                    model='gemini-2.0-flash-exp',
+                    model=GEMINI_MODEL,
                     contents=mega_context + [prompt],
                     config=types.GenerateContentConfig(
                         temperature=0.1,
@@ -1421,6 +1523,8 @@ STEP 6: OUTPUT FORMAT
             'contact_phone': data.get('contact_phone', ''),
             'contact_fax': data.get('contact_fax', ''),
             'contact_email': data.get('contact_email', ''),
+            'contact_country_code': data.get('contact_country_code', ''),
+            'contact_state_code': data.get('contact_state_code', ''),
             'activity_field_codes': data.get('activity_field_codes', []),
         }
 
