@@ -165,6 +165,12 @@ class DocumentExtractionService(models.AbstractModel):
             )
         )
 
+        # Get Gemini model from config (default: gemini-2.0-flash-exp)
+        GEMINI_MODEL = self.env['ir.config_parameter'].sudo().get_param(
+            'robotia_document_extractor.gemini_model',
+            default='gemini-2.0-flash-exp'
+        )
+
         tmp_file_path = None
         uploaded_file = None
 
@@ -209,7 +215,7 @@ class DocumentExtractionService(models.AbstractModel):
 
                     # Generate content with mega context + uploaded file + prompt
                     response = client.models.generate_content(
-                        model='gemini-2.0-flash-exp',
+                        model=GEMINI_MODEL,
                         contents=mega_context + [uploaded_file, prompt],
                         config=types.GenerateContentConfig(
                             temperature=0.1,  # Low temperature for consistent structured output
@@ -369,6 +375,13 @@ When you extract a substance name from the document, you MUST:
 2. Find the BEST MATCH using intelligent fuzzy matching
 3. Return the EXACT standardized name from the official list
 4. If no reasonable match exists, prefix with "[UNKNOWN] "
+
+⚠️ HS CODE LOGIC - IMPORTANT:
+- If substance name is empty, generic (e.g., "HFC"), or unclear
+- AND an HS code is provided in the document
+- Extract the HS code accurately - the system will use it to lookup the substance
+- Common HS codes for refrigerants: 2903.39, 2903.41, 3824.78, etc.
+- HS code can help identify the exact substance when name is ambiguous
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🧠 INTELLIGENT MATCHING STRATEGY
@@ -619,6 +632,27 @@ Analyze this Vietnamese Form 01 (Registration) PDF document for controlled subst
    - Contains specific substance names, equipment models, or actual data values
    - Mark as: is_title=false, fill in actual data
 
+⚠️ COMMON TABLE PARSING ERRORS TO AVOID:
+
+1. **Header vs Data Confusion (FORD case)**
+   - Equipment type headers ("Điều hòa không khí...") may appear on same line as first data row
+   - SOLUTION: Create TWO separate rows - one title row + one data row
+   - Example: "Điều hòa không khí | FORD RANGER..." → Split into title row + data row
+
+2. **Column Overflow (BKRE, HOÀNG BÁCH cases)**
+   - Companies may write descriptions in wrong columns
+   - "Nhập khẩu chất..." written in Substance Name column
+   - SOLUTION: Recognize these as descriptive text, not data values
+   - Don't push HS code to Substance Name column
+
+3. **Duplicate Data (HOÀNG BÁCH case)**
+   - Data from one row may spill into next row
+   - SOLUTION: Each row should have unique data, check for exact duplicates
+
+4. **Missing Sections (Viễn Nam case)**
+   - Some tables may be completely missing
+   - SOLUTION: Set has_table_X = false, return empty array for that section
+
 Return a JSON object with this structure (all field names in English):
 
 {
@@ -637,6 +671,8 @@ Return a JSON object with this structure (all field names in English):
   "contact_phone": "<string>",
   "contact_fax": "<string>",
   "contact_email": "<string>",
+  "contact_country_code": "<ISO 2-letter country code, e.g., VN>",
+  "contact_state_code": "<State/Province code for Vietnam, see list below>",
 
   "activity_field_codes": [<array of codes from section "2. Nội dung đăng ký" - see mapping below>],
 
@@ -706,6 +742,30 @@ Return a JSON object with this structure (all field names in English):
 EXTRACTION RULES:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+STEP 0: EXTRACT ORGANIZATION INFORMATION
+
+   When extracting organization information, pay special attention to:
+
+   **contact_country_code field:**
+   - Use ISO 3166-1 alpha-2 country codes (2 letters, UPPERCASE)
+   - For Vietnam: "VN"
+   - Examples: "US", "CN", "TH", "JP", "KR", "SG"
+
+   **contact_state_code field:**
+   - Use ISO 3166-2 subdivision codes for provinces/states
+   - For Vietnam, extract the province/city name from contact_address and convert to standard code
+   - Common examples:
+     * Hà Nội → "HN"
+     * TP. Hồ Chí Minh, Sài Gòn → "SG"
+     * Đà Nẵng → "DN"
+     * Bình Dương → "BD"
+     * Đồng Nai → "DO"
+     * Hải Phòng → "HP"
+     * Cần Thơ → "CT"
+   - Use your knowledge to convert Vietnamese province names to their standard ISO codes
+   - Province name usually appears at the end of address after district/ward
+   - If province is unclear, use null
+
 STEP 1: EXTRACT YEAR INFORMATION
 
    ⚠️ CRITICAL: Look at Table 1.1 column headers to identify the actual years:
@@ -728,7 +788,21 @@ STEP 1: EXTRACT YEAR INFORMATION
 
 STEP 2: EXTRACT ACTIVITY FIELD CODES (Section "2. Nội dung đăng ký")
 
+   ⚠️ CRITICAL: CAREFUL CHECKBOX RECOGNITION ⚠️
+
    Look for checkboxes (☑ or ☐) in section "2.a) Lĩnh vực sử dụng chất được kiểm soát"
+
+   **Common Recognition Issues to Avoid:**
+   1. Bilingual forms: Don't confuse English text with checkboxes
+   2. Faint marks: Some checkmarks may be light or unclear
+   3. Table borders: Don't mistake table lines for checkmarks
+   4. Multiple languages: Vietnamese + English side-by-side may cause confusion
+
+   **How to identify checked boxes:**
+   - Look for explicit check marks (✓, ✗, X, filled box)
+   - Compare with unchecked boxes in the same section
+   - ONLY mark as checked if there's clear visual indication
+   - When in doubt, check if corresponding table exists in the document
 
    Map Vietnamese labels to codes:
    - "Sản xuất chất được kiểm soát" → "production"
@@ -849,11 +923,51 @@ STEP 5: EXTRACT TABLE DATA WITH FIXED TITLES
    - Title rows: ALL numeric/data fields MUST be null
    - Data rows: Fill actual values from PDF
 
-STEP 6: DATA CONVERSION
+STEP 6: DATA CONVERSION - CRITICAL NUMBER FORMATTING RULES
 
-   - Convert Vietnamese numbers to float/int (handle commas "," and dots "." correctly)
-   - Use null for empty/missing numeric values (NEVER empty string or 0)
-   - Preserve Vietnamese text EXACTLY for names, addresses, text fields
+   ⚠️⚠️⚠️ VIETNAMESE NUMBER FORMAT STANDARDIZATION ⚠️⚠️⚠️
+
+   Vietnamese documents use BOTH formats inconsistently:
+   - Format 1: "1.000,5" (European) → 1000.5 (dot for thousands, comma for decimal)
+   - Format 2: "1,000.5" (US) → 1000.5 (comma for thousands, dot for decimal)
+
+   **CRITICAL RULES FOR NUMBER EXTRACTION:**
+
+   1. **Identify the decimal separator context:**
+      - If you see patterns like "1.000,5" or "100,25" → comma is decimal separator
+      - If you see patterns like "1,000.5" or "100.25" → dot is decimal separator
+
+   2. **Common patterns to recognize:**
+      - "300.000" or "300,000" → 300000 (no decimal part, thousands separator)
+      - "300.000,5" → 300000.5 (European format)
+      - "300,000.5" → 300000.5 (US format)
+      - "0,3" or "0.3" → 0.3 (decimal number)
+      - "03 kg" misread as "0,3 kg" → should be 3.0 (watch for OCR errors)
+
+   3. **LINE WRAP HANDLING - CRITICAL BUG FIX:**
+      - When numbers wrap to next line, DO NOT drop trailing zeros!
+      - Example: "300.0" on line 1 + "00" on line 2 = 300000 (NOT 30000)
+      - Example: "180.0" on line 1 + "00" on line 2 = 180000 (NOT 18000)
+      - Look for partial numbers at line breaks and reconstruct the full number
+      - If cell content spans multiple lines, concatenate before parsing
+
+   4. **Currency mixing (VND vs USD):**
+      - Vietnamese Dong (VND): Usually large numbers (millions/billions)
+      - US Dollar (USD): Usually smaller numbers
+      - Check context and units to determine which currency
+
+   5. **Final conversion:**
+      - Remove ALL thousand separators (both comma and dot)
+      - Convert decimal separator to dot "."
+      - Return as float/int (e.g., 300000.5 or 300000)
+
+   6. **Use null for empty/missing values:**
+      - NEVER use empty string ""
+      - NEVER use 0 for missing data (0 is a valid value)
+      - Use null for missing/empty cells
+
+   7. **Preserve Vietnamese text EXACTLY:**
+      - For names, addresses, text fields → keep original Vietnamese characters
 
 STEP 7: OUTPUT FORMAT
 
@@ -889,6 +1003,8 @@ Return a JSON object with this EXACT structure (all field names in English):
   "contact_phone": "<string>",
   "contact_fax": "<string>",
   "contact_email": "<string>",
+  "contact_country_code": "<ISO 2-letter country code, e.g., VN>",
+  "contact_state_code": "<State/Province code for Vietnam, see list below>",
 
   "activity_field_codes": [<array of codes from section "b) Thông tin về lĩnh vực hoạt động sử dụng chất được kiểm soát">],
 
@@ -968,6 +1084,30 @@ Return a JSON object with this EXACT structure (all field names in English):
 }
 
 CRITICAL INSTRUCTIONS:
+
+STEP 0: EXTRACT ORGANIZATION INFORMATION
+
+   When extracting organization information, pay special attention to:
+
+   **contact_country_code field:**
+   - Use ISO 3166-1 alpha-2 country codes (2 letters, UPPERCASE)
+   - For Vietnam: "VN"
+   - Examples: "US", "CN", "TH", "JP", "KR", "SG"
+
+   **contact_state_code field:**
+   - Use ISO 3166-2 subdivision codes for provinces/states
+   - For Vietnam, extract the province/city name from contact_address and convert to standard code
+   - Common examples:
+     * Hà Nội → "HN"
+     * TP. Hồ Chí Minh, Sài Gòn → "SG"
+     * Đà Nẵng → "DN"
+     * Bình Dương → "BD"
+     * Đồng Nai → "DO"
+     * Hải Phòng → "HP"
+     * Cần Thơ → "CT"
+   - Use your knowledge to convert Vietnamese province names to their standard ISO codes
+   - Province name usually appears at the end of address after district/ward
+   - If province is unclear, use null
 
 STEP 1: EXTRACT YEAR INFORMATION
 
@@ -1111,13 +1251,60 @@ STEP 5: COUNTRY CODE EXTRACTION (for quota_usage table)
    - If country code is not clear or not found, use null
    - Use UPPERCASE for country codes (e.g., "VN" not "vn")
 
-STEP 6: DATA FORMATTING
-   - Convert Vietnamese numbers to float/int (handle commas, dots correctly)
-   - Use null for empty/missing values in numeric fields, never use empty strings
-   - Preserve Vietnamese text exactly for names, addresses, and text fields
-   - Table 2.4 has complex structure with multiple columns per substance - read carefully
+STEP 6: DATA FORMATTING - CRITICAL NUMBER FORMATTING RULES
 
-STEP 6: OUTPUT FORMAT
+   ⚠️⚠️⚠️ VIETNAMESE NUMBER FORMAT STANDARDIZATION ⚠️⚠️⚠️
+
+   Vietnamese documents use BOTH formats inconsistently:
+   - Format 1: "1.000,5" (European) → 1000.5 (dot for thousands, comma for decimal)
+   - Format 2: "1,000.5" (US) → 1000.5 (comma for thousands, dot for decimal)
+
+   **CRITICAL RULES FOR NUMBER EXTRACTION:**
+
+   1. **Identify the decimal separator context:**
+      - If you see patterns like "1.000,5" or "100,25" → comma is decimal separator
+      - If you see patterns like "1,000.5" or "100.25" → dot is decimal separator
+
+   2. **Common patterns to recognize:**
+      - "300.000" or "300,000" → 300000 (no decimal part, thousands separator)
+      - "300.000,5" → 300000.5 (European format)
+      - "300,000.5" → 300000.5 (US format)
+      - "0,3" or "0.3" → 0.3 (decimal number)
+
+   3. **LINE WRAP HANDLING - CRITICAL BUG FIX:**
+      ⚠️ THIS IS THE MOST CRITICAL BUG TO FIX ⚠️
+      - When numbers wrap to next line, DO NOT drop trailing zeros!
+      - Example: "300.0" on line 1 + "00" on line 2 = 300000 (NOT 30000)
+      - Example: "180.0" on line 1 + "00" on line 2 = 180000 (NOT 18000)
+      - Example: "500.0" on line 1 + "00" on line 2 = 500000 (NOT 50000)
+      - Example: "219.0" on line 1 + "00" on line 2 = 219000 (NOT 21900)
+      - Look for partial numbers at line breaks and reconstruct the full number
+      - If cell content spans multiple lines, concatenate ALL parts before parsing
+      - Pay special attention to Table 2.1 where this bug commonly occurs
+
+   4. **Currency mixing (VND vs USD):**
+      - Vietnamese Dong (VND): Usually large numbers (millions/billions)
+      - US Dollar (USD): Usually smaller numbers
+      - Check context and units to determine which currency
+
+   5. **Final conversion:**
+      - Remove ALL thousand separators (both comma and dot)
+      - Convert decimal separator to dot "."
+      - Return as float/int (e.g., 300000.5 or 300000)
+
+   6. **Use null for empty/missing values:**
+      - NEVER use empty string ""
+      - NEVER use 0 for missing data (0 is a valid value)
+      - Use null for missing/empty cells
+
+   7. **Preserve Vietnamese text EXACTLY:**
+      - For names, addresses, text fields → keep original Vietnamese characters
+
+   8. **Table 2.4 special handling:**
+      - Complex structure with multiple columns per substance
+      - Read each column carefully and map to correct field
+
+STEP 7: OUTPUT FORMAT
    - Return ONLY valid JSON, no explanations or markdown formatting
    - Ensure all has_table_2_x fields are set correctly based on activity fields
 """
@@ -1267,9 +1454,15 @@ STEP 6: OUTPUT FORMAT
             # Build mega prompt context
             mega_context = self._build_mega_prompt_context()
 
+            # Get Gemini model from config
+            GEMINI_MODEL = self.env['ir.config_parameter'].sudo().get_param(
+                'robotia_document_extractor.gemini_model',
+                default='gemini-2.0-flash-exp'
+            )
+
             # Generate text content with mega context (using higher token limit for text)
             response = client.models.generate_content(
-                model='gemini-2.0-flash-exp',
+                model=GEMINI_MODEL,
                 contents=mega_context + [uploaded_file, prompt],
                 config=types.GenerateContentConfig(
                     temperature=0.1,
@@ -1333,6 +1526,12 @@ STEP 6: OUTPUT FORMAT
             )
         )
 
+        # Get Gemini model from config
+        GEMINI_MODEL = self.env['ir.config_parameter'].sudo().get_param(
+            'robotia_document_extractor.gemini_model',
+            default='gemini-2.0-flash-exp'
+        )
+
         GEMINI_MAX_RETRIES = 3
 
         extracted_json = None
@@ -1347,7 +1546,7 @@ STEP 6: OUTPUT FORMAT
 
                 # Generate JSON from text with mega context (no file upload needed)
                 response = client.models.generate_content(
-                    model='gemini-2.0-flash-exp',
+                    model=GEMINI_MODEL,
                     contents=mega_context + [prompt],
                     config=types.GenerateContentConfig(
                         temperature=0.1,
@@ -1421,6 +1620,8 @@ STEP 6: OUTPUT FORMAT
             'contact_phone': data.get('contact_phone', ''),
             'contact_fax': data.get('contact_fax', ''),
             'contact_email': data.get('contact_email', ''),
+            'contact_country_code': data.get('contact_country_code', ''),
+            'contact_state_code': data.get('contact_state_code', ''),
             'activity_field_codes': data.get('activity_field_codes', []),
         }
 

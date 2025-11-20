@@ -81,6 +81,16 @@ class DocumentExtraction(models.Model):
         tracking=True,
         index=True  # Performance: frequently filtered in dashboards
     )
+    needs_review = fields.Boolean(
+        string='Needs Manual Review',
+        default=False,
+        help='Flag this record if extraction has issues and needs human review',
+        tracking=True
+    )
+    review_notes = fields.Text(
+        string='Review Notes',
+        help='Notes about extraction issues that need manual review'
+    )
 
     # ===== Organization Information (4.1.1 & 4.2.1) =====
     organization_id = fields.Many2one(
@@ -129,6 +139,16 @@ class DocumentExtraction(models.Model):
     )
     contact_email = fields.Char(
         string='Email'
+    )
+    contact_country_id = fields.Many2one(
+        comodel_name='res.country',
+        string='Country',
+        help='Country extracted from contact address'
+    )
+    contact_state_id = fields.Many2one(
+        comodel_name='res.country.state',
+        string='Province/City',
+        help='Province or city extracted from contact address'
     )
 
     # ===== Activity Fields (4.1.2) =====

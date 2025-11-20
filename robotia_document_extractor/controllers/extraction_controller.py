@@ -255,6 +255,30 @@ class ExtractionController(http.Controller):
                 if not extracted_data.get('year_3'):
                     extracted_data['year_3'] = year + 1
 
+            # Lookup country and state from codes
+            contact_country_id = False
+            contact_state_id = False
+
+            country_code = extracted_data.get('contact_country_code')
+            if country_code:
+                country = request.env['res.country'].search([('code', '=', country_code.upper())], limit=1)
+                if country:
+                    contact_country_id = country.id
+                    _logger.info(f"Found country: {country.name} (code: {country_code})")
+
+            state_code = extracted_data.get('contact_state_code')
+            if state_code and contact_country_id:
+                # Search for state by code within the country
+                state = request.env['res.country.state'].search([
+                    ('code', '=', state_code.upper()),
+                    ('country_id', '=', contact_country_id)
+                ], limit=1)
+                if state:
+                    contact_state_id = state.id
+                    _logger.info(f"Found state: {state.name} (code: {state_code})")
+                else:
+                    _logger.warning(f"State code '{state_code}' not found for country {country_code}")
+
             # Prepare context with default values
             context = {
                 'default_document_type': document_type,
@@ -276,6 +300,8 @@ class ExtractionController(http.Controller):
                 'default_contact_phone': extracted_data.get('contact_phone'),
                 'default_contact_fax': extracted_data.get('contact_fax'),
                 'default_contact_email': extracted_data.get('contact_email'),
+                'default_contact_country_id': contact_country_id,
+                'default_contact_state_id': contact_state_id,
             }
 
             # Add One2many table data (Form 01)

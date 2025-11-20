@@ -21,6 +21,15 @@ class ResConfigSettings(models.TransientModel):
              'Default: 65536 (Gemini 2.0 Flash maximum)'
     )
 
+    gemini_model = fields.Char(
+        string='Gemini Model',
+        config_parameter='robotia_document_extractor.gemini_model',
+        default='gemini-2.0-flash-exp',
+        help='Gemini model to use for extraction. '
+             'Options: gemini-2.0-flash-exp, gemini-1.5-pro, gemini-1.5-flash, etc. '
+             'See Google AI documentation for available models.'
+    )
+
 
     def action_get_prompt_form_01(self):
         """Reset Form 01 prompt to default value"""
