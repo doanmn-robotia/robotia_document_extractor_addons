@@ -40,6 +40,17 @@
                                 </div>
                             </div>
                         </setting>
+                        <setting id="extraction_strategy_setting"
+                                 string="Extraction Strategy"
+                                 help="Choose how PDF documents are processed for extraction">
+                            <field name="extraction_strategy" widget="radio" class="o_light_label"/>
+                            <div class="content-group mt8">
+                                <div class="text-muted">
+                                    <strong>100% AI (Recommended):</strong> Gemini processes PDF directly, understanding layout and structure.<br/>
+                                    <strong>Text Extract + AI:</strong> Extract text first with PyMuPDF, then structure with AI. May be faster for very large PDFs.
+                                </div>
+                            </div>
+                        </setting>
                     </block>
 
                     <block title="AI Extraction Prompts Configuration">

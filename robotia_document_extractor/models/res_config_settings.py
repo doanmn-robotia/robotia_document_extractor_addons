@@ -31,6 +31,21 @@ class ResConfigSettings(models.TransientModel):
              'Options: gemini-3-pro-preview, gemini-2.5-pro, gemini-1.5-pro, gemini-1.5-flash, etc. '
              'See Google AI documentation for available models.'
     )
+
+    extraction_strategy = fields.Selection(
+        selection=[
+            ('ai_native', '100% AI (Gemini processes PDF directly)'),
+            ('text_extract', 'Text Extraction + AI (Extract text first, then AI structures)')
+        ],
+        string='Extraction Strategy',
+        config_parameter='robotia_document_extractor.extraction_strategy',
+        default='ai_native',
+        help='Choose extraction method:\n'
+             '• 100% AI: Gemini natively reads and understands PDF layout (recommended)\n'
+             '• Text Extract + AI: Extract text first using PyMuPDF, then AI structures it\n'
+             '  (useful for very large PDFs or cost optimization)'
+    )
+
     # ===== Google Drive Integration Settings =====
     google_drive_enabled = fields.Boolean(
         string='Enable Google Drive Integration',

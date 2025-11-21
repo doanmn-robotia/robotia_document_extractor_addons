@@ -52,10 +52,11 @@ class DocumentExtractionService(models.AbstractModel):
 
     def extract_pdf(self, pdf_binary, document_type, filename):
         """
-        Extract structured data from PDF using Gemini AI with 2-tier fallback strategy
+        Extract structured data from PDF using configurable extraction strategy
 
-        Strategy 1 (Primary): Direct PDF → JSON extraction
-        Strategy 2 (Fallback): 2-step extraction (PDF → Text → JSON) if Strategy 1 fails
+        Available Strategies (configured in Settings):
+        - ai_native: 100% AI (Gemini processes PDF directly)
+        - text_extract: Text Extraction + AI (PyMuPDF extracts text, then AI structures)
 
         Args:
             pdf_binary (bytes): Binary PDF data
@@ -70,8 +71,10 @@ class DocumentExtractionService(models.AbstractModel):
         """
         _logger.info(f"Starting AI extraction for {filename} (Type: {document_type})")
 
-        # Get Gemini API key from system parameters
-        api_key = self.env['ir.config_parameter'].sudo().get_param('robotia_document_extractor.gemini_api_key')
+        # Get configuration
+        ICP = self.env['ir.config_parameter'].sudo()
+        api_key = ICP.get_param('robotia_document_extractor.gemini_api_key')
+        strategy = ICP.get_param('robotia_document_extractor.extraction_strategy', default='ai_native')
 
         if not api_key:
             raise ValueError(
@@ -82,47 +85,149 @@ class DocumentExtractionService(models.AbstractModel):
         # Configure Gemini
         client = genai.Client(api_key=api_key)
 
-        # Strategy 1: Try direct PDF → JSON extraction (existing method)
+        _logger.info(f"Using extraction strategy: {strategy}")
+
+        # Route to appropriate strategy
+        if strategy == 'ai_native':
+            # Strategy 1: 100% AI (Gemini processes PDF directly)
+            return self._extract_with_ai_native(client, pdf_binary, document_type, filename)
+
+        elif strategy == 'text_extract':
+            # Strategy 2: Text Extract + AI (PyMuPDF → AI)
+            return self._extract_with_text_extract(client, pdf_binary, document_type, filename)
+
+        else:
+            _logger.warning(f"Unknown strategy '{strategy}', falling back to ai_native")
+            return self._extract_with_ai_native(client, pdf_binary, document_type, filename)
+
+    def _extract_with_ai_native(self, client, pdf_binary, document_type, filename):
+        """
+        Strategy: 100% AI (Gemini processes PDF directly)
+
+        Primary method with automatic fallback to 2-step if needed.
+        """
+        # Try direct PDF → JSON extraction
         try:
             _logger.info("=" * 70)
-            _logger.info("STRATEGY 1: Direct PDF → JSON extraction")
+            _logger.info("AI NATIVE: Direct PDF → JSON extraction")
             _logger.info("=" * 70)
             extracted_data = self._extract_direct_pdf_to_json(client, pdf_binary, document_type, filename)
-            _logger.info("✓ Strategy 1 succeeded - Direct extraction successful")
+            _logger.info("✓ AI Native succeeded")
             return extracted_data
 
         except Exception as e:
-            _logger.warning("✗ Strategy 1 failed - Direct extraction unsuccessful")
+            _logger.warning("✗ Direct extraction failed, falling back to 2-step")
             _logger.warning(f"Error: {type(e).__name__}: {str(e)}")
-            _logger.info("Falling back to Strategy 2...")
 
-            # Strategy 2: Fallback to 2-step extraction (PDF → Text → JSON)
+            # Fallback: 2-step extraction (PDF → Text → JSON) using Gemini
             try:
                 _logger.info("=" * 70)
-                _logger.info("STRATEGY 2: 2-Step extraction (PDF → Text → JSON)")
+                _logger.info("FALLBACK: 2-Step extraction (Gemini PDF → Text → JSON)")
                 _logger.info("=" * 70)
 
-                # Step 1: Extract PDF to plain text
-                _logger.info("Step 1/2: Extracting PDF to plain text...")
                 extracted_text = self._extract_pdf_to_text(client, pdf_binary, document_type, filename)
-                _logger.info(f"✓ Step 1 complete - Extracted {len(extracted_text)} chars of text")
+                _logger.info(f"✓ Step 1 complete - Extracted {len(extracted_text)} chars")
 
-                # Step 2: Convert text to structured JSON
-                _logger.info("Step 2/2: Converting text to structured JSON...")
                 extracted_data = self._convert_text_to_json(client, extracted_text, document_type)
                 _logger.info("✓ Step 2 complete - JSON conversion successful")
 
-                _logger.info("✓ Strategy 2 succeeded - 2-step extraction successful")
+                _logger.info("✓ Fallback succeeded")
                 return extracted_data
 
             except Exception as e2:
-                _logger.error("✗ Strategy 2 also failed - All extraction strategies exhausted")
-                _logger.exception(f"Final error: {type(e2).__name__}: {str(e2)}")
-                raise ValueError(
-                    f"All extraction strategies failed. "
-                    f"Strategy 1 error: {str(e)}. "
-                    f"Strategy 2 error: {str(e2)}"
-                )
+                _logger.error("✗ All AI Native strategies failed")
+                raise ValueError(f"AI Native extraction failed. Error: {str(e2)}")
+
+    def _extract_with_text_extract(self, client, pdf_binary, document_type, filename):
+        """
+        Strategy: Text Extract + AI (PyMuPDF → Gemini)
+
+        Extracts text using PyMuPDF, then structures with AI.
+        Falls back to AI Native if PyMuPDF fails.
+        """
+        try:
+            _logger.info("=" * 70)
+            _logger.info("TEXT EXTRACT: PyMuPDF → AI structuring")
+            _logger.info("=" * 70)
+
+            # Step 1: Extract text using PyMuPDF
+            _logger.info("Step 1/2: Extracting text with PyMuPDF...")
+            extracted_text = self._extract_pdf_to_text_pymupdf(pdf_binary, filename)
+            _logger.info(f"✓ Step 1 complete - Extracted {len(extracted_text)} chars")
+
+            # Check if extraction produced meaningful text
+            if len(extracted_text.strip()) < 100:
+                _logger.warning("PyMuPDF produced too little text, falling back to AI Native")
+                return self._extract_with_ai_native(client, pdf_binary, document_type, filename)
+
+            # Step 2: Structure with AI
+            _logger.info("Step 2/2: Structuring with AI...")
+            extracted_data = self._convert_text_to_json(client, extracted_text, document_type)
+            _logger.info("✓ Step 2 complete - JSON conversion successful")
+
+            _logger.info("✓ Text Extract strategy succeeded")
+            return extracted_data
+
+        except Exception as e:
+            _logger.warning(f"✗ Text Extract strategy failed: {str(e)}")
+            _logger.info("Falling back to AI Native...")
+            return self._extract_with_ai_native(client, pdf_binary, document_type, filename)
+
+    def _extract_pdf_to_text_pymupdf(self, pdf_binary, filename):
+        """
+        Extract text from PDF using PyMuPDF (fast, good for digital PDFs)
+
+        Args:
+            pdf_binary (bytes): Binary PDF data
+            filename (str): Original filename for logging
+
+        Returns:
+            str: Extracted text with page markers
+
+        Raises:
+            ImportError: If PyMuPDF is not installed
+            Exception: If PDF extraction fails
+        """
+        try:
+            import fitz  # PyMuPDF
+        except ImportError:
+            raise ImportError(
+                "PyMuPDF is not installed. Please install it with: pip install PyMuPDF"
+            )
+
+        try:
+            # Open PDF from binary data
+            doc = fitz.open(stream=pdf_binary, filetype="pdf")
+            total_pages = len(doc)
+
+            _logger.info(f"PyMuPDF: Processing {total_pages} pages...")
+
+            full_text = ""
+
+            # Extract text from each page
+            for page_num in range(total_pages):
+                page = doc[page_num]
+
+                # Add page marker
+                full_text += f"\n{'='*70}\n"
+                full_text += f"PAGE {page_num + 1}\n"
+                full_text += f"{'='*70}\n"
+
+                # Extract text with layout preservation
+                page_text = page.get_text("text")
+                full_text += page_text
+
+                _logger.debug(f"Page {page_num + 1}: Extracted {len(page_text)} characters")
+
+            doc.close()
+
+            _logger.info(f"PyMuPDF: Successfully extracted {len(full_text)} total characters")
+
+            return full_text
+
+        except Exception as e:
+            _logger.error(f"PyMuPDF extraction failed: {str(e)}")
+            raise
 
     def _extract_direct_pdf_to_json(self, client, pdf_binary, document_type, filename):
         """
@@ -617,76 +722,61 @@ IMPORTANT:
             str: Default Form 01 extraction prompt
         """
         return """
-╔══════════════════════════════════════════════════════════════════════════════╗
-║                    VIETNAMESE FORM 01 EXTRACTION SPECIALIST                  ║
-║                     (Professional Document Auditor Mode)                     ║
-╚══════════════════════════════════════════════════════════════════════════════╝
+# VIETNAMESE FORM 01 EXTRACTION SPECIALIST
 
 You are a PROFESSIONAL DOCUMENT AUDITOR specializing in Vietnamese regulatory forms.
 Your role is to extract REAL DATA from Form 01 (Registration) while identifying and
 IGNORING template/mockup/example data.
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📋 PART I: DOCUMENT INTELLIGENCE - REAL DATA vs TEMPLATE/MOCKUP
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## PART I: DOCUMENT INTELLIGENCE - REAL DATA vs TEMPLATE/MOCKUP
 
-⚠️ CRITICAL: Many companies submit PARTIALLY FILLED templates with mockup data.
+CRITICAL: Many companies submit PARTIALLY FILLED templates with mockup data.
 
-✅ EXTRACT ONLY REAL DATA:
-  1. Organization name that's SPECIFIC (not "Công ty ABC", "Tên công ty")
-  2. Actual substance names (HFC-134a, R-410A, R-32), NOT examples
-  3. Numbers that are HANDWRITTEN/TYPED by user (even if messy)
-  4. Checkboxes CLEARLY marked (✓, X, filled box)
-  5. Specific dates (15/03/2024), NOT placeholders (dd/mm/yyyy, __/__/____)
+**EXTRACT ONLY REAL DATA:**
+- Organization name that's SPECIFIC (not "Công ty ABC", "Tên công ty")
+- Actual substance names (HFC-134a, R-410A, R-32), NOT examples
+- Numbers that are HANDWRITTEN/TYPED by user (even if messy)
+- Checkboxes CLEARLY marked (✓, X, filled box)
+- Specific dates (15/03/2024), NOT placeholders (dd/mm/yyyy, __/__/____)
 
-❌ IGNORE TEMPLATE/MOCKUP DATA:
-  1. **Placeholder text**: "Tên doanh nghiệp", "Tên chất", "Ghi chú"
-  2. **Example markers**: "Ví dụ:", "VD:", "Example:", "(mẫu)"
-  3. **Instruction text**: "Ghi rõ...", "Điền vào...", "Nêu rõ..."
-  4. **Template numbers**: Perfect sequences (1, 2, 3) or round numbers (100, 200, 300)
-  5. **Empty template cells**: Unfilled rows with only borders
+**IGNORE TEMPLATE/MOCKUP DATA:**
+- Placeholder text: "Tên doanh nghiệp", "Tên chất", "Ghi chú"
+- Example markers: "Ví dụ:", "VD:", "Example:", "(mẫu)"
+- Instruction text: "Ghi rõ...", "Điền vào...", "Nêu rõ..."
+- Template numbers: Perfect sequences (1,2,3) or round numbers (100,200,300)
+- Empty template cells: Unfilled rows with only borders
 
-🔍 TEMPLATE DETECTION RULES:
-  - **Repetition test**: Same substance 5+ times with perfect round numbers → TEMPLATE
-  - **Number pattern**: All values are multiples of 100 → TEMPLATE
-  - **Gray text/Italic**: Often indicates placeholder → SKIP
-  - **Brackets/parentheses**: "(Tên chất)", "[Ghi rõ]" → TEMPLATE
-  - **Cross-validation**: If organization name is template, ENTIRE form is likely template
+**TEMPLATE DETECTION RULES:**
+- Repetition test: Same substance 5+ times with round numbers → TEMPLATE
+- Number pattern: All values multiples of 100 → TEMPLATE
+- Gray text/Italic: Often placeholder → SKIP
+- Brackets: "(Tên chất)", "[Ghi rõ]" → TEMPLATE
+- Cross-validation: If organization name is template, ENTIRE form is template
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🔧 PART II: HANDLING POOR QUALITY DOCUMENTS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## PART II: HANDLING POOR QUALITY DOCUMENTS
 
-For blurry, rotated, or messy documents:
+**Context-based inference:**
+- Blurry substance name? → Check HS code column
+- Unclear number? → Look at neighboring cells
+- Missing data? → Cross-reference other sections
 
-1. **Context-based inference**:
-   - Blurry substance name? → Check HS code column for clues
-   - Unclear number? → Look at neighboring cells for patterns
-   - Missing data? → Cross-reference with other sections
+**Line wrap reconstruction (CRITICAL):**
+- "300.0" (line 1) + "00" (line 2) = 300000 (NOT 30000!)
+- ALWAYS concatenate multi-line cell content BEFORE parsing
 
-2. **Line wrap reconstruction** (CRITICAL):
-   - "300.0" (line 1) + "00" (line 2) = 300000 (NOT 30000!)
-   - Always concatenate multi-line cell content BEFORE parsing
+**Handwritten ambiguity:**
+- "1" vs "7": Use unit context
+- When unclear: Mark as null, DON'T guess
 
-3. **Handwritten ambiguity**:
-   - "1" vs "7": Use unit context (1 ton vs 7 kg makes sense?)
-   - "0" vs "6": Check if surrounding numbers follow pattern
-   - When unclear: Mark as null, DON'T guess
+## PART III: COMPLETE JSON OUTPUT STRUCTURE
 
-4. **Bilingual forms**:
-   - Vietnamese + English side-by-side
-   - Don't confuse English section headers with checkmarks
-   - Prioritize Vietnamese text for substance names
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📐 PART III: JSON OUTPUT STRUCTURE
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Return JSON with ALL fields below (no omissions, no "..."):
 
 {
   "year": <integer>,
-  "year_1": <integer - actual year from column header, e.g., 2023>,
-  "year_2": <integer - actual year from column header, e.g., 2024>,
-  "year_3": <integer - actual year from column header, e.g., 2025>,
+  "year_1": <integer>,
+  "year_2": <integer>,
+  "year_3": <integer>,
 
   "organization_name": "<string>",
   "business_license_number": "<string>",
@@ -699,10 +789,15 @@ For blurry, rotated, or messy documents:
   "contact_phone": "<string>",
   "contact_fax": "<string>",
   "contact_email": "<string>",
-  "contact_country_code": "<ISO 2-letter, e.g., VN>",
-  "contact_state_code": "<Province code, e.g., HN, SG, BD>",
+  "contact_country_code": "<ISO 2-letter code: VN, US, CN, etc.>",
+  "contact_state_code": "<Province code: HN, SG, DN, BD, etc.>",
 
-  "activity_field_codes": ["production", "import", "export", ...],
+  "activity_field_codes": [
+    // Array of codes from checked activities:
+    // "production", "import", "export", "equipment_production",
+    // "equipment_import", "ac_ownership", "refrigeration_ownership",
+    // "collection_recycling"
+  ],
 
   "has_table_1_1": <boolean>,
   "has_table_1_2": <boolean>,
@@ -710,10 +805,11 @@ For blurry, rotated, or messy documents:
   "has_table_1_4": <boolean>,
 
   "substance_usage": [
+    // Table 1.1 data - ALL fields must be included:
     {
-      "is_title": <true for section headers, false for data>,
-      "sequence": <incremental number>,
-      "usage_type": "production|import|export",
+      "is_title": <boolean - true for section headers like "Sản xuất chất được kiểm soát", false for data rows>,
+      "sequence": <integer - row order number>,
+      "usage_type": "<production|import|export>",
       "substance_name": "<standardized name from official list>",
       "year_1_quantity_kg": <float or null>,
       "year_1_quantity_co2": <float or null>,
@@ -726,164 +822,84 @@ For blurry, rotated, or messy documents:
     }
   ],
 
-  "equipment_product": [...],
-  "equipment_ownership": [...],
-  "collection_recycling": [...]
+  "equipment_product": [
+    // Table 1.2 data - ALL fields must be included:
+    {
+      "is_title": <boolean>,
+      "sequence": <integer>,
+      "product_type": "<string - equipment model/type>",
+      "hs_code": "<string - HS code like 8415.10, 8418.50>",
+      "capacity": "<string - cooling capacity/power>",
+      "quantity": <float or null>,
+      "substance_name": "<standardized substance name>",
+      "substance_quantity_per_unit": <float or null>,
+      "notes": "<string or null>"
+    }
+  ],
+
+  "equipment_ownership": [
+    // Table 1.3 data - ALL fields must be included:
+    {
+      "is_title": <boolean>,
+      "sequence": <integer>,
+      "equipment_type": "<string - equipment model/manufacturer>",
+      "start_year": <integer or null - year equipment was put into use>,
+      "capacity": "<string - cooling capacity/power>",
+      "equipment_quantity": <integer or null>,
+      "substance_name": "<standardized substance name>",
+      "refill_frequency": <float or null - times per year>,
+      "substance_quantity_per_refill": <float or null - kg per refill>
+    }
+  ],
+
+  "collection_recycling": [
+    // Table 1.4 data - ALL fields must be included:
+    // IMPORTANT: One PDF row may create 4 records (collection, reuse, recycle, disposal)
+    {
+      "is_title": <boolean>,
+      "sequence": <integer>,
+      "activity_type": "<collection|reuse|recycle|disposal>",
+      "substance_name": "<standardized substance name>",
+      "quantity_kg": <float or null>,
+      "quantity_co2": <float or null>
+    }
+  ]
 }
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🔄 PART IV: EXTRACTION WORKFLOW (Follow this order)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## PART IV: EXTRACTION WORKFLOW
 
-STEP 1: DOCUMENT QUALITY ASSESSMENT
-  → Scan entire document for template indicators
-  → Check if organization name is real or placeholder
-  → Identify which sections are filled vs empty template
+**Activity Field Mapping:**
+- "Sản xuất chất..." → "production"
+- "Nhập khẩu chất..." → "import"
+- "Xuất khẩu chất..." → "export"
+- "Sản xuất thiết bị..." → "equipment_production"
+- "Nhập khẩu thiết bị..." → "equipment_import"
+- "Sở hữu máy điều hòa..." → "ac_ownership"
+- "Sở hữu thiết bị lạnh..." → "refrigeration_ownership"
+- "Thu gom, tái chế..." → "collection_recycling"
 
-STEP 2: ORGANIZATION INFORMATION
-  → Extract company name, license, contact info
-  → **Country code**: Use ISO 3166-1 (VN for Vietnam)
-  → **State code**: Extract province (HN, SG, DN, BD...) from address end
+**Table Presence Logic:**
+- has_table_1_1 = true IF any(production, import, export) checked
+- has_table_1_2 = true IF any(equipment_production, equipment_import) checked
+- has_table_1_3 = true IF any(ac_ownership, refrigeration_ownership) checked
+- has_table_1_4 = true IF collection_recycling checked
 
-STEP 3: YEAR EXTRACTION (Critical for multi-year data)
-  → Look at Table 1.1 column headers for ACTUAL years
-  → Example: "Năm 2023" → year_1=2023, "Năm 2024" → year_2=2024
-  → If not shown: infer from main year field (year_1 = year-1, etc.)
+**Number Formatting (CRITICAL):**
+- LINE WRAP BUG: "300.0" + "00" (next line) = 300000 (NOT 30000!)
+- ALWAYS concatenate multi-line numbers BEFORE parsing
+- Remove thousands separators, convert decimal to dot
 
-STEP 4: ACTIVITY FIELD RECOGNITION
-  → Check Section "2. Nội dung đăng ký" for checkboxes
-  → ⚠️ CAREFUL: Don't confuse bilingual text with checkmarks
-  → Only mark as checked if CLEAR visual indication (✓, X, filled)
-  → Map to codes:
-    * "Sản xuất chất..." → "production"
-    * "Nhập khẩu chất..." → "import"
-    * "Xuất khẩu chất..." → "export"
-    * "Sản xuất thiết bị..." → "equipment_production"
-    * "Nhập khẩu thiết bị..." → "equipment_import"
-    * "Sở hữu máy điều hòa..." → "ac_ownership"
-    * "Sở hữu thiết bị lạnh..." → "refrigeration_ownership"
-    * "Thu gom, tái chế..." → "collection_recycling"
+**Substance Name Standardization:**
+- Match to official list using fuzzy matching
+- "HFC134a" → "HFC-134a", "R410A" → "R-410A"
+- If no match: prefix "[UNKNOWN] "
 
-STEP 5: TABLE PRESENCE DETERMINATION
-  → has_table_1_1 = true IF any("production", "import", "export") checked
-  → has_table_1_2 = true IF any("equipment_production", "equipment_import") checked
-  → has_table_1_3 = true IF any("ac_ownership", "refrigeration_ownership") checked
-  → has_table_1_4 = true IF "collection_recycling" checked
-
-STEP 6: TABLE EXTRACTION (ONLY extract checked tables)
-  → For each table, apply REAL vs TEMPLATE filter
-  → Extract ONLY rows with real data
-  → Skip template rows with placeholder text
-
-STEP 7: DATA VALIDATION & STANDARDIZATION
-  → Substance names → Match to official list (see PART V below)
-  → Numbers → Standardize format (see NUMBER RULES below)
-  → Dates → Convert to YYYY-MM-DD
-  → Province codes → Convert to ISO codes
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📊 PART V: TABLE STRUCTURE RULES
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-**TITLE ROW vs DATA ROW:**
-
-✅ TITLE ROW (is_title=true):
-  - MERGED CELLS spanning multiple columns
-  - Contains section names: "Sản xuất chất được kiểm soát"
-  - NO specific substance names or quantities
-  - ALL numeric fields = null
-
-❌ DATA ROW (is_title=false):
-  - SEPARATE CELLS (not merged)
-  - Contains actual substance names (HFC-134a, R-410A)
-  - Has numeric values
-
-**COMMON PARSING ERRORS TO AVOID:**
-
-1. **Header/Data Confusion** (FORD case):
-   - If "Điều hòa không khí" appears on SAME LINE as "FORD RANGER"
-   - SPLIT into 2 rows: Title row + Data row
-
-2. **Column Overflow** (BKRE, HOÀNG BÁCH cases):
-   - "Nhập khẩu chất..." written in WRONG column (Substance Name column)
-   - RECOGNIZE as descriptive text, NOT substance name
-   - Don't push HS code into Substance Name field
-
-3. **Duplicate Spillover** (HOÀNG BÁCH case):
-   - Data from row N appearing in row N+1
-   - CHECK for exact duplicates, keep only ONE instance
-
-4. **Missing Sections** (Viễn Nam case):
-   - Table completely missing → set has_table_X = false
-   - Return empty array for that table
-
-**CONDITIONAL EXTRACTION:**
-  - ONLY include section titles for CHECKED activities
-  - Example: If "production" NOT checked → DON'T create "Sản xuất chất..." title row
-  - For Table 1.4: ALWAYS include all 4 sections (collection, reuse, recycle, disposal)
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🔢 PART VI: NUMBER FORMATTING RULES (CRITICAL)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Vietnamese documents use BOTH formats inconsistently:
-  - European: "1.000,5" (dot=thousands, comma=decimal) → 1000.5
-  - US: "1,000.5" (comma=thousands, dot=decimal) → 1000.5
-
-**DETECTION STRATEGY:**
-  1. Look for decimal patterns: "100,25" vs "100.25"
-  2. If you see "X.XXX,X" → comma is decimal
-  3. If you see "X,XXX.X" → dot is decimal
-
-**LINE WRAP HANDLING** (⚠️ MOST CRITICAL BUG):
-  - Numbers often wrap to next line in small cells
-  - "300.0" (line 1) + "00" (line 2) = 300000 (NOT 30000!)
-  - "180.0" (line 1) + "00" (line 2) = 180000 (NOT 18000!)
-  - "500.0" (line 1) + "00" (line 2) = 500000 (NOT 50000!)
-  - **Rule**: ALWAYS concatenate ALL parts before parsing
-
-**FINAL CONVERSION:**
-  1. Remove ALL thousands separators (both comma AND dot)
-  2. Convert decimal separator to dot "."
-  3. Return as float/int: 300000.5 or 300000
-
-**NULL HANDLING:**
-  - Empty cell → null (NOT 0, NOT "")
-  - Missing data → null
-  - 0 is a VALID value (different from missing!)
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🧪 PART VII: SUBSTANCE NAME STANDARDIZATION
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-You have access to the OFFICIAL LIST of controlled substances (see context above).
-
-**MATCHING STRATEGY:**
-  1. Extract raw name from document
-  2. Apply FUZZY MATCHING to official list:
-     - "HFC134a" → "HFC-134a" (missing hyphen)
-     - "R410A" → "R-410A" (missing hyphens)
-     - "r-22" → "HCFC-22" (case + code-to-name)
-  3. Return EXACT standardized name from official list
-  4. If NO match: prefix with "[UNKNOWN] "
-
-**HS CODE FALLBACK:**
-  - If substance name is unclear/generic ("HFC" only)
-  - AND HS code is provided
-  - Extract HS code accurately - system will lookup substance
-  - Common HS codes: 2903.39, 2903.41, 3824.78
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-✅ PART VIII: OUTPUT REQUIREMENTS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
+**Output Requirements:**
 1. Return ONLY valid JSON (no markdown, no explanations)
-2. Use null for missing values (NOT "None", NOT empty string "")
-3. Preserve Vietnamese characters EXACTLY
-4. Extract ONLY real data (skip all template/mockup rows)
-5. Apply ALL formatting rules (numbers, dates, codes)
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2. Use null for missing values
+3. Preserve Vietnamese characters
+4. Extract ONLY real data (skip template/mockup)
+5. Include ALL fields specified in JSON structure above
 
 BEGIN EXTRACTION NOW.
 """
@@ -896,79 +912,54 @@ BEGIN EXTRACTION NOW.
             str: Default Form 02 extraction prompt
         """
         return """
-╔══════════════════════════════════════════════════════════════════════════════╗
-║                    VIETNAMESE FORM 02 EXTRACTION SPECIALIST                  ║
-║                     (Professional Document Auditor Mode)                     ║
-╚══════════════════════════════════════════════════════════════════════════════╝
+# VIETNAMESE FORM 02 EXTRACTION SPECIALIST
 
 You are a PROFESSIONAL DOCUMENT AUDITOR specializing in Vietnamese regulatory forms.
 Your role is to extract REAL DATA from Form 02 (Report) while identifying and
 IGNORING template/mockup/example data.
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📋 PART I: DOCUMENT INTELLIGENCE - REAL DATA vs TEMPLATE/MOCKUP
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## PART I: DOCUMENT INTELLIGENCE - REAL DATA vs TEMPLATE/MOCKUP
 
-⚠️ CRITICAL: Many companies submit PARTIALLY FILLED templates with mockup data.
+CRITICAL: Many companies submit PARTIALLY FILLED templates with mockup data.
 
-✅ EXTRACT ONLY REAL DATA:
-  1. Organization name that's SPECIFIC (not "Công ty ABC", "Tên công ty")
-  2. Actual substance names (HFC-134a, R-410A, R-32), NOT examples
-  3. Numbers that are HANDWRITTEN/TYPED by user (even if messy)
-  4. Specific dates (15/03/2024), NOT placeholders (dd/mm/yyyy, __/__/____)
-  5. Country codes that are REAL (VN, CN, TH), NOT template "(Mã nước)"
+**EXTRACT ONLY REAL DATA:**
+- Organization name that's SPECIFIC (not "Công ty ABC", "Tên công ty")
+- Actual substance names (HFC-134a, R-410A, R-32), NOT examples
+- Numbers that are HANDWRITTEN/TYPED by user (even if messy)
+- Specific dates (15/03/2024), NOT placeholders
+- Country codes that are REAL (VN, CN, TH), NOT template "(Mã nước)"
 
-❌ IGNORE TEMPLATE/MOCKUP DATA:
-  1. **Placeholder text**: "Tên doanh nghiệp", "Tên chất", "Ghi chú"
-  2. **Example markers**: "Ví dụ:", "VD:", "Example:", "(mẫu)"
-  3. **Instruction text**: "Ghi rõ...", "Điền vào...", "Nêu rõ..."
-  4. **Template numbers**: Perfect sequences (1, 2, 3) or round numbers (100, 200, 300)
-  5. **Empty template cells**: Unfilled rows with only borders
+**IGNORE TEMPLATE/MOCKUP DATA:**
+- Placeholder text: "Tên doanh nghiệp", "Tên chất", "Ghi chú"
+- Example markers: "Ví dụ:", "VD:", "Example:", "(mẫu)"
+- Instruction text: "Ghi rõ...", "Điền vào...", "Nêu rõ..."
+- Template numbers: Perfect sequences or round numbers
+- Empty template cells
 
-🔍 TEMPLATE DETECTION RULES:
-  - **Repetition test**: Same substance 5+ times with perfect round numbers → TEMPLATE
-  - **Number pattern**: All values are multiples of 100 → TEMPLATE
-  - **Gray text/Italic**: Often indicates placeholder → SKIP
-  - **Brackets/parentheses**: "(Tên chất)", "[Ghi rõ]" → TEMPLATE
-  - **Cross-validation**: If organization name is template, ENTIRE form is likely template
+## PART II: HANDLING POOR QUALITY DOCUMENTS
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🔧 PART II: HANDLING POOR QUALITY DOCUMENTS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+**Context-based inference:**
+- Blurry substance name? → Check HS code column
+- Unclear number? → Look at neighboring cells
+- Missing data? → Cross-reference other sections
 
-For blurry, rotated, or messy documents:
+**Line wrap reconstruction (CRITICAL for Table 2.1):**
+- "300.0" (line 1) + "00" (line 2) = 300000 (NOT 30000!)
+- ALWAYS concatenate multi-line cell content BEFORE parsing
 
-1. **Context-based inference**:
-   - Blurry substance name? → Check HS code column for clues
-   - Unclear number? → Look at neighboring cells for patterns
-   - Missing data? → Cross-reference with other sections
+**Handwritten ambiguity:**
+- When unclear: Mark as null, DON'T guess
 
-2. **Line wrap reconstruction** (CRITICAL):
-   - "300.0" (line 1) + "00" (line 2) = 300000 (NOT 30000!)
-   - Always concatenate multi-line cell content BEFORE parsing
-   - Table 2.1 is especially prone to this bug!
+## PART III: COMPLETE JSON OUTPUT STRUCTURE
 
-3. **Handwritten ambiguity**:
-   - "1" vs "7": Use unit context (1 ton vs 7 kg makes sense?)
-   - "0" vs "6": Check if surrounding numbers follow pattern
-   - When unclear: Mark as null, DON'T guess
-
-4. **Bilingual forms**:
-   - Vietnamese + English side-by-side
-   - Don't confuse English section headers with data
-   - Prioritize Vietnamese text for substance names
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📐 PART III: JSON OUTPUT STRUCTURE
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Return a JSON object with this EXACT structure (all field names in English):
+Return JSON with ALL fields below (no omissions, no "..."):
 
 {
   "year": <integer>,
-  "year_1": <integer - actual year for year_1 column, e.g., 2023>,
-  "year_2": <integer - actual year for year_2 column, e.g., 2024>,
-  "year_3": <integer - actual year for year_3 column, e.g., 2025>,
+  "year_1": <integer>,
+  "year_2": <integer>,
+  "year_3": <integer>,
+
   "organization_name": "<string>",
   "business_license_number": "<string>",
   "business_license_date": "<YYYY-MM-DD or null>",
@@ -980,10 +971,12 @@ Return a JSON object with this EXACT structure (all field names in English):
   "contact_phone": "<string>",
   "contact_fax": "<string>",
   "contact_email": "<string>",
-  "contact_country_code": "<ISO 2-letter country code, e.g., VN>",
-  "contact_state_code": "<State/Province code for Vietnam, see list below>",
+  "contact_country_code": "<ISO 2-letter code: VN, US, CN, etc.>",
+  "contact_state_code": "<Province code: HN, SG, DN, BD, etc.>",
 
-  "activity_field_codes": [<array of codes from section "b) Thông tin về lĩnh vực hoạt động sử dụng chất được kiểm soát">],
+  "activity_field_codes": [
+    // Array of codes from checked activities
+  ],
 
   "has_table_2_1": <boolean>,
   "has_table_2_2": <boolean>,
@@ -991,223 +984,117 @@ Return a JSON object with this EXACT structure (all field names in English):
   "has_table_2_4": <boolean>,
 
   "quota_usage": [
+    // Table 2.1 data - ALL fields must be included:
     {
-      "is_title": <true for merged cell rows, false for data rows>,
-      "sequence": <incremental number>,
+      "is_title": <boolean>,
+      "sequence": <integer>,
       "usage_type": "<production|import|export>",
-      "substance_name": "<string>",
-      "hs_code": "<string>",
+      "substance_name": "<standardized substance name>",
+      "hs_code": "<string - HS code>",
       "allocated_quota_kg": <float or null>,
       "allocated_quota_co2": <float or null>,
-      "adjusted_quota_kg": <float or null>,
-      "adjusted_quota_co2": <float or null>,
+      "adjusted_quota_kg": <float or null - can be negative>,
+      "adjusted_quota_co2": <float or null - can be negative>,
       "total_quota_kg": <float or null>,
       "total_quota_co2": <float or null>,
       "average_price": <float or null>,
-      "country_code": "<ISO 2-letter country code, e.g., VN, US, CN, TH, JP>",
-      "customs_declaration_number": "<string>",
+      "country_code": "<ISO 2-letter: VN, US, CN, TH, JP, etc.>",
+      "customs_declaration_number": "<string or null>",
       "next_year_quota_kg": <float or null>,
       "next_year_quota_co2": <float or null>
     }
   ],
 
   "equipment_product_report": [
+    // Table 2.2 data - ALL fields must be included:
     {
-      "is_title": <true for merged cell rows, false for data rows>,
-      "sequence": <incremental number>,
+      "is_title": <boolean>,
+      "sequence": <integer>,
       "production_type": "<production|import>",
-      "product_type": "<string>",
+      "product_type": "<string - equipment model/type>",
       "hs_code": "<string>",
       "capacity": "<string>",
       "quantity": <float or null>,
-      "substance_name": "<string>",
+      "substance_name": "<standardized substance name>",
       "substance_quantity_per_unit": <float or null>,
-      "notes": "<string>"
+      "notes": "<string or null>"
     }
   ],
 
   "equipment_ownership_report": [
+    // Table 2.3 data - ALL fields must be included:
     {
-      "is_title": <true for merged cell rows, false for data rows>,
-      "sequence": <incremental number>,
+      "is_title": <boolean>,
+      "sequence": <integer>,
       "ownership_type": "<air_conditioner|refrigeration>",
       "equipment_type": "<string>",
       "equipment_quantity": <integer or null>,
-      "substance_name": "<string>",
+      "substance_name": "<standardized substance name>",
       "capacity": "<string>",
       "start_year": <integer or null>,
-      "refill_frequency": <float or null>,
+      "refill_frequency": <float or null - times per year>,
       "substance_quantity_per_refill": <float or null>,
-      "notes": "<string>"
+      "notes": "<string or null>"
     }
   ],
 
   "collection_recycling_report": [
+    // Table 2.4 data - ALL fields must be included:
+    // IMPORTANT: One row per substance with ALL activities
     {
-      "substance_name": "<string>",
+      "substance_name": "<standardized substance name>",
       "collection_quantity_kg": <float or null>,
-      "collection_location": "<string>",
-      "storage_location": "<string>",
+      "collection_location": "<string or null>",
+      "storage_location": "<string or null>",
       "reuse_quantity_kg": <float or null>,
-      "reuse_technology": "<string>",
+      "reuse_technology": "<string or null>",
       "recycle_quantity_kg": <float or null>,
-      "recycle_technology": "<string>",
-      "recycle_usage_location": "<string>",
+      "recycle_technology": "<string or null>",
+      "recycle_usage_location": "<string or null>",
       "disposal_quantity_kg": <float or null>,
-      "disposal_technology": "<string>",
-      "disposal_facility": "<string>"
+      "disposal_technology": "<string or null>",
+      "disposal_facility": "<string or null>"
     }
   ]
 }
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🔄 PART IV: EXTRACTION WORKFLOW (Follow this order)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## PART IV: EXTRACTION WORKFLOW
 
-STEP 1: DOCUMENT QUALITY ASSESSMENT
-  → Scan entire document for template indicators
-  → Check if organization name is real or placeholder
-  → Identify which sections are filled vs empty template
+**Activity Field Mapping:**
+- Same as Form 01
 
-STEP 2: ORGANIZATION INFORMATION
-  → Extract company name, license, contact info
-  → **Country code**: Use ISO 3166-1 (VN for Vietnam)
-  → **State code**: Extract province (HN, SG, DN, BD...) from address end
+**Table Presence Logic:**
+- has_table_2_1 = true IF any(production, import, export) checked
+- has_table_2_2 = true IF any(equipment_production, equipment_import) checked
+- has_table_2_3 = true IF any(ac_ownership, refrigeration_ownership) checked
+- has_table_2_4 = true IF collection_recycling checked
 
-STEP 3: YEAR EXTRACTION (Critical for multi-year data)
-  → Look at Table 2.1 column headers for ACTUAL years (if present)
-  → Example: "Năm 2023" → year_1=2023, "Năm 2024" → year_2=2024
-  → If not shown: infer from main year field (year_1 = year-1, etc.)
+**Table 2.4 Special Rules:**
+- NO title rows at all
+- One row per substance with ALL activities
+- Extract all columns (collection, reuse, recycle, disposal)
 
-STEP 4: ACTIVITY FIELD RECOGNITION
-  → Check Section "b) Thông tin về lĩnh vực hoạt động" for activity types
-  → Map to codes:
-    * "Sản xuất chất..." → "production"
-    * "Nhập khẩu chất..." → "import"
-    * "Xuất khẩu chất..." → "export"
-    * "Sản xuất thiết bị..." → "equipment_production"
-    * "Nhập khẩu thiết bị..." → "equipment_import"
-    * "Sở hữu máy điều hòa..." → "ac_ownership"
-    * "Sở hữu thiết bị lạnh..." → "refrigeration_ownership"
-    * "Thu gom, tái chế..." → "collection_recycling"
+**Country Code Extraction (Table 2.1):**
+- "Việt Nam" → "VN", "Trung Quốc" → "CN", "Hoa Kỳ" / "Mỹ" → "US"
+- "Thái Lan" → "TH", "Nhật Bản" → "JP"
+- Return ISO 2-letter UPPERCASE
 
-STEP 5: TABLE PRESENCE DETERMINATION
-  → has_table_2_1 = true IF any("production", "import", "export") exists
-  → has_table_2_2 = true IF any("equipment_production", "equipment_import") exists
-  → has_table_2_3 = true IF any("ac_ownership", "refrigeration_ownership") exists
-  → has_table_2_4 = true IF "collection_recycling" exists
+**Number Formatting (CRITICAL for Table 2.1):**
+- LINE WRAP BUG: "300.0" + "00" (next line) = 300000 (NOT 30000!)
+- ALWAYS concatenate multi-line numbers BEFORE parsing
+- Remove thousands separators, convert decimal to dot
 
-STEP 6: TABLE EXTRACTION (ONLY extract existing tables)
-  → For each table, apply REAL vs TEMPLATE filter
-  → Extract ONLY rows with real data
-  → Skip template rows with placeholder text
-  → For Table 2.4: NO title rows, extract substance data with all columns
+**Substance Name Standardization:**
+- Match to official list using fuzzy matching
+- "HFC134a" → "HFC-134a", "R410A" → "R-410A"
+- If no match: prefix "[UNKNOWN] "
 
-STEP 7: DATA VALIDATION & STANDARDIZATION
-  → Substance names → Match to official list (see PART VII)
-  → Numbers → Standardize format (see PART VI)
-  → Country codes → Convert Vietnamese names to ISO codes (see PART V)
-  → Dates → Convert to YYYY-MM-DD
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📊 PART V: TABLE STRUCTURE RULES
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-**TITLE ROW vs DATA ROW:**
-
-✅ TITLE ROW (is_title=true) - For Tables 2.1, 2.2, 2.3 ONLY:
-  - MERGED CELLS spanning multiple columns
-  - Contains section names: "Sản xuất chất được kiểm soát", "Nhập khẩu chất được kiểm soát"
-  - NO specific substance names or quantities
-  - ALL numeric fields = null
-
-❌ DATA ROW (is_title=false):
-  - SEPARATE CELLS (not merged)
-  - Contains actual substance names, equipment models, quantities
-  - Has numeric values
-
-**TABLE 2.4 SPECIAL RULE:**
-  - NO title rows at all
-  - Extract ONLY substance data rows with all columns filled
-  - Each row = one substance with collection/reuse/recycle/disposal data
-
-**COUNTRY CODE EXTRACTION (Table 2.1 quota_usage):**
-  ⚠️ Extract ONLY ISO 2-letter codes (VN, US, CN, TH, JP, KR, SG)
-  - "Việt Nam" → "VN"
-  - "Trung Quốc" → "CN"
-  - "Hoa Kỳ", "Mỹ" → "US"
-  - "Thái Lan" → "TH"
-  - "Nhật Bản" → "JP"
-  - Use UPPERCASE, return null if unclear
-
-**CONDITIONAL EXTRACTION:**
-  - Tables 2.1, 2.2, 2.3: ALWAYS include title rows for ALL sections
-  - Table 2.4: NO title rows, just data
-  - If table doesn't exist → set has_table_2_x = false, return empty array
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🔢 PART VI: NUMBER FORMATTING RULES (CRITICAL)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Vietnamese documents use BOTH formats inconsistently:
-  - European: "1.000,5" (dot=thousands, comma=decimal) → 1000.5
-  - US: "1,000.5" (comma=thousands, dot=decimal) → 1000.5
-
-**DETECTION STRATEGY:**
-  1. Look for decimal patterns: "100,25" vs "100.25"
-  2. If you see "X.XXX,X" → comma is decimal
-  3. If you see "X,XXX.X" → dot is decimal
-
-**LINE WRAP HANDLING** (⚠️ MOST CRITICAL BUG - ESPECIALLY IN TABLE 2.1):
-  - Numbers often wrap to next line in small cells
-  - "300.0" (line 1) + "00" (line 2) = 300000 (NOT 30000!)
-  - "180.0" (line 1) + "00" (line 2) = 180000 (NOT 18000!)
-  - "500.0" (line 1) + "00" (line 2) = 500000 (NOT 50000!)
-  - "219.0" (line 1) + "00" (line 2) = 219000 (NOT 21900!)
-  - **Rule**: ALWAYS concatenate ALL parts before parsing
-
-**FINAL CONVERSION:**
-  1. Remove ALL thousands separators (both comma AND dot)
-  2. Convert decimal separator to dot "."
-  3. Return as float/int: 300000.5 or 300000
-
-**NULL HANDLING:**
-  - Empty cell → null (NOT 0, NOT "")
-  - Missing data → null
-  - 0 is a VALID value (different from missing!)
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🧪 PART VII: SUBSTANCE NAME STANDARDIZATION
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-You have access to the OFFICIAL LIST of controlled substances (see context above).
-
-**MATCHING STRATEGY:**
-  1. Extract raw name from document
-  2. Apply FUZZY MATCHING to official list:
-     - "HFC134a" → "HFC-134a" (missing hyphen)
-     - "R410A" → "R-410A" (missing hyphens)
-     - "r-22" → "HCFC-22" (case + code-to-name)
-  3. Return EXACT standardized name from official list
-  4. If NO match: prefix with "[UNKNOWN] "
-
-**HS CODE FALLBACK:**
-  - If substance name is unclear/generic ("HFC" only)
-  - AND HS code is provided
-  - Extract HS code accurately - system will lookup substance
-  - Common HS codes: 2903.39, 2903.41, 3824.78
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-✅ PART VIII: OUTPUT REQUIREMENTS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
+**Output Requirements:**
 1. Return ONLY valid JSON (no markdown, no explanations)
-2. Use null for missing values (NOT "None", NOT empty string "")
-3. Preserve Vietnamese characters EXACTLY
-4. Extract ONLY real data (skip all template/mockup rows)
-5. Apply ALL formatting rules (numbers, dates, codes)
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2. Use null for missing values
+3. Preserve Vietnamese characters
+4. Extract ONLY real data (skip template/mockup)
+5. Include ALL fields specified in JSON structure above
 
 BEGIN EXTRACTION NOW.
 """

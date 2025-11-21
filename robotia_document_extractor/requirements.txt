@@ -1,0 +1,7 @@
+# Python dependencies for robotia_document_extractor module
+
+# Google Gemini AI API
+google-genai>=0.1.0
+
+# PDF text extraction (for text_extract strategy)
+PyMuPDF>=1.23.0
