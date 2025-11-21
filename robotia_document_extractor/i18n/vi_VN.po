@@ -2671,3 +2671,103 @@ msgstr "Cấu hình Google Drive"
 msgid "Google Drive Configuration Wizard"
 msgstr "Trình hướng dẫn Cấu hình Google Drive"
 
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_res_config_settings__gemini_max_output_tokens
+msgid "Max Output Tokens"
+msgstr "Số Token Đầu ra Tối đa"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_res_config_settings__gemini_max_output_tokens
+msgid ""
+"Maximum number of tokens for Gemini API response. "
+"Increase this value if extraction fails for very long documents. "
+"Default: 65536 (Gemini 2.0 Flash maximum)"
+msgstr ""
+"Số lượng token tối đa cho phản hồi từ Gemini API. "
+"Tăng giá trị này nếu trích xuất thất bại với tài liệu quá dài. "
+"Mặc định: 65536 (tối đa của Gemini 2.0 Flash)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_res_config_settings__gemini_model
+msgid "Gemini Model"
+msgstr "Mô hình Gemini"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_res_config_settings__gemini_model
+msgid ""
+"Gemini model to use for extraction. "
+"Options: gemini-3-pro-preview, gemini-2.5-pro, gemini-1.5-pro, gemini-1.5-flash, etc. "
+"See Google AI documentation for available models."
+msgstr ""
+"Mô hình Gemini sử dụng để trích xuất. "
+"Tùy chọn: gemini-3-pro-preview, gemini-2.5-pro, gemini-1.5-pro, gemini-1.5-flash, v.v. "
+"Xem tài liệu Google AI để biết các mô hình khả dụng."
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_res_config_settings__extraction_strategy
+msgid "Extraction Strategy"
+msgstr "Chiến lược Trích xuất"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__res_config_settings__extraction_strategy__ai_native
+msgid "100% AI (Gemini processes PDF directly)"
+msgstr "100% AI (Gemini xử lý PDF trực tiếp)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__res_config_settings__extraction_strategy__text_extract
+msgid "Text Extraction + AI (Extract text first, then AI structures)"
+msgstr "Trích xuất Văn bản + AI (Trích xuất văn bản trước, sau đó AI cấu trúc hóa)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_res_config_settings__extraction_strategy
+msgid ""
+"Choose extraction method:\n"
+"• 100% AI: Gemini natively reads and understands PDF layout (recommended)\n"
+"• Text Extract + AI: Extract text first using PyMuPDF, then AI structures it\n"
+"  (useful for very large PDFs or cost optimization)"
+msgstr ""
+"Chọn phương pháp trích xuất:\n"
+"• 100% AI: Gemini đọc và hiểu bố cục PDF một cách tự nhiên (khuyến nghị)\n"
+"• Trích xuất Văn bản + AI: Trích xuất văn bản trước bằng PyMuPDF, sau đó AI cấu trúc hóa\n"
+"  (hữu ích cho PDF rất lớn hoặc tối ưu chi phí)"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "Maximum number of tokens for Gemini API response. Increase if extraction fails for very long documents."
+msgstr "Số lượng token tối đa cho phản hồi từ Gemini API. Tăng lên nếu trích xuất thất bại với tài liệu quá dài."
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "Recommended: 65536 (maximum for Gemini 2.0 Flash). Reduce if you want to limit API costs."
+msgstr "Khuyến nghị: 65536 (tối đa cho Gemini 2.0 Flash). Giảm xuống nếu bạn muốn giới hạn chi phí API."
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "Select the Gemini model to use for extraction. Different models have different capabilities and costs."
+msgstr "Chọn mô hình Gemini để sử dụng cho trích xuất. Các mô hình khác nhau có khả năng và chi phí khác nhau."
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "Available models: gemini-3-pro-preview, gemini-2.5-pro"
+msgstr "Các mô hình khả dụng: gemini-3-pro-preview, gemini-2.5-pro"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "See <a href=\"https://ai.google.dev/gemini-api/docs/models/gemini\" target=\"_blank\">Gemini Models documentation</a> for details."
+msgstr "Xem <a href=\"https://ai.google.dev/gemini-api/docs/models/gemini\" target=\"_blank\">tài liệu Mô hình Gemini</a> để biết chi tiết."
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "Choose how PDF documents are processed for extraction"
+msgstr "Chọn cách xử lý tài liệu PDF để trích xuất"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "<strong>100% AI (Recommended):</strong> Gemini processes PDF directly, understanding layout and structure.<br/>"
+msgstr "<strong>100% AI (Khuyến nghị):</strong> Gemini xử lý PDF trực tiếp, hiểu bố cục và cấu trúc.<br/>"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "<strong>Text Extract + AI:</strong> Extract text first with PyMuPDF, then structure with AI. May be faster for very large PDFs."
+msgstr "<strong>Trích xuất Văn bản + AI:</strong> Trích xuất văn bản trước bằng PyMuPDF, sau đó cấu trúc hóa bằng AI. Có thể nhanh hơn cho PDF rất lớn."
+
