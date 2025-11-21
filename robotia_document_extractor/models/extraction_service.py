@@ -168,7 +168,7 @@ class DocumentExtractionService(models.AbstractModel):
         # Get Gemini model from config (default: gemini-2.0-flash-exp)
         GEMINI_MODEL = self.env['ir.config_parameter'].sudo().get_param(
             'robotia_document_extractor.gemini_model',
-            default='gemini-2.0-flash-exp'
+            default='gemini-2.5-pro'
         )
 
         tmp_file_path = None
@@ -1360,7 +1360,7 @@ BEGIN EXTRACTION NOW.
             # Get Gemini model from config
             GEMINI_MODEL = self.env['ir.config_parameter'].sudo().get_param(
                 'robotia_document_extractor.gemini_model',
-                default='gemini-2.0-flash-exp'
+                default='gemini-2.5-pro'
             )
 
             # Generate text content with mega context (using higher token limit for text)
@@ -1432,7 +1432,7 @@ BEGIN EXTRACTION NOW.
         # Get Gemini model from config
         GEMINI_MODEL = self.env['ir.config_parameter'].sudo().get_param(
             'robotia_document_extractor.gemini_model',
-            default='gemini-2.0-flash-exp'
+            default='gemini-2.5-pro'
         )
 
         GEMINI_MAX_RETRIES = 3

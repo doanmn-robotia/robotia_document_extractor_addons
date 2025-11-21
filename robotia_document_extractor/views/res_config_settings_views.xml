@@ -31,26 +31,13 @@
                         <setting id="gemini_model_setting"
                                  string="Gemini Model"
                                  help="Select the Gemini model to use for extraction. Different models have different capabilities and costs.">
-                            <field name="gemini_model" class="oe_inline" placeholder="gemini-2.0-flash-exp"/>
+                            <field name="gemini_model" class="oe_inline" placeholder="gemini-2.5-pro"/>
                             <div class="content-group mt8">
                                 <div class="text-muted">
-                                    Available models: gemini-2.0-flash-exp, gemini-1.5-pro, gemini-1.5-flash, gemini-2.0-flash-thinking-exp-01-21
+                                    Available models: gemini-3-pro-preview, gemini-2.5-pro
                                     <br/>
                                     See <a href="https://ai.google.dev/gemini-api/docs/models/gemini" target="_blank">Gemini Models documentation</a> for details.
                                 </div>
-                            </div>
-                        </setting>
-                    </block>
-
-                    <block title="Document Processing">
-                        <setting id="extraction_info_setting" string="Extraction Information">
-                            <div class="text-muted">
-                                <ul>
-                                    <li>Model: Google Gemini 2.0 Flash Exp (with PDF understanding)</li>
-                                    <li>Supports Form 01 (Registration) and Form 02 (Report)</li>
-                                    <li>Automatic data extraction from Vietnamese PDFs</li>
-                                    <li>Human-in-the-loop validation workflow</li>
-                                </ul>
                             </div>
                         </setting>
                     </block>

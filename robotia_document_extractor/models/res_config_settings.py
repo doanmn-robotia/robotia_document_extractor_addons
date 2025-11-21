@@ -26,9 +26,9 @@ class ResConfigSettings(models.TransientModel):
     gemini_model = fields.Char(
         string='Gemini Model',
         config_parameter='robotia_document_extractor.gemini_model',
-        default='gemini-2.0-flash-exp',
+        default='gemini-2.5-pro',
         help='Gemini model to use for extraction. '
-             'Options: gemini-2.0-flash-exp, gemini-1.5-pro, gemini-1.5-flash, etc. '
+             'Options: gemini-3-pro-preview, gemini-2.5-pro, gemini-1.5-pro, gemini-1.5-flash, etc. '
              'See Google AI documentation for available models.'
     )
     # ===== Google Drive Integration Settings =====
