@@ -8,7 +8,7 @@ class QuotaUsage(models.Model):
     """Table 2.1: Quota Usage Report (Form 02 only)"""
     _name = 'quota.usage'
     _description = 'Quota Usage'
-    _order = 'document_id, sequence, id'
+    _order = 'sequence, id'
 
     document_id = fields.Many2one(
         comodel_name='document.extraction',
@@ -173,31 +173,3 @@ class QuotaUsage(models.Model):
 
         return country
 
-    @api.constrains('allocated_quota_kg', 'adjusted_quota_kg', 'total_quota_kg')
-    def _check_quota_logic(self):
-        """
-        Validate that total quota = allocated + adjusted (with 1% tolerance)
-        Skip validation for title rows
-        """
-        for record in self:
-            # Skip title rows (they don't have actual data)
-            if record.is_title:
-                continue
-
-            # Skip if all values are None/0
-            if not any([record.allocated_quota_kg, record.adjusted_quota_kg, record.total_quota_kg]):
-                continue
-
-            expected = (record.allocated_quota_kg or 0) + (record.adjusted_quota_kg or 0)
-            actual = record.total_quota_kg or 0
-
-            # Allow 1% tolerance for rounding errors, minimum 0.1kg
-            tolerance = max(abs(expected) * 0.01, 0.1)
-
-            if abs(expected - actual) > tolerance:
-                raise ValidationError(
-                    f'Quota logic error: Total quota ({actual:.2f} kg) does not match '
-                    f'Allocated ({record.allocated_quota_kg or 0:.2f}) + '
-                    f'Adjusted ({record.adjusted_quota_kg or 0:.2f}) = {expected:.2f} kg. '
-                    f'Difference: {abs(expected - actual):.2f} kg (tolerance: {tolerance:.2f} kg)'
-                )

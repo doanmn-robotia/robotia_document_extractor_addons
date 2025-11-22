@@ -245,6 +245,38 @@ class ExtractionController(http.Controller):
                     return []
                 return [(0, 0, item) for item in data_list]
 
+            # Helper function to populate substance_id from substance_name
+            def populate_substance_ids_in_table(table_data, substance_lookup):
+                """
+                Populate substance_id in table data based on substance_name
+
+                Args:
+                    table_data (list): List of dicts containing table rows
+                    substance_lookup (dict): Dict mapping substance_name to substance_id
+
+                Returns:
+                    list: Modified table data with substance_id populated
+                """
+                if not table_data or not substance_lookup:
+                    return table_data
+
+                for row in table_data:
+                    # Skip title rows
+                    if row.get('is_title'):
+                        continue
+
+                    substance_name = row.get('substance_name')
+                    # Only populate if substance_name exists and substance_id not already set
+                    if substance_name and not row.get('substance_id'):
+                        substance_id = substance_lookup.get(substance_name)
+                        if substance_id:
+                            row['substance_id'] = substance_id
+                            _logger.info(f"Populated substance_id={substance_id} for substance_name='{substance_name}'")
+                        else:
+                            _logger.warning(f"Substance not found in database: '{substance_name}'")
+
+                return table_data
+
             # Auto-calculate year_1, year_2, year_3 if not extracted by AI
             year = extracted_data.get('year')
             if year:
@@ -254,6 +286,50 @@ class ExtractionController(http.Controller):
                     extracted_data['year_2'] = year
                 if not extracted_data.get('year_3'):
                     extracted_data['year_3'] = year + 1
+
+            # ========== AUTO-POPULATE SUBSTANCE IDs ==========
+            # Collect all unique substance_names from all tables
+            all_substance_names = set()
+
+            # Define table keys based on document type
+            if document_type == '01':
+                table_keys = ['substance_usage', 'equipment_product', 'equipment_ownership', 'collection_recycling']
+            else:  # document_type == '02'
+                table_keys = ['quota_usage', 'equipment_product_report', 'equipment_ownership_report', 'collection_recycling_report']
+
+            # Collect substance_names from all tables
+            for table_key in table_keys:
+                table_data = extracted_data.get(table_key, [])
+                for row in table_data:
+                    # Skip title rows
+                    if row.get('is_title'):
+                        continue
+                    substance_name = row.get('substance_name')
+                    if substance_name and substance_name.strip():
+                        all_substance_names.add(substance_name.strip())
+
+            # Build substance lookup dictionary (single query for performance)
+            substance_lookup = {}
+            if all_substance_names:
+                _logger.info(f"Looking up {len(all_substance_names)} unique substances: {list(all_substance_names)}")
+                substances = request.env['controlled.substance'].search([
+                    ('code', 'in', list(all_substance_names))
+                ])
+                substance_lookup = {s.code: s.id for s in substances}
+                _logger.info(f"Found {len(substance_lookup)} substances in database")
+
+                # Log any substances not found
+                missing_substances = all_substance_names - set(substance_lookup.keys())
+                if missing_substances:
+                    _logger.warning(f"Substances not found in database: {missing_substances}")
+
+            # Populate substance_id in all tables
+            for table_key in table_keys:
+                table_data = extracted_data.get(table_key, [])
+                if table_data:
+                    populate_substance_ids_in_table(table_data, substance_lookup)
+
+            # ========== END AUTO-POPULATE SUBSTANCE IDs ==========
 
             # Lookup country and state from codes
             contact_country_id = False

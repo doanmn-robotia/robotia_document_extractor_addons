@@ -5,7 +5,7 @@
         <!-- Replace the else block to add external link button -->
         <xpath expr="//t[@t-else='']" position="replace">
             <t t-if="this.props.record.fields[this.props.name].type == 'many2one'">
-                <Many2OneField record="this.props.record" readonly="this.props.readonly" name="this.props.name" canQuickCreate="false" canCreateEdit="false" canCreate="this.props.canCreate"/>
+                <Many2OneField record="this.props.record" readonly="this.props.readonly" name="this.props.name" canQuickCreate="this.props.canQuickCreate" canCreateEdit="this.props.canCreateEdit" canCreate="this.props.canCreate"/>
             </t>
             <t t-else="">
                 <CharField record="this.props.record" readonly="this.props.readonly" name="this.props.name"/>

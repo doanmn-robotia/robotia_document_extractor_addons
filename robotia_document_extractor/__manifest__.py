@@ -50,11 +50,20 @@
             'robotia_document_extractor/static/src/scss/recovery_dashboard.scss',
             'robotia_document_extractor/static/src/scss/hfc_dashboard.scss',
 
+            # Field Replacement for X2ManyField (Global Patch - must load before other X2Many widgets)
+            'robotia_document_extractor/static/src/js/field_replacement/field_replacement_list_renderer.js',
+            'robotia_document_extractor/static/src/js/field_replacement/field_replacement_x2many.js',
+
             # X2Many Numbered Widget (with row numbers)
             'robotia_document_extractor/static/src/js/x2many_numbered/x2many_numbered_list_renderer.js',
             'robotia_document_extractor/static/src/js/x2many_numbered/x2many_numbered_field.js',
             'robotia_document_extractor/static/src/js/x2many_numbered/x2many_numbered_list_renderer.xml',
             'robotia_document_extractor/static/src/js/x2many_numbered/x2many_numbered.scss',
+
+            # Grouped One2many Widget (section + row numbering + grouped columns)
+            'robotia_document_extractor/static/src/js/grouped_one2many/extraction_grouped_list_renderer.js',
+            'robotia_document_extractor/static/src/js/grouped_one2many/extraction_grouped_list_renderer.xml',
+            'robotia_document_extractor/static/src/js/grouped_one2many/extraction_grouped_one2many_field.js',
 
             # Other existing files
             'robotia_document_extractor/static/src/**/*'

@@ -7,7 +7,7 @@ class EquipmentOwnershipReport(models.Model):
     """Table 2.3: Equipment Ownership Report (Form 02)"""
     _name = 'equipment.ownership.report'
     _description = 'Equipment Ownership Report'
-    _order = 'document_id, sequence, id'
+    _order = 'sequence, id'
 
     document_id = fields.Many2one(
         comodel_name='document.extraction',

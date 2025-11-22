@@ -8,7 +8,7 @@ class SubstanceUsage(models.Model):
     """Table 1.1: Substance Usage (Production, Import, Export)"""
     _name = 'substance.usage'
     _description = 'Substance Usage'
-    _order = 'document_id, sequence, id'
+    _order = 'sequence, id'
 
     document_id = fields.Many2one(
         comodel_name='document.extraction',

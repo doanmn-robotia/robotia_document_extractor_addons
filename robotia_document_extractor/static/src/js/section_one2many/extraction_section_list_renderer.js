@@ -67,8 +67,6 @@ export class ExtractionSectionListRenderer extends X2ManyNumberedListRenderer {
         if (this.isSection(record)) {
             columns = this.getSectionColumns(columns);
         }
-        console.log(columns);
-        
         return columns;
     }
 

@@ -7,7 +7,7 @@ class EquipmentProduct(models.Model):
     """Table 1.2: Equipment/Product Info"""
     _name = 'equipment.product'
     _description = 'Equipment/Product Info'
-    _order = 'document_id, sequence, id'
+    _order = 'sequence, id'
 
     document_id = fields.Many2one(
         comodel_name='document.extraction',

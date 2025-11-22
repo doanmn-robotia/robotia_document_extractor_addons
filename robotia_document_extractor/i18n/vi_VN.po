@@ -167,6 +167,12 @@ msgid "Collection & Recycling"
 msgstr "Thu gom và tái chế"
 
 #. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/grouped_one2many/extraction_grouped_one2many_field.js:0
+msgid "Year %s"
+msgstr "Năm %s"
+
+#. module: robotia_document_extractor
 #: model:ir.model.fields.selection,name:robotia_document_extractor.selection__document_extraction__state__completed
 #. odoo-javascript
 #: code:addons/robotia_document_extractor/static/src/js/dashboard/recent_extraction.js:0
@@ -998,6 +1004,17 @@ msgstr "Chưa có tài liệu nào được trích xuất"
 #: model:ir.actions.act_window,help:robotia_document_extractor.action_document_extraction_all
 msgid "Upload PDF documents to extract data automatically using AI."
 msgstr "Tải lên tài liệu PDF để trích xuất dữ liệu tự động bằng AI."
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_form
+msgid "Quantity (Kg)"
+msgstr "Lượng (Kg)"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_form
+msgid "Quantity (ton CO2tđ)"
+msgstr "Lượng (tấn CO2tđ)"
+
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_form
