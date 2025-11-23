@@ -55,34 +55,42 @@ class SubstanceUsage(models.Model):
 
     # Year 1
     year_1_quantity_kg = fields.Float(
-        string='Year 1 Quantity (kg)'
+        string='Year 1 Quantity (kg)',
+        digits=(16, 4)
     )
     year_1_quantity_co2 = fields.Float(
-        string='Year 1 Quantity (ton CO2)'
+        string='Year 1 Quantity (ton CO2)',
+        digits=(16, 4)
     )
 
     # Year 2
     year_2_quantity_kg = fields.Float(
-        string='Year 2 Quantity (kg)'
+        string='Year 2 Quantity (kg)',
+        digits=(16, 4)
     )
     year_2_quantity_co2 = fields.Float(
-        string='Year 2 Quantity (ton CO2)'
+        string='Year 2 Quantity (ton CO2)',
+        digits=(16, 4)
     )
 
     # Year 3
     year_3_quantity_kg = fields.Float(
-        string='Year 3 Quantity (kg)'
+        string='Year 3 Quantity (kg)',
+        digits=(16, 4)
     )
     year_3_quantity_co2 = fields.Float(
-        string='Year 3 Quantity (ton CO2)'
+        string='Year 3 Quantity (ton CO2)',
+        digits=(16, 4)
     )
 
     # Average
     avg_quantity_kg = fields.Float(
-        string='Average Quantity (kg)'
+        string='Average Quantity (kg)',
+        digits=(16, 4)
     )
     avg_quantity_co2 = fields.Float(
-        string='Average Quantity (ton CO2)'
+        string='Average Quantity (ton CO2)',
+        digits=(16, 4)
     )
 
     # SQL Constraints for data validation

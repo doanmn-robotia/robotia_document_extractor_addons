@@ -61,17 +61,6 @@
             <field name="form_type">both</field>
         </record>
 
-       <record id="substance_hfc_23" model="controlled.substance">
-            <field name="name">HFC-23</field>
-            <field name="code">R-23</field>
-            <field name="formula">CHF3</field>
-            <field name="cas_number">75-46-7</field>
-            <field name="hs_code_id" ref="hs_code_84151020"/>
-            <field name="gwp">14800</field>
-            <field name="form_type">both</field>
-        </record>
-
-
         <record id="substance_hfc_134a" model="controlled.substance">
             <field name="name">HFC-134a</field>
             <field name="code">R-134a</field>
@@ -238,6 +227,7 @@
             <field name="formula">CHF3</field>
             <field name="cas_number">75-46-7</field>
             <field name="hs_code_id" ref="hs_code_29033900"/>
+            <field name="sub_hs_code_ids" eval="[(6, 0, [ref('hs_code_84151020')])]"/>
             <field name="gwp">14800</field>
             <field name="form_type">both</field>
         </record>

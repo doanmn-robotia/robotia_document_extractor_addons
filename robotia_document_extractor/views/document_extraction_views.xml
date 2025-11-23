@@ -69,7 +69,7 @@
                                 <group string="Contact Details" colspan="2">
                                     <field name="contact_address"/>
                                     <field name="contact_country_id"/>
-                                    <field name="contact_state_id"/>
+                                    <field name="contact_state_id" domain="[('country_id', '=', contact_country_id)]"/>
                                     <field name="contact_phone"/>
                                     <field name="contact_fax"/>
                                     <field name="contact_email" widget="email"/>
@@ -158,7 +158,8 @@
                                     <field name="sequence" widget="handle" options="{'enable_formatting': false}"/>
                                     <field name="product_type" widget="extraction_title_field"/>
                                     <field name="hs_code"/>
-                                    <field name="capacity"/>
+                                    <field name="cooling_capacity"/>
+                                    <field name="power_capacity"/>
                                     <field name="quantity"/>
                                     <field name="substance_id" required="1" options="{'no_quick_create': True}"/>
                                     <field name="substance_quantity_per_unit"/>
@@ -181,7 +182,8 @@
                                     <field name="sequence" widget="handle" options="{'enable_formatting': false}"/>
                                     <field name="equipment_type" widget="extraction_title_field"/>
                                     <field name="start_year" options="{'enable_formatting': false}"/>
-                                    <field name="capacity"/>
+                                    <field name="cooling_capacity"/>
+                                    <field name="power_capacity"/>
                                     <field name="substance_id" required="1" options="{'no_quick_create': True}"/>
                                     <field name="equipment_quantity" options="{'enable_formatting': false}"/>
                                     <field name="refill_frequency"/>
@@ -256,7 +258,8 @@
                                     <field name="sequence" widget="handle" options="{'enable_formatting': false}"/>
                                     <field name="product_type" widget="extraction_title_field"/>
                                     <field name="hs_code"/>
-                                    <field name="capacity"/>
+                                    <field name="cooling_capacity"/>
+                                    <field name="power_capacity"/>
                                     <field name="quantity"/>
                                     <field name="substance_id" required="1" options="{'no_quick_create': True}"/>
                                     <field name="substance_quantity_per_unit"/>
@@ -281,7 +284,8 @@
                                     <field name="equipment_type" widget="extraction_title_field"/>
                                     <field name="equipment_quantity" options="{'enable_formatting': false}"/>
                                     <field name="substance_id" required="1" options="{'no_quick_create': True}"/>
-                                    <field name="capacity"/>
+                                    <field name="cooling_capacity"/>
+                                    <field name="power_capacity"/>
                                     <field name="start_year" options="{'enable_formatting': false}"/>
                                     <field name="refill_frequency"/>
                                     <field name="substance_quantity_per_refill"/>

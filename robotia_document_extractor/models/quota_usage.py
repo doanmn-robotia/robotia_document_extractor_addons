@@ -44,30 +44,37 @@ class QuotaUsage(models.Model):
 
     # Allocated Quota
     allocated_quota_kg = fields.Float(
-        string='Allocated Quota (kg)'
+        string='Allocated Quota (kg)',
+        digits=(16, 4)
     )
     allocated_quota_co2 = fields.Float(
-        string='Allocated Quota (ton CO2)'
+        string='Allocated Quota (ton CO2)',
+        digits=(16, 4)
     )
 
     # Adjusted Quota
     adjusted_quota_kg = fields.Float(
-        string='Adjusted Quota (kg)'
+        string='Adjusted Quota (kg)',
+        digits=(16, 4)
     )
     adjusted_quota_co2 = fields.Float(
-        string='Adjusted Quota (ton CO2)'
+        string='Adjusted Quota (ton CO2)',
+        digits=(16, 4)
     )
 
     # Total Quota Usage
     total_quota_kg = fields.Float(
         string='Total Quota (kg)',
+        digits=(16, 4),
         index=True  # Add index for sorting/filtering in dashboards
     )
     total_quota_co2 = fields.Float(
-        string='Total Quota (ton CO2)'
+        string='Total Quota (ton CO2)',
+        digits=(16, 4)
     )
     average_price = fields.Float(
-        string='Average Price'
+        string='Average Price',
+        digits=(16, 4)
     )
     country_text = fields.Char(
         string='Export/Import Country',
@@ -79,10 +86,12 @@ class QuotaUsage(models.Model):
 
     # Next Year Registration
     next_year_quota_kg = fields.Float(
-        string='Next Year Quota (kg)'
+        string='Next Year Quota (kg)',
+        digits=(16, 4)
     )
     next_year_quota_co2 = fields.Float(
-        string='Next Year Quota (ton CO2)'
+        string='Next Year Quota (ton CO2)',
+        digits=(16, 4)
     )
 
     # SQL Constraints for data validation

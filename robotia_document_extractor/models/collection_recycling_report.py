@@ -23,19 +23,19 @@ class CollectionRecyclingReport(models.Model):
     substance_name = fields.Char(string='Substance Name', compute='_compute_substance_name', store=True, readonly=False, required=True)
 
     # Collection
-    collection_quantity_kg = fields.Float(string='Collection Quantity (kg)')
+    collection_quantity_kg = fields.Float(string='Collection Quantity (kg)', digits=(16, 4))
     collection_location_id = fields.Many2one('collection.location', string='Collection Location', ondelete='restrict')
     collection_location = fields.Char(string='Collection Location Text', compute='_compute_collection_location', store=True, readonly=False)
     storage_location_id = fields.Many2one('collection.location', string='Storage Location', ondelete='restrict')
     storage_location = fields.Char(string='Storage Location Text', compute='_compute_storage_location', store=True, readonly=False)
 
     # Reuse
-    reuse_quantity_kg = fields.Float(string='Reuse Quantity (kg)')
+    reuse_quantity_kg = fields.Float(string='Reuse Quantity (kg)', digits=(16, 4))
     reuse_technology_id = fields.Many2one('recycling.technology', string='Reuse Technology', ondelete='restrict')
     reuse_technology = fields.Char(string='Reuse Technology Text', compute='_compute_reuse_technology', store=True, readonly=False)
 
     # Recycle
-    recycle_quantity_kg = fields.Float(string='Recycle Quantity (kg)')
+    recycle_quantity_kg = fields.Float(string='Recycle Quantity (kg)', digits=(16, 4))
     recycle_technology_id = fields.Many2one('recycling.technology', string='Recycle Technology', ondelete='restrict')
     recycle_technology = fields.Char(string='Recycle Technology Text', compute='_compute_recycle_technology', store=True, readonly=False)
     recycle_facility_id = fields.Many2one('recycling.facility', string='Recycle Facility', ondelete='restrict')
@@ -43,7 +43,7 @@ class CollectionRecyclingReport(models.Model):
     recycle_usage_location = fields.Char(string='Usage Location Text', compute='_compute_recycle_location', store=True, readonly=False)
 
     # Disposal
-    disposal_quantity_kg = fields.Float(string='Disposal Quantity (kg)')
+    disposal_quantity_kg = fields.Float(string='Disposal Quantity (kg)', digits=(16, 4))
     disposal_technology_id = fields.Many2one('recycling.technology', string='Disposal Technology', ondelete='restrict')
     disposal_technology = fields.Char(string='Disposal Technology Text', compute='_compute_disposal_technology', store=True, readonly=False)
     disposal_facility_id = fields.Many2one('recycling.facility', string='Disposal Facility', ondelete='restrict')

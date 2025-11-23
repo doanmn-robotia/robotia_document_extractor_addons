@@ -54,11 +54,15 @@ class EquipmentProduct(models.Model):
         readonly=False,
         help='HS code (auto-filled from hs_code_id)'
     )
-    capacity = fields.Char(
-        string='Cooling Capacity/Power'
+    cooling_capacity = fields.Char(
+        string='Cooling Capacity'
+    )
+    power_capacity = fields.Char(
+        string='Power Capacity'
     )
     quantity = fields.Float(
-        string='Quantity'
+        string='Quantity',
+        digits=(16, 4)
     )
     substance_id = fields.Many2one(
         comodel_name='controlled.substance',
@@ -75,7 +79,8 @@ class EquipmentProduct(models.Model):
         help='Substance name (auto-filled from substance_id)'
     )
     substance_quantity_per_unit = fields.Float(
-        string='Substance Quantity per Unit'
+        string='Substance Quantity per Unit',
+        digits=(16, 4)
     )
     notes = fields.Text(
         string='Notes'

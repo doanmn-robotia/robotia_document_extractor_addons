@@ -57,10 +57,12 @@ class CollectionRecycling(models.Model):
         help='Substance name (auto-filled from substance_id)'
     )
     quantity_kg = fields.Float(
-        string='Quantity (kg)'
+        string='Quantity (kg)',
+        digits=(16, 4)
     )
     quantity_co2 = fields.Float(
-        string='Quantity (ton CO2)'
+        string='Quantity (ton CO2)',
+        digits=(16, 4)
     )
 
     @api.depends('substance_id')

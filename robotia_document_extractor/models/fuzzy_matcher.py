@@ -140,24 +140,44 @@ class FuzzyMatcher(models.AbstractModel):
 
             if normalized_hs:
                 # Strategy 3: Exact HS code match
+                # Priority 1: Match primary HS code
                 hs_exact_match = self.env['controlled.substance'].search([
                     ('hs_code_id.code', '=', normalized_hs)
                 ], limit=1)
 
                 if hs_exact_match:
-                    _logger.info(f"HS code exact match: hs='{hs_code_term}' -> {hs_exact_match.name}")
+                    _logger.info(f"HS code exact match (primary): hs='{hs_code_term}' -> {hs_exact_match.name}")
                     return hs_exact_match
+
+                # Priority 2: Match alternative HS codes
+                hs_alt_match = self.env['controlled.substance'].search([
+                    ('sub_hs_code_ids.code', '=', normalized_hs)
+                ], limit=1)
+
+                if hs_alt_match:
+                    _logger.info(f"HS code exact match (alternative): hs='{hs_code_term}' -> {hs_alt_match.name}")
+                    return hs_alt_match
 
                 # Strategy 4: HS code prefix match (first 6 digits)
                 if len(normalized_hs) >= 6:
                     hs_prefix = normalized_hs[:6]
+                    # Priority 1: Match primary HS code prefix
                     hs_prefix_match = self.env['controlled.substance'].search([
                         ('hs_code_id.code', '=ilike', f'{hs_prefix}%')
                     ], limit=1)
 
                     if hs_prefix_match:
-                        _logger.info(f"HS code prefix match: hs='{hs_code_term}' -> {hs_prefix_match.name}")
+                        _logger.info(f"HS code prefix match (primary): hs='{hs_code_term}' -> {hs_prefix_match.name}")
                         return hs_prefix_match
+
+                    # Priority 2: Match alternative HS code prefix
+                    hs_alt_prefix_match = self.env['controlled.substance'].search([
+                        ('sub_hs_code_ids.code', '=ilike', f'{hs_prefix}%')
+                    ], limit=1)
+
+                    if hs_alt_prefix_match:
+                        _logger.info(f"HS code prefix match (alternative): hs='{hs_code_term}' -> {hs_alt_prefix_match.name}")
+                        return hs_alt_prefix_match
 
         # Strategy 5: Partial ILIKE match (last resort)
         # Search for partial matches in name or code

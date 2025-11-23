@@ -31,12 +31,20 @@ class ControlledSubstance(models.Model):
         index=True,
         help='Harmonized System Code for customs/trade classification'
     )
+    sub_hs_code_ids = fields.Many2many(
+        comodel_name='hs.code',
+        relation='controlled_substance_sub_hs_code_rel',
+        column1='substance_id',
+        column2='hs_code_id',
+        string='Alternative HS Codes',
+        help='Alternative HS codes for this substance. Used in fuzzy search when primary HS code does not match.'
+    )
     hs_code_display = fields.Char(
         string='HS Code (Display)',
-        related='hs_code_id.code',
+        compute='_compute_hs_code_display',
         store=True,
         readonly=True,
-        help='HS Code for display purposes'
+        help='HS Code for display purposes, including alternatives'
     )
     form_type = fields.Selection(
         selection=[
@@ -76,6 +84,19 @@ class ControlledSubstance(models.Model):
     _sql_constraints = [
         ('code_unique', 'UNIQUE(code)', 'The substance code must be unique!')
     ]
+
+    @api.depends('hs_code_id', 'sub_hs_code_ids')
+    def _compute_hs_code_display(self):
+        """Compute HS code display with primary and alternative codes"""
+        for record in self:
+            if record.hs_code_id:
+                display = record.hs_code_id.code
+                if record.sub_hs_code_ids:
+                    alt_codes = ', '.join(record.sub_hs_code_ids.mapped('code'))
+                    display = f"{display} (Alt: {alt_codes})"
+                record.hs_code_display = display
+            else:
+                record.hs_code_display = False
 
     @api.model
     def name_create(self, name):

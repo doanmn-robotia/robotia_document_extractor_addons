@@ -126,12 +126,20 @@ msgid "CAS Number"
 msgstr "Số CAS"
 
 #. module: robotia_document_extractor
-#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_product__capacity
-#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_ownership__capacity
-#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_product_report__capacity
-#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_ownership_report__capacity
-msgid "Cooling Capacity/Power"
-msgstr "Năng suất lạnh/Công suất điện"
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_product__cooling_capacity
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_ownership__cooling_capacity
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_product_report__cooling_capacity
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_ownership_report__cooling_capacity
+msgid "Cooling Capacity"
+msgstr "Năng suất lạnh"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_product__power_capacity
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_ownership__power_capacity
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_product_report__power_capacity
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_ownership_report__power_capacity
+msgid "Power Capacity"
+msgstr "Công suất điện"
 
 #. module: robotia_document_extractor
 #: model:ir.model.fields,field_description:robotia_document_extractor.field_controlled_substance__code
@@ -2925,3 +2933,23 @@ msgstr "Hỗn hợp chất làm lạnh chứa hydrofluoroolefin (HFO) - Hỗn h�
 #: model:hs.code,product_category:robotia_document_extractor.hs_code_38276800
 msgid "Refrigerant Blends - New generation (HFO/HFC)"
 msgstr "Hỗn hợp chất làm lạnh - Thế hệ mới (HFO/HFC)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_controlled_substance__sub_hs_code_ids
+msgid "Alternative HS Codes"
+msgstr "Mã HS thay thế"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_controlled_substance__sub_hs_code_ids
+msgid "Alternative HS codes for this substance. Used in fuzzy search when primary HS code does not match."
+msgstr "Mã HS thay thế cho chất này. Được sử dụng trong tìm kiếm mờ khi mã HS chính không khớp."
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_controlled_substance__hs_code_display
+msgid "HS Code (Display)"
+msgstr "Mã HS (Hiển thị)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_controlled_substance__hs_code_display
+msgid "HS Code for display purposes, including alternatives"
+msgstr "Mã HS để hiển thị, bao gồm cả mã thay thế"

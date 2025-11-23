@@ -43,8 +43,11 @@ class EquipmentOwnership(models.Model):
     start_year = fields.Integer(
         string='Year Started'
     )
-    capacity = fields.Char(
-        string='Cooling Capacity/Power'
+    cooling_capacity = fields.Char(
+        string='Cooling Capacity'
+    )
+    power_capacity = fields.Char(
+        string='Power Capacity'
     )
     equipment_quantity = fields.Integer(
         string='Quantity'
@@ -64,10 +67,12 @@ class EquipmentOwnership(models.Model):
         help='Substance name (auto-filled from substance_id)'
     )
     refill_frequency = fields.Float(
-        string='Refill Frequency (times/year)'
+        string='Refill Frequency (times/year)',
+        digits=(16, 4)
     )
     substance_quantity_per_refill = fields.Float(
-        string='Substance Quantity per Refill'
+        string='Substance Quantity per Refill',
+        digits=(16, 4)
     )
 
     @api.depends('equipment_type_id')

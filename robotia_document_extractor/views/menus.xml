@@ -12,11 +12,12 @@
             <list string="Controlled Substances">
                 <field name="name"/>
                 <field name="code"/>
+                <field name="hs_code_id" options="{'no_create': True}"/>
                 <field name="formula"/>
                 <field name="cas_number"/>
                 <field name="form_type"/>
                 <field name="gwp"/>
-                <field name="active"/>
+                <field name="active" column_invisible="1"/>
                 <button name="action_view_dashboard" type="object" string="Dashboard" icon="fa-bar-chart"/>
             </list>
         </field>
@@ -42,6 +43,7 @@
                             <field name="code"/>
                             <field name="formula"/>
                             <field name="hs_code_id" options="{'no_create': True}"/>
+                            <field name="sub_hs_code_ids" widget="many2many_tags" options="{'no_create': True}"/>
                         </group>
                         <group>
                             <field name="cas_number"/>

@@ -768,6 +768,23 @@ CRITICAL: Many companies submit PARTIALLY FILLED templates with mockup data.
 - "1" vs "7": Use unit context
 - When unclear: Mark as null, DON'T guess
 
+**Capacity field parsing (CRITICAL for Tables 1.2 and 1.3):**
+The PDF may present capacity data in TWO different formats:
+1. **Combined column**: Single column "Công suất lạnh/Công suất điện" with "/" separator
+   - Example: "5 HP/3.5 kW" → cooling_capacity: "5 HP", power_capacity: "3.5 kW"
+   - Example: "10 kW/2.5 HP" → cooling_capacity: "10 kW", power_capacity: "2.5 HP"
+   - Split on "/" and assign left part to cooling_capacity, right part to power_capacity
+2. **Separate columns**: Two distinct columns for cooling and power
+   - Map directly to cooling_capacity and power_capacity respectively
+   - No splitting required
+
+**Parsing rules:**
+- If you see "/" in capacity value → Split on "/" (trim whitespace)
+- If you see separate columns → Map each to its respective field
+- If only one value exists without "/" → Put it in cooling_capacity, leave power_capacity empty
+- Preserve units (HP, kW, BTU, etc.) exactly as written
+- Handle missing values → Set both fields to null or empty string
+
 ## PART III: COMPLETE JSON OUTPUT STRUCTURE
 
 Return JSON with ALL fields below (no omissions, no "..."):
@@ -790,7 +807,7 @@ Return JSON with ALL fields below (no omissions, no "..."):
   "contact_fax": "<string>",
   "contact_email": "<string>",
   "contact_country_code": "<ISO 2-letter code: VN, US, CN, etc.>",
-  "contact_state_code": "<Province code: VN-HN, VN-SG, VN-DN, VN-BD, etc.> (formula: contact_country_code + '-' + province code)",
+  "contact_state_code": "<Province code: VN-HN, VN-SG, VN-DN, VN-BD, etc.> (formula: contact_country_code + '-' + province code, you MUST give the state code if you found country code)",
 
   "activity_field_codes": [
     // Array of codes from checked activities:
@@ -829,7 +846,8 @@ Return JSON with ALL fields below (no omissions, no "..."):
       "sequence": <integer>,
       "product_type": "<IMPORTANT: If is_title=true, this contains the section title. If is_title=false, this contains the equipment model/type>",
       "hs_code": "<string - HS code like 8415.10, 8418.50>",
-      "capacity": "<string - cooling capacity/power>",
+      "cooling_capacity": "<string - cooling capacity (if combined with '/', split on '/'; if separate column, use directly)>",
+      "power_capacity": "<string - power capacity (if combined with '/', split on '/'; if separate column, use directly)>",
       "quantity": <float or null>,
       "substance_name": "<standardized substance name>",
       "substance_quantity_per_unit": <float or null>,
@@ -844,7 +862,8 @@ Return JSON with ALL fields below (no omissions, no "..."):
       "sequence": <integer>,
       "equipment_type": "<IMPORTANT: If is_title=true, this contains the section title. If is_title=false, this contains the equipment model/manufacturer>",
       "start_year": <integer or null - year equipment was put into use>,
-      "capacity": "<string - cooling capacity/power>",
+      "cooling_capacity": "<string - cooling capacity (if combined with '/', split on '/'; if separate column, use directly)>",
+      "power_capacity": "<string - power capacity (if combined with '/', split on '/'; if separate column, use directly)>",
       "equipment_quantity": <integer or null>,
       "substance_name": "<standardized substance name>",
       "refill_frequency": <float or null - times per year>,
@@ -950,6 +969,23 @@ CRITICAL: Many companies submit PARTIALLY FILLED templates with mockup data.
 **Handwritten ambiguity:**
 - When unclear: Mark as null, DON'T guess
 
+**Capacity field parsing (CRITICAL for Tables 2.2 and 2.3):**
+The PDF may present capacity data in TWO different formats:
+1. **Combined column**: Single column "Công suất lạnh/Công suất điện" with "/" separator
+   - Example: "5 HP/3.5 kW" → cooling_capacity: "5 HP", power_capacity: "3.5 kW"
+   - Example: "10 kW/2.5 HP" → cooling_capacity: "10 kW", power_capacity: "2.5 HP"
+   - Split on "/" and assign left part to cooling_capacity, right part to power_capacity
+2. **Separate columns**: Two distinct columns for cooling and power
+   - Map directly to cooling_capacity and power_capacity respectively
+   - No splitting required
+
+**Parsing rules:**
+- If you see "/" in capacity value → Split on "/" (trim whitespace)
+- If you see separate columns → Map each to its respective field
+- If only one value exists without "/" → Put it in cooling_capacity, leave power_capacity empty
+- Preserve units (HP, kW, BTU, etc.) exactly as written
+- Handle missing values → Set both fields to null or empty string
+
 ## PART III: COMPLETE JSON OUTPUT STRUCTURE
 
 Return JSON with ALL fields below (no omissions, no "..."):
@@ -972,7 +1008,7 @@ Return JSON with ALL fields below (no omissions, no "..."):
   "contact_fax": "<string>",
   "contact_email": "<string>",
   "contact_country_code": "<ISO 2-letter code: VN, US, CN, etc.>",
-  "contact_state_code": "<Province code: HN, SG, DN, BD, etc.>",
+  "contact_state_code": "<Province code: VN-HN, VN-SG, VN-DN, VN-BD, etc.> (formula: contact_country_code + '-' + province code, you MUST give the state code if you found country code)",
 
   "activity_field_codes": [
     // Array of codes from checked activities
@@ -1013,7 +1049,8 @@ Return JSON with ALL fields below (no omissions, no "..."):
       "production_type": "<production|import>",
       "product_type": "<IMPORTANT: If is_title=true, this contains the section title. If is_title=false, this contains the equipment model/type>",
       "hs_code": "<string>",
-      "capacity": "<string>",
+      "cooling_capacity": "<string - cooling capacity (if combined with '/', split on '/'; if separate column, use directly)>",
+      "power_capacity": "<string - power capacity (if combined with '/', split on '/'; if separate column, use directly)>",
       "quantity": <float or null>,
       "substance_name": "<standardized substance name>",
       "substance_quantity_per_unit": <float or null>,
@@ -1030,7 +1067,8 @@ Return JSON with ALL fields below (no omissions, no "..."):
       "equipment_type": "<IMPORTANT: If is_title=true, this contains the section title. If is_title=false, this contains the equipment model/manufacturer>",
       "equipment_quantity": <integer or null>,
       "substance_name": "<standardized substance name>",
-      "capacity": "<string>",
+      "cooling_capacity": "<string - cooling capacity (if combined with '/', split on '/'; if separate column, use directly)>",
+      "power_capacity": "<string - power capacity (if combined with '/', split on '/'; if separate column, use directly)>",
       "start_year": <integer or null>,
       "refill_frequency": <float or null - times per year>,
       "substance_quantity_per_refill": <float or null>,
