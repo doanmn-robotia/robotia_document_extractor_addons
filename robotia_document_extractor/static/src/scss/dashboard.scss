@@ -104,6 +104,86 @@
                 .upload-info {
                     color: #94a3b8; // slate-400
                 }
+
+                // File Preview Card
+                .file-preview-card {
+                    max-width: 600px;
+                    margin: 0 auto;
+
+                    .file-preview-header {
+                        display: flex;
+                        align-items: center;
+                        gap: 1rem;
+                        padding: 1.5rem;
+                        background-color: #f8fafc; // slate-50
+                        border: 2px solid #e2e8f0; // slate-200
+                        border-radius: 0.75rem;
+
+                        i.fa-file-pdf-o {
+                            font-size: 2rem;
+                            color: #dc2626; // red-600
+                            flex-shrink: 0;
+                        }
+
+                        .file-preview-info {
+                            flex: 1;
+                            min-width: 0;
+
+                            .file-preview-name {
+                                color: #1e293b; // slate-800
+                                font-size: 1rem;
+                                font-weight: 600;
+                                margin: 0;
+                                white-space: nowrap;
+                                overflow: hidden;
+                                text-overflow: ellipsis;
+                            }
+
+                            .file-preview-size {
+                                color: #64748b; // slate-500
+                                font-size: 0.875rem;
+                                margin: 0.25rem 0 0 0;
+                            }
+                        }
+
+                        button {
+                            flex-shrink: 0;
+                            border-color: #e2e8f0;
+                            color: #64748b;
+
+                            &:hover {
+                                background-color: #fee2e2; // red-100
+                                border-color: #fecaca; // red-200
+                                color: #dc2626; // red-600
+                            }
+
+                            i {
+                                font-size: 1.125rem;
+                            }
+                        }
+                    }
+
+                    .file-preview-actions {
+                        .btn-primary {
+                            background-color: #2563eb;
+                            border-color: #2563eb;
+                            font-weight: 600;
+                            padding: 0.75rem 1.5rem;
+                            font-size: 1rem;
+
+                            &:hover {
+                                background-color: #1d4ed8; // blue-700
+                                border-color: #1d4ed8;
+                                transform: translateY(-1px);
+                                box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);
+                            }
+
+                            i {
+                                font-size: 1.125rem;
+                            }
+                        }
+                    }
+                }
             }
 
             .uploading-state {
