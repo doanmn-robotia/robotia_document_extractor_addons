@@ -8,6 +8,7 @@
     'depends': ['web'],
     'data': [
         'security/ir.model.access.csv',
+        'data/hs_code_data.xml',
         'data/master_data.xml',
         'data/substance_groups_data.xml',
         'data/default_prompts.xml',

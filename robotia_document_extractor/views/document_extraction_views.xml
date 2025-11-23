@@ -68,6 +68,8 @@
                             <group>
                                 <group string="Contact Details" colspan="2">
                                     <field name="contact_address"/>
+                                    <field name="contact_country_id"/>
+                                    <field name="contact_state_id"/>
                                     <field name="contact_phone"/>
                                     <field name="contact_fax"/>
                                     <field name="contact_email" widget="email"/>
@@ -231,7 +233,7 @@
                                     <field name="total_quota_kg"/>
                                     <field name="total_quota_co2"/>
                                     <field name="average_price"/>
-                                    <field name="country_id"/>
+                                    <field name="country_text"/>
                                     <field name="customs_declaration_number"/>
                                     <field name="next_year_quota_kg"/>
                                     <field name="next_year_quota_co2"/>

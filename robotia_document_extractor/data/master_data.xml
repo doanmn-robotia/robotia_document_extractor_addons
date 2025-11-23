@@ -50,107 +50,46 @@
             <field name="sequence">80</field>
         </record>
 
-        <!-- Common Controlled Substances -->
-        <!-- HFC Group -->
-        <record id="substance_hfc_134a" model="controlled.substance">
-            <field name="name">HFC-134a</field>
-            <field name="code">HFC-134a</field>
-            <field name="formula">CH2FCF3</field>
-            <field name="cas_number">811-97-2</field>
-            <field name="form_type">both</field>
-            <field name="gwp">1430</field>
-        </record>
-
-        <record id="substance_hfc_125" model="controlled.substance">
-            <field name="name">HFC-125</field>
-            <field name="code">HFC-125</field>
-            <field name="formula">CHF2CF3</field>
-            <field name="cas_number">354-33-6</field>
-            <field name="form_type">both</field>
-            <field name="gwp">3500</field>
-        </record>
-
-        <record id="substance_hfc_143a" model="controlled.substance">
-            <field name="name">HFC-143a</field>
-            <field name="code">HFC-143a</field>
-            <field name="formula">CH3CF3</field>
-            <field name="cas_number">420-46-2</field>
-            <field name="form_type">both</field>
-            <field name="gwp">4470</field>
-        </record>
-
-        <record id="substance_hfc_32" model="controlled.substance">
-            <field name="name">HFC-32</field>
-            <field name="code">HFC-32</field>
-            <field name="formula">CH2F2</field>
-            <field name="cas_number">75-10-5</field>
-            <field name="form_type">both</field>
-            <field name="gwp">675</field>
-        </record>
-
-        <record id="substance_r410a" model="controlled.substance">
-            <field name="name">R-410A (HFC blend)</field>
-            <field name="code">R-410A</field>
-            <field name="formula">50% HFC-32, 50% HFC-125</field>
-            <field name="cas_number">N/A</field>
-            <field name="form_type">both</field>
-            <field name="gwp">2088</field>
-        </record>
-
-        <record id="substance_r407c" model="controlled.substance">
-            <field name="name">R-407C (HFC blend)</field>
-            <field name="code">R-407C</field>
-            <field name="formula">23% HFC-32, 25% HFC-125, 52% HFC-134a</field>
-            <field name="cas_number">N/A</field>
-            <field name="form_type">both</field>
-            <field name="gwp">1774</field>
-        </record>
-
-        <!-- HCFC Group -->
-        <record id="substance_hcfc_22" model="controlled.substance">
-            <field name="name">HCFC-22</field>
-            <field name="code">HCFC-22</field>
-            <field name="formula">CHClF2</field>
-            <field name="cas_number">75-45-6</field>
-            <field name="form_type">both</field>
-            <field name="gwp">1810</field>
-        </record>
-
-        <record id="substance_hcfc_141b" model="controlled.substance">
-            <field name="name">HCFC-141b</field>
-            <field name="code">HCFC-141b</field>
-            <field name="formula">CH3CCl2F</field>
-            <field name="cas_number">1717-00-6</field>
-            <field name="form_type">both</field>
-            <field name="gwp">725</field>
-        </record>
-
-        <record id="substance_hcfc_142b" model="controlled.substance">
-            <field name="name">HCFC-142b</field>
-            <field name="code">HCFC-142b</field>
-            <field name="formula">CH3CClF2</field>
-            <field name="cas_number">75-68-3</field>
-            <field name="form_type">both</field>
-            <field name="gwp">2310</field>
-        </record>
-
-        <!-- Additional HFC Single Components -->
+        <!-- Controlled Substances - HFC Group -->
         <record id="substance_hfc_134" model="controlled.substance">
             <field name="name">HFC-134</field>
             <field name="code">R-134</field>
             <field name="formula">CHF2CHF2</field>
             <field name="cas_number">359-35-3</field>
-            <field name="form_type">both</field>
+            <field name="hs_code_id" ref="hs_code_29034500"/>
             <field name="gwp">1100</field>
+            <field name="form_type">both</field>
+        </record>
+
+       <record id="substance_hfc_23" model="controlled.substance">
+            <field name="name">HFC-23</field>
+            <field name="code">R-23</field>
+            <field name="formula">CHF3</field>
+            <field name="cas_number">75-46-7</field>
+            <field name="hs_code_id" ref="hs_code_84151020"/>
+            <field name="gwp">14800</field>
+            <field name="form_type">both</field>
+        </record>
+
+
+        <record id="substance_hfc_134a" model="controlled.substance">
+            <field name="name">HFC-134a</field>
+            <field name="code">R-134a</field>
+            <field name="formula">CH2FCF3</field>
+            <field name="cas_number">811-97-2</field>
+            <field name="hs_code_id" ref="hs_code_29034500"/>
+            <field name="gwp">1430</field>
+            <field name="form_type">both</field>
         </record>
 
         <record id="substance_hfc_143" model="controlled.substance">
             <field name="name">HFC-143</field>
             <field name="code">R-143</field>
-            <field name="formula">CH2FCHF2</field>
+            <field name="formula">CH3CHF2</field>
             <field name="cas_number">430-66-0</field>
-            <field name="form_type">both</field>
+            <field name="hs_code_id" ref="hs_code_29034400"/>
             <field name="gwp">353</field>
+            <field name="form_type">both</field>
         </record>
 
         <record id="substance_hfc_245fa" model="controlled.substance">
@@ -158,8 +97,9 @@
             <field name="code">R-245fa</field>
             <field name="formula">CHF2CH2CF3</field>
             <field name="cas_number">460-73-1</field>
-            <field name="form_type">both</field>
+            <field name="hs_code_id" ref="hs_code_29034700"/>
             <field name="gwp">1030</field>
+            <field name="form_type">both</field>
         </record>
 
         <record id="substance_hfc_365mfc" model="controlled.substance">
@@ -167,8 +107,9 @@
             <field name="code">R-365mfc</field>
             <field name="formula">CH3CF2CH2CF3</field>
             <field name="cas_number">406-58-6</field>
-            <field name="form_type">both</field>
+            <field name="hs_code_id" ref="hs_code_29034800"/>
             <field name="gwp">794</field>
+            <field name="form_type">both</field>
         </record>
 
         <record id="substance_hfc_227ea" model="controlled.substance">
@@ -176,26 +117,29 @@
             <field name="code">R-227ea</field>
             <field name="formula">CF3CHFCF3</field>
             <field name="cas_number">431-89-0</field>
-            <field name="form_type">both</field>
+            <field name="hs_code_id" ref="hs_code_29034700"/>
             <field name="gwp">3220</field>
+            <field name="form_type">both</field>
         </record>
 
         <record id="substance_hfc_236cb" model="controlled.substance">
             <field name="name">HFC-236cb</field>
             <field name="code">R-236cb</field>
             <field name="formula">CH2FCF2CF3</field>
-            <field name="cas_number">677-56-5</field>
-            <field name="form_type">both</field>
+            <field name="cas_number">N/A</field>
+            <field name="hs_code_id" ref="hs_code_29034700"/>
             <field name="gwp">1340</field>
+            <field name="form_type">both</field>
         </record>
 
         <record id="substance_hfc_236ea" model="controlled.substance">
             <field name="name">HFC-236ea</field>
             <field name="code">R-236ea</field>
             <field name="formula">CHF2CHFCF3</field>
-            <field name="cas_number">431-63-0</field>
-            <field name="form_type">both</field>
+            <field name="cas_number">N/A</field>
+            <field name="hs_code_id" ref="hs_code_29034700"/>
             <field name="gwp">1370</field>
+            <field name="form_type">both</field>
         </record>
 
         <record id="substance_hfc_236fa" model="controlled.substance">
@@ -203,8 +147,9 @@
             <field name="code">R-236fa</field>
             <field name="formula">CF3CH2CF3</field>
             <field name="cas_number">690-39-1</field>
-            <field name="form_type">both</field>
+            <field name="hs_code_id" ref="hs_code_29034700"/>
             <field name="gwp">9810</field>
+            <field name="form_type">both</field>
         </record>
 
         <record id="substance_hfc_245ca" model="controlled.substance">
@@ -212,8 +157,9 @@
             <field name="code">R-245ca</field>
             <field name="formula">CH2FCF2CHF2</field>
             <field name="cas_number">679-86-7</field>
-            <field name="form_type">both</field>
+            <field name="hs_code_id" ref="hs_code_29034700"/>
             <field name="gwp">693</field>
+            <field name="form_type">both</field>
         </record>
 
         <record id="substance_hfc_43_10mee" model="controlled.substance">
@@ -221,8 +167,39 @@
             <field name="code">R-43-10mee</field>
             <field name="formula">CF3CHFCHFCF2CF3</field>
             <field name="cas_number">138495-42-8</field>
-            <field name="form_type">both</field>
+            <field name="hs_code_id" ref="hs_code_29034800"/>
             <field name="gwp">1640</field>
+            <field name="form_type">both</field>
+        </record>
+
+        <record id="substance_hfc_32" model="controlled.substance">
+            <field name="name">HFC-32</field>
+            <field name="code">R-32</field>
+            <field name="formula">CH2F2</field>
+            <field name="cas_number">75-10-5</field>
+            <field name="hs_code_id" ref="hs_code_29034300"/>
+            <field name="gwp">675</field>
+            <field name="form_type">both</field>
+        </record>
+
+        <record id="substance_hfc_125" model="controlled.substance">
+            <field name="name">HFC-125</field>
+            <field name="code">R-125</field>
+            <field name="formula">CHF2CF3</field>
+            <field name="cas_number">354-33-6</field>
+            <field name="hs_code_id" ref="hs_code_29034400"/>
+            <field name="gwp">3500</field>
+            <field name="form_type">both</field>
+        </record>
+
+        <record id="substance_hfc_143a" model="controlled.substance">
+            <field name="name">HFC-143a</field>
+            <field name="code">R-143a</field>
+            <field name="formula">CF3CH3</field>
+            <field name="cas_number">420-46-2</field>
+            <field name="hs_code_id" ref="hs_code_29034400"/>
+            <field name="gwp">4470</field>
+            <field name="form_type">both</field>
         </record>
 
         <record id="substance_hfc_41" model="controlled.substance">
@@ -230,8 +207,9 @@
             <field name="code">R-41</field>
             <field name="formula">CH3F</field>
             <field name="cas_number">593-53-3</field>
-            <field name="form_type">both</field>
+            <field name="hs_code_id" ref="hs_code_29034300"/>
             <field name="gwp">92</field>
+            <field name="form_type">both</field>
         </record>
 
         <record id="substance_hfc_152" model="controlled.substance">
@@ -239,8 +217,9 @@
             <field name="code">R-152</field>
             <field name="formula">CH2FCH2F</field>
             <field name="cas_number">624-72-6</field>
-            <field name="form_type">both</field>
+            <field name="hs_code_id" ref="hs_code_29034300"/>
             <field name="gwp">53</field>
+            <field name="form_type">both</field>
         </record>
 
         <record id="substance_hfc_152a" model="controlled.substance">
@@ -248,8 +227,9 @@
             <field name="code">R-152a</field>
             <field name="formula">CH3CHF2</field>
             <field name="cas_number">75-37-6</field>
-            <field name="form_type">both</field>
+            <field name="hs_code_id" ref="hs_code_29034300"/>
             <field name="gwp">124</field>
+            <field name="form_type">both</field>
         </record>
 
         <record id="substance_hfc_23" model="controlled.substance">
@@ -257,280 +237,381 @@
             <field name="code">R-23</field>
             <field name="formula">CHF3</field>
             <field name="cas_number">75-46-7</field>
-            <field name="form_type">both</field>
+            <field name="hs_code_id" ref="hs_code_29033900"/>
             <field name="gwp">14800</field>
+            <field name="form_type">both</field>
         </record>
 
         <!-- HFC Blends / Refrigerant Mixtures -->
         <record id="substance_r401a" model="controlled.substance">
             <field name="name">R-401A</field>
             <field name="code">R-401A</field>
-            <field name="formula">HCFC-22/HFC-152a/HCFC-124 (53/13/34)</field>
-            <field name="cas_number">N/A</field>
-            <field name="form_type">both</field>
+            <field name="formula">53% R-22, 34% R-124, 13% R-152a</field>
+            <field name="cas_number">Mixture</field>
+            <field name="hs_code_id" ref="hs_code_38247400"/>
             <field name="gwp">1182</field>
+            <field name="form_type">both</field>
         </record>
 
         <record id="substance_r401b" model="controlled.substance">
             <field name="name">R-401B</field>
             <field name="code">R-401B</field>
-            <field name="formula">HCFC-22/HFC-152a/HCFC-124 (61/11/28)</field>
-            <field name="cas_number">N/A</field>
-            <field name="form_type">both</field>
+            <field name="formula">61% R-22, 28% R-124, 11% R-152a</field>
+            <field name="cas_number">Mixture</field>
+            <field name="hs_code_id" ref="hs_code_38247400"/>
             <field name="gwp">1288</field>
+            <field name="form_type">both</field>
         </record>
 
         <record id="substance_r404a" model="controlled.substance">
             <field name="name">R-404A</field>
             <field name="code">R-404A</field>
-            <field name="formula">HFC-125/HFC-143a/HFC-134a (44/52/4)</field>
-            <field name="cas_number">N/A</field>
-            <field name="form_type">both</field>
+            <field name="formula">44% R-125, 52% R-143a, 4% R-134a</field>
+            <field name="cas_number">Mixture</field>
+            <field name="hs_code_id" ref="hs_code_38247800"/>
             <field name="gwp">3922</field>
+            <field name="form_type">both</field>
         </record>
 
         <record id="substance_r406a" model="controlled.substance">
             <field name="name">R-406A</field>
             <field name="code">R-406A</field>
-            <field name="formula">HCFC-22/HCFC-142b/HC-600a (55/41/4)</field>
-            <field name="cas_number">N/A</field>
-            <field name="form_type">both</field>
+            <field name="formula">55% R-22, 41% R-142b, 4% HC-600a</field>
+            <field name="cas_number">Mixture</field>
+            <field name="hs_code_id" ref="hs_code_38247400"/>
             <field name="gwp">1943</field>
+            <field name="form_type">both</field>
         </record>
 
         <record id="substance_r407a" model="controlled.substance">
             <field name="name">R-407A</field>
             <field name="code">R-407A</field>
-            <field name="formula">HFC-32/HFC-125/HFC-134a (20/40/40)</field>
-            <field name="cas_number">N/A</field>
-            <field name="form_type">both</field>
+            <field name="formula">20% R-32, 40% R-125, 40% R-134a</field>
+            <field name="cas_number">Mixture</field>
+            <field name="hs_code_id" ref="hs_code_38247800"/>
             <field name="gwp">2107</field>
+            <field name="form_type">both</field>
+        </record>
+
+        <record id="substance_r407c" model="controlled.substance">
+            <field name="name">R-407C</field>
+            <field name="code">R-407C</field>
+            <field name="formula">23% R-32, 25% R-125, 52% R-134a</field>
+            <field name="cas_number">Mixture</field>
+            <field name="hs_code_id" ref="hs_code_38247800"/>
+            <field name="gwp">1774</field>
+            <field name="form_type">both</field>
         </record>
 
         <record id="substance_r407f" model="controlled.substance">
             <field name="name">R-407F</field>
             <field name="code">R-407F</field>
-            <field name="formula">HFC-32/HFC-125/HFC-134a (30/30/40)</field>
-            <field name="cas_number">N/A</field>
-            <field name="form_type">both</field>
+            <field name="formula">30% R-32, 30% R-125, 40% R-134a</field>
+            <field name="cas_number">Mixture</field>
+            <field name="hs_code_id" ref="hs_code_38247800"/>
             <field name="gwp">1825</field>
+            <field name="form_type">both</field>
         </record>
 
         <record id="substance_r407h" model="controlled.substance">
             <field name="name">R-407H</field>
             <field name="code">R-407H</field>
-            <field name="formula">HFC-32/HFC-125/HFC-134a (32.5/15/52.5)</field>
-            <field name="cas_number">N/A</field>
-            <field name="form_type">both</field>
+            <field name="formula">32.5% R-32, 15% R-125, 52.5% R-134a</field>
+            <field name="cas_number">Mixture</field>
+            <field name="hs_code_id" ref="hs_code_38247800"/>
             <field name="gwp">1495</field>
+            <field name="form_type">both</field>
         </record>
 
         <record id="substance_r408a" model="controlled.substance">
             <field name="name">R-408A</field>
             <field name="code">R-408A</field>
-            <field name="formula">HCFC-22/HFC-125/HFC-143a (47/7/46)</field>
-            <field name="cas_number">N/A</field>
-            <field name="form_type">both</field>
+            <field name="formula">47% R-22, 46% R-143a, 7% R-125</field>
+            <field name="cas_number">Mixture</field>
+            <field name="hs_code_id" ref="hs_code_38247400"/>
             <field name="gwp">3152</field>
+            <field name="form_type">both</field>
         </record>
 
         <record id="substance_r409a" model="controlled.substance">
             <field name="name">R-409A</field>
             <field name="code">R-409A</field>
-            <field name="formula">HCFC-22/HCFC-124/HCFC-142b (60/25/15)</field>
-            <field name="cas_number">N/A</field>
-            <field name="form_type">both</field>
+            <field name="formula">60% R-22, 25% R-124, 15% R-142b</field>
+            <field name="cas_number">Mixture</field>
+            <field name="hs_code_id" ref="hs_code_38247400"/>
             <field name="gwp">1585</field>
+            <field name="form_type">both</field>
+        </record>
+
+        <record id="substance_r410a" model="controlled.substance">
+            <field name="name">R-410A</field>
+            <field name="code">R-410A</field>
+            <field name="formula">50% R-32, 50% R-125</field>
+            <field name="cas_number">Mixture</field>
+            <field name="hs_code_id" ref="hs_code_38247800"/>
+            <field name="gwp">2088</field>
+            <field name="form_type">both</field>
         </record>
 
         <record id="substance_r415b" model="controlled.substance">
             <field name="name">R-415B</field>
             <field name="code">R-415B</field>
-            <field name="formula">HCFC-22/HFC-152a (25/75)</field>
-            <field name="cas_number">N/A</field>
-            <field name="form_type">both</field>
+            <field name="formula">25% R-22, 75% R-152a</field>
+            <field name="cas_number">Mixture</field>
+            <field name="hs_code_id" ref="hs_code_38247400"/>
             <field name="gwp">546</field>
+            <field name="form_type">both</field>
         </record>
 
         <record id="substance_r417a" model="controlled.substance">
             <field name="name">R-417A</field>
             <field name="code">R-417A</field>
-            <field name="formula">HFC-125/HFC-134a/HC-600 (46.6/50/3.4)</field>
-            <field name="cas_number">N/A</field>
-            <field name="form_type">both</field>
+            <field name="formula">46.6% R-125, 50% R-134a, 3.4% R-600</field>
+            <field name="cas_number">Mixture</field>
+            <field name="hs_code_id" ref="hs_code_38247800"/>
             <field name="gwp">2346</field>
+            <field name="form_type">both</field>
         </record>
 
         <record id="substance_r422a" model="controlled.substance">
             <field name="name">R-422A</field>
             <field name="code">R-422A</field>
-            <field name="formula">HFC-125/HFC-134a/HC-600a (85.1/11.5/3.4)</field>
-            <field name="cas_number">N/A</field>
-            <field name="form_type">both</field>
+            <field name="formula">85.1% R-125, 11.5% R-134a, 3.4% R-600a</field>
+            <field name="cas_number">Mixture</field>
+            <field name="hs_code_id" ref="hs_code_38247800"/>
             <field name="gwp">3143</field>
+            <field name="form_type">both</field>
         </record>
 
         <record id="substance_r422d" model="controlled.substance">
             <field name="name">R-422D</field>
             <field name="code">R-422D</field>
-            <field name="formula">HFC-125/HFC-134a/HC-600a (65.1/31.5/3.4)</field>
-            <field name="cas_number">N/A</field>
-            <field name="form_type">both</field>
+            <field name="formula">65.1% R-125, 31.5% R-134a, 3.4% R-600a</field>
+            <field name="cas_number">Mixture</field>
+            <field name="hs_code_id" ref="hs_code_38247800"/>
             <field name="gwp">2729</field>
+            <field name="form_type">both</field>
         </record>
 
         <record id="substance_r427a" model="controlled.substance">
             <field name="name">R-427A</field>
             <field name="code">R-427A</field>
-            <field name="formula">HFC-32/HFC-125/HFC-143a/HFC-134a (15/25/25/35)</field>
-            <field name="cas_number">N/A</field>
-            <field name="form_type">both</field>
+            <field name="formula">15% R-32, 25% R-125, 10% R-143a, 50% R-134a</field>
+            <field name="cas_number">Mixture</field>
+            <field name="hs_code_id" ref="hs_code_38247800"/>
             <field name="gwp">2138</field>
+            <field name="form_type">both</field>
         </record>
 
         <record id="substance_r438a" model="controlled.substance">
             <field name="name">R-438A</field>
             <field name="code">R-438A</field>
-            <field name="formula">HFC-32/HFC-125/HFC-134a/HC-600a/HC-600 (8.5/45/44.2/1.7/0.6)</field>
-            <field name="cas_number">N/A</field>
-            <field name="form_type">both</field>
+            <field name="formula">8.5% R-32, 45% R-125, 44.2% R-134a, 1.7% R-600, 0.6% R-601a</field>
+            <field name="cas_number">Mixture</field>
+            <field name="hs_code_id" ref="hs_code_38247800"/>
             <field name="gwp">2265</field>
+            <field name="form_type">both</field>
         </record>
 
         <record id="substance_r448a" model="controlled.substance">
             <field name="name">R-448A</field>
             <field name="code">R-448A</field>
-            <field name="formula">HFC-32/HFC-125/HFC-134a/HFO-1234yf/HFO-1234ze(E) (26/26/21/20/7)</field>
-            <field name="cas_number">N/A</field>
-            <field name="form_type">both</field>
+            <field name="formula">26% R-32, 26% R-125, 21% R-134a, 20% R-1234yf, 7% R-1234ze</field>
+            <field name="cas_number">Mixture</field>
+            <field name="hs_code_id" ref="hs_code_38276800"/>
             <field name="gwp">1387</field>
+            <field name="form_type">both</field>
         </record>
 
         <record id="substance_r449a" model="controlled.substance">
             <field name="name">R-449A</field>
             <field name="code">R-449A</field>
-            <field name="formula">HFC-32/HFC-125/HFC-134a/HFO-1234yf (24.3/24.7/25.7/25.3)</field>
-            <field name="cas_number">N/A</field>
-            <field name="form_type">both</field>
+            <field name="formula">24.3% R-32, 24.7% R-125, 25.7% R-134a, 25.3% R-1234yf</field>
+            <field name="cas_number">Mixture</field>
+            <field name="hs_code_id" ref="hs_code_38276800"/>
             <field name="gwp">1397</field>
+            <field name="form_type">both</field>
         </record>
 
         <record id="substance_r449b" model="controlled.substance">
             <field name="name">R-449B</field>
             <field name="code">R-449B</field>
-            <field name="formula">HFC-32/HFC-125/HFC-134a/HFO-1234yf (25.2/24.3/23.2/27.3)</field>
-            <field name="cas_number">N/A</field>
-            <field name="form_type">both</field>
+            <field name="formula">25.2% R-32, 24.3% R-125, 23.2% R-134a, 27.3% R-1234yf</field>
+            <field name="cas_number">Mixture</field>
+            <field name="hs_code_id" ref="hs_code_38276800"/>
             <field name="gwp">1412</field>
+            <field name="form_type">both</field>
         </record>
 
         <record id="substance_r450a" model="controlled.substance">
             <field name="name">R-450A</field>
             <field name="code">R-450A</field>
-            <field name="formula">HFC-134a/HFO-1234ze(E) (42/58)</field>
-            <field name="cas_number">N/A</field>
-            <field name="form_type">both</field>
+            <field name="formula">42% R-134a, 58% R-1234ze</field>
+            <field name="cas_number">Mixture</field>
+            <field name="hs_code_id" ref="hs_code_38276800"/>
             <field name="gwp">605</field>
+            <field name="form_type">both</field>
         </record>
 
         <record id="substance_r452a" model="controlled.substance">
             <field name="name">R-452A</field>
             <field name="code">R-452A</field>
-            <field name="formula">HFC-32/HFC-125/HFO-1234yf (11/59/30)</field>
-            <field name="cas_number">N/A</field>
-            <field name="form_type">both</field>
+            <field name="formula">11% R-32, 59% R-125, 30% R-1234yf</field>
+            <field name="cas_number">Mixture</field>
+            <field name="hs_code_id" ref="hs_code_38276800"/>
             <field name="gwp">2140</field>
+            <field name="form_type">both</field>
         </record>
 
         <record id="substance_r452b" model="controlled.substance">
             <field name="name">R-452B</field>
             <field name="code">R-452B</field>
-            <field name="formula">HFC-32/HFC-125/HFO-1234yf (67/7/26)</field>
-            <field name="cas_number">N/A</field>
-            <field name="form_type">both</field>
+            <field name="formula">67% R-32, 7% R-125, 26% R-1234yf</field>
+            <field name="cas_number">Mixture</field>
+            <field name="hs_code_id" ref="hs_code_38276800"/>
             <field name="gwp">698</field>
+            <field name="form_type">both</field>
         </record>
 
         <record id="substance_r454a" model="controlled.substance">
             <field name="name">R-454A</field>
             <field name="code">R-454A</field>
-            <field name="formula">HFC-32/HFO-1234yf (35/65)</field>
-            <field name="cas_number">N/A</field>
-            <field name="form_type">both</field>
+            <field name="formula">35% R-32, 65% R-1234yf</field>
+            <field name="cas_number">Mixture</field>
+            <field name="hs_code_id" ref="hs_code_38276800"/>
             <field name="gwp">239</field>
+            <field name="form_type">both</field>
         </record>
 
         <record id="substance_r454b" model="controlled.substance">
             <field name="name">R-454B</field>
             <field name="code">R-454B</field>
-            <field name="formula">HFC-32/HFO-1234yf (68.9/31.1)</field>
-            <field name="cas_number">N/A</field>
-            <field name="form_type">both</field>
+            <field name="formula">68.9% R-32, 31.1% R-1234yf</field>
+            <field name="cas_number">Mixture</field>
+            <field name="hs_code_id" ref="hs_code_38276800"/>
             <field name="gwp">466</field>
+            <field name="form_type">both</field>
         </record>
 
         <record id="substance_r454c" model="controlled.substance">
             <field name="name">R-454C</field>
             <field name="code">R-454C</field>
-            <field name="formula">HFC-32/HFO-1234yf (21.5/78.5)</field>
-            <field name="cas_number">N/A</field>
-            <field name="form_type">both</field>
+            <field name="formula">21% R-32, 79% R-1234yf</field>
+            <field name="cas_number">Mixture</field>
+            <field name="hs_code_id" ref="hs_code_38276800"/>
             <field name="gwp">148</field>
+            <field name="form_type">both</field>
         </record>
 
         <record id="substance_r466a" model="controlled.substance">
             <field name="name">R-466A</field>
             <field name="code">R-466A</field>
-            <field name="formula">HFC-32/HFC-125/HFO-1234yf (49/11.5/39.5)</field>
-            <field name="cas_number">N/A</field>
-            <field name="form_type">both</field>
+            <field name="formula">49% R-32, 11.5% R-125, 39.5% R-13I1</field>
+            <field name="cas_number">Mixture</field>
+            <field name="hs_code_id" ref="hs_code_38276800"/>
             <field name="gwp">733</field>
+            <field name="form_type">both</field>
         </record>
 
         <record id="substance_r507a" model="controlled.substance">
             <field name="name">R-507A</field>
             <field name="code">R-507A</field>
-            <field name="formula">HFC-125/HFC-143a (50/50)</field>
-            <field name="cas_number">N/A</field>
-            <field name="form_type">both</field>
+            <field name="formula">50% R-125, 50% R-143a</field>
+            <field name="cas_number">Mixture</field>
+            <field name="hs_code_id" ref="hs_code_38247800"/>
             <field name="gwp">3985</field>
+            <field name="form_type">both</field>
         </record>
 
         <record id="substance_r508b" model="controlled.substance">
             <field name="name">R-508B</field>
             <field name="code">R-508B</field>
-            <field name="formula">HFC-23/PFC-116 (46/54)</field>
-            <field name="cas_number">N/A</field>
-            <field name="form_type">both</field>
+            <field name="formula">46% R-23, 54% R-116</field>
+            <field name="cas_number">Mixture</field>
+            <field name="hs_code_id" ref="hs_code_38247800"/>
             <field name="gwp">13396</field>
+            <field name="form_type">both</field>
         </record>
 
         <record id="substance_r513a" model="controlled.substance">
             <field name="name">R-513A</field>
             <field name="code">R-513A</field>
-            <field name="formula">HFC-134a/HFO-1234yf (56/44)</field>
-            <field name="cas_number">N/A</field>
-            <field name="form_type">both</field>
+            <field name="formula">56% R-1234yf, 44% R-134a</field>
+            <field name="cas_number">Mixture</field>
+            <field name="hs_code_id" ref="hs_code_38276800"/>
             <field name="gwp">631</field>
+            <field name="form_type">both</field>
         </record>
 
         <record id="substance_r513b" model="controlled.substance">
             <field name="name">R-513B</field>
             <field name="code">R-513B</field>
-            <field name="formula">HFC-134a/HFO-1234yf (58.5/41.5)</field>
-            <field name="cas_number">N/A</field>
-            <field name="form_type">both</field>
+            <field name="formula">58.5% R-1234yf, 41.5% R-134a</field>
+            <field name="cas_number">Mixture</field>
+            <field name="hs_code_id" ref="hs_code_38276800"/>
             <field name="gwp">596</field>
+            <field name="form_type">both</field>
         </record>
 
-        <!-- Additional HCFC -->
+        <!-- HCFC Group -->
+        <record id="substance_hcfc_22" model="controlled.substance">
+            <field name="name">HCFC-22</field>
+            <field name="code">R-22</field>
+            <field name="formula">CHClF2</field>
+            <field name="cas_number">75-45-6</field>
+            <field name="hs_code_id" ref="hs_code_29037100"/>
+            <field name="gwp">1810</field>
+            <field name="form_type">both</field>
+        </record>
+
         <record id="substance_hcfc_123" model="controlled.substance">
             <field name="name">HCFC-123</field>
             <field name="code">R-123</field>
             <field name="formula">CHCl2CF3</field>
             <field name="cas_number">306-83-2</field>
-            <field name="form_type">both</field>
+            <field name="hs_code_id" ref="hs_code_29037900"/>
             <field name="gwp">77</field>
+            <field name="form_type">both</field>
+        </record>
+
+        <record id="substance_hcfc_141" model="controlled.substance">
+            <field name="name">HCFC-141</field>
+            <field name="code">R-141</field>
+            <field name="formula">CH3CCl2F</field>
+            <field name="cas_number">1717-00-6</field>
+            <field name="hs_code_id" ref="hs_code_29037600"/>
+            <field name="gwp">725</field>
+            <field name="form_type">both</field>
+        </record>
+
+        <record id="substance_hcfc_142" model="controlled.substance">
+            <field name="name">HCFC-142</field>
+            <field name="code">R-142</field>
+            <field name="formula">CH3CClF2</field>
+            <field name="cas_number">75-68-3</field>
+            <field name="hs_code_id" ref="hs_code_29037600"/>
+            <field name="gwp">2310</field>
+            <field name="form_type">both</field>
+        </record>
+
+        <record id="substance_hcfc_142b" model="controlled.substance">
+            <field name="name">HCFC-142b</field>
+            <field name="code">R-142b</field>
+            <field name="formula">CH3CClF2</field>
+            <field name="cas_number">75-68-3</field>
+            <field name="hs_code_id" ref="hs_code_29037600"/>
+            <field name="gwp">2310</field>
+            <field name="form_type">both</field>
+        </record>
+
+        <record id="substance_hcfc_225" model="controlled.substance">
+            <field name="name">HCFC-225</field>
+            <field name="code">R-225</field>
+            <field name="formula">C3HCl2F5 (mixture of ca &amp; cb)</field>
+            <field name="cas_number">141563-84-0</field>
+            <field name="hs_code_id" ref="hs_code_29037900"/>
+            <field name="gwp">360</field>
+            <field name="form_type">both</field>
         </record>
 
         <record id="substance_hcfc_225ca" model="controlled.substance">
@@ -538,17 +619,19 @@
             <field name="code">R-225ca</field>
             <field name="formula">CHCl2CF2CF3</field>
             <field name="cas_number">422-56-0</field>
-            <field name="form_type">both</field>
+            <field name="hs_code_id" ref="hs_code_29037900"/>
             <field name="gwp">122</field>
+            <field name="form_type">both</field>
         </record>
 
         <record id="substance_hcfc_225cb" model="controlled.substance">
             <field name="name">HCFC-225cb</field>
             <field name="code">R-225cb</field>
-            <field name="formula">CClF2CF2CHClF</field>
+            <field name="formula">CHClFCF2CClF2</field>
             <field name="cas_number">507-55-1</field>
-            <field name="form_type">both</field>
+            <field name="hs_code_id" ref="hs_code_29037900"/>
             <field name="gwp">595</field>
+            <field name="form_type">both</field>
         </record>
     </data>
 </odoo>

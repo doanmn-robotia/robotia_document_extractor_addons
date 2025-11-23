@@ -124,8 +124,8 @@
                 <field name="chapter"/>
                 <field name="product_category"/>
                 <field name="controlled_substance_ids" widget="many2many_tags"/>
-                <field name="active" invisible="1"/>
-                <field name="needs_review" invisible="1"/>
+                <field name="active" column_invisible="1"/>
+                <field name="needs_review" column_invisible="1"/>
             </list>
         </field>
     </record>
@@ -413,8 +413,8 @@
                 <field name="location_type"/>
                 <field name="city"/>
                 <field name="district"/>
-                <field name="active" invisible="1"/>
-                <field name="needs_review" invisible="1"/>
+                <field name="active" column_invisible="1"/>
+                <field name="needs_review" column_invisible="1"/>
             </list>
         </field>
     </record>

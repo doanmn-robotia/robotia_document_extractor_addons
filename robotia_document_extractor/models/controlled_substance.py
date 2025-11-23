@@ -24,6 +24,20 @@ class ControlledSubstance(models.Model):
     cas_number = fields.Char(
         string='CAS Number'
     )
+    hs_code_id = fields.Many2one(
+        comodel_name='hs.code',
+        string='HS Code',
+        ondelete='restrict',
+        index=True,
+        help='Harmonized System Code for customs/trade classification'
+    )
+    hs_code_display = fields.Char(
+        string='HS Code (Display)',
+        related='hs_code_id.code',
+        store=True,
+        readonly=True,
+        help='HS Code for display purposes'
+    )
     form_type = fields.Selection(
         selection=[
             ('01', 'Form 01'),

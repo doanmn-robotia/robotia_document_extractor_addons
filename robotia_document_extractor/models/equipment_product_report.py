@@ -68,8 +68,6 @@ class EquipmentProductReport(models.Model):
                 continue
             if not vals.get('equipment_type_id') and vals.get('product_type'):
                 vals['equipment_type_id'] = self._find_or_create('equipment.type', vals['product_type']).id
-            if not vals.get('hs_code_id') and vals.get('hs_code'):
-                vals['hs_code_id'] = self._find_or_create_hs(vals['hs_code']).id
         return super(EquipmentProductReport, self).create(vals_list)
 
     def _find_or_create(self, model, text):
@@ -77,7 +75,4 @@ class EquipmentProductReport(models.Model):
         rec = self.env[model].search(['|', ('name', '=ilike', text), ('code', '=ilike', text)], limit=1)
         return rec or self.env[model].create({'name': text, 'code': text, 'active': True, 'needs_review': True, 'created_from_extraction': True})
 
-    def _find_or_create_hs(self, text):
-        text = text.strip()
-        rec = self.env['hs.code'].search([('code', '=', text)], limit=1)
-        return rec or self.env['hs.code'].create({'code': text, 'name': text, 'active': True, 'needs_review': True, 'created_from_extraction': True})
+

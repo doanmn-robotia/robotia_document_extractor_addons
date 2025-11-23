@@ -26,6 +26,7 @@ from . import collection_recycling_report
 
 # Services
 from . import extraction_service
+from . import fuzzy_matcher
 from . import res_config_settings
 from . import google_drive_service
 

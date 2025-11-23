@@ -190,6 +190,16 @@ msgid "Contact Address"
 msgstr "Địa chỉ liên hệ"
 
 #. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_document_extraction__contact_country_id
+msgid "Country"
+msgstr "Quốc gia"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_document_extraction__contact_state_id
+msgid "Province/City"
+msgstr "Tỉnh/Thành phố"
+
+#. module: robotia_document_extractor
 #: model:ir.model.fields,field_description:robotia_document_extractor.field_res_partner__contact_person_name
 msgid "Contact Person"
 msgstr "Người đại diện liên lạc"
@@ -356,7 +366,7 @@ msgid "Extraction Date"
 msgstr "Ngày trích xuất"
 
 #. module: robotia_document_extractor
-#: model:ir.model.fields,field_description:robotia_document_extractor.field_quota_usage__country_id
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_quota_usage__country_text
 msgid "Export/Import Country"
 msgstr "Quốc gia xuất/nhập khẩu"
 
@@ -2788,3 +2798,130 @@ msgstr "<strong>100% AI (Khuyến nghị):</strong> Gemini xử lý PDF trực t
 msgid "<strong>Text Extract + AI:</strong> Extract text first with PyMuPDF, then structure with AI. May be faster for very large PDFs."
 msgstr "<strong>Trích xuất Văn bản + AI:</strong> Trích xuất văn bản trước bằng PyMuPDF, sau đó cấu trúc hóa bằng AI. Có thể nhanh hơn cho PDF rất lớn."
 
+
+#. module: robotia_document_extractor
+#: model:hs.code,name:robotia_document_extractor.hs_code_84151020
+msgid "Fluorinated, brominated or iodinated derivatives of acyclic hydrocarbons - Other (including HFC-23)"
+msgstr "Dẫn xuất fluor hóa, brom hóa hoặc iod hóa của hydrocacbon không vòng - Khác (bao gồm HFC-23)"
+
+#. module: robotia_document_extractor
+#: model:hs.code,product_category:robotia_document_extractor.hs_code_84151020
+#: model:hs.code,product_category:robotia_document_extractor.hs_code_29033900
+msgid "HFC - Fluorinated derivatives"
+msgstr "HFC - Dẫn xuất fluor hóa"
+
+#. module: robotia_document_extractor
+#: model:hs.code,name:robotia_document_extractor.hs_code_29033900
+msgid "Fluorinated, brominated or iodinated derivatives of acyclic hydrocarbons - Other (not including HFC-23)"
+msgstr "Dẫn xuất fluor hóa, brom hóa hoặc iod hóa của hydrocacbon không vòng - Khác (không bao gồm HFC-23)"
+
+
+#. module: robotia_document_extractor
+#: model:hs.code,name:robotia_document_extractor.hs_code_29034300
+msgid "Halogenated derivatives of acyclic hydrocarbons - fluorinated (HFC-32, HFC-152a, HFC-41, HFC-152)"
+msgstr "Dẫn xuất halogen hóa của hydrocacbon không vòng - fluor hóa (HFC-32, HFC-152a, HFC-41, HFC-152)"
+
+#. module: robotia_document_extractor
+#: model:hs.code,product_category:robotia_document_extractor.hs_code_29034300
+msgid "HFC - Single component fluorinated"
+msgstr "HFC - Thành phần đơn fluor hóa"
+
+#. module: robotia_document_extractor
+#: model:hs.code,name:robotia_document_extractor.hs_code_29034400
+msgid "Halogenated derivatives containing two or more different halogens (HFC-125, HFC-143, HFC-143a)"
+msgstr "Dẫn xuất halogen hóa chứa hai hoặc nhiều halogen khác nhau (HFC-125, HFC-143, HFC-143a)"
+
+#. module: robotia_document_extractor
+#: model:hs.code,product_category:robotia_document_extractor.hs_code_29034400
+msgid "HFC - Multi-halogenated"
+msgstr "HFC - Đa halogen"
+
+#. module: robotia_document_extractor
+#: model:hs.code,name:robotia_document_extractor.hs_code_29034500
+msgid "Halogenated derivatives - fluorinated, brominated or iodinated (HFC-134, HFC-134a)"
+msgstr "Dẫn xuất halogen hóa - fluor hóa, brom hóa hoặc iod hóa (HFC-134, HFC-134a)"
+
+#. module: robotia_document_extractor
+#: model:hs.code,product_category:robotia_document_extractor.hs_code_29034500
+msgid "HFC - Fluorinated R-134 family"
+msgstr "HFC - Họ R-134 fluor hóa"
+
+#. module: robotia_document_extractor
+#: model:hs.code,name:robotia_document_extractor.hs_code_29034700
+msgid "Halogenated derivatives of acyclic hydrocarbons - other (HFC-227ea, HFC-236 series, HFC-245ca)"
+msgstr "Dẫn xuất halogen hóa của hydrocacbon không vòng - khác (HFC-227ea, dòng HFC-236, HFC-245ca)"
+
+#. module: robotia_document_extractor
+#: model:hs.code,product_category:robotia_document_extractor.hs_code_29034700
+msgid "HFC - High-GWP refrigerants"
+msgstr "HFC - Chất làm lạnh GWP cao"
+
+#. module: robotia_document_extractor
+#: model:hs.code,name:robotia_document_extractor.hs_code_29034800
+msgid "Halogenated derivatives of acyclic hydrocarbons (HFC-365mfc, HFC-43-10mee)"
+msgstr "Dẫn xuất halogen hóa của hydrocacbon không vòng (HFC-365mfc, HFC-43-10mee)"
+
+#. module: robotia_document_extractor
+#: model:hs.code,product_category:robotia_document_extractor.hs_code_29034800
+msgid "HFC - Specialty refrigerants"
+msgstr "HFC - Chất làm lạnh chuyên dụng"
+
+#. module: robotia_document_extractor
+#: model:hs.code,name:robotia_document_extractor.hs_code_29037100
+msgid "Chlorodifluoromethane (HCFC-22 / R-22)"
+msgstr "Clorodifluoromethan (HCFC-22 / R-22)"
+
+#. module: robotia_document_extractor
+#: model:hs.code,product_category:robotia_document_extractor.hs_code_29037100
+msgid "HCFC - R-22 refrigerant"
+msgstr "HCFC - Chất làm lạnh R-22"
+
+#. module: robotia_document_extractor
+#: model:hs.code,name:robotia_document_extractor.hs_code_29037600
+msgid "Bromochlorodifluoromethane, bromotrifluoromethane and dibromotetrafluoroethanes (HCFC-141, HCFC-142, HCFC-142b)"
+msgstr "Bromoclorodifluoromethan, bromotrifluoromethan và dibromotetrafluroetan (HCFC-141, HCFC-142, HCFC-142b)"
+
+#. module: robotia_document_extractor
+#: model:hs.code,product_category:robotia_document_extractor.hs_code_29037600
+msgid "HCFC - Halogenated compounds"
+msgstr "HCFC - Hợp chất halogen"
+
+#. module: robotia_document_extractor
+#: model:hs.code,name:robotia_document_extractor.hs_code_29037900
+msgid "Other halogenated derivatives of acyclic hydrocarbons containing two or more different halogens (HCFC-123, HCFC-225 series)"
+msgstr "Dẫn xuất halogen hóa khác của hydrocacbon không vòng chứa hai hoặc nhiều halogen khác nhau (HCFC-123, dòng HCFC-225)"
+
+#. module: robotia_document_extractor
+#: model:hs.code,product_category:robotia_document_extractor.hs_code_29037900
+msgid "HCFC - Multi-halogenated"
+msgstr "HCFC - Đa halogen"
+
+#. module: robotia_document_extractor
+#: model:hs.code,name:robotia_document_extractor.hs_code_38247400
+msgid "Refrigerant mixtures containing hydrochlorofluorocarbons (HCFCs) - R-22 based blends (R-401, R-406, R-408, R-409, R-415)"
+msgstr "Hỗn hợp chất làm lạnh chứa hydroclorofluorocarbon (HCFC) - Hỗn hợp gốc R-22 (R-401, R-406, R-408, R-409, R-415)"
+
+#. module: robotia_document_extractor
+#: model:hs.code,product_category:robotia_document_extractor.hs_code_38247400
+msgid "Refrigerant Blends - HCFC based"
+msgstr "Hỗn hợp chất làm lạnh - Gốc HCFC"
+
+#. module: robotia_document_extractor
+#: model:hs.code,name:robotia_document_extractor.hs_code_38247800
+msgid "Refrigerant mixtures containing hydrofluorocarbons (HFCs) - R-404A, R-407, R-410A, R-417A, R-422, R-427A, R-438A, R-507A, R-508B"
+msgstr "Hỗn hợp chất làm lạnh chứa hydrofluorocarbon (HFC) - R-404A, R-407, R-410A, R-417A, R-422, R-427A, R-438A, R-507A, R-508B"
+
+#. module: robotia_document_extractor
+#: model:hs.code,product_category:robotia_document_extractor.hs_code_38247800
+msgid "Refrigerant Blends - HFC based"
+msgstr "Hỗn hợp chất làm lạnh - Gốc HFC"
+
+#. module: robotia_document_extractor
+#: model:hs.code,name:robotia_document_extractor.hs_code_38276800
+msgid "Refrigerant mixtures containing hydrofluoroolefins (HFOs) - Low-GWP blends (R-448A, R-449, R-450A, R-452, R-454, R-466A, R-513)"
+msgstr "Hỗn hợp chất làm lạnh chứa hydrofluoroolefin (HFO) - Hỗn hợp GWP thấp (R-448A, R-449, R-450A, R-452, R-454, R-466A, R-513)"
+
+#. module: robotia_document_extractor
+#: model:hs.code,product_category:robotia_document_extractor.hs_code_38276800
+msgid "Refrigerant Blends - New generation (HFO/HFC)"
+msgstr "Hỗn hợp chất làm lạnh - Thế hệ mới (HFO/HFC)"

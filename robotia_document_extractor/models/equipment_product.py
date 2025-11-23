@@ -114,11 +114,6 @@ class EquipmentProduct(models.Model):
                 equipment_type = self._find_or_create_equipment_type(vals.get('product_type'))
                 vals['equipment_type_id'] = equipment_type.id
 
-            # 2. Handle HS Code
-            if not vals.get('hs_code_id') and vals.get('hs_code'):
-                hs_code = self._find_or_create_hs_code(vals.get('hs_code'))
-                vals['hs_code_id'] = hs_code.id
-
         return super(EquipmentProduct, self).create(vals_list)
 
     def _find_or_create_equipment_type(self, type_text):
@@ -141,18 +136,3 @@ class EquipmentProduct(models.Model):
             'created_from_extraction': True
         })
 
-    def _find_or_create_hs_code(self, code_text):
-        """Search for HS code, create if not found"""
-        code_text = code_text.strip()
-        hs_code = self.env['hs.code'].search([('code', '=', code_text)], limit=1)
-
-        if hs_code:
-            return hs_code
-
-        return self.env['hs.code'].create({
-            'code': code_text,
-            'name': code_text,  # Use code as name initially
-            'active': True,
-            'needs_review': True,
-            'created_from_extraction': True
-        })

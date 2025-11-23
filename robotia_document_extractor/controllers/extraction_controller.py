@@ -287,9 +287,9 @@ class ExtractionController(http.Controller):
                 if not extracted_data.get('year_3'):
                     extracted_data['year_3'] = year + 1
 
-            # ========== AUTO-POPULATE SUBSTANCE IDs ==========
-            # Collect all unique substance_names from all tables
-            all_substance_names = set()
+            # ========== AUTO-POPULATE SUBSTANCE IDs WITH FUZZY MATCHING ==========
+            # Collect all substance info (name + hs_code if available) from all tables
+            all_substance_info = []  # List of tuples: (substance_name, hs_code or None)
 
             # Define table keys based on document type
             if document_type == '01':
@@ -297,31 +297,49 @@ class ExtractionController(http.Controller):
             else:  # document_type == '02'
                 table_keys = ['quota_usage', 'equipment_product_report', 'equipment_ownership_report', 'collection_recycling_report']
 
-            # Collect substance_names from all tables
+            # Collect substance_names and hs_codes from all tables
             for table_key in table_keys:
                 table_data = extracted_data.get(table_key, [])
                 for row in table_data:
                     # Skip title rows
                     if row.get('is_title'):
                         continue
-                    substance_name = row.get('substance_name')
-                    if substance_name and substance_name.strip():
-                        all_substance_names.add(substance_name.strip())
+                    substance_name = row.get('substance_name', '').strip()
+                    # Only bảng 2.1 (quota_usage) has hs_code field
+                    hs_code = row.get('hs_code', '').strip() if row.get('hs_code') else None
+                    if substance_name:
+                        all_substance_info.append((substance_name, hs_code))
 
-            # Build substance lookup dictionary (single query for performance)
+            # Build substance lookup dictionary with fuzzy matching
             substance_lookup = {}
-            if all_substance_names:
-                _logger.info(f"Looking up {len(all_substance_names)} unique substances: {list(all_substance_names)}")
-                substances = request.env['controlled.substance'].search([
-                    ('code', 'in', list(all_substance_names))
-                ])
-                substance_lookup = {s.code: s.id for s in substances}
-                _logger.info(f"Found {len(substance_lookup)} substances in database")
+            fuzzy_matcher = request.env['fuzzy.matcher']
 
-                # Log any substances not found
-                missing_substances = all_substance_names - set(substance_lookup.keys())
-                if missing_substances:
-                    _logger.warning(f"Substances not found in database: {missing_substances}")
+            _logger.info(f"Looking up {len(all_substance_info)} substance entries with fuzzy matching")
+
+            for substance_name, hs_code in all_substance_info:
+                # Skip if already found
+                if substance_name in substance_lookup:
+                    continue
+
+                # Use fuzzy matching to find substance
+                found_substance = fuzzy_matcher.search_substance_fuzzy(
+                    search_term=substance_name,
+                    hs_code_term=hs_code
+                )
+
+                if found_substance:
+                    substance_lookup[substance_name] = found_substance.id
+                    _logger.info(
+                        f"Fuzzy matched: '{substance_name}' "
+                        f"(hs_code='{hs_code}') -> {found_substance.name} (id={found_substance.id})"
+                    )
+                else:
+                    _logger.warning(
+                        f"No match found for substance: '{substance_name}' "
+                        f"(hs_code='{hs_code}')"
+                    )
+
+            _logger.info(f"Fuzzy matching complete: Found {len(substance_lookup)} unique substances")
 
             # Populate substance_id in all tables
             for table_key in table_keys:
@@ -331,29 +349,56 @@ class ExtractionController(http.Controller):
 
             # ========== END AUTO-POPULATE SUBSTANCE IDs ==========
 
-            # Lookup country and state from codes
+            # ========== COUNTRY/STATE LOOKUP WITH FUZZY FALLBACK ==========
             contact_country_id = False
             contact_state_id = False
 
             country_code = extracted_data.get('contact_country_code')
             if country_code:
-                country = request.env['res.country'].search([('code', '=', country_code.upper())], limit=1)
+                # Step 1: Exact search by code
+                country = request.env['res.country'].search([
+                    ('code', '=', country_code.upper())
+                ], limit=1)
+
                 if country:
                     contact_country_id = country.id
-                    _logger.info(f"Found country: {country.name} (code: {country_code})")
+                    _logger.info(f"Exact match country: code='{country_code}' -> {country.name}")
+                else:
+                    # Step 2: Fuzzy search (fallback)
+                    country = fuzzy_matcher.search_country_fuzzy(country_code)
+                    if country:
+                        contact_country_id = country.id
+                        _logger.info(f"Fuzzy matched country: '{country_code}' -> {country.name} ({country.code})")
+                    else:
+                        _logger.warning(f"Country not found (exact & fuzzy failed): '{country_code}'")
 
             state_code = extracted_data.get('contact_state_code')
             if state_code and contact_country_id:
-                # Search for state by code within the country
+                # Step 1: Exact search by code within country
                 state = request.env['res.country.state'].search([
                     ('code', '=', state_code.upper()),
                     ('country_id', '=', contact_country_id)
                 ], limit=1)
+
                 if state:
                     contact_state_id = state.id
-                    _logger.info(f"Found state: {state.name} (code: {state_code})")
+                    _logger.info(f"Exact match state: code='{state_code}' -> {state.name}")
                 else:
-                    _logger.warning(f"State code '{state_code}' not found for country {country_code}")
+                    # Step 2: Fuzzy search (fallback)
+                    state = fuzzy_matcher.search_state_fuzzy(
+                        search_term=state_code,
+                        country_id=contact_country_id
+                    )
+                    if state:
+                        contact_state_id = state.id
+                        _logger.info(f"Fuzzy matched state: '{state_code}' -> {state.name} ({state.code})")
+                    else:
+                        _logger.warning(
+                            f"State not found (exact & fuzzy failed): '{state_code}' "
+                            f"in country_id={contact_country_id}"
+                        )
+
+            # ========== END COUNTRY/STATE LOOKUP ==========
 
             # Prepare context with default values
             context = {

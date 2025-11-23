@@ -41,6 +41,7 @@
                             <field name="name" required="1"/>
                             <field name="code"/>
                             <field name="formula"/>
+                            <field name="hs_code_id" options="{'no_create': True}"/>
                         </group>
                         <group>
                             <field name="cas_number"/>

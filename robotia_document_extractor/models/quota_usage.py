@@ -69,19 +69,9 @@ class QuotaUsage(models.Model):
     average_price = fields.Float(
         string='Average Price'
     )
-    country_id = fields.Many2one(
-        comodel_name='res.country',
+    country_text = fields.Char(
         string='Export/Import Country',
-        ondelete='restrict',
-        index=True,
         help='Country for import/export trade (ISO code)'
-    )
-    country_code = fields.Char(
-        string='Country Code',
-        compute='_compute_country_code',
-        store=True,
-        readonly=False,
-        help='ISO 2-letter country code (e.g., VN, US, CN)'
     )
     customs_declaration_number = fields.Char(
         string='Customs Declaration Number'
@@ -126,50 +116,3 @@ class QuotaUsage(models.Model):
     def _compute_hs_code(self):
         for r in self:
             r.hs_code = r.hs_code_id.code if r.hs_code_id else ''
-
-    @api.depends('country_id')
-    def _compute_country_code(self):
-        for r in self:
-            r.country_code = r.country_id.code if r.country_id else ''
-
-    @api.model_create_multi
-    def create(self, vals_list):
-        for vals in vals_list:
-            if vals.get('is_title'):
-                continue
-            if not vals.get('hs_code_id') and vals.get('hs_code'):
-                vals['hs_code_id'] = self._find_or_create_hs_code(vals['hs_code']).id
-            if not vals.get('country_id') and vals.get('country_code'):
-                vals['country_id'] = self._find_country_by_code(vals['country_code']).id
-        return super(QuotaUsage, self).create(vals_list)
-
-    def _find_or_create_hs_code(self, text):
-        text = text.strip()
-        rec = self.env['hs.code'].search([('code', '=', text)], limit=1)
-        return rec or self.env['hs.code'].create({'code': text, 'name': text, 'active': True, 'needs_review': True, 'created_from_extraction': True})
-
-    def _find_country_by_code(self, code):
-        """
-        Find country by ISO code (case-insensitive)
-
-        Args:
-            code (str): ISO 2-letter country code (e.g., 'VN', 'US', 'CN')
-
-        Returns:
-            res.country: Found country record or empty recordset
-        """
-        if not code:
-            return self.env['res.country']
-
-        code = code.strip().upper()
-        # Search by code (case-insensitive)
-        country = self.env['res.country'].search([('code', '=ilike', code)], limit=1)
-
-        if not country:
-            # Log warning if country code not found
-            import logging
-            _logger = logging.getLogger(__name__)
-            _logger.warning(f"Country code '{code}' not found in system. Please check ISO country codes.")
-
-        return country
-

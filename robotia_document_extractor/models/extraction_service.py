@@ -790,7 +790,7 @@ Return JSON with ALL fields below (no omissions, no "..."):
   "contact_fax": "<string>",
   "contact_email": "<string>",
   "contact_country_code": "<ISO 2-letter code: VN, US, CN, etc.>",
-  "contact_state_code": "<Province code: HN, SG, DN, BD, etc.>",
+  "contact_state_code": "<Province code: VN-HN, VN-SG, VN-DN, VN-BD, etc.> (formula: contact_country_code + '-' + province code)",
 
   "activity_field_codes": [
     // Array of codes from checked activities:
@@ -998,7 +998,7 @@ Return JSON with ALL fields below (no omissions, no "..."):
       "total_quota_kg": <float or null>,
       "total_quota_co2": <float or null>,
       "average_price": <float or null>,
-      "country_code": "<ISO 2-letter: VN, US, CN, TH, JP, etc.>",
+      "country_text": "<Country where substance is import or export - get exact text in cell>",
       "customs_declaration_number": "<string or null>",
       "next_year_quota_kg": <float or null>,
       "next_year_quota_co2": <float or null>

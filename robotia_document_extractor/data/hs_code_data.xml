@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- HS Codes for Controlled Substances -->
+
+        <!-- Chapter 29: Organic chemicals - HFC compounds -->
+
+        <record id="hs_code_84151020" model="hs.code">
+            <field name="code">84151020</field>
+            <field name="name">Fluorinated, brominated or iodinated derivatives of acyclic hydrocarbons - Other (including HFC-23)</field>
+            <field name="product_category">HFC - Fluorinated derivatives</field>
+        </record>
+
+        <record id="hs_code_29033900" model="hs.code">
+            <field name="code">29033900</field>
+            <field name="name">Fluorinated, brominated or iodinated derivatives of acyclic hydrocarbons - Other (not including HFC-23)</field>
+            <field name="product_category">HFC - Fluorinated derivatives</field>
+        </record>
+
+        <record id="hs_code_29034300" model="hs.code">
+            <field name="code">29034300</field>
+            <field name="name">Halogenated derivatives of acyclic hydrocarbons - fluorinated (HFC-32, HFC-152a, HFC-41, HFC-152)</field>
+            <field name="product_category">HFC - Single component fluorinated</field>
+        </record>
+
+        <record id="hs_code_29034400" model="hs.code">
+            <field name="code">29034400</field>
+            <field name="name">Halogenated derivatives containing two or more different halogens (HFC-125, HFC-143, HFC-143a)</field>
+            <field name="product_category">HFC - Multi-halogenated</field>
+        </record>
+
+        <record id="hs_code_29034500" model="hs.code">
+            <field name="code">29034500</field>
+            <field name="name">Halogenated derivatives - fluorinated, brominated or iodinated (HFC-134, HFC-134a)</field>
+            <field name="product_category">HFC - Fluorinated R-134 family</field>
+        </record>
+
+        <record id="hs_code_29034700" model="hs.code">
+            <field name="code">29034700</field>
+            <field name="name">Halogenated derivatives of acyclic hydrocarbons - other (HFC-227ea, HFC-236 series, HFC-245ca)</field>
+            <field name="product_category">HFC - High-GWP refrigerants</field>
+        </record>
+
+        <record id="hs_code_29034800" model="hs.code">
+            <field name="code">29034800</field>
+            <field name="name">Halogenated derivatives of acyclic hydrocarbons (HFC-365mfc, HFC-43-10mee)</field>
+            <field name="product_category">HFC - Specialty refrigerants</field>
+        </record>
+
+        <!-- Chapter 29: HCFC compounds -->
+
+        <record id="hs_code_29037100" model="hs.code">
+            <field name="code">29037100</field>
+            <field name="name">Chlorodifluoromethane (HCFC-22 / R-22)</field>
+            <field name="product_category">HCFC - R-22 refrigerant</field>
+        </record>
+
+        <record id="hs_code_29037600" model="hs.code">
+            <field name="code">29037600</field>
+            <field name="name">Bromochlorodifluoromethane, bromotrifluoromethane and dibromotetrafluoroethanes (HCFC-141, HCFC-142, HCFC-142b)</field>
+            <field name="product_category">HCFC - Halogenated compounds</field>
+        </record>
+
+        <record id="hs_code_29037900" model="hs.code">
+            <field name="code">29037900</field>
+            <field name="name">Other halogenated derivatives of acyclic hydrocarbons containing two or more different halogens (HCFC-123, HCFC-225 series)</field>
+            <field name="product_category">HCFC - Multi-halogenated</field>
+        </record>
+
+        <!-- Chapter 38: Refrigerant mixtures -->
+
+        <record id="hs_code_38247400" model="hs.code">
+            <field name="code">38247400</field>
+            <field name="name">Refrigerant mixtures containing hydrochlorofluorocarbons (HCFCs) - R-22 based blends (R-401, R-406, R-408, R-409, R-415)</field>
+            <field name="product_category">Refrigerant Blends - HCFC based</field>
+        </record>
+
+        <record id="hs_code_38247800" model="hs.code">
+            <field name="code">38247800</field>
+            <field name="name">Refrigerant mixtures containing hydrofluorocarbons (HFCs) - R-404A, R-407, R-410A, R-417A, R-422, R-427A, R-438A, R-507A, R-508B</field>
+            <field name="product_category">Refrigerant Blends - HFC based</field>
+        </record>
+
+        <record id="hs_code_38276800" model="hs.code">
+            <field name="code">38276800</field>
+            <field name="name">Refrigerant mixtures containing hydrofluoroolefins (HFOs) - Low-GWP blends (R-448A, R-449, R-450A, R-452, R-454, R-466A, R-513)</field>
+            <field name="product_category">Refrigerant Blends - New generation (HFO/HFC)</field>
+        </record>
+
+    </data>
+</odoo>

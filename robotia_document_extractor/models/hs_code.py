@@ -20,10 +20,12 @@ class HSCode(models.Model):
     name = fields.Char(
         string='Description',
         required=True,
+        translate=True,
         help='Product description'
     )
     product_category = fields.Char(
         string='Product Category',
+        translate=True,
         help='General product category'
     )
     chapter = fields.Char(
@@ -32,13 +34,11 @@ class HSCode(models.Model):
         store=True,
         help='HS Chapter (first 2 digits)'
     )
-    controlled_substance_ids = fields.Many2many(
+    controlled_substance_ids = fields.One2many(
         comodel_name='controlled.substance',
-        relation='hs_code_controlled_substance_rel',
-        column1='hs_code_id',
-        column2='substance_id',
+        inverse_name='hs_code_id',
         string='Related Controlled Substances',
-        help='Substances typically associated with this HS code'
+        help='Substances using this HS code (auto-populated from controlled.substance)'
     )
     active = fields.Boolean(
         string='Active',
