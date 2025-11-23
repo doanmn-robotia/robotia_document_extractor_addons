@@ -44,10 +44,12 @@ class EquipmentOwnership(models.Model):
         string='Year Started'
     )
     cooling_capacity = fields.Char(
-        string='Cooling Capacity'
+        string='Cooling Capacity',
+        help='Cooling capacity with unit (e.g., 5 HP, 10 kW, 18000 BTU). Extract value AND unit from PDF.'
     )
     power_capacity = fields.Char(
-        string='Power Capacity'
+        string='Power Capacity',
+        help='Power capacity with unit (e.g., 3.5 kW, 2.5 HP). Extract value AND unit from PDF.'
     )
     equipment_quantity = fields.Integer(
         string='Quantity'

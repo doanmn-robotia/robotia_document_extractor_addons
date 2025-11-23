@@ -134,12 +134,28 @@ msgid "Cooling Capacity"
 msgstr "Năng suất lạnh"
 
 #. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_equipment_product__cooling_capacity
+#: model:ir.model.fields,help:robotia_document_extractor.field_equipment_ownership__cooling_capacity
+#: model:ir.model.fields,help:robotia_document_extractor.field_equipment_product_report__cooling_capacity
+#: model:ir.model.fields,help:robotia_document_extractor.field_equipment_ownership_report__cooling_capacity
+msgid "Cooling capacity with unit (e.g., 5 HP, 10 kW, 18000 BTU). Extract value AND unit from PDF."
+msgstr "Năng suất lạnh kèm đơn vị (ví dụ: 5 HP, 10 kW, 18000 BTU). Trích xuất cả giá trị VÀ đơn vị từ PDF."
+
+#. module: robotia_document_extractor
 #: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_product__power_capacity
 #: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_ownership__power_capacity
 #: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_product_report__power_capacity
 #: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_ownership_report__power_capacity
 msgid "Power Capacity"
 msgstr "Công suất điện"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_equipment_product__power_capacity
+#: model:ir.model.fields,help:robotia_document_extractor.field_equipment_ownership__power_capacity
+#: model:ir.model.fields,help:robotia_document_extractor.field_equipment_product_report__power_capacity
+#: model:ir.model.fields,help:robotia_document_extractor.field_equipment_ownership_report__power_capacity
+msgid "Power capacity with unit (e.g., 3.5 kW, 2.5 HP). Extract value AND unit from PDF."
+msgstr "Công suất điện kèm đơn vị (ví dụ: 3.5 kW, 2.5 HP). Trích xuất cả giá trị VÀ đơn vị từ PDF."
 
 #. module: robotia_document_extractor
 #: model:ir.model.fields,field_description:robotia_document_extractor.field_controlled_substance__code

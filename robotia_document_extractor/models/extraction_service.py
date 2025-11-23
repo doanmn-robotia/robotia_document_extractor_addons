@@ -778,12 +778,17 @@ The PDF may present capacity data in TWO different formats:
    - Map directly to cooling_capacity and power_capacity respectively
    - No splitting required
 
-**Parsing rules:**
+**Parsing rules (MUST INCLUDE UNITS):**
+- **ALWAYS extract the complete value WITH unit** (e.g., "5 HP", NOT just "5")
 - If you see "/" in capacity value → Split on "/" (trim whitespace)
 - If you see separate columns → Map each to its respective field
 - If only one value exists without "/" → Put it in cooling_capacity, leave power_capacity empty
-- Preserve units (HP, kW, BTU, etc.) exactly as written
+- Common units to recognize: **HP** (horsepower), **kW** (kilowatt), **BTU**, **TR** (ton refrigeration), **RT** (refrigeration ton), **kcal/h**, **W** (watt)
+- Preserve decimal points and formatting (e.g., "3.5 kW", "2,000 BTU", "18,000 BTU/h")
+- Handle Vietnamese unit notation if present (e.g., "mã lực" = HP)
+- If no unit is visible in the PDF cell, extract value as-is but try to infer unit from column header or neighboring cells
 - Handle missing values → Set both fields to null or empty string
+- **NEVER extract just numbers without units** - units are REQUIRED for proper capacity specification
 
 ## PART III: COMPLETE JSON OUTPUT STRUCTURE
 
@@ -846,8 +851,8 @@ Return JSON with ALL fields below (no omissions, no "..."):
       "sequence": <integer>,
       "product_type": "<IMPORTANT: If is_title=true, this contains the section title. If is_title=false, this contains the equipment model/type>",
       "hs_code": "<string - HS code like 8415.10, 8418.50>",
-      "cooling_capacity": "<string - cooling capacity (if combined with '/', split on '/'; if separate column, use directly)>",
-      "power_capacity": "<string - power capacity (if combined with '/', split on '/'; if separate column, use directly)>",
+      "cooling_capacity": "<string - cooling capacity WITH UNIT (e.g., '5 HP', '10 kW', '18000 BTU'). If combined with '/', split on '/'; if separate column, use directly. ALWAYS include unit>",
+      "power_capacity": "<string - power capacity WITH UNIT (e.g., '3.5 kW', '2.5 HP'). If combined with '/', split on '/'; if separate column, use directly. ALWAYS include unit>",
       "quantity": <float or null>,
       "substance_name": "<standardized substance name>",
       "substance_quantity_per_unit": <float or null>,
@@ -862,8 +867,8 @@ Return JSON with ALL fields below (no omissions, no "..."):
       "sequence": <integer>,
       "equipment_type": "<IMPORTANT: If is_title=true, this contains the section title. If is_title=false, this contains the equipment model/manufacturer>",
       "start_year": <integer or null - year equipment was put into use>,
-      "cooling_capacity": "<string - cooling capacity (if combined with '/', split on '/'; if separate column, use directly)>",
-      "power_capacity": "<string - power capacity (if combined with '/', split on '/'; if separate column, use directly)>",
+      "cooling_capacity": "<string - cooling capacity WITH UNIT (e.g., '5 HP', '10 kW', '18000 BTU'). If combined with '/', split on '/'; if separate column, use directly. ALWAYS include unit>",
+      "power_capacity": "<string - power capacity WITH UNIT (e.g., '3.5 kW', '2.5 HP'). If combined with '/', split on '/'; if separate column, use directly. ALWAYS include unit>",
       "equipment_quantity": <integer or null>,
       "substance_name": "<standardized substance name>",
       "refill_frequency": <float or null - times per year>,
@@ -979,12 +984,17 @@ The PDF may present capacity data in TWO different formats:
    - Map directly to cooling_capacity and power_capacity respectively
    - No splitting required
 
-**Parsing rules:**
+**Parsing rules (MUST INCLUDE UNITS):**
+- **ALWAYS extract the complete value WITH unit** (e.g., "5 HP", NOT just "5")
 - If you see "/" in capacity value → Split on "/" (trim whitespace)
 - If you see separate columns → Map each to its respective field
 - If only one value exists without "/" → Put it in cooling_capacity, leave power_capacity empty
-- Preserve units (HP, kW, BTU, etc.) exactly as written
+- Common units to recognize: **HP** (horsepower), **kW** (kilowatt), **BTU**, **TR** (ton refrigeration), **RT** (refrigeration ton), **kcal/h**, **W** (watt)
+- Preserve decimal points and formatting (e.g., "3.5 kW", "2,000 BTU", "18,000 BTU/h")
+- Handle Vietnamese unit notation if present (e.g., "mã lực" = HP)
+- If no unit is visible in the PDF cell, extract value as-is but try to infer unit from column header or neighboring cells
 - Handle missing values → Set both fields to null or empty string
+- **NEVER extract just numbers without units** - units are REQUIRED for proper capacity specification
 
 ## PART III: COMPLETE JSON OUTPUT STRUCTURE
 
@@ -1049,8 +1059,8 @@ Return JSON with ALL fields below (no omissions, no "..."):
       "production_type": "<production|import>",
       "product_type": "<IMPORTANT: If is_title=true, this contains the section title. If is_title=false, this contains the equipment model/type>",
       "hs_code": "<string>",
-      "cooling_capacity": "<string - cooling capacity (if combined with '/', split on '/'; if separate column, use directly)>",
-      "power_capacity": "<string - power capacity (if combined with '/', split on '/'; if separate column, use directly)>",
+      "cooling_capacity": "<string - cooling capacity WITH UNIT (e.g., '5 HP', '10 kW', '18000 BTU'). If combined with '/', split on '/'; if separate column, use directly. ALWAYS include unit>",
+      "power_capacity": "<string - power capacity WITH UNIT (e.g., '3.5 kW', '2.5 HP'). If combined with '/', split on '/'; if separate column, use directly. ALWAYS include unit>",
       "quantity": <float or null>,
       "substance_name": "<standardized substance name>",
       "substance_quantity_per_unit": <float or null>,
@@ -1067,8 +1077,8 @@ Return JSON with ALL fields below (no omissions, no "..."):
       "equipment_type": "<IMPORTANT: If is_title=true, this contains the section title. If is_title=false, this contains the equipment model/manufacturer>",
       "equipment_quantity": <integer or null>,
       "substance_name": "<standardized substance name>",
-      "cooling_capacity": "<string - cooling capacity (if combined with '/', split on '/'; if separate column, use directly)>",
-      "power_capacity": "<string - power capacity (if combined with '/', split on '/'; if separate column, use directly)>",
+      "cooling_capacity": "<string - cooling capacity WITH UNIT (e.g., '5 HP', '10 kW', '18000 BTU'). If combined with '/', split on '/'; if separate column, use directly. ALWAYS include unit>",
+      "power_capacity": "<string - power capacity WITH UNIT (e.g., '3.5 kW', '2.5 HP'). If combined with '/', split on '/'; if separate column, use directly. ALWAYS include unit>",
       "start_year": <integer or null>,
       "refill_frequency": <float or null - times per year>,
       "substance_quantity_per_refill": <float or null>,
