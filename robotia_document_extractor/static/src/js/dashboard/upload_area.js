@@ -22,7 +22,9 @@ export class UploadArea extends Component {
         this.state = useState({
             documentType: '01',
             uploading: false,
-            dragOver: false
+            dragOver: false,
+            selectedFile: null, // Store selected file before extraction
+            filePreview: null   // Store file info for preview card
         });
     }
 
@@ -45,26 +47,26 @@ export class UploadArea extends Component {
         this.state.dragOver = false;
 
         // Don't handle drop if disabled or already uploading
-        if (this.props.disabled || this.state.uploading) {
+        if (this.props.disabled || this.state.uploading || this.state.selectedFile) {
             return;
         }
 
         const files = ev.dataTransfer.files;
         if (files.length > 0) {
-            this.handleFile(files[0]);
+            this.onFileSelected(files[0]);
         }
     }
 
     onFileSelect(ev) {
         const files = ev.target.files;
         if (files.length > 0) {
-            this.handleFile(files[0]);
+            this.onFileSelected(files[0]);
         }
         // Reset input so same file can be selected again
         ev.target.value = '';
     }
 
-    async handleFile(file) {
+    onFileSelected(file) {
         // Validate file type
         if (file.type !== 'application/pdf') {
             this.notification.add(
@@ -83,6 +85,27 @@ export class UploadArea extends Component {
             );
             return;
         }
+
+        // Store file and show preview card
+        this.state.selectedFile = file;
+        this.state.filePreview = {
+            name: file.name,
+            size: this.formatFileSize(file.size),
+            sizeBytes: file.size
+        };
+    }
+
+    cancelFileSelection() {
+        this.state.selectedFile = null;
+        this.state.filePreview = null;
+    }
+
+    async startExtraction() {
+        if (!this.state.selectedFile) {
+            return;
+        }
+
+        const file = this.state.selectedFile;
 
         // Notify parent that upload is starting
         if (this.props.onUploadStart) {
@@ -103,6 +126,9 @@ export class UploadArea extends Component {
             });
 
             this.state.uploading = false;
+            // Clear selected file after extraction
+            this.state.selectedFile = null;
+            this.state.filePreview = null;
 
             // Notify parent that upload has ended
             if (this.props.onUploadEnd) {
@@ -130,6 +156,9 @@ export class UploadArea extends Component {
         } catch (error) {
             console.error('Extraction error:', error);
             this.state.uploading = false;
+            // Clear selected file on error
+            this.state.selectedFile = null;
+            this.state.filePreview = null;
 
             // Notify parent that upload has ended (even on error)
             if (this.props.onUploadEnd) {
@@ -141,6 +170,14 @@ export class UploadArea extends Component {
                 { type: 'danger', sticky: true }
             );
         }
+    }
+
+    formatFileSize(bytes) {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
 
     readFileAsBase64(file) {
