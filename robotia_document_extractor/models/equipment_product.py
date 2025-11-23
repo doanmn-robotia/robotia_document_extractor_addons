@@ -54,6 +54,10 @@ class EquipmentProduct(models.Model):
         readonly=False,
         help='HS code (auto-filled from hs_code_id)'
     )
+    capacity = fields.Char(
+        string='Cooling Capacity/Power Capacity',
+        help='Combined capacity when PDF has merged column (e.g., "5 HP/3.5 kW"). Only use when is_capacity_merged = True.'
+    )
     cooling_capacity = fields.Char(
         string='Cooling Capacity',
         help='Cooling capacity with unit (e.g., 5 HP, 10 kW, 18000 BTU). Extract value AND unit from PDF.'

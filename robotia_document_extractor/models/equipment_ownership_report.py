@@ -40,6 +40,7 @@ class EquipmentOwnershipReport(models.Model):
     equipment_quantity = fields.Integer(string='Quantity')
     substance_id = fields.Many2one('controlled.substance', string='Controlled Substance', ondelete='restrict', index=True)
     substance_name = fields.Char(string='Substance Name', compute='_compute_substance_name', store=True, readonly=False)
+    capacity = fields.Char(string='Cooling Capacity/Power Capacity', help='Combined capacity when PDF has merged column (e.g., "5 HP/3.5 kW"). Only use when is_capacity_merged = True.')
     cooling_capacity = fields.Char(string='Cooling Capacity', help='Cooling capacity with unit (e.g., 5 HP, 10 kW, 18000 BTU). Extract value AND unit from PDF.')
     power_capacity = fields.Char(string='Power Capacity', help='Power capacity with unit (e.g., 3.5 kW, 2.5 HP). Extract value AND unit from PDF.')
     start_year = fields.Integer(string='Year Started')

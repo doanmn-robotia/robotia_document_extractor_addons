@@ -236,6 +236,28 @@ class DocumentExtraction(models.Model):
         help='Organization reports collection, recycling, reuse, disposal'
     )
 
+    # ===== Capacity Column Format Flags =====
+    is_capacity_merged_table_1_2 = fields.Boolean(
+        string='Table 1.2: Capacity Columns Merged',
+        default=True,
+        help='True = PDF has 1 merged column. False = PDF has 2 separate columns for cooling and power capacity.'
+    )
+    is_capacity_merged_table_1_3 = fields.Boolean(
+        string='Table 1.3: Capacity Columns Merged',
+        default=True,
+        help='True = merged column, False = separate columns.'
+    )
+    is_capacity_merged_table_2_2 = fields.Boolean(
+        string='Table 2.2: Capacity Columns Merged',
+        default=True,
+        help='True = merged column, False = separate columns.'
+    )
+    is_capacity_merged_table_2_3 = fields.Boolean(
+        string='Table 2.3: Capacity Columns Merged',
+        default=True,
+        help='True = merged column, False = separate columns.'
+    )
+
     # ===== Table 1.1: Substance Usage (Production, Import, Export) =====
     substance_usage_ids = fields.One2many(
         comodel_name='substance.usage',

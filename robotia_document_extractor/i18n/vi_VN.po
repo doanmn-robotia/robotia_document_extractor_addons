@@ -126,6 +126,22 @@ msgid "CAS Number"
 msgstr "Số CAS"
 
 #. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_product__capacity
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_ownership__capacity
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_product_report__capacity
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_ownership_report__capacity
+msgid "Cooling Capacity/Power Capacity"
+msgstr "Năng suất lạnh/Công suất điện"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_equipment_product__capacity
+#: model:ir.model.fields,help:robotia_document_extractor.field_equipment_ownership__capacity
+#: model:ir.model.fields,help:robotia_document_extractor.field_equipment_product_report__capacity
+#: model:ir.model.fields,help:robotia_document_extractor.field_equipment_ownership_report__capacity
+msgid "Combined capacity when PDF has merged column (e.g., \"5 HP/3.5 kW\"). Only use when is_capacity_merged = True."
+msgstr "Công suất gộp khi PDF có cột hợp nhất (ví dụ: \"5 HP/3.5 kW\"). Chỉ dùng khi is_capacity_merged = True."
+
+#. module: robotia_document_extractor
 #: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_product__cooling_capacity
 #: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_ownership__cooling_capacity
 #: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_product_report__cooling_capacity
@@ -1406,6 +1422,47 @@ msgstr "Có Bảng 2.4 (Báo cáo Thu gom & Tái chế)"
 #: model:ir.model.fields,help:robotia_document_extractor.field_document_extraction__has_table_2_4
 msgid "Organization reports collection, recycling, reuse, disposal"
 msgstr "Tổ chức báo cáo thu gom, tái chế, tái sử dụng, xử lý"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_document_extraction__is_capacity_merged_table_1_2
+msgid "Table 1.2: Capacity Columns Merged"
+msgstr "Bảng 1.2: Cột công suất được gộp"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_document_extraction__is_capacity_merged_table_1_2
+msgid "True = PDF has 1 merged column. False = PDF has 2 separate columns for cooling and power capacity."
+msgstr "True = PDF có 1 cột gộp. False = PDF có 2 cột riêng cho năng suất lạnh và công suất điện."
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_document_extraction__is_capacity_merged_table_1_3
+msgid "Table 1.3: Capacity Columns Merged"
+msgstr "Bảng 1.3: Cột công suất được gộp"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_document_extraction__is_capacity_merged_table_1_3
+msgid "True = merged column, False = separate columns."
+msgstr "True = cột gộp, False = cột riêng."
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_document_extraction__is_capacity_merged_table_2_2
+msgid "Table 2.2: Capacity Columns Merged"
+msgstr "Bảng 2.2: Cột công suất được gộp"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_document_extraction__is_capacity_merged_table_2_2
+msgid "True = merged column, False = separate columns."
+msgstr "True = cột gộp, False = cột riêng."
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_document_extraction__is_capacity_merged_table_2_3
+msgid "Table 2.3: Capacity Columns Merged"
+msgstr "Bảng 2.3: Cột công suất được gộp"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_document_extraction__is_capacity_merged_table_2_3
+msgid "True = merged column, False = separate columns."
+msgstr "True = cột gộp, False = cột riêng."
+
 # ========================================
 # EQUIPMENT TYPE MASTER DATA
 # ========================================

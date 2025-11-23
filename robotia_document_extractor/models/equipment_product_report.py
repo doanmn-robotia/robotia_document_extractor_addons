@@ -39,6 +39,7 @@ class EquipmentProductReport(models.Model):
     product_type = fields.Char(string='Product/Equipment Type', compute='_compute_product_type', store=True, readonly=False)
     hs_code_id = fields.Many2one('hs.code', string='HS Code', ondelete='restrict', index=True)
     hs_code = fields.Char(string='HS Code Text', compute='_compute_hs_code', store=True, readonly=False)
+    capacity = fields.Char(string='Cooling Capacity/Power Capacity', help='Combined capacity when PDF has merged column (e.g., "5 HP/3.5 kW"). Only use when is_capacity_merged = True.')
     cooling_capacity = fields.Char(string='Cooling Capacity', help='Cooling capacity with unit (e.g., 5 HP, 10 kW, 18000 BTU). Extract value AND unit from PDF.')
     power_capacity = fields.Char(string='Power Capacity', help='Power capacity with unit (e.g., 3.5 kW, 2.5 HP). Extract value AND unit from PDF.')
     quantity = fields.Float(string='Quantity', digits=(16, 4))

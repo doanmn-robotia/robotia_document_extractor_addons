@@ -769,26 +769,57 @@ CRITICAL: Many companies submit PARTIALLY FILLED templates with mockup data.
 - When unclear: Mark as null, DON'T guess
 
 **Capacity field parsing (CRITICAL for Tables 1.2 and 1.3):**
-The PDF may present capacity data in TWO different formats:
-1. **Combined column**: Single column "Công suất lạnh/Công suất điện" with "/" separator
-   - Example: "5 HP/3.5 kW" → cooling_capacity: "5 HP", power_capacity: "3.5 kW"
-   - Example: "10 kW/2.5 HP" → cooling_capacity: "10 kW", power_capacity: "2.5 HP"
-   - Split on "/" and assign left part to cooling_capacity, right part to power_capacity
-2. **Separate columns**: Two distinct columns for cooling and power
-   - Map directly to cooling_capacity and power_capacity respectively
-   - No splitting required
 
-**Parsing rules (MUST INCLUDE UNITS):**
-- **ALWAYS extract the complete value WITH unit** (e.g., "5 HP", NOT just "5")
-- If you see "/" in capacity value → Split on "/" (trim whitespace)
-- If you see separate columns → Map each to its respective field
-- If only one value exists without "/" → Put it in cooling_capacity, leave power_capacity empty
-- Common units to recognize: **HP** (horsepower), **kW** (kilowatt), **BTU**, **TR** (ton refrigeration), **RT** (refrigeration ton), **kcal/h**, **W** (watt)
-- Preserve decimal points and formatting (e.g., "3.5 kW", "2,000 BTU", "18,000 BTU/h")
-- Handle Vietnamese unit notation if present (e.g., "mã lực" = HP)
-- If no unit is visible in the PDF cell, extract value as-is but try to infer unit from column header or neighboring cells
-- Handle missing values → Set both fields to null or empty string
-- **NEVER extract just numbers without units** - units are REQUIRED for proper capacity specification
+**IMPORTANT - Table mapping:**
+- Table 1.2 = "equipment_product" array
+- Table 1.3 = "equipment_ownership" array
+- Both tables have capacity-related columns in PDF
+
+**STEP 1: Determine PDF table structure FOR EACH TABLE**
+
+For Table 1.2 (Equipment/Product):
+- Look at Table 1.2's column headers in PDF
+- If 1 column "Năng suất lạnh/Công suất điện" (merged) → is_capacity_merged_table_1_2 = TRUE
+- If 2 columns "Năng suất lạnh" AND "Công suất điện" (separate) → is_capacity_merged_table_1_2 = FALSE
+
+For Table 1.3 (Equipment Ownership):
+- Look at Table 1.3's column headers in PDF
+- If 1 column "Năng suất lạnh/Công suất điện" (merged) → is_capacity_merged_table_1_3 = TRUE
+- If 2 columns "Năng suất lạnh" AND "Công suất điện" (separate) → is_capacity_merged_table_1_3 = FALSE
+
+**STEP 2: Extract data into equipment_product array (Table 1.2)**
+
+CASE 1 - Table 1.2 has MERGED column (is_capacity_merged_table_1_2 = TRUE):
+  → For each row in equipment_product array:
+     - Extract entire "Năng suất lạnh/Công suất điện" cell value to "capacity" field AS-IS (e.g., "5 HP/3.5 kW")
+     - Set "cooling_capacity" = null
+     - Set "power_capacity" = null
+
+CASE 2 - Table 1.2 has SEPARATE columns (is_capacity_merged_table_1_2 = FALSE):
+  → For each row in equipment_product array:
+     - Extract "Năng suất lạnh" column to "cooling_capacity" (ONLY HP/BTU/TR/RT units)
+     - Extract "Công suất điện" column to "power_capacity" (ONLY kW/W units)
+     - Set "capacity" = null
+
+**STEP 3: Extract data into equipment_ownership array (Table 1.3)**
+
+CASE 1 - Table 1.3 has MERGED column (is_capacity_merged_table_1_3 = TRUE):
+  → For each row in equipment_ownership array:
+     - Extract entire "Năng suất lạnh/Công suất điện" cell value to "capacity" field AS-IS
+     - Set "cooling_capacity" = null
+     - Set "power_capacity" = null
+
+CASE 2 - Table 1.3 has SEPARATE columns (is_capacity_merged_table_1_3 = FALSE):
+  → For each row in equipment_ownership array:
+     - Extract "Năng suất lạnh" column to "cooling_capacity" (ONLY HP/BTU/TR/RT units)
+     - Extract "Công suất điện" column to "power_capacity" (ONLY kW/W units)
+     - Set "capacity" = null
+
+**Unit extraction rules:**
+- **ALWAYS include unit** (e.g., "5 HP", NOT just "5")
+- Common units: **HP, kW, BTU, TR, RT, kcal/h, W**
+- Preserve formatting (e.g., "3.5 kW", "2,000 BTU")
+- Handle Vietnamese notation (e.g., "mã lực" = HP)
 
 ## PART III: COMPLETE JSON OUTPUT STRUCTURE
 
@@ -826,6 +857,9 @@ Return JSON with ALL fields below (no omissions, no "..."):
   "has_table_1_3": <boolean>,
   "has_table_1_4": <boolean>,
 
+  "is_capacity_merged_table_1_2": <boolean - true if 1 MERGED column, false if 2 SEPARATE columns>,
+  "is_capacity_merged_table_1_3": <boolean - true if 1 MERGED column, false if 2 SEPARATE columns>,
+
   "substance_usage": [
     // Table 1.1 data - ALL fields must be included:
     {
@@ -846,13 +880,15 @@ Return JSON with ALL fields below (no omissions, no "..."):
 
   "equipment_product": [
     // Table 1.2 data - ALL fields must be included:
+    // IMPORTANT: Check is_capacity_merged_table_1_2 flag to know which capacity fields to fill
     {
       "is_title": <boolean>,
       "sequence": <integer>,
       "product_type": "<IMPORTANT: If is_title=true, this contains the section title. If is_title=false, this contains the equipment model/type>",
       "hs_code": "<string - HS code like 8415.10, 8418.50>",
-      "cooling_capacity": "<string - cooling capacity WITH UNIT (e.g., '5 HP', '10 kW', '18000 BTU'). If combined with '/', split on '/'; if separate column, use directly. ALWAYS include unit>",
-      "power_capacity": "<string - power capacity WITH UNIT (e.g., '3.5 kW', '2.5 HP'). If combined with '/', split on '/'; if separate column, use directly. ALWAYS include unit>",
+      "capacity": "<string or null - ONLY if is_capacity_merged_table_1_2=TRUE. Extract from merged 'Năng suất lạnh/Công suất điện' column. Store as-is (e.g., '5 HP/3.5 kW')>",
+      "cooling_capacity": "<string or null - ONLY if is_capacity_merged_table_1_2=FALSE. Extract from 'Năng suất lạnh' column. ONLY HP/BTU/TR/RT units>",
+      "power_capacity": "<string or null - ONLY if is_capacity_merged_table_1_2=FALSE. Extract from 'Công suất điện' column. ONLY kW/W units>",
       "quantity": <float or null>,
       "substance_name": "<standardized substance name>",
       "substance_quantity_per_unit": <float or null>,
@@ -862,13 +898,15 @@ Return JSON with ALL fields below (no omissions, no "..."):
 
   "equipment_ownership": [
     // Table 1.3 data - ALL fields must be included:
+    // IMPORTANT: Check is_capacity_merged_table_1_3 flag to know which capacity fields to fill
     {
       "is_title": <boolean>,
       "sequence": <integer>,
       "equipment_type": "<IMPORTANT: If is_title=true, this contains the section title. If is_title=false, this contains the equipment model/manufacturer>",
       "start_year": <integer or null - year equipment was put into use>,
-      "cooling_capacity": "<string - cooling capacity WITH UNIT (e.g., '5 HP', '10 kW', '18000 BTU'). If combined with '/', split on '/'; if separate column, use directly. ALWAYS include unit>",
-      "power_capacity": "<string - power capacity WITH UNIT (e.g., '3.5 kW', '2.5 HP'). If combined with '/', split on '/'; if separate column, use directly. ALWAYS include unit>",
+      "capacity": "<string or null - ONLY if is_capacity_merged_table_1_3=TRUE. Extract from merged 'Năng suất lạnh/Công suất điện' column. Store as-is (e.g., '5 HP/3.5 kW')>",
+      "cooling_capacity": "<string or null - ONLY if is_capacity_merged_table_1_3=FALSE. Extract from 'Năng suất lạnh' column. ONLY HP/BTU/TR/RT units>",
+      "power_capacity": "<string or null - ONLY if is_capacity_merged_table_1_3=FALSE. Extract from 'Công suất điện' column. ONLY kW/W units>",
       "equipment_quantity": <integer or null>,
       "substance_name": "<standardized substance name>",
       "refill_frequency": <float or null - times per year>,
@@ -907,6 +945,13 @@ Return JSON with ALL fields below (no omissions, no "..."):
 - has_table_1_2 = true IF any(equipment_production, equipment_import) checked
 - has_table_1_3 = true IF any(ac_ownership, refrigeration_ownership) checked
 - has_table_1_4 = true IF collection_recycling checked
+
+**Capacity Column Format Logic:**
+- is_capacity_merged_table_1_2 = true IF Table 1.2 has 1 merged column "Năng suất lạnh/Công suất điện", false IF 2 separate columns
+- is_capacity_merged_table_1_3 = true IF Table 1.3 has 1 merged column, false IF 2 separate columns
+- Check the TABLE HEADER ROW to determine column format
+- If header shows "Năng suất lạnh/Công suất điện" or similar merged text → TRUE
+- If header shows two separate columns for cooling and power → FALSE
 
 **Number Formatting (CRITICAL):**
 - LINE WRAP BUG: "300.0" + "00" (next line) = 300000 (NOT 30000!)
@@ -975,26 +1020,57 @@ CRITICAL: Many companies submit PARTIALLY FILLED templates with mockup data.
 - When unclear: Mark as null, DON'T guess
 
 **Capacity field parsing (CRITICAL for Tables 2.2 and 2.3):**
-The PDF may present capacity data in TWO different formats:
-1. **Combined column**: Single column "Công suất lạnh/Công suất điện" with "/" separator
-   - Example: "5 HP/3.5 kW" → cooling_capacity: "5 HP", power_capacity: "3.5 kW"
-   - Example: "10 kW/2.5 HP" → cooling_capacity: "10 kW", power_capacity: "2.5 HP"
-   - Split on "/" and assign left part to cooling_capacity, right part to power_capacity
-2. **Separate columns**: Two distinct columns for cooling and power
-   - Map directly to cooling_capacity and power_capacity respectively
-   - No splitting required
 
-**Parsing rules (MUST INCLUDE UNITS):**
-- **ALWAYS extract the complete value WITH unit** (e.g., "5 HP", NOT just "5")
-- If you see "/" in capacity value → Split on "/" (trim whitespace)
-- If you see separate columns → Map each to its respective field
-- If only one value exists without "/" → Put it in cooling_capacity, leave power_capacity empty
-- Common units to recognize: **HP** (horsepower), **kW** (kilowatt), **BTU**, **TR** (ton refrigeration), **RT** (refrigeration ton), **kcal/h**, **W** (watt)
-- Preserve decimal points and formatting (e.g., "3.5 kW", "2,000 BTU", "18,000 BTU/h")
-- Handle Vietnamese unit notation if present (e.g., "mã lực" = HP)
-- If no unit is visible in the PDF cell, extract value as-is but try to infer unit from column header or neighboring cells
-- Handle missing values → Set both fields to null or empty string
-- **NEVER extract just numbers without units** - units are REQUIRED for proper capacity specification
+**IMPORTANT - Table mapping:**
+- Table 2.2 = "equipment_product_report" array
+- Table 2.3 = "equipment_ownership_report" array
+- Both tables have capacity-related columns in PDF
+
+**STEP 1: Determine PDF table structure FOR EACH TABLE**
+
+For Table 2.2 (Equipment/Product Report):
+- Look at Table 2.2's column headers in PDF
+- If 1 column "Năng suất lạnh/Công suất điện" (merged) → is_capacity_merged_table_2_2 = TRUE
+- If 2 columns "Năng suất lạnh" AND "Công suất điện" (separate) → is_capacity_merged_table_2_2 = FALSE
+
+For Table 2.3 (Equipment Ownership Report):
+- Look at Table 2.3's column headers in PDF
+- If 1 column "Năng suất lạnh/Công suất điện" (merged) → is_capacity_merged_table_2_3 = TRUE
+- If 2 columns "Năng suất lạnh" AND "Công suất điện" (separate) → is_capacity_merged_table_2_3 = FALSE
+
+**STEP 2: Extract data into equipment_product_report array (Table 2.2)**
+
+CASE 1 - Table 2.2 has MERGED column (is_capacity_merged_table_2_2 = TRUE):
+  → For each row in equipment_product_report array:
+     - Extract entire "Năng suất lạnh/Công suất điện" cell value to "capacity" field AS-IS (e.g., "5 HP/3.5 kW")
+     - Set "cooling_capacity" = null
+     - Set "power_capacity" = null
+
+CASE 2 - Table 2.2 has SEPARATE columns (is_capacity_merged_table_2_2 = FALSE):
+  → For each row in equipment_product_report array:
+     - Extract "Năng suất lạnh" column to "cooling_capacity" (ONLY HP/BTU/TR/RT units)
+     - Extract "Công suất điện" column to "power_capacity" (ONLY kW/W units)
+     - Set "capacity" = null
+
+**STEP 3: Extract data into equipment_ownership_report array (Table 2.3)**
+
+CASE 1 - Table 2.3 has MERGED column (is_capacity_merged_table_2_3 = TRUE):
+  → For each row in equipment_ownership_report array:
+     - Extract entire "Năng suất lạnh/Công suất điện" cell value to "capacity" field AS-IS
+     - Set "cooling_capacity" = null
+     - Set "power_capacity" = null
+
+CASE 2 - Table 2.3 has SEPARATE columns (is_capacity_merged_table_2_3 = FALSE):
+  → For each row in equipment_ownership_report array:
+     - Extract "Năng suất lạnh" column to "cooling_capacity" (ONLY HP/BTU/TR/RT units)
+     - Extract "Công suất điện" column to "power_capacity" (ONLY kW/W units)
+     - Set "capacity" = null
+
+**Unit extraction rules:**
+- **ALWAYS include unit** (e.g., "5 HP", NOT just "5")
+- Common units: **HP, kW, BTU, TR, RT, kcal/h, W**
+- Preserve formatting (e.g., "3.5 kW", "2,000 BTU")
+- Handle Vietnamese notation (e.g., "mã lực" = HP)
 
 ## PART III: COMPLETE JSON OUTPUT STRUCTURE
 
@@ -1029,6 +1105,9 @@ Return JSON with ALL fields below (no omissions, no "..."):
   "has_table_2_3": <boolean>,
   "has_table_2_4": <boolean>,
 
+  "is_capacity_merged_table_2_2": <boolean - true if merged, false if separate>,
+  "is_capacity_merged_table_2_3": <boolean - true if merged, false if separate>,
+
   "quota_usage": [
     // Table 2.1 data - ALL fields must be included:
     {
@@ -1053,14 +1132,16 @@ Return JSON with ALL fields below (no omissions, no "..."):
 
   "equipment_product_report": [
     // Table 2.2 data - ALL fields must be included:
+    // IMPORTANT: Check is_capacity_merged_table_2_2 flag to know which capacity fields to fill
     {
       "is_title": <boolean>,
       "sequence": <integer>,
       "production_type": "<production|import>",
       "product_type": "<IMPORTANT: If is_title=true, this contains the section title. If is_title=false, this contains the equipment model/type>",
       "hs_code": "<string>",
-      "cooling_capacity": "<string - cooling capacity WITH UNIT (e.g., '5 HP', '10 kW', '18000 BTU'). If combined with '/', split on '/'; if separate column, use directly. ALWAYS include unit>",
-      "power_capacity": "<string - power capacity WITH UNIT (e.g., '3.5 kW', '2.5 HP'). If combined with '/', split on '/'; if separate column, use directly. ALWAYS include unit>",
+      "capacity": "<string or null - ONLY if is_capacity_merged_table_2_2=TRUE. Extract from merged 'Năng suất lạnh/Công suất điện' column. Store as-is (e.g., '5 HP/3.5 kW')>",
+      "cooling_capacity": "<string or null - ONLY if is_capacity_merged_table_2_2=FALSE. Extract from 'Năng suất lạnh' column. ONLY HP/BTU/TR/RT units>",
+      "power_capacity": "<string or null - ONLY if is_capacity_merged_table_2_2=FALSE. Extract from 'Công suất điện' column. ONLY kW/W units>",
       "quantity": <float or null>,
       "substance_name": "<standardized substance name>",
       "substance_quantity_per_unit": <float or null>,
@@ -1070,6 +1151,7 @@ Return JSON with ALL fields below (no omissions, no "..."):
 
   "equipment_ownership_report": [
     // Table 2.3 data - ALL fields must be included:
+    // IMPORTANT: Check is_capacity_merged_table_2_3 flag to know which capacity fields to fill
     {
       "is_title": <boolean>,
       "sequence": <integer>,
@@ -1077,8 +1159,9 @@ Return JSON with ALL fields below (no omissions, no "..."):
       "equipment_type": "<IMPORTANT: If is_title=true, this contains the section title. If is_title=false, this contains the equipment model/manufacturer>",
       "equipment_quantity": <integer or null>,
       "substance_name": "<standardized substance name>",
-      "cooling_capacity": "<string - cooling capacity WITH UNIT (e.g., '5 HP', '10 kW', '18000 BTU'). If combined with '/', split on '/'; if separate column, use directly. ALWAYS include unit>",
-      "power_capacity": "<string - power capacity WITH UNIT (e.g., '3.5 kW', '2.5 HP'). If combined with '/', split on '/'; if separate column, use directly. ALWAYS include unit>",
+      "capacity": "<string or null - ONLY if is_capacity_merged_table_2_3=TRUE. Extract from merged 'Năng suất lạnh/Công suất điện' column. Store as-is (e.g., '5 HP/3.5 kW')>",
+      "cooling_capacity": "<string or null - ONLY if is_capacity_merged_table_2_3=FALSE. Extract from 'Năng suất lạnh' column. ONLY HP/BTU/TR/RT units>",
+      "power_capacity": "<string or null - ONLY if is_capacity_merged_table_2_3=FALSE. Extract from 'Công suất điện' column. ONLY kW/W units>",
       "start_year": <integer or null>,
       "refill_frequency": <float or null - times per year>,
       "substance_quantity_per_refill": <float or null>,
@@ -1116,6 +1199,13 @@ Return JSON with ALL fields below (no omissions, no "..."):
 - has_table_2_2 = true IF any(equipment_production, equipment_import) checked
 - has_table_2_3 = true IF any(ac_ownership, refrigeration_ownership) checked
 - has_table_2_4 = true IF collection_recycling checked
+
+**Capacity Column Format Logic:**
+- is_capacity_merged_table_2_2 = true IF Table 2.2 has 1 merged column "Năng suất lạnh/Công suất điện", false IF 2 separate columns
+- is_capacity_merged_table_2_3 = true IF Table 2.3 has 1 merged column, false IF 2 separate columns
+- Check the TABLE HEADER ROW to determine column format
+- If header shows "Năng suất lạnh/Công suất điện" or similar merged text → TRUE
+- If header shows two separate columns for cooling and power → FALSE
 
 **Table 2.4 Special Rules:**
 - NO title rows at all
@@ -1470,6 +1560,8 @@ BEGIN EXTRACTION NOW.
                 'has_table_1_2': data.get('has_table_1_2', False),
                 'has_table_1_3': data.get('has_table_1_3', False),
                 'has_table_1_4': data.get('has_table_1_4', False),
+                'is_capacity_merged_table_1_2': data.get('is_capacity_merged_table_1_2', True),
+                'is_capacity_merged_table_1_3': data.get('is_capacity_merged_table_1_3', True),
                 'substance_usage': data.get('substance_usage', []),
                 'equipment_product': data.get('equipment_product', []),
                 'equipment_ownership': data.get('equipment_ownership', []),
@@ -1481,6 +1573,8 @@ BEGIN EXTRACTION NOW.
                 'has_table_2_2': data.get('has_table_2_2', False),
                 'has_table_2_3': data.get('has_table_2_3', False),
                 'has_table_2_4': data.get('has_table_2_4', False),
+                'is_capacity_merged_table_2_2': data.get('is_capacity_merged_table_2_2', True),
+                'is_capacity_merged_table_2_3': data.get('is_capacity_merged_table_2_3', True),
                 'quota_usage': data.get('quota_usage', []),
                 'equipment_product_report': data.get('equipment_product_report', []),
                 'equipment_ownership_report': data.get('equipment_ownership_report', []),
