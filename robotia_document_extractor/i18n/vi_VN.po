@@ -3095,3 +3095,183 @@ msgstr "Mã HS (Hiển thị)"
 #: model:ir.model.fields,help:robotia_document_extractor.field_controlled_substance__hs_code_display
 msgid "HS Code for display purposes, including alternatives"
 msgstr "Mã HS để hiển thị, bao gồm cả mã thay thế"
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_google_drive_config_wizard__form01_folder_id
+msgid "Form 01 Folder ID"
+msgstr "ID Thư mục Form 01"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_google_drive_config_wizard__form01_folder_id
+msgid "Google Drive folder ID for Form 01 Registration documents"
+msgstr "ID thư mục Google Drive cho tài liệu Đăng ký Form 01"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_google_drive_config_wizard__form02_folder_id
+msgid "Form 02 Folder ID"
+msgstr "ID Thư mục Form 02"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_google_drive_config_wizard__form02_folder_id
+msgid "Google Drive folder ID for Form 02 Report documents"
+msgstr "ID thư mục Google Drive cho tài liệu Báo cáo Form 02"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_google_drive_config_wizard__processed_folder_id
+msgid "Processed Folder ID"
+msgstr "ID Thư mục Đã xử lý"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_google_drive_config_wizard__processed_folder_id
+msgid "Folder to move processed files after extraction"
+msgstr "Thư mục để di chuyển các file đã xử lý sau khi trích xuất"
+
+#. module: robotia_document_extractor
+#: model:ir.model,name:robotia_document_extractor.model_google_drive_extraction_log
+msgid "Google Drive Extraction Log"
+msgstr "Nhật ký Trích xuất Google Drive"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_google_drive_extraction_log__drive_file_id
+msgid "Drive File ID"
+msgstr "ID File Drive"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_google_drive_extraction_log__drive_file_id
+msgid "Google Drive file ID"
+msgstr "ID file Google Drive"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_google_drive_extraction_log__file_name
+msgid "File Name"
+msgstr "Tên File"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_google_drive_extraction_log__document_type
+msgid "Document Type"
+msgstr "Loại Tài liệu"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__google_drive_extraction_log__document_type__01
+msgid "Form 01 - Registration"
+msgstr "Form 01 - Đăng ký"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__google_drive_extraction_log__document_type__02
+msgid "Form 02 - Report"
+msgstr "Form 02 - Báo cáo"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_google_drive_extraction_log__status
+msgid "Status"
+msgstr "Trạng thái"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__google_drive_extraction_log__status__processing
+msgid "Processing"
+msgstr "Đang xử lý"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__google_drive_extraction_log__status__success
+msgid "Success"
+msgstr "Thành công"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__google_drive_extraction_log__status__error
+msgid "Error"
+msgstr "Lỗi"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_google_drive_extraction_log__extraction_record_id
+msgid "Extraction Record"
+msgstr "Bản ghi Trích xuất"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_google_drive_extraction_log__ai_response_json
+msgid "AI Response JSON"
+msgstr "JSON Phản hồi AI"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_google_drive_extraction_log__ai_response_json
+msgid "Raw JSON response from Gemini AI"
+msgstr "Phản hồi JSON thô từ Gemini AI"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_google_drive_extraction_log__error_message
+msgid "Error Message"
+msgstr "Thông báo Lỗi"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_google_drive_extraction_log__error_message
+msgid "Error details if extraction failed"
+msgstr "Chi tiết lỗi nếu trích xuất thất bại"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_google_drive_extraction_log__processed_date
+msgid "Processed Date"
+msgstr "Ngày Xử lý"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_document_extraction__extraction_log_id
+msgid "Extraction Log"
+msgstr "Nhật ký Trích xuất"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_document_extraction__extraction_log_id
+msgid "Link to extraction log record (for both manual and automated extractions)"
+msgstr "Liên kết đến bản ghi nhật ký trích xuất (cho cả trích xuất thủ công và tự động)"
+
+#. module: robotia_document_extractor
+#: model:ir.actions.act_window,name:robotia_document_extractor.action_google_drive_extraction_log
+#: model:ir.ui.menu,name:robotia_document_extractor.menu_google_drive_extraction_log
+msgid "Extraction Logs"
+msgstr "Nhật ký Trích xuất"
+
+#. module: robotia_document_extractor
+#: model:ir.cron,name:robotia_document_extractor.ir_cron_google_drive_auto_extract
+msgid "Google Drive: Auto Extract Documents"
+msgstr "Google Drive: Tự động Trích xuất Tài liệu"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_google_drive_extraction_log_form
+msgid "View Record"
+msgstr "Xem Bản ghi"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_google_drive_extraction_log_form
+msgid "AI Response"
+msgstr "Phản hồi AI"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_google_drive_extraction_log_search
+msgid "Errors"
+msgstr "Lỗi"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_google_drive_extraction_log_search
+msgid "Group By"
+msgstr "Nhóm theo"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.google_drive_config_wizard_form
+msgid "Folder Configuration"
+msgstr "Cấu hình Thư mục"
+
+#. module: robotia_document_extractor
+#: code:addons/robotia_document_extractor/wizard/google_drive_config_wizard.py:0
+msgid "Configuration Saved"
+msgstr "Đã lưu Cấu hình"
+
+#. module: robotia_document_extractor
+#: code:addons/robotia_document_extractor/wizard/google_drive_config_wizard.py:0
+msgid "Service account configured successfully!\n\nService Account: %s\n\nYou can now test the connection in Settings."
+msgstr "Cấu hình tài khoản dịch vụ thành công!\n\nTài khoản Dịch vụ: %s\n\nBạn có thể kiểm tra kết nối trong Cài đặt."
+
+#. module: robotia_document_extractor
+#: code:addons/robotia_document_extractor/wizard/google_drive_config_wizard.py:0
+msgid "Configuration Cleared"
+msgstr "Đã xóa Cấu hình"
+
+#. module: robotia_document_extractor
+#: code:addons/robotia_document_extractor/wizard/google_drive_config_wizard.py:0
+msgid "Google Drive configuration has been removed."
+msgstr "Cấu hình Google Drive đã được gỡ bỏ."

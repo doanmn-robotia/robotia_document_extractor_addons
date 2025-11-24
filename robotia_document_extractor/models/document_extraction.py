@@ -91,6 +91,17 @@ class DocumentExtraction(models.Model):
         string='Review Notes',
         help='Notes about extraction issues that need manual review'
     )
+    extraction_log_id = fields.Many2one(
+        'google.drive.extraction.log',
+        string='Extraction Log',
+        ondelete='set null',
+        copy=False,
+        index=True,
+        help='Link to extraction log record (for both manual and automated extractions)'
+    )
+
+    extraction_log_json = fields.Text(related="extraction_log_id.ai_response_json")
+
     source = fields.Selection(
         selection=[
             ('from_user_upload', 'User Upload'),
@@ -578,3 +589,18 @@ class DocumentExtraction(models.Model):
     def action_draft(self):
         """Reset document to draft"""
         self.write({'state': 'draft'})
+
+    def action_view_extraction_log(self):
+        """Smart button to view extraction log"""
+        self.ensure_one()
+        if not self.extraction_log_id:
+            return
+
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Extraction Log',
+            'res_model': 'google.drive.extraction.log',
+            'res_id': self.extraction_log_id.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }

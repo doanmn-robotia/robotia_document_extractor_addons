@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Auto Extract Documents from Google Drive -->
+        <record id="ir_cron_google_drive_auto_extract" model="ir.cron">
+            <field name="name">Google Drive: Auto Extract Documents</field>
+            <field name="model_id" ref="model_google_drive_auto_extractor"/>
+            <field name="state">code</field>
+            <field name="code">model.process_drive_files()</field>
+            <field name="interval_number">50</field>
+            <field name="interval_type">minutes</field>
+            <field name="active" eval="True"/>
+        </record>
+    </data>
+</odoo>

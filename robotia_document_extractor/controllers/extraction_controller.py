@@ -181,45 +181,6 @@ class ExtractionController(http.Controller):
             })
             _logger.info(f"Created public attachment ID {attachment.id} for PDF preview")
 
-            # Helper function to build One2many commands
-            def build_o2m_commands(data_list):
-                """Convert list of dicts to Odoo One2many commands: [(0, 0, values)]"""
-                if not data_list:
-                    return []
-                return [(0, 0, item) for item in data_list]
-
-            # Helper function to populate substance_id from substance_name
-            def populate_substance_ids_in_table(table_data, substance_lookup):
-                """
-                Populate substance_id in table data based on substance_name
-
-                Args:
-                    table_data (list): List of dicts containing table rows
-                    substance_lookup (dict): Dict mapping substance_name to substance_id
-
-                Returns:
-                    list: Modified table data with substance_id populated
-                """
-                if not table_data or not substance_lookup:
-                    return table_data
-
-                for row in table_data:
-                    # Skip title rows
-                    if row.get('is_title'):
-                        continue
-
-                    substance_name = row.get('substance_name')
-                    # Only populate if substance_name exists and substance_id not already set
-                    if substance_name and not row.get('substance_id'):
-                        substance_id = substance_lookup.get(substance_name)
-                        if substance_id:
-                            row['substance_id'] = substance_id
-                            _logger.info(f"Populated substance_id={substance_id} for substance_name='{substance_name}'")
-                        else:
-                            _logger.warning(f"Substance not found in database: '{substance_name}'")
-
-                return table_data
-
             # Auto-calculate year_1, year_2, year_3 if not extracted by AI
             year = extracted_data.get('year')
             if year:
@@ -230,219 +191,22 @@ class ExtractionController(http.Controller):
                 if not extracted_data.get('year_3'):
                     extracted_data['year_3'] = year + 1
 
-            # ========== AUTO-POPULATE SUBSTANCE IDs WITH FUZZY MATCHING ==========
-            # Collect all substance info (name + hs_code if available) from all tables
-            all_substance_info = []  # List of tuples: (substance_name, hs_code or None)
+            # ========== USE EXTRACTION HELPER TO BUILD VALUES ==========
+            # Get extraction helper service
+            helper = request.env['extraction.helper']
 
-            # Define table keys based on document type
-            if document_type == '01':
-                table_keys = ['substance_usage', 'equipment_product', 'equipment_ownership', 'collection_recycling']
-            else:  # document_type == '02'
-                table_keys = ['quota_usage', 'equipment_product_report', 'equipment_ownership_report', 'collection_recycling_report']
+            # Build values dict (without 'default_' prefix)
+            vals = helper.build_extraction_values(
+                extracted_data=extracted_data,
+                attachment=attachment,
+                document_type=document_type
+            )
 
-            # Collect substance_names and hs_codes from all tables
-            for table_key in table_keys:
-                table_data = extracted_data.get(table_key, [])
-                for row in table_data:
-                    # Skip title rows
-                    if row.get('is_title'):
-                        continue
-                    substance_name = row.get('substance_name', '').strip()
-                    # Only bảng 2.1 (quota_usage) has hs_code field
-                    hs_code = row.get('hs_code', '').strip() if row.get('hs_code') else None
-                    if substance_name:
-                        all_substance_info.append((substance_name, hs_code))
-
-            # Build substance lookup dictionary with fuzzy matching
-            substance_lookup = {}
-            fuzzy_matcher = request.env['fuzzy.matcher']
-
-            _logger.info(f"Looking up {len(all_substance_info)} substance entries with fuzzy matching")
-
-            for substance_name, hs_code in all_substance_info:
-                # Skip if already found
-                if substance_name in substance_lookup:
-                    continue
-
-                # Use fuzzy matching to find substance
-                found_substance = fuzzy_matcher.search_substance_fuzzy(
-                    search_term=substance_name,
-                    hs_code_term=hs_code
-                )
-
-                if found_substance:
-                    substance_lookup[substance_name] = found_substance.id
-                    _logger.info(
-                        f"Fuzzy matched: '{substance_name}' "
-                        f"(hs_code='{hs_code}') -> {found_substance.name} (id={found_substance.id})"
-                    )
-                else:
-                    _logger.warning(
-                        f"No match found for substance: '{substance_name}' "
-                        f"(hs_code='{hs_code}')"
-                    )
-
-            _logger.info(f"Fuzzy matching complete: Found {len(substance_lookup)} unique substances")
-
-            # Populate substance_id in all tables
-            for table_key in table_keys:
-                table_data = extracted_data.get(table_key, [])
-                if table_data:
-                    populate_substance_ids_in_table(table_data, substance_lookup)
-
-            # ========== END AUTO-POPULATE SUBSTANCE IDs ==========
-
-            # ========== COUNTRY/STATE LOOKUP WITH FUZZY FALLBACK ==========
-            contact_country_id = False
-            contact_state_id = False
-
-            country_code = extracted_data.get('contact_country_code')
-            if country_code:
-                # Step 1: Exact search by code
-                country = request.env['res.country'].search([
-                    ('code', '=', country_code.upper())
-                ], limit=1)
-
-                if country:
-                    contact_country_id = country.id
-                    _logger.info(f"Exact match country: code='{country_code}' -> {country.name}")
-                else:
-                    # Step 2: Fuzzy search (fallback)
-                    country = fuzzy_matcher.search_country_fuzzy(country_code)
-                    if country:
-                        contact_country_id = country.id
-                        _logger.info(f"Fuzzy matched country: '{country_code}' -> {country.name} ({country.code})")
-                    else:
-                        _logger.warning(f"Country not found (exact & fuzzy failed): '{country_code}'")
-
-            state_code = extracted_data.get('contact_state_code')
-            if state_code and contact_country_id:
-                # Step 1: Exact search by code within country
-                state = request.env['res.country.state'].search([
-                    ('code', '=', state_code.upper()),
-                    ('country_id', '=', contact_country_id)
-                ], limit=1)
-
-                if state:
-                    contact_state_id = state.id
-                    _logger.info(f"Exact match state: code='{state_code}' -> {state.name}")
-                else:
-                    # Step 2: Fuzzy search (fallback)
-                    state = fuzzy_matcher.search_state_fuzzy(
-                        search_term=state_code,
-                        country_id=contact_country_id
-                    )
-                    if state:
-                        contact_state_id = state.id
-                        _logger.info(f"Fuzzy matched state: '{state_code}' -> {state.name} ({state.code})")
-                    else:
-                        _logger.warning(
-                            f"State not found (exact & fuzzy failed): '{state_code}' "
-                            f"in country_id={contact_country_id}"
-                        )
-
-            # ========== END COUNTRY/STATE LOOKUP ==========
-
-            # Prepare context with default values
+            # Convert to context with 'default_' prefix
             context = {
-                'default_document_type': document_type,
-                'default_pdf_attachment_id': attachment.id,  # Pass attachment ID instead of base64
-                'default_pdf_filename': filename,
-                'default_year': extracted_data.get('year'),
-                'default_year_1': extracted_data.get('year_1'),
-                'default_year_2': extracted_data.get('year_2'),
-                'default_year_3': extracted_data.get('year_3'),
-
-                # Organization info
-                'default_business_license_number': extracted_data.get('business_license_number'),
-                'default_business_license_date': extracted_data.get('business_license_date'),
-                'default_business_license_place': extracted_data.get('business_license_place'),
-                'default_legal_representative_name': extracted_data.get('legal_representative_name'),
-                'default_legal_representative_position': extracted_data.get('legal_representative_position'),
-                'default_contact_person_name': extracted_data.get('contact_person_name'),
-                'default_contact_address': extracted_data.get('contact_address'),
-                'default_contact_phone': extracted_data.get('contact_phone'),
-                'default_contact_fax': extracted_data.get('contact_fax'),
-                'default_contact_email': extracted_data.get('contact_email'),
-                'default_contact_country_id': contact_country_id,
-                'default_contact_state_id': contact_state_id,
+                f'default_{key}': value
+                for key, value in vals.items()
             }
-
-            # Add One2many table data (Form 01)
-            if document_type == '01':
-                # Registration table flags
-                context['default_has_table_1_1'] = extracted_data.get('has_table_1_1', False)
-                context['default_has_table_1_2'] = extracted_data.get('has_table_1_2', False)
-                context['default_has_table_1_3'] = extracted_data.get('has_table_1_3', False)
-                context['default_has_table_1_4'] = extracted_data.get('has_table_1_4', False)
-
-                # Capacity column format flags
-                context['default_is_capacity_merged_table_1_2'] = extracted_data.get('is_capacity_merged_table_1_2', True)
-                context['default_is_capacity_merged_table_1_3'] = extracted_data.get('is_capacity_merged_table_1_3', True)
-
-                # Table 1.1 - Substance Usage (clean empty sections before creating commands)
-                context['default_substance_usage_ids'] = build_o2m_commands(extracted_data.get('substance_usage', []))
-
-                # Table 1.2 - Equipment/Product (clean empty sections)
-                context['default_equipment_product_ids'] = build_o2m_commands(extracted_data.get('equipment_product', []))
-
-                # Table 1.3 - Equipment Ownership (clean empty sections)
-                context['default_equipment_ownership_ids'] = build_o2m_commands(extracted_data.get('equipment_ownership', []))
-
-                # Table 1.4 - Collection & Recycling (clean empty sections)
-                context['default_collection_recycling_ids'] = build_o2m_commands(extracted_data.get('collection_recycling', []))
-
-            # Add One2many table data (Form 02)
-            elif document_type == '02':
-                # Report table flags
-                context['default_has_table_2_1'] = extracted_data.get('has_table_2_1', False)
-                context['default_has_table_2_2'] = extracted_data.get('has_table_2_2', False)
-                context['default_has_table_2_3'] = extracted_data.get('has_table_2_3', False)
-                context['default_has_table_2_4'] = extracted_data.get('has_table_2_4', False)
-
-                # Capacity column format flags
-                context['default_is_capacity_merged_table_2_2'] = extracted_data.get('is_capacity_merged_table_2_2', True)
-                context['default_is_capacity_merged_table_2_3'] = extracted_data.get('is_capacity_merged_table_2_3', True)
-
-                # Table 2.1 - Quota Usage (clean empty sections)
-                context['default_quota_usage_ids'] = build_o2m_commands(extracted_data.get('quota_usage', []))
-
-                # Table 2.2 - Equipment/Product Report (clean empty sections)
-                context['default_equipment_product_report_ids'] = build_o2m_commands(extracted_data.get('equipment_product_report', []))
-
-                # Table 2.3 - Equipment Ownership Report (clean empty sections)
-                context['default_equipment_ownership_report_ids'] = build_o2m_commands(extracted_data.get('equipment_ownership_report', []))
-
-                # Table 2.4 - Collection & Recycling Report
-                context['default_collection_recycling_report_ids'] = build_o2m_commands(
-                    extracted_data.get('collection_recycling_report', [])
-                )
-
-            # Handle organization_id (search by business_license_number)
-            business_license_number = extracted_data.get('business_license_number')
-            if business_license_number:
-                partner = request.env['res.partner'].search([
-                    ('business_license_number', '=', business_license_number)
-                ], limit=1)
-
-                if partner:
-                    context['default_organization_id'] = partner.id
-                # If not found, organization will be created on save with info from extracted data
-
-            # Always include organization_name
-            context['default_organization_name'] = extracted_data.get('organization_name')
-
-            # Handle activity_field_ids (map codes to Many2many IDs)
-            activity_field_codes = extracted_data.get('activity_field_codes', [])
-            if activity_field_codes:
-                # Search for activity fields by codes
-                activity_fields = request.env['activity.field'].search([
-                    ('code', 'in', activity_field_codes)
-                ])
-                if activity_fields:
-                    # Many2many command: [(6, 0, [ids])] = replace all with these IDs
-                    context['default_activity_field_ids'] = [(6, 0, activity_fields.ids)]
-                    _logger.info(f"Mapped {len(activity_fields)} activity fields: {activity_field_codes}")
 
             _logger.info(f"Extraction successful for {filename} (Type: {document_type})")
 

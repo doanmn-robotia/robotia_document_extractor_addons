@@ -766,6 +766,44 @@ CRITICAL: Many companies submit PARTIALLY FILLED templates with mockup data.
 - Brackets: "(Tên chất)", "[Ghi rõ]" → TEMPLATE
 - Cross-validation: If organization name is template, ENTIRE form is template
 
+## YEAR FIELDS EXTRACTION (CRITICAL)
+
+**Extract year values from table headers:**
+
+1. **Main year field (`year`):**
+   - Extract from document header/title
+   - Usually the registration year or report year
+   - Example: "Đăng ký năm 2024" → year = 2024
+
+2. **Table column years (`year_1`, `year_2`, `year_3`):**
+   - These are the 3 YEAR VALUES from table column headers
+   - Found in Table 1.1 (Substance Usage) - typically the first 3 quantity columns
+   - Headers are often MERGED CELLS containing year numbers
+
+**Example from Table 1.1:**
+```
+Header row: | Chất kiểm soát | 2022 (kg) | 2023 (kg) | 2024 (kg) | Trung bình |
+                                  ↑           ↑           ↑
+                              year_1      year_2      year_3
+```
+
+**Extraction rules:**
+- Look at the MERGED HEADER CELLS above the first 3 quantity columns in Table 1.1
+- Extract ONLY the year numbers (integers): 2022, 2023, 2024
+- Ignore column sub-headers like "(kg)", "(tấn CO2)"
+- If year is written in Vietnamese: "Năm 2024" → extract 2024
+- If only 2-digit: "22" → convert to 2022 (assume 20XX century)
+- Common patterns:
+  - "2022" → year_1 = 2022
+  - "Năm 2023" → year_2 = 2023
+  - "N-1" or "Năm trước" → year_1 = year - 1
+  - "N" or "Năm hiện tại" → year_2 = year
+  - "N+1" or "Năm sau" → year_3 = year + 1
+
+**If years are not explicitly stated:**
+- Use logical sequence based on main `year` field
+- Example: if year = 2024 → year_1 = 2022, year_2 = 2023, year_3 = 2024
+
 ## PART II: HANDLING POOR QUALITY DOCUMENTS
 
 **Context-based inference:**
@@ -856,7 +894,7 @@ Return JSON with ALL fields below (no omissions, no "..."):
   "contact_fax": "<string>",
   "contact_email": "<string>",
   "contact_country_code": "<ISO 2-letter code: VN, US, CN, etc.>",
-  "contact_state_code": "<Province code: VN-HN, VN-SG, VN-DN, VN-BD, etc.> (formula: contact_country_code + '-' + province code, you MUST give the state code if you found country code)",
+  "contact_state_code": "<ISO Province code: VN-HN, VN-SG, VN-DN, VN-BD, etc.> (formula: contact_country_code + '-' + province code, you MUST give the state code if you found country code)",
 
   "activity_field_codes": [
     // Array of codes from checked activities:
@@ -1018,6 +1056,44 @@ CRITICAL: Many companies submit PARTIALLY FILLED templates with mockup data.
 - Template numbers: Perfect sequences or round numbers
 - Empty template cells
 
+## YEAR FIELDS EXTRACTION (CRITICAL)
+
+**Extract year values from table headers:**
+
+1. **Main year field (`year`):**
+   - Extract from document header/title
+   - Usually the report year
+   - Example: "Báo cáo năm 2024" → year = 2024
+
+2. **Table column years (`year_1`, `year_2`, `year_3`):**
+   - These are the 3 YEAR VALUES from table column headers
+   - Found in Table 2.1 (Quota Usage) - typically the first 3 quantity columns
+   - Headers are often MERGED CELLS containing year numbers
+
+**Example from Table 2.1:**
+```
+Header row: | Tên chất | Mã HS | 2022 | 2023 | 2024 | Giá TB |
+                                  ↑      ↑      ↑
+                              year_1  year_2  year_3
+```
+
+**Extraction rules:**
+- Look at the MERGED HEADER CELLS above the first 3 quantity columns in Table 2.1
+- Extract ONLY the year numbers (integers): 2022, 2023, 2024
+- Ignore column sub-headers like "(kg)", "(tấn CO2)", "(USD)"
+- If year is written in Vietnamese: "Năm 2024" → extract 2024
+- If only 2-digit: "22" → convert to 2022 (assume 20XX century)
+- Common patterns:
+  - "2022" → year_1 = 2022
+  - "Năm 2023" → year_2 = 2023
+  - "N-1" or "Năm trước" → year_1 = year - 1
+  - "N" or "Năm hiện tại" → year_2 = year
+  - "N+1" or "Năm sau" → year_3 = year + 1
+
+**If years are not explicitly stated:**
+- Use logical sequence based on main `year` field
+- Example: if year = 2024 → year_1 = 2022, year_2 = 2023, year_3 = 2024
+
 ## PART II: HANDLING POOR QUALITY DOCUMENTS
 
 **Context-based inference:**
@@ -1107,7 +1183,7 @@ Return JSON with ALL fields below (no omissions, no "..."):
   "contact_fax": "<string>",
   "contact_email": "<string>",
   "contact_country_code": "<ISO 2-letter code: VN, US, CN, etc.>",
-  "contact_state_code": "<Province code: VN-HN, VN-SG, VN-DN, VN-BD, etc.> (formula: contact_country_code + '-' + province code, you MUST give the state code if you found country code)",
+  "contact_state_code": "<ISO Province code: VN-HN, VN-SG, VN-DN, VN-BD, etc.> (formula: contact_country_code + '-' + province code, you MUST give the state code if you found country code)",
 
   "activity_field_codes": [
     // Array of codes from checked activities
@@ -1551,6 +1627,9 @@ BEGIN EXTRACTION NOW.
         # Ensure all expected keys exist with default values
         cleaned = {
             'year': data.get('year'),
+            'year_1': data.get('year_1'),
+            'year_2': data.get('year_2'),
+            'year_3': data.get('year_3'),
             'organization_name': data.get('organization_name', ''),
             'business_license_number': data.get('business_license_number', ''),
             'business_license_date': data.get('business_license_date'),

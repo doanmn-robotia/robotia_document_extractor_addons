@@ -13,6 +13,19 @@
                 </header>
 
                 <sheet>
+                    <!-- Smart Buttons -->
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_extraction_log" type="object"
+                                class="oe_stat_button" icon="fa-history"
+                                invisible="not extraction_log_id">
+                            <field name="extraction_log_id" invisible="1"/>
+                            <div class="o_stat_info">
+                                <span class="o_stat_text">Extraction</span>
+                                <span class="o_stat_text">Log</span>
+                            </div>
+                        </button>
+                    </div>
+
                     <!-- Document Metadata -->
                     <div class="oe_title">
                         <h1>
@@ -334,15 +347,19 @@
 
                 <!-- PDF Preview Container (will be extracted by FormCompiler) -->
                 <div class="o_pdf_preview">
-                    <div class="o_pdf_preview_header">
-                        <h3>PDF Document Preview</h3>
-                    </div>
-                    <div class="o_pdf_preview_content">
-                        <field name="id" invisible="1"/>
-                        <field name="pdf_attachment_id" invisible="1"/>
-                        <field name="pdf_file" widget="pdf_viewer" invisible="not id" options="{'height': '100%'}"/>
-                        <field name="pdf_url" widget="pdf_url_viewer" invisible="id"/>
-                    </div>
+                    <notebook>
+                        <page name="name" string="PDF Document Preview">
+                            <div class="o_pdf_preview_content">
+                                <field name="id" invisible="1"/>
+                                <field name="pdf_attachment_id" invisible="1"/>
+                                <field name="pdf_file" widget="pdf_viewer" invisible="not id" options="{'height': '100%'}"/>
+                                <field name="pdf_url" widget="pdf_url_viewer" invisible="id"/>
+                            </div>
+                        </page>
+                        <page name="json" string="Json">
+                            <field name="extraction_log_json" options="{'mode': 'python'}" widget="ace"/>
+                        </page>
+                    </notebook>
                 </div>
             </form>
         </field>

@@ -12,8 +12,10 @@
                             widget="binary"/>
                     <field name="service_account_filename" invisible="1"/>
                 </group>
-                <group>
-                    <field name="folder_id" placeholder="Leave empty for all Drive"/>
+                <group string="Folder Configuration">
+                    <field name="form01_folder_id" placeholder="Form 01 folder ID"/>
+                    <field name="form02_folder_id" placeholder="Form 02 folder ID"/>
+                    <field name="processed_folder_id" placeholder="Processed folder ID"/>
                 </group>
 
                 <div class="alert alert-info">
@@ -31,9 +33,16 @@
                         <li>Download the JSON file (it will be named like <code>project-name-123abc.json</code>)</li>
                         <li><strong>Upload that file here</strong></li>
                         <li>Copy the service account email (e.g., <code>my-service@project.iam.gserviceaccount.com</code>)</li>
-                        <li>Share your Google Drive folder with that email address (give "Viewer" or "Editor" permission)</li>
-                        <li>Get the folder ID from the URL: <code>https://drive.google.com/drive/folders/<strong>FOLDER_ID</strong></code></li>
-                        <li>Enter the folder ID above (or leave empty to access all Drive)</li>
+                        <li>Create 3 folders in Google Drive:
+                            <ul>
+                                <li><strong>Form 01</strong> - For Form 01 Registration documents</li>
+                                <li><strong>Form 02</strong> - For Form 02 Report documents</li>
+                                <li><strong>Processed</strong> - For processed files</li>
+                            </ul>
+                        </li>
+                        <li>Share all 3 folders with the service account email (give "Editor" permission)</li>
+                        <li>Get folder IDs from URLs: <code>https://drive.google.com/drive/folders/<strong>FOLDER_ID</strong></code></li>
+                        <li>Enter the 3 folder IDs above</li>
                     </ol>
                 </div>
                 <footer>

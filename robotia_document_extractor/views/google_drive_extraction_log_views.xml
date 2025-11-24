@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- list View -->
+    <record id="view_google_drive_extraction_log_list" model="ir.ui.view">
+        <field name="name">google.drive.extraction.log.list</field>
+        <field name="model">google.drive.extraction.log</field>
+        <field name="arch" type="xml">
+            <list decoration-success="status=='success'" decoration-danger="status=='error'">
+                <field name="processed_date"/>
+                <field name="file_name"/>
+                <field name="document_type"/>
+                <field name="status"/>
+                <field name="extraction_record_id"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_google_drive_extraction_log_form" model="ir.ui.view">
+        <field name="name">google.drive.extraction.log.form</field>
+        <field name="model">google.drive.extraction.log</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_extraction_record" type="object"
+                                class="oe_stat_button" icon="fa-file-text"
+                                invisible="not extraction_record_id">
+                            <span>View Record</span>
+                        </button>
+                    </div>
+
+                    <group>
+                        <group>
+                            <field name="file_name"/>
+                            <field name="document_type"/>
+                            <field name="status"/>
+                        </group>
+                        <group>
+                            <field name="drive_file_id"/>
+                            <field name="processed_date"/>
+                            <field name="extraction_record_id"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="AI Response" invisible="not ai_response_json">
+                            <field name="ai_response_json" widget="text"/>
+                        </page>
+                        <page string="Error" invisible="status != 'error'">
+                            <field name="error_message" widget="text"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="view_google_drive_extraction_log_search" model="ir.ui.view">
+        <field name="name">google.drive.extraction.log.search</field>
+        <field name="model">google.drive.extraction.log</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="file_name"/>
+                <filter name="filter_success" string="Success" domain="[('status', '=', 'success')]"/>
+                <filter name="filter_error" string="Errors" domain="[('status', '=', 'error')]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_status" string="Status" context="{'group_by': 'status'}"/>
+                    <filter name="group_type" string="Document Type" context="{'group_by': 'document_type'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_google_drive_extraction_log" model="ir.actions.act_window">
+        <field name="name">Extraction Logs</field>
+        <field name="res_model">google.drive.extraction.log</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_group_status': 1}</field>
+    </record>
+
+    <!-- Menu -->
+    <menuitem id="menu_google_drive_extraction_log"
+              name="Extraction Logs"
+              parent="menu_configuration"
+              action="action_google_drive_extraction_log"
+              sequence="50"/>
+</odoo>

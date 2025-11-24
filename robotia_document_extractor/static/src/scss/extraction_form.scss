@@ -47,7 +47,14 @@
             overflow-y: auto;
             overflow-x: hidden;   // Prevent horizontal scroll
             background-color: #f8fafc; // slate-50
-            padding: 1rem;
+            padding: 10px;
+
+            .o_notebook {
+                margin: 0 !important;
+                .nav-tabs {
+                    margin-bottom: 0 !important;
+                }
+            }
 
             // RESPONSIVE: Mobile - Full width, fixed height, top border
             @media (max-width: 991px) {

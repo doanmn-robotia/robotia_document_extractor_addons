@@ -26,9 +26,12 @@ from . import collection_recycling_report
 
 # Services
 from . import extraction_service
+from . import extraction_helper
 from . import fuzzy_matcher
 from . import res_config_settings
 from . import google_drive_service
+from . import google_drive_extraction_log
+from . import google_drive_auto_extractor
 
 # Chatbot
 from . import chatbot_conversation

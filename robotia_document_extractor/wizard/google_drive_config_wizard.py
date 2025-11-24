@@ -23,19 +23,33 @@ class GoogleDriveConfigWizard(models.TransientModel):
         string='Filename'
     )
 
-    folder_id = fields.Char(
-        string='Google Drive Folder ID',
-        help='Optional: Folder ID to sync from. Leave empty to access all Drive.'
+    form01_folder_id = fields.Char(
+        string='Form 01 Folder ID',
+        help='Google Drive folder ID for Form 01 Registration documents'
+    )
+
+    form02_folder_id = fields.Char(
+        string='Form 02 Folder ID',
+        help='Google Drive folder ID for Form 02 Report documents'
+    )
+
+    processed_folder_id = fields.Char(
+        string='Processed Folder ID',
+        help='Folder to move processed files after extraction'
     )
 
     @api.model
     def default_get(self, fields_list):
-        """Load current folder_id if exists"""
+        """Load current folder IDs if exist"""
         res = super().default_get(fields_list)
         ICP = self.env['ir.config_parameter'].sudo()
 
-        if 'folder_id' in fields_list:
-            res['folder_id'] = ICP.get_param('google_drive_folder_id', '')
+        if 'form01_folder_id' in fields_list:
+            res['form01_folder_id'] = ICP.get_param('google_drive_form01_folder_id', '')
+        if 'form02_folder_id' in fields_list:
+            res['form02_folder_id'] = ICP.get_param('google_drive_form02_folder_id', '')
+        if 'processed_folder_id' in fields_list:
+            res['processed_folder_id'] = ICP.get_param('google_drive_processed_folder_id', '')
 
         return res
 
@@ -66,12 +80,14 @@ class GoogleDriveConfigWizard(models.TransientModel):
             # Save to system parameters
             ICP = self.env['ir.config_parameter'].sudo()
             ICP.set_param('google_drive_service_account_json', json_content)
-            ICP.set_param('google_drive_folder_id', self.folder_id or '')
+            ICP.set_param('google_drive_form01_folder_id', self.form01_folder_id or '')
+            ICP.set_param('google_drive_form02_folder_id', self.form02_folder_id or '')
+            ICP.set_param('google_drive_processed_folder_id', self.processed_folder_id or '')
 
             service_account_email = credentials.get('client_email')
             _logger.info("Google Drive service account configured: %s", service_account_email)
 
-            # Show success notification
+            # Show success notification and close wizard
             return {
                 'type': 'ir.actions.client',
                 'tag': 'display_notification',
@@ -79,7 +95,8 @@ class GoogleDriveConfigWizard(models.TransientModel):
                     'title': _('Configuration Saved'),
                     'message': _('Service account configured successfully!\n\nService Account: %s\n\nYou can now test the connection in Settings.') % service_account_email,
                     'type': 'success',
-                    'sticky': True,
+                    'sticky': False,
+                    'next': {'type': 'ir.actions.act_window_close'}
                 }
             }
 
@@ -107,7 +124,8 @@ class GoogleDriveConfigWizard(models.TransientModel):
                         'title': _('Connection Successful'),
                         'message': result['message'],
                         'type': 'success',
-                        'sticky': True,
+                        'sticky': False,
+                        'next': {'type': 'ir.actions.act_window_close'}
                     }
                 }
             else:
@@ -120,7 +138,9 @@ class GoogleDriveConfigWizard(models.TransientModel):
         """Clear the stored configuration"""
         ICP = self.env['ir.config_parameter'].sudo()
         ICP.set_param('google_drive_service_account_json', '')
-        ICP.set_param('google_drive_folder_id', '')
+        ICP.set_param('google_drive_form01_folder_id', '')
+        ICP.set_param('google_drive_form02_folder_id', '')
+        ICP.set_param('google_drive_processed_folder_id', '')
 
         return {
             'type': 'ir.actions.client',
@@ -130,5 +150,6 @@ class GoogleDriveConfigWizard(models.TransientModel):
                 'message': _('Google Drive configuration has been removed.'),
                 'type': 'info',
                 'sticky': False,
+                'next': {'type': 'ir.actions.act_window_close'}
             }
         }
