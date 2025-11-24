@@ -116,8 +116,19 @@ class DocumentExtractionService(models.AbstractModel):
             return extracted_data
 
         except Exception as e:
-            _logger.warning("✗ Direct extraction failed, falling back to 2-step")
+            _logger.warning("✗ Direct extraction failed")
             _logger.warning(f"Error: {type(e).__name__}: {str(e)}")
+
+            # Check if fallback is allowed
+            ICP = self.env['ir.config_parameter'].sudo()
+            allow_fallback = ICP.get_param('robotia_document_extractor.gemini_allow_fallback', default='True')
+            allow_fallback = allow_fallback.lower() in ('true', '1', 'yes')
+
+            if not allow_fallback:
+                _logger.error("✗ Fallback disabled - failing immediately")
+                raise ValueError(f"Direct extraction failed and fallback is disabled. Error: {str(e)}")
+
+            _logger.info("→ Fallback enabled, trying 2-step extraction...")
 
             # Fallback: 2-step extraction (PDF → Text → JSON) using Gemini
             try:
@@ -259,7 +270,14 @@ class DocumentExtractionService(models.AbstractModel):
         # Constants
         GEMINI_POLL_INTERVAL_SECONDS = 2
         GEMINI_MAX_POLL_RETRIES = 30  # 30 * 2s = 60s timeout
-        GEMINI_MAX_RETRIES = 3  # Retry on incomplete responses
+
+        # Get max retries from config (default: 3)
+        GEMINI_MAX_RETRIES = int(
+            self.env['ir.config_parameter'].sudo().get_param(
+                'robotia_document_extractor.gemini_max_retries',
+                default='3'
+            )
+        )
 
         # Get max output tokens from config (default: 65536 for Gemini 2.0 Flash)
         # User can adjust this in Settings if needed
@@ -367,10 +385,7 @@ class DocumentExtractionService(models.AbstractModel):
                     last_error = e
                     _logger.warning(f"Attempt {retry_attempt + 1} returned incomplete JSON: {str(e)}")
                     if retry_attempt < GEMINI_MAX_RETRIES - 1:
-                        # Wait before retry (exponential backoff)
-                        wait_time = 2 ** retry_attempt  # 1s, 2s, 4s
-                        _logger.info(f"Retrying in {wait_time}s...")
-                        time.sleep(wait_time)
+                        _logger.info(f"Retrying immediately...")
                     else:
                         # Last attempt failed - will be caught below
                         _logger.error("All retry attempts failed - response still incomplete")
@@ -378,9 +393,7 @@ class DocumentExtractionService(models.AbstractModel):
                     last_error = e
                     _logger.warning(f"Attempt {retry_attempt + 1} failed: {type(e).__name__}: {str(e)}")
                     if retry_attempt < GEMINI_MAX_RETRIES - 1:
-                        wait_time = 2 ** retry_attempt
-                        _logger.info(f"Retrying in {wait_time}s...")
-                        time.sleep(wait_time)
+                        _logger.info(f"Retrying immediately...")
                     else:
                         raise
 
@@ -1460,7 +1473,13 @@ BEGIN EXTRACTION NOW.
             default='gemini-2.5-pro'
         )
 
-        GEMINI_MAX_RETRIES = 3
+        # Get max retries from config (default: 3)
+        GEMINI_MAX_RETRIES = int(
+            self.env['ir.config_parameter'].sudo().get_param(
+                'robotia_document_extractor.gemini_max_retries',
+                default='3'
+            )
+        )
 
         extracted_json = None
         last_error = None
@@ -1503,10 +1522,7 @@ BEGIN EXTRACTION NOW.
                 last_error = e
                 _logger.warning(f"Attempt {retry_attempt + 1} returned incomplete JSON: {str(e)}")
                 if retry_attempt < GEMINI_MAX_RETRIES - 1:
-                    wait_time = 2 ** retry_attempt
-                    _logger.info(f"Retrying in {wait_time}s...")
-                    import time
-                    time.sleep(wait_time)
+                    _logger.info(f"Retrying immediately...")
                 else:
                     _logger.error("All JSON conversion attempts failed")
 
@@ -1514,9 +1530,7 @@ BEGIN EXTRACTION NOW.
                 last_error = e
                 _logger.warning(f"Attempt {retry_attempt + 1} failed: {type(e).__name__}: {str(e)}")
                 if retry_attempt < GEMINI_MAX_RETRIES - 1:
-                    wait_time = 2 ** retry_attempt
-                    import time
-                    time.sleep(wait_time)
+                    _logger.info(f"Retrying immediately...")
                 else:
                     raise
 

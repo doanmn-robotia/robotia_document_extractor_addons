@@ -2796,6 +2796,38 @@ msgstr ""
 "Mặc định: 65536 (tối đa của Gemini 2.0 Flash)"
 
 #. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_res_config_settings__gemini_max_retries
+msgid "Max Retries"
+msgstr "Số Lần Thử lại Tối đa"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_res_config_settings__gemini_max_retries
+msgid ""
+"Maximum number of retry attempts when Gemini API extraction fails. "
+"Retries are executed immediately without delay. "
+"Default: 3"
+msgstr ""
+"Số lần thử lại tối đa khi trích xuất từ Gemini API thất bại. "
+"Các lần thử lại được thực hiện ngay lập tức không có độ trễ. "
+"Mặc định: 3"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_res_config_settings__gemini_allow_fallback
+msgid "Allow Fallback Strategy"
+msgstr "Cho phép Chiến lược Dự phòng"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_res_config_settings__gemini_allow_fallback
+msgid ""
+"Enable fallback to 2-step extraction (PDF → Text → JSON) when direct extraction fails. "
+"If disabled, extraction will fail immediately without trying the fallback method. "
+"Default: Enabled"
+msgstr ""
+"Bật chế độ dự phòng sang trích xuất 2 bước (PDF → Văn bản → JSON) khi trích xuất trực tiếp thất bại. "
+"Nếu tắt, quá trình trích xuất sẽ thất bại ngay lập tức mà không thử phương pháp dự phòng. "
+"Mặc định: Bật"
+
+#. module: robotia_document_extractor
 #: model:ir.model.fields,field_description:robotia_document_extractor.field_res_config_settings__gemini_model
 msgid "Gemini Model"
 msgstr "Mô hình Gemini"
@@ -2848,6 +2880,31 @@ msgstr "Số lượng token tối đa cho phản hồi từ Gemini API. Tăng l�
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
 msgid "Recommended: 65536 (maximum for Gemini 2.0 Flash). Reduce if you want to limit API costs."
 msgstr "Khuyến nghị: 65536 (tối đa cho Gemini 2.0 Flash). Giảm xuống nếu bạn muốn giới hạn chi phí API."
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "Maximum retry attempts when Gemini API extraction fails. Retries are executed immediately without delay."
+msgstr "Số lần thử lại tối đa khi trích xuất từ Gemini API thất bại. Các lần thử lại được thực hiện ngay lập tức không có độ trễ."
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "Default: 3 retries executed immediately. Increase for unreliable API responses."
+msgstr "Mặc định: 3 lần thử lại được thực hiện ngay lập tức. Tăng lên nếu API phản hồi không ổn định."
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "Enable fallback to 2-step extraction when direct extraction fails."
+msgstr "Bật chế độ dự phòng sang trích xuất 2 bước khi trích xuất trực tiếp thất bại."
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "When enabled, if direct PDF extraction fails, the system will automatically try 2-step extraction (PDF → Text → JSON)."
+msgstr "Khi bật, nếu trích xuất PDF trực tiếp thất bại, hệ thống sẽ tự động thử trích xuất 2 bước (PDF → Văn bản → JSON)."
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "Disable this to fail immediately without fallback."
+msgstr "Tắt để thất bại ngay lập tức mà không dự phòng."
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form

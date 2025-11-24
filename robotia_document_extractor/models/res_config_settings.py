@@ -23,6 +23,24 @@ class ResConfigSettings(models.TransientModel):
              'Default: 65536 (Gemini 2.0 Flash maximum)'
     )
 
+    gemini_max_retries = fields.Integer(
+        string='Max Retries',
+        config_parameter='robotia_document_extractor.gemini_max_retries',
+        default=3,
+        help='Maximum number of retry attempts when Gemini API extraction fails. '
+             'Retries are executed immediately without delay. '
+             'Default: 3'
+    )
+
+    gemini_allow_fallback = fields.Boolean(
+        string='Allow Fallback Strategy',
+        config_parameter='robotia_document_extractor.gemini_allow_fallback',
+        default=False,
+        help='Enable fallback to 2-step extraction (PDF → Text → JSON) when direct extraction fails. '
+             'If disabled, extraction will fail immediately without trying the fallback method. '
+             'Default: Enabled'
+    )
+
     gemini_model = fields.Char(
         string='Gemini Model',
         config_parameter='robotia_document_extractor.gemini_model',

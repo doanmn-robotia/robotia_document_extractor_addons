@@ -28,6 +28,27 @@
                                 </div>
                             </div>
                         </setting>
+                        <setting id="gemini_max_retries_setting"
+                                 string="Max Retries"
+                                 help="Maximum retry attempts when Gemini API extraction fails. Retries are executed immediately without delay.">
+                            <field name="gemini_max_retries" class="oe_inline"/>
+                            <div class="content-group mt8">
+                                <div class="text-muted">
+                                    Default: 3 retries executed immediately. Increase for unreliable API responses.
+                                </div>
+                            </div>
+                        </setting>
+                        <setting id="gemini_allow_fallback_setting"
+                                 string="Allow Fallback Strategy"
+                                 help="Enable fallback to 2-step extraction when direct extraction fails.">
+                            <field name="gemini_allow_fallback"/>
+                            <div class="content-group mt8">
+                                <div class="text-muted">
+                                    When enabled, if direct PDF extraction fails, the system will automatically try 2-step extraction (PDF → Text → JSON).
+                                    Disable this to fail immediately without fallback.
+                                </div>
+                            </div>
+                        </setting>
                         <setting id="gemini_model_setting"
                                  string="Gemini Model"
                                  help="Select the Gemini model to use for extraction. Different models have different capabilities and costs.">
