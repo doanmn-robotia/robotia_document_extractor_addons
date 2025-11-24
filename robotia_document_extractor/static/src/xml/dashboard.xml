@@ -78,7 +78,7 @@
                         <div class="file-preview-actions mt-3">
                             <button class="btn btn-primary btn-lg w-100"
                                     t-on-click="startExtraction">
-                                <i class="fa fa-magic me-2"/>Bắt đầu trích xuất
+                                <i class="fa fa-magic me-2"/>Start Extraction
                             </button>
                         </div>
 

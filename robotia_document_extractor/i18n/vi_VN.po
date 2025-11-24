@@ -1178,6 +1178,18 @@ msgstr "Kéo & Thả tệp PDF"
 
 #. module: robotia_document_extractor
 #. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/dashboard.xml:54
+msgid "Start Extraction"
+msgstr "Bắt đầu trích xuất"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/dashboard.xml:54
+msgid "Click the button above to start AI extraction"
+msgstr "Bấm nút để bắt đầu thực hiện trích xuất bằng AI"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
 #: code:addons/robotia_document_extractor/static/src/xml/dashboard.xml:55
 msgid "or click to browse"
 msgstr "hoặc nhấp để chọn"
