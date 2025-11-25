@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+
+    <!-- Inherit from original ace field template and add copy/download buttons -->
+    <t t-name="robotia_document_extractor.AceCopyField" t-inherit="web.AceField" t-inherit-mode="primary">
+        <!-- Add custom class to outer div for styling -->
+        <xpath expr="//div[hasclass('o_ace_view_editor')]" position="attributes">
+            <attribute name="class" add="o_field_ace_copy" separator=" "/>
+        </xpath>
+
+        <!-- Insert floating toolbar as first child of outer div -->
+        <xpath expr="//div[hasclass('o_ace_view_editor')]/CodeEditor" position="before">
+            <div class="o_ace_copy_toolbar">
+                <button class="btn btn-sm btn-secondary" t-on-click="onCopyClick" title="Copy to clipboard">
+                    <i class="fa fa-copy"/>
+                </button>
+                <button class="btn btn-sm btn-secondary" t-on-click="onDownloadClick" title="Download JSON">
+                    <i class="fa fa-download"/>
+                </button>
+            </div>
+        </xpath>
+    </t>
+
+</templates>

@@ -68,6 +68,11 @@
             'robotia_document_extractor/static/src/js/grouped_one2many/extraction_grouped_list_renderer.xml',
             'robotia_document_extractor/static/src/js/grouped_one2many/extraction_grouped_one2many_field.js',
 
+            # Ace Copy Field Widget (ace editor with copy/download buttons)
+            'robotia_document_extractor/static/src/js/fields/ace_copy_field.js',
+            'robotia_document_extractor/static/src/xml/ace_copy_field.xml',
+            'robotia_document_extractor/static/src/scss/ace_copy_field.scss',
+
             # Other existing files
             'robotia_document_extractor/static/src/**/*'
         ],

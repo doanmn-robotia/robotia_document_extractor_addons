@@ -29,6 +29,20 @@ class DocumentExtractionService(models.AbstractModel):
     _description = 'Document Extraction Service'
 
     @api.model
+    def _get_vietnamese_provinces_list(self):
+        """
+        Get Vietnamese provinces/cities list from database
+
+        Returns:
+            str: Formatted list of province codes and names
+        """
+        states = self.env['res.country.state'].search([
+            ('country_id.code', '=', 'VN')
+        ], order='code')
+
+        provinces = [f"{state.code}: {state.name}" for state in states]
+        return "\n".join(provinces)
+
     def _initialize_default_prompts(self):
         """
         Initialize default extraction prompts in system parameters
@@ -612,10 +626,62 @@ Document Shows (checkbox checked)           → Code to Return
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 """
 
+        # Build Vietnamese provinces/cities context
+        provinces_list = self._get_vietnamese_provinces_list()
+        provinces_context_text = f"""
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🗺️ VIETNAMESE PROVINCES/CITIES STANDARDIZATION CONTEXT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ CRITICAL: contact_state_code LOOKUP REQUIRED ⚠️
+
+You have access to the OFFICIAL LIST of Vietnamese provinces and cities below.
+
+**BEFORE RETURNING THE FINAL RESULT**, you MUST:
+1. Look at the `contact_address` field you extracted
+2. Identify the province/city name from the address (usually at the end)
+3. Match it to the EXACT code from the official list below
+4. Set `contact_state_code` to the matching code
+5. If no match found or address is outside Vietnam, set `contact_state_code` = null
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 OFFICIAL VIETNAMESE PROVINCES/CITIES LIST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Code        | Province/City Name
+────────────────────────────────────────────────────────────────────────
+{provinces_list}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🧠 MATCHING EXAMPLES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Address Text                                    → contact_state_code
+────────────────────────────────────────────────────────────────────────
+"123 Nguyễn Huệ, Quận 1, TP Hồ Chí Minh"       → "VN-SG"
+"45 Lê Lợi, Hải Châu, Đà Nẵng"                 → "VN-DN"
+"10 Trần Hưng Đạo, Ba Đình, Hà Nội"            → "VN-HN"
+"Số 5, Phường 1, Tp. Cần Thơ"                  → "VN-CT"
+"789 Main St, California, USA"                  → null (outside Vietnam)
+"Khu công nghiệp, Bình Dương"                  → "VN-57"
+"Thị xã Thuận An, Bình Dương"                  → "VN-57"
+
+⚠️ IMPORTANT NOTES:
+- Match province/city name intelligently (handle variations like "TP.HCM", "TPHCM", "Sài Gòn" → "TP Hồ Chí Minh")
+- Common abbreviations: "TP" = "Thành phố", "Tx" = "Thị xã", "Q." = "Quận"
+- If address contains district/ward but no province → try to infer from context
+- ONLY use codes from the official list above
+- DO NOT guess or create codes that are not in this list
+- Always set contact_country_code = "VN" when contact_state_code is set
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+"""
+
         # Return as list of types.Part.from_text (can add more context items in the future)
         return [
-            types.Part.from_text(text=mega_prompt_text),      # Substances context
-            types.Part.from_text(text=activity_fields_text)   # Activity fields context
+            types.Part.from_text(text=mega_prompt_text),        # Substances context
+            types.Part.from_text(text=activity_fields_text),    # Activity fields context
+            types.Part.from_text(text=provinces_context_text)   # Provinces/cities context
         ]
 
     def _build_extraction_prompt(self, document_type):
@@ -894,7 +960,7 @@ Return JSON with ALL fields below (no omissions, no "..."):
   "contact_fax": "<string>",
   "contact_email": "<string>",
   "contact_country_code": "<ISO 2-letter code: VN, US, CN, etc.>",
-  "contact_state_code": "<ISO Province code: VN-HN, VN-SG, VN-DN, VN-BD, etc.> (formula: contact_country_code + '-' + province code, you MUST give the state code if you found country code)",
+  "contact_state_code": "<ISO Province code: VN-HN, VN-SG, VN-DN, etc. - IMPORTANT: Before returning final result, lookup province/city name from contact_address in the Vietnamese Provinces/Cities list provided in the context above and set the matching code. Set to null if no match found>",
 
   "activity_field_codes": [
     // Array of codes from checked activities:
@@ -1183,7 +1249,7 @@ Return JSON with ALL fields below (no omissions, no "..."):
   "contact_fax": "<string>",
   "contact_email": "<string>",
   "contact_country_code": "<ISO 2-letter code: VN, US, CN, etc.>",
-  "contact_state_code": "<ISO Province code: VN-HN, VN-SG, VN-DN, VN-BD, etc.> (formula: contact_country_code + '-' + province code, you MUST give the state code if you found country code)",
+  "contact_state_code": "<ISO Province code: VN-HN, VN-SG, VN-DN, etc. - IMPORTANT: Before returning final result, lookup province/city name from contact_address in the Vietnamese Provinces/Cities list provided in the context above and set the matching code. Set to null if no match found>",
 
   "activity_field_codes": [
     // Array of codes from checked activities

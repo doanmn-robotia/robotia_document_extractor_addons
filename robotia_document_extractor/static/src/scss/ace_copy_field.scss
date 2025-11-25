@@ -1,0 +1,25 @@
+/**
+ * Ace Copy Field Styles
+ * Floating toolbar at top-right corner of editor
+ */
+
+.o_field_ace_copy {
+    position: relative;
+
+    .o_ace_copy_toolbar {
+
+        display: flex;
+        gap: 5px;
+
+        margin-bottom: 8px;
+
+        button {
+            opacity: 0.9;
+            transition: opacity 0.2s;
+
+            &:hover {
+                opacity: 1;
+            }
+        }
+    }
+}

@@ -356,8 +356,8 @@
                                 <field name="pdf_url" widget="pdf_url_viewer" invisible="id"/>
                             </div>
                         </page>
-                        <page name="json" string="Json">
-                            <field name="extraction_log_json" options="{'mode': 'python'}" widget="ace"/>
+                        <page name="json" string="Json" invisible="not extraction_log_json">
+                            <field name="extraction_log_json" options="{'mode': 'python'}" widget="ace_copy"/>
                         </page>
                     </notebook>
                 </div>
