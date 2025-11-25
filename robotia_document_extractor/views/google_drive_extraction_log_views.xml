@@ -10,6 +10,7 @@
                 <field name="file_name"/>
                 <field name="document_type"/>
                 <field name="status"/>
+                <field name="source_type"/>
                 <field name="extraction_record_id"/>
             </list>
         </field>
@@ -65,6 +66,9 @@
                 <field name="file_name"/>
                 <filter name="filter_success" string="Success" domain="[('status', '=', 'success')]"/>
                 <filter name="filter_error" string="Errors" domain="[('status', '=', 'error')]"/>
+                <separator/>
+                <filter name="filter_manual" string="Manual Uploads" domain="[('drive_file_id', '=', False)]"/>
+                <filter name="filter_automated" string="Automated (Drive)" domain="[('drive_file_id', '!=', False)]"/>
                 <group expand="0" string="Group By">
                     <filter name="group_status" string="Status" context="{'group_by': 'status'}"/>
                     <filter name="group_type" string="Document Type" context="{'group_by': 'document_type'}"/>

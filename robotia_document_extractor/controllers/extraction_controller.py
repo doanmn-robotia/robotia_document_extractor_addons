@@ -4,6 +4,8 @@ from odoo import http
 from odoo.http import request
 import base64
 import logging
+import json
+import traceback
 
 _logger = logging.getLogger(__name__)
 
@@ -72,11 +74,22 @@ class ExtractionController(http.Controller):
         MAX_PDF_SIZE_BYTES = MAX_PDF_SIZE_MB * 1024 * 1024
         EXTRACTION_RATE_LIMIT_SECONDS = 5
 
+        # Create extraction log
+        log = request.env['google.drive.extraction.log'].sudo().create({
+            'drive_file_id': False,  # No Drive ID for manual uploads
+            'file_name': filename,
+            'document_type': document_type,
+            'status': 'processing',
+        })
         try:
             _logger.info(f"Starting extraction for {filename} (Type: {document_type})")
 
             # Validate file extension
             if not filename.lower().endswith('.pdf'):
+                log.write({
+                    'status': 'error',
+                    'error_message': 'Invalid file type: Only PDF files are allowed',
+                })
                 return {
                     'type': 'ir.actions.client',
                     'tag': 'display_notification',
@@ -93,6 +106,10 @@ class ExtractionController(http.Controller):
                 pdf_binary = base64.b64decode(pdf_data)
             except Exception as e:
                 _logger.error(f"Failed to decode PDF: {e}")
+                log.write({
+                    'status': 'error',
+                    'error_message': f'Failed to decode PDF file: {str(e)}',
+                })
                 return {
                     'type': 'ir.actions.client',
                     'tag': 'display_notification',
@@ -108,6 +125,10 @@ class ExtractionController(http.Controller):
             pdf_size_bytes = len(pdf_binary)
             if pdf_size_bytes > MAX_PDF_SIZE_BYTES:
                 pdf_size_mb = pdf_size_bytes / 1024 / 1024
+                log.write({
+                    'status': 'error',
+                    'error_message': f'File size ({pdf_size_mb:.1f}MB) exceeds maximum allowed size ({MAX_PDF_SIZE_MB}MB)',
+                })
                 return {
                     'type': 'ir.actions.client',
                     'tag': 'display_notification',
@@ -121,6 +142,10 @@ class ExtractionController(http.Controller):
 
             # Validate PDF magic bytes
             if not pdf_binary.startswith(b'%PDF'):
+                log.write({
+                    'status': 'error',
+                    'error_message': 'The uploaded file does not appear to be a valid PDF',
+                })
                 return {
                     'type': 'ir.actions.client',
                     'tag': 'display_notification',
@@ -138,6 +163,10 @@ class ExtractionController(http.Controller):
             current_time = time.time()
             if current_time - last_extract_time < EXTRACTION_RATE_LIMIT_SECONDS:
                 wait_seconds = int(EXTRACTION_RATE_LIMIT_SECONDS - (current_time - last_extract_time))
+                log.write({
+                    'status': 'error',
+                    'error_message': f'Rate limit exceeded. Please wait {wait_seconds} seconds before extracting another document',
+                })
                 return {
                     'type': 'ir.actions.client',
                     'tag': 'display_notification',
@@ -157,6 +186,13 @@ class ExtractionController(http.Controller):
                 extracted_data = extraction_service.extract_pdf(pdf_binary, document_type, filename)
             except Exception as e:
                 _logger.error(f"Extraction failed: {e}")
+
+                # Update log with AI error
+                log.write({
+                    'status': 'error',
+                    'error_message': f"AI extraction failed: {str(e)}",
+                })
+
                 return {
                     'type': 'ir.actions.client',
                     'tag': 'display_notification',
@@ -208,7 +244,17 @@ class ExtractionController(http.Controller):
                 for key, value in vals.items()
             }
 
-            _logger.info(f"Extraction successful for {filename} (Type: {document_type})")
+            # Update log with AI response (extraction successful)
+            log.write({
+                'status': 'success',
+                'ai_response_json': json.dumps(extracted_data, ensure_ascii=False, indent=2),
+            })
+
+            # Add log_id to context so it can be linked when record is created
+            context['default_extraction_log_id'] = log.id
+            context['default_source'] = 'from_user_upload'  # Explicitly set source
+
+            _logger.info(f"Extraction successful for {filename} (Type: {document_type}), Log ID: {log.id}")
 
             # Return action to open form in CREATE mode
             return {
@@ -222,6 +268,12 @@ class ExtractionController(http.Controller):
 
         except Exception as e:
             _logger.exception(f"Unexpected error in extraction controller: {e}")
+
+            # Try to update log if it exists
+            log.write({
+                'status': 'error',
+                'error_message': f"Unexpected system error: {str(e)}\n\n{traceback.format_exc()}",
+            })
             return {
                 'type': 'ir.actions.client',
                 'tag': 'display_notification',

@@ -61,6 +61,30 @@ class GoogleDriveExtractionLog(models.Model):
         required=True
     )
 
+    # Computed source type for UI filtering
+    source_type = fields.Selection([
+        ('manual', 'Manual Upload'),
+        ('google_drive', 'Google Drive')
+    ], string='Source',
+        compute='_compute_source_type',
+        store=True,
+        help='Extraction source: Manual Upload or Google Drive',
+        default="manual"
+    )
+
+    @api.depends('drive_file_id')
+    def _compute_source_type(self):
+        """Compute source type based on drive_file_id"""
+        for record in self:
+            if record.drive_file_id:
+                record.source_type = 'google_drive'
+            else:
+                record.source_type = 'manual'
+
+    def _compute_display_name(self):
+        for record in self:
+            record.display_name = 'Log'
+
     def action_view_extraction_record(self):
         """Smart button to view linked extraction record"""
         self.ensure_one()

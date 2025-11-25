@@ -3211,6 +3211,26 @@ msgid "Processed Date"
 msgstr "Ngày Xử lý"
 
 #. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_google_drive_extraction_log__source_type
+msgid "Source"
+msgstr "Nguồn"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_google_drive_extraction_log__source_type
+msgid "Extraction source: Manual Upload or Google Drive"
+msgstr "Nguồn trích xuất: Tải lên Thủ công hoặc Google Drive"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__google_drive_extraction_log__source_type__manual
+msgid "Manual Upload"
+msgstr "Tải lên Thủ công"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__google_drive_extraction_log__source_type__google_drive
+msgid "Google Drive"
+msgstr "Google Drive"
+
+#. module: robotia_document_extractor
 #: model:ir.model.fields,field_description:robotia_document_extractor.field_document_extraction__extraction_log_id
 msgid "Extraction Log"
 msgstr "Nhật ký Trích xuất"

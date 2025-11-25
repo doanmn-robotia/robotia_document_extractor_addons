@@ -506,6 +506,15 @@ class DocumentExtraction(models.Model):
         # Create records
         records = super(DocumentExtraction, self).create(vals_list)
 
+        # Link extraction logs to created records
+        for record in records:
+            if record.extraction_log_id and not record.extraction_log_id.extraction_record_id:
+                # Update log to link the created record
+                # Status remains 'success' (was set by controller)
+                record.extraction_log_id.sudo().write({
+                    'extraction_record_id': record.id,
+                })
+
         # Link PDF attachments to created records
         for record in records:
             if record.pdf_attachment_id and record.pdf_attachment_id.res_id == 0:

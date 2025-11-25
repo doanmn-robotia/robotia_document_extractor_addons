@@ -41,7 +41,7 @@
                             <field name="source"/>
                         </group>
                         <group>
-                            <field name="ocr_status" invisible="source != 'from_external_source'"/>
+                            <field name="ocr_status" invisible="1"/>
                             <field name="ocr_error_message" invisible="ocr_status != 'error'" readonly="1"/>
                             <field name="gdrive_file_id" invisible="source != 'from_external_source'" readonly="1"/>
                             <field name="pdf_filename" invisible="1"/>
@@ -379,7 +379,7 @@
                 <field name="year_2" optional="hide" options="{'enable_formatting': false}"/>
                 <field name="year_3" optional="hide" options="{'enable_formatting': false}"/>
                 <field name="source"/>
-                <field name="ocr_status" optional="show"
+                <field name="ocr_status" column_invisible="1"
                        decoration-muted="ocr_status == 'pending'"
                        decoration-warning="ocr_status == 'processing'"
                        decoration-success="ocr_status == 'completed'"
@@ -404,7 +404,7 @@
                 <field name="year" options="{'enable_formatting': false}"/>
                 <field name="state"/>
                 <field name="source"/>
-                <field name="ocr_status"/>
+                <field name="ocr_status" invisible="1"/>
                 <field name="extraction_date"/>
 
                 <!-- Search Fields - Organization -->
@@ -464,17 +464,6 @@
                         domain="[('source', '=', 'from_user_upload')]"/>
                 <filter string="External Source (Google Drive)" name="filter_external_source"
                         domain="[('source', '=', 'from_external_source')]"/>
-
-                <separator/>
-
-                <filter string="OCR Pending" name="filter_ocr_pending"
-                        domain="[('ocr_status', '=', 'pending')]"/>
-                <filter string="OCR Processing" name="filter_ocr_processing"
-                        domain="[('ocr_status', '=', 'processing')]"/>
-                <filter string="OCR Completed" name="filter_ocr_completed"
-                        domain="[('ocr_status', '=', 'completed')]"/>
-                <filter string="OCR Error" name="filter_ocr_error"
-                        domain="[('ocr_status', '=', 'error')]"/>
 
                 <separator/>
 
