@@ -14,5 +14,21 @@
             <field name="key">robotia_document_extractor.extraction_strategy</field>
             <field name="value">ai_native</field>
         </record>
+
+        <!-- Batch Extraction Configuration -->
+        <record id="param_batch_size_min" model="ir.config_parameter">
+            <field name="key">robotia_document_extractor.batch_size_min</field>
+            <field name="value">3</field>
+        </record>
+
+        <record id="param_batch_size_max" model="ir.config_parameter">
+            <field name="key">robotia_document_extractor.batch_size_max</field>
+            <field name="value">7</field>
+        </record>
+
+        <record id="param_batch_image_dpi" model="ir.config_parameter">
+            <field name="key">robotia_document_extractor.batch_image_dpi</field>
+            <field name="value">200</field>
+        </record>
     </data>
 </odoo>

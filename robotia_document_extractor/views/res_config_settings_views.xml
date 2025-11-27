@@ -68,17 +68,73 @@
                             <div class="content-group mt8">
                                 <div class="text-muted">
                                     <strong>100% AI (Recommended):</strong> Gemini processes PDF directly, understanding layout and structure.<br/>
-                                    <strong>Text Extract + AI:</strong> Extract text first with PyMuPDF, then structure with AI. May be faster for very large PDFs.
+                                    <strong>Text Extract + AI:</strong> Extract text first with PyMuPDF, then structure with AI. May be faster for very large PDFs.<br/>
+                                    <strong>Batch Extraction:</strong> Convert PDF to images, process in batches with adaptive sizing. Best for very large documents (20+ pages).
+                                </div>
+                            </div>
+                        </setting>
+                    </block>
+
+                    <!-- Batch Extraction Configuration -->
+                    <block title="Batch Extraction Configuration" invisible="extraction_strategy != 'batch_extract'">
+                        <setting id="batch_size_min_setting"
+                                 string="Minimum Batch Size"
+                                 help="Minimum pages per API call for complex documents with many table rows">
+                            <field name="batch_size_min" class="oe_inline"/>
+                            <div class="content-group mt8">
+                                <div class="text-muted">
+                                    For documents with many tables (complex): process fewer pages per API call for better accuracy.
+                                    Recommended: 3 pages.
+                                </div>
+                            </div>
+                        </setting>
+                        <setting id="batch_size_max_setting"
+                                 string="Maximum Batch Size"
+                                 help="Maximum pages per API call for simple documents with few table rows">
+                            <field name="batch_size_max" class="oe_inline"/>
+                            <div class="content-group mt8">
+                                <div class="text-muted">
+                                    For simple documents: process more pages per API call for efficiency.
+                                    Recommended: 7 pages.
+                                </div>
+                            </div>
+                        </setting>
+                        <setting id="batch_image_dpi_setting"
+                                 string="Image Resolution (DPI)"
+                                 help="Resolution when converting PDF to images">
+                            <field name="batch_image_dpi" class="oe_inline"/>
+                            <div class="content-group mt8">
+                                <div class="text-muted">
+                                    Higher DPI = better image quality but larger file sizes and longer processing time.
+                                    Recommended range: 150-300 DPI. Default: 200 DPI.
                                 </div>
                             </div>
                         </setting>
                     </block>
 
                     <block title="AI Extraction Prompts Configuration">
-                        <setting id="extraction_prompts_setting" string="Configure AI Extraction Prompts">
+                        <setting id="extraction_prompts_setting" string="Direct Extraction Prompts">
                             <div class="d-flex gap-2">
                                 <button string="Get Register Prompt" name="action_get_prompt_form_01" type="object" class="btn btn-outline-primary"/>
                                 <button string="Get Report Prompt" name="action_get_prompt_form_02" type="object" class="btn btn-outline-primary"/>
+                            </div>
+                            <div class="content-group mt8">
+                                <div class="text-muted">
+                                    Reset prompts for direct extraction strategies (100% AI and Text Extract + AI).
+                                </div>
+                            </div>
+                        </setting>
+                        <setting id="batch_extraction_prompts_setting"
+                                 string="Batch Extraction Prompts"
+                                 invisible="extraction_strategy != 'batch_extract'">
+                            <div class="d-flex gap-2">
+                                <button string="Get Batch Register Prompt" name="action_get_batch_prompt_form_01" type="object" class="btn btn-outline-primary"/>
+                                <button string="Get Batch Report Prompt" name="action_get_batch_prompt_form_02" type="object" class="btn btn-outline-primary"/>
+                            </div>
+                            <div class="content-group mt8">
+                                <div class="text-muted">
+                                    Reset prompts for batch extraction strategy. These prompts are optimized for per-page extraction with context memory.
+                                </div>
                             </div>
                         </setting>
                     </block>

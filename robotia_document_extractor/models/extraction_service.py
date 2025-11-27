@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from odoo import models, api
-import base64
 import json
 import logging
 

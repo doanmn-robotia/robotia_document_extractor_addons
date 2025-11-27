@@ -52,16 +52,47 @@ class ResConfigSettings(models.TransientModel):
 
     extraction_strategy = fields.Selection(
         selection=[
-            ('ai_native', '100% AI (Gemini processes PDF directly)'),
-            ('text_extract', 'Text Extraction + AI (Extract text first, then AI structures)')
+            ('ai_native', _('100% AI (Gemini processes PDF directly)')),
+            ('text_extract', _('Text Extraction + AI (Extract text first, then AI structures)')),
+            ('batch_extract', _('Batch Extraction (Process pages in batches with chat session)'))
         ],
-        string='Extraction Strategy',
+        string=_('Extraction Strategy'),
         config_parameter='robotia_document_extractor.extraction_strategy',
         default='ai_native',
-        help='Choose extraction method:\n'
-             '• 100% AI: Gemini natively reads and understands PDF layout (recommended)\n'
-             '• Text Extract + AI: Extract text first using PyMuPDF, then AI structures it\n'
-             '  (useful for very large PDFs or cost optimization)'
+        help=_('Choose extraction method:\n'
+               '• 100% AI: Gemini natively reads and understands PDF layout (recommended)\n'
+               '• Text Extract + AI: Extract text first using PyMuPDF, then AI structures it\n'
+               '  (useful for very large PDFs or cost optimization)\n'
+               '• Batch Extraction: Convert PDF to images, process in batches with adaptive sizing\n'
+               '  (recommended for very large documents 20+ pages with many tables)')
+    )
+
+    # ===== Batch Extraction Configuration =====
+    batch_size_min = fields.Integer(
+        string=_('Minimum Batch Size'),
+        config_parameter='robotia_document_extractor.batch_size_min',
+        default=3,
+        help=_('Minimum pages per API call for complex documents (many table rows). '
+               'Smaller batches = more accurate but more API calls. '
+               'Default: 3 pages')
+    )
+
+    batch_size_max = fields.Integer(
+        string=_('Maximum Batch Size'),
+        config_parameter='robotia_document_extractor.batch_size_max',
+        default=7,
+        help=_('Maximum pages per API call for simple documents (few table rows). '
+               'Larger batches = fewer API calls but may lose accuracy. '
+               'Default: 7 pages')
+    )
+
+    batch_image_dpi = fields.Integer(
+        string=_('Image Resolution (DPI)'),
+        config_parameter='robotia_document_extractor.batch_image_dpi',
+        default=200,
+        help=_('Resolution when converting PDF to images for batch extraction. '
+               'Higher DPI = better quality but larger file sizes. '
+               'Recommended: 150-300 DPI. Default: 200')
     )
 
     # ===== Google Drive Integration Settings =====
@@ -112,29 +143,39 @@ class ResConfigSettings(models.TransientModel):
 
     def action_get_prompt_form_01(self):
         """Reset Form 01 prompt to default value"""
-        from . import extraction_service
-        default_prompt = extraction_service.DocumentExtractionService._get_default_prompt_form_01(self.env['document.extraction.service'])
+        default_prompt = self.env['document.extraction.service']._get_default_prompt_form_01()
         self.env['ir.config_parameter'].sudo().set_param(
             'robotia_document_extractor.extraction_prompt_form_01',
             default_prompt
         )
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'reload',
-        }
+        return True
 
     def action_get_prompt_form_02(self):
         """Reset Form 02 prompt to default value"""
-        from . import extraction_service
-        default_prompt = extraction_service.DocumentExtractionService._get_default_prompt_form_02(self.env['document.extraction.service'])
+        default_prompt = self.env['document.extraction.service']._get_default_prompt_form_02()
         self.env['ir.config_parameter'].sudo().set_param(
             'robotia_document_extractor.extraction_prompt_form_02',
             default_prompt
         )
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'reload',
-        }
+        return True
+
+    def action_get_batch_prompt_form_01(self):
+        """Reset Batch Form 01 prompt to default value"""
+        default_prompt = self.env['document.extraction.service']._get_default_batch_prompt_form_01()
+        self.env['ir.config_parameter'].sudo().set_param(
+            'robotia_document_extractor.batch_prompt_form_01',
+            default_prompt
+        )
+        return True
+
+    def action_get_batch_prompt_form_02(self):
+        """Reset Batch Form 02 prompt to default value"""
+        default_prompt = self.env['document.extraction.service']._get_default_batch_prompt_form_02()
+        self.env['ir.config_parameter'].sudo().set_param(
+            'robotia_document_extractor.batch_prompt_form_02',
+            default_prompt
+        )
+        return True
 
     def action_open_google_drive_config_wizard(self):
         """Open Google Drive configuration wizard"""

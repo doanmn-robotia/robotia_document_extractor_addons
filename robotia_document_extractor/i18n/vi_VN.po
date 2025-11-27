@@ -3295,3 +3295,175 @@ msgstr "Đã xóa Cấu hình"
 #: code:addons/robotia_document_extractor/wizard/google_drive_config_wizard.py:0
 msgid "Google Drive configuration has been removed."
 msgstr "Cấu hình Google Drive đã được gỡ bỏ."
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__res_config_settings__extraction_strategy__batch_extract
+msgid "Batch Extraction (Process pages in batches with chat session)"
+msgstr "Trích xuất hàng loạt (Xử lý từng đợt trang với phiên chat)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_res_config_settings__extraction_strategy
+msgid "Extraction Strategy"
+msgstr "Chiến lược trích xuất"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_res_config_settings__extraction_strategy
+msgid ""
+"Choose extraction method:\n"
+"• 100% AI: Gemini natively reads and understands PDF layout (recommended)\n"
+"• Text Extract + AI: Extract text first using PyMuPDF, then AI structures it\n"
+"  (useful for very large PDFs or cost optimization)\n"
+"• Batch Extraction: Convert PDF to images, process in batches with adaptive sizing\n"
+"  (recommended for very large documents 20+ pages with many tables)"
+msgstr ""
+"Chọn phương pháp trích xuất:\n"
+"• 100% AI: Gemini đọc và hiểu trực tiếp bố cục PDF (khuyến nghị)\n"
+"• Trích xuất văn bản + AI: Trích xuất văn bản trước bằng PyMuPDF, sau đó AI cấu trúc hóa\n"
+"  (hữu ích cho PDF rất lớn hoặc tối ưu chi phí)\n"
+"• Trích xuất hàng loạt: Chuyển PDF sang hình ảnh, xử lý theo đợt với kích thước tự động\n"
+"  (khuyến nghị cho tài liệu rất lớn 20+ trang với nhiều bảng biểu)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_res_config_settings__batch_size_min
+msgid "Minimum Batch Size"
+msgstr "Kích thước đợt tối thiểu"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_res_config_settings__batch_size_min
+msgid ""
+"Minimum pages per API call for complex documents (many table rows). "
+"Smaller batches = more accurate but more API calls. "
+"Default: 3 pages"
+msgstr ""
+"Số trang tối thiểu mỗi lần gọi API cho tài liệu phức tạp (nhiều dòng bảng). "
+"Đợt nhỏ hơn = chính xác hơn nhưng nhiều lệnh gọi API hơn. "
+"Mặc định: 3 trang"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_res_config_settings__batch_size_max
+msgid "Maximum Batch Size"
+msgstr "Kích thước đợt tối đa"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_res_config_settings__batch_size_max
+msgid ""
+"Maximum pages per API call for simple documents (few table rows). "
+"Larger batches = fewer API calls but may lose accuracy. "
+"Default: 7 pages"
+msgstr ""
+"Số trang tối đa mỗi lần gọi API cho tài liệu đơn giản (ít dòng bảng). "
+"Đợt lớn hơn = ít lệnh gọi API hơn nhưng có thể mất độ chính xác. "
+"Mặc định: 7 trang"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_res_config_settings__batch_image_dpi
+msgid "Image Resolution (DPI)"
+msgstr "Độ phân giải hình ảnh (DPI)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_res_config_settings__batch_image_dpi
+msgid ""
+"Resolution when converting PDF to images for batch extraction. "
+"Higher DPI = better quality but larger file sizes. "
+"Recommended: 150-300 DPI. Default: 200"
+msgstr ""
+"Độ phân giải khi chuyển PDF sang hình ảnh cho trích xuất hàng loạt. "
+"DPI cao hơn = chất lượng tốt hơn nhưng kích thước file lớn hơn. "
+"Khuyến nghị: 150-300 DPI. Mặc định: 200"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "<strong>Batch Extraction:</strong> Convert PDF to images, process in batches with adaptive sizing. Best for very large documents (20+ pages)."
+msgstr "<strong>Trích xuất hàng loạt:</strong> Chuyển PDF sang hình ảnh, xử lý theo đợt với kích thước tự động. Tốt nhất cho tài liệu rất lớn (20+ trang)."
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "Batch Extraction Configuration"
+msgstr "Cấu hình trích xuất hàng loạt"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "Minimum Batch Size"
+msgstr "Kích thước đợt tối thiểu"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "Minimum pages per API call for complex documents with many table rows"
+msgstr "Số trang tối thiểu mỗi lần gọi API cho tài liệu phức tạp có nhiều dòng bảng"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid ""
+"For documents with many tables (complex): process fewer pages per API call for better accuracy.\n"
+"Recommended: 3 pages."
+msgstr ""
+"Đối với tài liệu có nhiều bảng biểu (phức tạp): xử lý ít trang hơn mỗi lần gọi API để có độ chính xác cao hơn.\n"
+"Khuyến nghị: 3 trang."
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "Maximum Batch Size"
+msgstr "Kích thước đợt tối đa"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "Maximum pages per API call for simple documents with few table rows"
+msgstr "Số trang tối đa mỗi lần gọi API cho tài liệu đơn giản có ít dòng bảng"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid ""
+"For simple documents: process more pages per API call for efficiency.\n"
+"Recommended: 7 pages."
+msgstr ""
+"Đối với tài liệu đơn giản: xử lý nhiều trang hơn mỗi lần gọi API để hiệu quả hơn.\n"
+"Khuyến nghị: 7 trang."
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "Image Resolution (DPI)"
+msgstr "Độ phân giải hình ảnh (DPI)"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "Resolution when converting PDF to images"
+msgstr "Độ phân giải khi chuyển PDF sang hình ảnh"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid ""
+"Higher DPI = better image quality but larger file sizes and longer processing time.\n"
+"Recommended range: 150-300 DPI. Default: 200 DPI."
+msgstr ""
+"DPI cao hơn = chất lượng hình ảnh tốt hơn nhưng kích thước file lớn hơn và thời gian xử lý lâu hơn.\n"
+"Phạm vi khuyến nghị: 150-300 DPI. Mặc định: 200 DPI."
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "Direct Extraction Prompts"
+msgstr "Prompt trích xuất trực tiếp"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "Reset prompts for direct extraction strategies (100% AI and Text Extract + AI)."
+msgstr "Đặt lại prompts cho chiến lược trích xuất trực tiếp (100% AI và Trích xuất văn bản + AI)."
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "Batch Extraction Prompts"
+msgstr "Prompt trích xuất hàng loạt"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "Get Batch Register Prompt"
+msgstr "Lấy Prompt Đăng ký Batch"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "Get Batch Report Prompt"
+msgstr "Lấy Prompt Báo cáo Batch"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "Reset prompts for batch extraction strategy. These prompts are optimized for per-page extraction with context memory."
+msgstr "Đặt lại prompts cho chiến lược trích xuất hàng loạt. Các prompt này được tối ưu hóa cho trích xuất từng trang với bộ nhớ ngữ cảnh."

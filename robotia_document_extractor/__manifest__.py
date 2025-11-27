@@ -81,6 +81,8 @@
         'python': [
             'google-genai',
             'google-api-python-client',
+            'PyMuPDF',
+            'Pillow',
         ]
     },
     'license': 'LGPL-3',
