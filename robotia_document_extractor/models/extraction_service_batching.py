@@ -329,16 +329,463 @@ CASE 2 - Table 1.3 has SEPARATE columns (is_capacity_merged_table_1_3 = FALSE):
 - "HFC134a" → "HFC-134a", "R410A" → "R-410A"
 - If no match: prefix "[UNKNOWN] "
 
-## ACTIVITY FIELD MAPPING
+## ACTIVITY FIELD EXTRACTION (DETAILED)
 
-- "Sản xuất chất..." → "production"
-- "Nhập khẩu chất..." → "import"
-- "Xuất khẩu chất..." → "export"
-- "Sản xuất thiết bị..." → "equipment_production"
-- "Nhập khẩu thiết bị..." → "equipment_import"
-- "Sở hữu máy điều hòa..." → "ac_ownership"
-- "Sở hữu thiết bị lạnh..." → "refrigeration_ownership"
-- "Thu gom, tái chế..." → "collection_recycling"
+**WHERE**: Activity fields are usually on the FIRST PAGE of the form, near organization info section.
+
+**VISUAL FORMAT**: Typically presented as checkboxes:
+```
+LĨNH VỰC HOẠT ĐỘNG (chọn các mục tương ứng):
+☐ Sản xuất chất được kiểm soát
+☐ Nhập khẩu chất được kiểm soát
+☐ Xuất khẩu chất được kiểm soát
+☐ Sản xuất thiết bị chứa chất được kiểm soát
+☐ Nhập khẩu thiết bị chứa chất được kiểm soát
+☐ Sở hữu máy điều hòa không khí
+☐ Sở hữu thiết bị lạnh
+☐ Thu gom, tái chế, tiêu hủy chất được kiểm soát
+```
+
+**HOW TO IDENTIFY CHECKED BOXES:**
+1. **Visual marks**:
+   - ✓ (checkmark)
+   - X (X mark)
+   - ✔ (heavy checkmark)
+   - Filled/shaded box (☑)
+   - Circled text (text with circle around it)
+   - Underlined text
+
+2. **Handwritten marks**:
+   - Hand-drawn checkmark (even if messy)
+   - Hand-drawn X
+   - Pen mark inside box
+
+3. **NOT checked** (ignore these):
+   - Empty box: ☐
+   - Faint/gray placeholder checkbox
+   - No mark at all
+
+**EXTRACTION LOGIC:**
+For each checked activity field, add the corresponding CODE to `activity_field_codes` array:
+
+| Vietnamese Text (if checked) | Code to Extract |
+|------------------------------|-----------------|
+| "Sản xuất chất..." | "production" |
+| "Nhập khẩu chất..." | "import" |
+| "Xuất khẩu chất..." | "export" |
+| "Sản xuất thiết bị..." | "equipment_production" |
+| "Nhập khẩu thiết bị..." | "equipment_import" |
+| "Sở hữu máy điều hòa..." | "ac_ownership" |
+| "Sở hữu thiết bị lạnh..." | "refrigeration_ownership" |
+| "Thu gom, tái chế..." | "collection_recycling" |
+
+**Example extraction**:
+If checkmarks next to:
+- "Sản xuất chất được kiểm soát" ✓
+- "Sở hữu máy điều hòa không khí" ✓
+
+Then extract:
+```json
+"activity_field_codes": ["production", "ac_ownership"]
+```
+
+**CROSS-VALIDATION WITH TABLES:**
+- If "production", "import", or "export" checked → expect Table 1.1 data
+- If "equipment_production" or "equipment_import" checked → expect Table 1.2 data
+- If "ac_ownership" or "refrigeration_ownership" checked → expect Table 1.3 data
+- If "collection_recycling" checked → expect Table 1.4 data
+
+Use this to double-check your has_table_X_Y flags.
+
+## TABLE EXTRACTION QUALITY RULES
+
+**EXTRACT ALL DATA ROWS:**
+When you see a table section (title row), extract:
+1. The title row itself (is_title=true)
+2. **ALL data rows under that section** (is_title=false)
+
+**CRITICAL**: Do not extract ONLY title rows!
+
+**Example - WRONG extraction (only titles)**:
+```json
+[
+  {{"is_title": true, "substance_name": "Sản xuất chất được kiểm soát"}},
+  {{"is_title": true, "substance_name": "Nhập khẩu chất được kiểm soát"}}
+]
+```
+
+**Example - CORRECT extraction (titles + data)**:
+```json
+[
+  {{"is_title": true, "substance_name": "Sản xuất chất được kiểm soát"}},
+  {{"is_title": false, "substance_name": "HFC-134a", "year_1_quantity_kg": 100}},
+  {{"is_title": false, "substance_name": "R-410A", "year_1_quantity_kg": 200}},
+  {{"is_title": true, "substance_name": "Nhập khẩu chất được kiểm soát"}},
+  {{"is_title": false, "substance_name": "HFC-32", "year_1_quantity_kg": 50}}
+]
+```
+
+**SKIP PLACEHOLDER/SUMMARY ROWS:**
+Do NOT extract these types of rows:
+- **Summary rows**: "Tổng", "Tổng cộng", "Total", "Cộng"
+- **Placeholder substances**: "HFC...", "HFC-xxx", "R-xxx", "(Tên chất)"
+- **Example rows**: Rows with "Ví dụ:", "VD:", markers
+- **Instruction rows**: "Ghi rõ...", "Điền vào đây", "[placeholder text]"
+- **Empty template rows**: Rows with only borders, no actual data
+
+**Recognition patterns**:
+- Summary rows: Usually at bottom of section, contains totaling text
+- Placeholder: Contains ellipsis (...), xxx, or bracketed text
+- If substance_name contains "..." or brackets → SKIP
+- If entire row is template/instruction → SKIP
+
+**Example - Substance name analysis**:
+- "HFC-134a" → ✅ EXTRACT (real substance)
+- "R-410A" → ✅ EXTRACT (real substance)
+- "HFC..." → ❌ SKIP (placeholder)
+- "HFC-xxx" → ❌ SKIP (placeholder)
+- "(Tên chất)" → ❌ SKIP (instruction)
+- "Tổng" → ❌ SKIP (summary row)
+
+## ⚠️ CRITICAL: NUMBER LINE WRAP IN TABLE CELLS ⚠️
+
+**PROBLEM**: Numbers in table cells can wrap to multiple lines, causing data loss if not handled correctly.
+
+**Common scenarios**:
+1. **Trailing zeros wrap**:
+   ```
+   Cell content appears as:
+   Line 1: "12600"
+   Line 2: "0"
+
+   WRONG extraction: 12600 (missing the zero!)
+   CORRECT extraction: 126000 (concatenate: "12600" + "0")
+   ```
+
+2. **Large numbers wrap**:
+   ```
+   Cell content appears as:
+   Line 1: "300.0"
+   Line 2: "00"
+
+   WRONG extraction: 300.0 (missing "00"!)
+   CORRECT extraction: 300000 (concatenate: "300.0" + "00")
+   ```
+
+3. **Multi-line numbers**:
+   ```
+   Cell content appears as:
+   Line 1: "1"
+   Line 2: "234"
+   Line 3: "567"
+
+   WRONG extraction: 1 or 234 (partial!)
+   CORRECT extraction: 1234567 (full concatenation)
+   ```
+
+**EXTRACTION RULES:**
+1. **ALWAYS check if cell has multiple lines** before parsing numbers
+2. **Concatenate ALL lines in the cell** first, then parse as a single number
+3. **Look for wrapped digits**: Single digits or digit groups on separate lines = likely wrapped
+4. **Visual clues**:
+   - Small font or narrow column → high chance of wrapping
+   - Isolated digits (especially zeros) below main number → wrapped content
+   - Numbers that seem too small compared to context → missing digits
+
+**Step-by-step process**:
+```
+1. Read the entire cell (all lines)
+2. Check: Does it contain multiple lines with only digits?
+3. If YES: Concatenate all lines (remove line breaks, keep digits)
+4. Parse the concatenated string as number
+5. Validate: Does the result make sense in context?
+```
+
+**Examples**:
+
+**Example 1 - Trailing zero wrap**:
+```
+PDF cell shows:
+┌─────────┐
+│ 12600   │
+│ 0       │
+└─────────┘
+
+AI should read: "12600" + "0" = "126000"
+Extract as: 126000
+```
+
+**Example 2 - Decimal wrap**:
+```
+PDF cell shows:
+┌─────────┐
+│ 45.     │
+│ 50      │
+└─────────┘
+
+AI should read: "45." + "50" = "45.50"
+Extract as: 45.5 or 45.50
+```
+
+**Example 3 - Full number wrap**:
+```
+PDF cell shows:
+┌─────────┐
+│ 999     │
+│ 888     │
+│ 777     │
+└─────────┘
+
+AI should read: "999" + "888" + "777" = "999888777"
+Extract as: 999888777
+```
+
+**VALIDATION CHECK:**
+After extracting numbers, ask yourself:
+- Does this number make sense for this field (quantity, CO2e, etc.)?
+- Is it suspiciously small (e.g., 126 kg when similar substances show 100000+ kg)?
+- Are there orphaned digits below the number in the cell?
+
+If suspicious → Re-check the cell for wrapped content!
+
+**CRITICAL**: This applies to ALL numeric fields in tables:
+- Quantities (kg, tons)
+- CO2 equivalent values
+- Quotas
+- Prices
+- Equipment quantities
+- ANY numeric data in table cells
+
+## ⚠️ CRITICAL: ROW CONTINUATION ACROSS PAGES ⚠️
+
+**PROBLEM**: A table row can be split across page boundaries when it reaches the end of a page.
+
+**How it happens in PDF structure:**
+```
+Page 1 (ends mid-row):
+┌──────────┬────────┬────────┬────────┐
+│ HFC-134a │ 100.5  │ 200.3  │        │ ← Row incomplete (cut off at page end)
+└──────────┴────────┴────────┴────────┘
+                                    [Page 1 ends here]
+
+Page 2 (continuation):
+┌────────┬─────────┐
+│ 150.2  │ 150.0   │ ← Continuation of HFC-134a row from page 1
+├────────┼─────────┤
+│ R-410A │ 300.0   │ ← New complete row
+```
+
+**EXTRACTION CHALLENGE:**
+- Page 1 shows: HFC-134a with partial data (only first 2 columns)
+- Page 2 shows: Numbers that look like a new row BUT are actually continuation
+
+**HOW TO DETECT ROW CONTINUATION:**
+
+1. **Visual clues on Page N (end of page)**:
+   - Row appears incomplete (missing columns compared to header)
+   - Row ends at page boundary (bottom edge)
+   - No closing border or section break
+   - Uneven number of filled cells compared to other rows
+
+2. **Visual clues on Page N+1 (start of page)**:
+   - Starts with partial row (no substance name or row identifier)
+   - Starts with middle/end columns only
+   - First line has numbers but no context
+   - No table header repeated
+
+**EXTRACTION STRATEGY:**
+
+**For BATCH extraction (you're processing multiple pages in one batch):**
+```
+IF page P shows incomplete row at bottom AND page P+1 shows continuation:
+  → Merge them into ONE row in the JSON
+  → Use substance_name from page P
+  → Combine all column data from both pages
+  → Single sequence number for the merged row
+```
+
+**For CROSS-BATCH continuation (row split across batches):**
+```
+Remember context from previous batch:
+- Did previous batch end with incomplete row?
+- What was the substance_name and sequence?
+- Which columns were already filled?
+
+If current batch starts with continuation:
+- Extract the continuation data
+- Mark clearly in JSON: This continues from previous batch
+- Include substance_name from memory
+- Use same sequence number
+```
+
+**EXAMPLE - Correct handling:**
+
+**Scenario**: Row for "HFC-134a" is split between page 3 and page 4
+
+**Page 3 extraction** (incomplete row at bottom):
+```json
+{{
+  "page": 3,
+  "substance_usage": [
+    // ... other complete rows ...
+    {{
+      "sequence": 15,
+      "is_title": false,
+      "substance_name": "HFC-134a",
+      "usage_type": "production",
+      "year_1_quantity_kg": 100.5,
+      "year_2_quantity_kg": 200.3,
+      "year_3_quantity_kg": null,  // Missing - row incomplete
+      "avg_quantity_kg": null       // Missing - row incomplete
+    }}
+  ]
+}}
+```
+
+**Page 4 extraction** (continuation at top):
+```json
+{{
+  "page": 4,
+  "substance_usage": [
+    {{
+      "sequence": 15,  // SAME sequence as page 3
+      "is_title": false,
+      "substance_name": "HFC-134a",  // Remembered from page 3
+      "usage_type": "production",
+      "year_1_quantity_kg": null,  // Already in page 3
+      "year_2_quantity_kg": null,  // Already in page 3
+      "year_3_quantity_kg": 150.2, // From continuation
+      "avg_quantity_kg": 150.0      // From continuation
+    }}
+  ]
+}}
+```
+
+**After deduplication by sequence**:
+Python will merge these into ONE complete row with all data.
+
+**CRITICAL RULES:**
+1. **Use context memory** - remember incomplete rows from previous pages/batches
+2. **Same sequence number** - continuation uses SAME sequence as original
+3. **Same substance_name** - even if not visible on continuation page
+4. **Fill missing columns** - continuation provides the missing data
+5. **Check page boundaries** - rows at bottom of page may be incomplete
+6. **Validate completeness** - does the row have all expected columns?
+
+**When in doubt:**
+- Look at table structure: How many columns should this table have?
+- Check if row at page bottom is incomplete
+- Check if next page starts with orphaned data
+- Use sequence numbers to track and merge
+
+## ⚠️ CRITICAL: NUMBER AND TEXT RECOGNITION ACCURACY ⚠️
+
+**PROBLEM**: Similar-looking characters can be misread, especially with poor scan quality, small fonts, or handwriting.
+
+**COMMON MISREADING PAIRS:**
+
+**Numbers that look similar:**
+- **0 (zero) vs O (letter O)**: "100" vs "1OO" or "10O"
+- **1 (one) vs l (lowercase L) vs I (uppercase i)**: "100" vs "l00" or "I00"
+- **2 vs Z**: "250" vs "Z50"
+- **5 vs S**: "500" vs "S00"
+- **6 vs b**: "600" vs "b00"
+- **8 vs B**: "800" vs "B00"
+- **9 vs g**: "900" vs "g00"
+
+**Punctuation:**
+- **.  (period) vs , (comma)**: "1.5" vs "1,5"
+- **. (period) vs ° (degree symbol)**
+
+**VALIDATION RULES:**
+
+1. **Context check**:
+   ```
+   IF field expects number (quantity_kg, quota_kg, etc.):
+     → Result MUST be pure digits (0-9) and decimal point only
+     → NO letters (O, l, I, S, B, g, etc.)
+
+   IF you see letter in number field:
+     → WRONG! Misread character
+     → Re-examine the image carefully
+   ```
+
+2. **Range check**:
+   ```
+   Example: year_1_quantity_kg field
+   - Seeing "1OO.5" → Likely "100.5" (O misread as 0)
+   - Seeing "S00" → Likely "500" (S misread as 5)
+   - Seeing "l234" → Likely "1234" (l misread as 1)
+   ```
+
+3. **Pattern check**:
+   ```
+   In Vietnamese forms:
+   - Years: Should be 20XX (2020-2030 range)
+     - "2O24" → Wrong! Should be "2024"
+     - "2Ol9" → Wrong! Should be "2019"
+
+   - Quantities: Usually large numbers (thousands)
+     - "lOOOO" → Wrong! Should be "10000"
+     - "5OO" → Wrong! Should be "500"
+   ```
+
+4. **Consistency check**:
+   ```
+   Compare with similar fields:
+   - If year_1 = 2022, year_2 should be ~2023 (not 2O23)
+   - If substance A has 1000 kg, similar substance shouldn't have "lOOO" kg
+   ```
+
+**CAREFUL EXAMINATION REQUIRED FOR:**
+
+1. **Small fonts**: Zoom in mentally, examine each digit
+2. **Handwritten numbers**: Look at stroke patterns:
+   - "0" has continuous loop, "O" may have gap
+   - "1" is single stroke, "l" may have serif
+3. **Degraded scans**: Low resolution, faded ink
+   - Look at surrounding characters for context
+   - Compare with similar numbers elsewhere
+4. **Narrow columns**: Characters may be squeezed
+   - Distinguish "1" from "l" from "I"
+   - Check digit spacing
+
+**SELF-VALIDATION QUESTIONS:**
+
+Before finalizing extraction, ask yourself:
+1. ✓ Are all numeric fields pure numbers (no letters)?
+2. ✓ Do years fall in reasonable range (2020-2030)?
+3. ✓ Do quantities make sense (not mixing 0/O or 1/l)?
+4. ✓ Are similar values consistent across rows?
+5. ✓ Did I double-check small or unclear characters?
+
+**EXAMPLE - Wrong vs Right:**
+
+**WRONG extraction**:
+```json
+{{
+  "substance_name": "HFC-134a",
+  "year_1_quantity_kg": "1OO.5",     // ❌ Letter O instead of zero
+  "year_2_quantity_kg": "2OO.3",     // ❌ Letter O instead of zero
+  "year": "2O24"                      // ❌ Letter O instead of zero
+}}
+```
+
+**CORRECT extraction**:
+```json
+{{
+  "substance_name": "HFC-134a",
+  "year_1_quantity_kg": 100.5,       // ✅ Pure number
+  "year_2_quantity_kg": 200.3,       // ✅ Pure number
+  "year": 2024                        // ✅ Pure number
+}}
+```
+
+**CRITICAL**: If you're unsure about a character:
+- Zoom in on the image
+- Compare with same character elsewhere in document
+- Check if result makes sense in context
+- When truly unclear → set to null rather than guess wrong
 
 ## TABLE PRESENCE LOGIC
 
@@ -496,6 +943,484 @@ CASE 2 - Table 2.3 has SEPARATE columns (is_capacity_merged_table_2_3 = FALSE):
 - "HFC134a" → "HFC-134a", "R410A" → "R-410A"
 - If no match: prefix "[UNKNOWN] "
 
+## ACTIVITY FIELD EXTRACTION (DETAILED)
+
+**WHERE**: Activity fields are usually on the FIRST PAGE of the form, near organization info section.
+
+**VISUAL FORMAT**: Typically presented as checkboxes:
+```
+LĨNH VỰC HOẠT ĐỘNG (chọn các mục tương ứng):
+☐ Sản xuất chất được kiểm soát
+☐ Nhập khẩu chất được kiểm soát
+☐ Xuất khẩu chất được kiểm soát
+☐ Sản xuất thiết bị chứa chất được kiểm soát
+☐ Nhập khẩu thiết bị chứa chất được kiểm soát
+☐ Sở hữu máy điều hòa không khí
+☐ Sở hữu thiết bị lạnh
+☐ Thu gom, tái chế, tiêu hủy chất được kiểm soát
+```
+
+**HOW TO IDENTIFY CHECKED BOXES:**
+1. **Visual marks**:
+   - ✓ (checkmark)
+   - X (X mark)
+   - ✔ (heavy checkmark)
+   - Filled/shaded box (☑)
+   - Circled text (text with circle around it)
+   - Underlined text
+
+2. **Handwritten marks**:
+   - Hand-drawn checkmark (even if messy)
+   - Hand-drawn X
+   - Pen mark inside box
+
+3. **NOT checked** (ignore these):
+   - Empty box: ☐
+   - Faint/gray placeholder checkbox
+   - No mark at all
+
+**EXTRACTION LOGIC:**
+For each checked activity field, add the corresponding CODE to `activity_field_codes` array:
+
+| Vietnamese Text (if checked) | Code to Extract |
+|------------------------------|-----------------|
+| "Sản xuất chất..." | "production" |
+| "Nhập khẩu chất..." | "import" |
+| "Xuất khẩu chất..." | "export" |
+| "Sản xuất thiết bị..." | "equipment_production" |
+| "Nhập khẩu thiết bị..." | "equipment_import" |
+| "Sở hữu máy điều hòa..." | "ac_ownership" |
+| "Sở hữu thiết bị lạnh..." | "refrigeration_ownership" |
+| "Thu gom, tái chế..." | "collection_recycling" |
+
+**Example extraction**:
+If checkmarks next to:
+- "Sản xuất chất được kiểm soát" ✓
+- "Sở hữu máy điều hòa không khí" ✓
+
+Then extract:
+```json
+"activity_field_codes": ["production", "ac_ownership"]
+```
+
+**CROSS-VALIDATION WITH TABLES:**
+- If "production", "import", or "export" checked → expect Table 2.1 data
+- If "equipment_production" or "equipment_import" checked → expect Table 2.2 data
+- If "ac_ownership" or "refrigeration_ownership" checked → expect Table 2.3 data
+- If "collection_recycling" checked → expect Table 2.4 data
+
+Use this to double-check your has_table_X_Y flags.
+
+## TABLE EXTRACTION QUALITY RULES
+
+**EXTRACT ALL DATA ROWS:**
+When you see a table section (title row), extract:
+1. The title row itself (is_title=true)
+2. **ALL data rows under that section** (is_title=false)
+
+**CRITICAL**: Do not extract ONLY title rows!
+
+**Example - WRONG extraction (only titles)**:
+```json
+[
+  {{"is_title": true, "substance_name": "Sản xuất"}},
+  {{"is_title": true, "substance_name": "Nhập khẩu"}}
+]
+```
+
+**Example - CORRECT extraction (titles + data)**:
+```json
+[
+  {{"is_title": true, "substance_name": "Sản xuất", "usage_type": "production"}},
+  {{"is_title": false, "substance_name": "HFC-134a", "total_quota_kg": 100}},
+  {{"is_title": false, "substance_name": "R-410A", "total_quota_kg": 200}},
+  {{"is_title": true, "substance_name": "Nhập khẩu", "usage_type": "import"}},
+  {{"is_title": false, "substance_name": "HFC-32", "total_quota_kg": 50}}
+]
+```
+
+**SKIP PLACEHOLDER/SUMMARY ROWS:**
+Do NOT extract these types of rows:
+- **Summary rows**: "Tổng", "Tổng cộng", "Total", "Cộng"
+- **Placeholder substances**: "HFC...", "HFC-xxx", "R-xxx", "(Tên chất)"
+- **Example rows**: Rows with "Ví dụ:", "VD:", markers
+- **Instruction rows**: "Ghi rõ...", "Điền vào đây", "[placeholder text]"
+- **Empty template rows**: Rows with only borders, no actual data
+
+**Recognition patterns**:
+- Summary rows: Usually at bottom of section, contains totaling text
+- Placeholder: Contains ellipsis (...), xxx, or bracketed text
+- If substance_name contains "..." or brackets → SKIP
+- If entire row is template/instruction → SKIP
+
+**Example - Substance name analysis**:
+- "HFC-134a" → ✅ EXTRACT (real substance)
+- "R-410A" → ✅ EXTRACT (real substance)
+- "HFC..." → ❌ SKIP (placeholder)
+- "HFC-xxx" → ❌ SKIP (placeholder)
+- "(Tên chất)" → ❌ SKIP (instruction)
+- "Tổng" → ❌ SKIP (summary row)
+
+**IMPORTANT NOTE FOR FORM 02:**
+- Table 2.4 (Collection/Recycling Report) has NO title rows - all rows are data rows
+- For Tables 2.1, 2.2, 2.3: Apply title row logic as above
+
+## ⚠️ CRITICAL: NUMBER LINE WRAP IN TABLE CELLS ⚠️
+
+**PROBLEM**: Numbers in table cells can wrap to multiple lines, causing data loss if not handled correctly.
+
+**Common scenarios**:
+1. **Trailing zeros wrap**:
+   ```
+   Cell content appears as:
+   Line 1: "12600"
+   Line 2: "0"
+
+   WRONG extraction: 12600 (missing the zero!)
+   CORRECT extraction: 126000 (concatenate: "12600" + "0")
+   ```
+
+2. **Large numbers wrap**:
+   ```
+   Cell content appears as:
+   Line 1: "300.0"
+   Line 2: "00"
+
+   WRONG extraction: 300.0 (missing "00"!)
+   CORRECT extraction: 300000 (concatenate: "300.0" + "00")
+   ```
+
+3. **Multi-line numbers**:
+   ```
+   Cell content appears as:
+   Line 1: "1"
+   Line 2: "234"
+   Line 3: "567"
+
+   WRONG extraction: 1 or 234 (partial!)
+   CORRECT extraction: 1234567 (full concatenation)
+   ```
+
+**EXTRACTION RULES:**
+1. **ALWAYS check if cell has multiple lines** before parsing numbers
+2. **Concatenate ALL lines in the cell** first, then parse as a single number
+3. **Look for wrapped digits**: Single digits or digit groups on separate lines = likely wrapped
+4. **Visual clues**:
+   - Small font or narrow column → high chance of wrapping
+   - Isolated digits (especially zeros) below main number → wrapped content
+   - Numbers that seem too small compared to context → missing digits
+
+**Step-by-step process**:
+```
+1. Read the entire cell (all lines)
+2. Check: Does it contain multiple lines with only digits?
+3. If YES: Concatenate all lines (remove line breaks, keep digits)
+4. Parse the concatenated string as number
+5. Validate: Does the result make sense in context?
+```
+
+**Examples**:
+
+**Example 1 - Trailing zero wrap**:
+```
+PDF cell shows:
+┌─────────┐
+│ 12600   │
+│ 0       │
+└─────────┘
+
+AI should read: "12600" + "0" = "126000"
+Extract as: 126000
+```
+
+**Example 2 - Decimal wrap**:
+```
+PDF cell shows:
+┌─────────┐
+│ 45.     │
+│ 50      │
+└─────────┘
+
+AI should read: "45." + "50" = "45.50"
+Extract as: 45.5 or 45.50
+```
+
+**Example 3 - Full number wrap**:
+```
+PDF cell shows:
+┌─────────┐
+│ 999     │
+│ 888     │
+│ 777     │
+└─────────┘
+
+AI should read: "999" + "888" + "777" = "999888777"
+Extract as: 999888777
+```
+
+**VALIDATION CHECK:**
+After extracting numbers, ask yourself:
+- Does this number make sense for this field (quantity, CO2e, quota, price, etc.)?
+- Is it suspiciously small (e.g., 126 kg when similar substances show 100000+ kg)?
+- Are there orphaned digits below the number in the cell?
+
+If suspicious → Re-check the cell for wrapped content!
+
+**CRITICAL**: This applies to ALL numeric fields in Form 02 tables:
+- **Table 2.1**: allocated_quota_kg, adjusted_quota_kg, total_quota_kg, CO2 values, average_price, next_year_quota
+- **Table 2.2**: quantity, substance_quantity_per_unit
+- **Table 2.3**: equipment_quantity, refill_frequency, substance_quantity_per_refill
+- **Table 2.4**: collection_quantity_kg, reuse_quantity_kg, recycle_quantity_kg, disposal_quantity_kg
+- **ANY numeric data in table cells**
+
+## ⚠️ CRITICAL: ROW CONTINUATION ACROSS PAGES ⚠️
+
+**PROBLEM**: A table row can be split across page boundaries when it reaches the end of a page.
+
+**How it happens in PDF structure:**
+```
+Page 1 (ends mid-row):
+┌──────────┬────────┬────────┬────────┐
+│ HFC-134a │ 500.0  │ 600.0  │        │ ← Row incomplete (cut off at page end)
+└──────────┴────────┴────────┴────────┘
+                                    [Page 1 ends here]
+
+Page 2 (continuation):
+┌────────┬─────────┐
+│ 550.0  │ 12.50   │ ← Continuation of HFC-134a row from page 1
+├────────┼─────────┤
+│ R-410A │ 700.0   │ ← New complete row
+```
+
+**EXTRACTION CHALLENGE:**
+- Page 1 shows: HFC-134a with partial data (only first 2-3 columns)
+- Page 2 shows: Numbers that look like a new row BUT are actually continuation
+
+**HOW TO DETECT ROW CONTINUATION:**
+
+1. **Visual clues on Page N (end of page)**:
+   - Row appears incomplete (missing columns compared to header)
+   - Row ends at page boundary (bottom edge)
+   - No closing border or section break
+   - Uneven number of filled cells compared to other rows
+
+2. **Visual clues on Page N+1 (start of page)**:
+   - Starts with partial row (no substance name or row identifier)
+   - Starts with middle/end columns only
+   - First line has numbers but no context
+   - No table header repeated
+
+**EXTRACTION STRATEGY:**
+
+**For BATCH extraction (you're processing multiple pages in one batch):**
+```
+IF page P shows incomplete row at bottom AND page P+1 shows continuation:
+  → Merge them into ONE row in the JSON
+  → Use substance_name from page P
+  → Combine all column data from both pages
+  → Single sequence number for the merged row
+```
+
+**For CROSS-BATCH continuation (row split across batches):**
+```
+Remember context from previous batch:
+- Did previous batch end with incomplete row?
+- What was the substance_name and sequence?
+- Which columns were already filled?
+
+If current batch starts with continuation:
+- Extract the continuation data
+- Mark clearly in JSON: This continues from previous batch
+- Include substance_name from memory
+- Use same sequence number
+```
+
+**EXAMPLE - Correct handling for Table 2.1:**
+
+**Scenario**: Row for "HFC-134a" is split between page 2 and page 3
+
+**Page 2 extraction** (incomplete row at bottom):
+```json
+{{
+  "page": 2,
+  "quota_usage": [
+    // ... other complete rows ...
+    {{
+      "sequence": 8,
+      "is_title": false,
+      "substance_name": "HFC-134a",
+      "usage_type": "import",
+      "hs_code": "2903.39.19",
+      "allocated_quota_kg": 5000.0,
+      "adjusted_quota_kg": null,      // Missing - row incomplete
+      "total_quota_kg": null,          // Missing - row incomplete
+      "average_price": null,           // Missing - row incomplete
+      "next_year_quota_kg": null       // Missing - row incomplete
+    }}
+  ]
+}}
+```
+
+**Page 3 extraction** (continuation at top):
+```json
+{{
+  "page": 3,
+  "quota_usage": [
+    {{
+      "sequence": 8,  // SAME sequence as page 2
+      "is_title": false,
+      "substance_name": "HFC-134a",  // Remembered from page 2
+      "usage_type": "import",
+      "hs_code": null,                // Already in page 2
+      "allocated_quota_kg": null,     // Already in page 2
+      "adjusted_quota_kg": 1000.0,    // From continuation
+      "total_quota_kg": 6000.0,       // From continuation
+      "average_price": 12.50,         // From continuation
+      "next_year_quota_kg": 7000.0    // From continuation
+    }}
+  ]
+}}
+```
+
+**After deduplication by sequence**:
+Python will merge these into ONE complete row with all data.
+
+**CRITICAL RULES:**
+1. **Use context memory** - remember incomplete rows from previous pages/batches
+2. **Same sequence number** - continuation uses SAME sequence as original
+3. **Same substance_name** - even if not visible on continuation page
+4. **Fill missing columns** - continuation provides the missing data
+5. **Check page boundaries** - rows at bottom of page may be incomplete
+6. **Validate completeness** - does the row have all expected columns?
+
+**When in doubt:**
+- Look at table structure: How many columns should this table have?
+- Check if row at page bottom is incomplete
+- Check if next page starts with orphaned data
+- Use sequence numbers to track and merge
+
+## ⚠️ CRITICAL: NUMBER AND TEXT RECOGNITION ACCURACY ⚠️
+
+**PROBLEM**: Similar-looking characters can be misread, especially with poor scan quality, small fonts, or handwriting.
+
+**COMMON MISREADING PAIRS:**
+
+**Numbers that look similar:**
+- **0 (zero) vs O (letter O)**: "100" vs "1OO" or "10O"
+- **1 (one) vs l (lowercase L) vs I (uppercase i)**: "100" vs "l00" or "I00"
+- **2 vs Z**: "250" vs "Z50"
+- **5 vs S**: "500" vs "S00"
+- **6 vs b**: "600" vs "b00"
+- **8 vs B**: "800" vs "B00"
+- **9 vs g**: "900" vs "g00"
+
+**Punctuation:**
+- **.  (period) vs , (comma)**: "1.5" vs "1,5"
+- **. (period) vs ° (degree symbol)**
+
+**VALIDATION RULES:**
+
+1. **Context check**:
+   ```
+   IF field expects number (quota_kg, quantity_kg, price, etc.):
+     → Result MUST be pure digits (0-9) and decimal point only
+     → NO letters (O, l, I, S, B, g, etc.)
+
+   IF you see letter in number field:
+     → WRONG! Misread character
+     → Re-examine the image carefully
+   ```
+
+2. **Range check**:
+   ```
+   Example: allocated_quota_kg field
+   - Seeing "5OOO.0" → Likely "5000.0" (O misread as 0)
+   - Seeing "lOOO" → Likely "1000" (l and O misread)
+   - Seeing "S00.5" → Likely "500.5" (S misread as 5)
+   ```
+
+3. **Pattern check**:
+   ```
+   In Vietnamese forms:
+   - Years: Should be 20XX (2020-2030 range)
+     - "2O24" → Wrong! Should be "2024"
+     - "2Ol9" → Wrong! Should be "2019"
+
+   - Quotas: Usually large numbers (thousands)
+     - "lOOOO" → Wrong! Should be "10000"
+     - "5OOO" → Wrong! Should be "5000"
+
+   - Prices: Usually reasonable (1-100 USD range)
+     - "lO.5" → Wrong! Should be "10.5"
+     - "2O.OO" → Wrong! Should be "20.00"
+   ```
+
+4. **Consistency check**:
+   ```
+   Compare with similar fields:
+   - If year_1 = 2022, year_2 should be ~2023 (not 2O23)
+   - If substance A has 1000 kg quota, similar substance shouldn't have "lOOO" kg
+   - If average_price is 10.5 for one substance, similar shouldn't be "lO.5"
+   ```
+
+**CAREFUL EXAMINATION REQUIRED FOR:**
+
+1. **Small fonts**: Zoom in mentally, examine each digit
+2. **Handwritten numbers**: Look at stroke patterns:
+   - "0" has continuous loop, "O" may have gap
+   - "1" is single stroke, "l" may have serif
+3. **Degraded scans**: Low resolution, faded ink
+   - Look at surrounding characters for context
+   - Compare with similar numbers elsewhere
+4. **Narrow columns**: Characters may be squeezed
+   - Distinguish "1" from "l" from "I"
+   - Check digit spacing
+5. **Table 2.1 specific**: Many numeric columns (quotas, CO2, prices)
+   - Extra careful with large numbers (quota fields)
+   - Decimal prices need precise reading
+
+**SELF-VALIDATION QUESTIONS:**
+
+Before finalizing extraction, ask yourself:
+1. ✓ Are all numeric fields pure numbers (no letters)?
+2. ✓ Do years fall in reasonable range (2020-2030)?
+3. ✓ Do quotas/quantities make sense (not mixing 0/O or 1/l)?
+4. ✓ Are prices reasonable (typically 1-100 USD)?
+5. ✓ Are similar values consistent across rows?
+6. ✓ Did I double-check small or unclear characters?
+
+**EXAMPLE - Wrong vs Right:**
+
+**WRONG extraction**:
+```json
+{{
+  "substance_name": "HFC-134a",
+  "allocated_quota_kg": "5OOO.O",    // ❌ Letters O instead of zeros
+  "adjusted_quota_kg": "lOOO.O",     // ❌ Letter l and O
+  "total_quota_kg": "6OOO.O",        // ❌ Letters O instead of zeros
+  "average_price": "lO.5",           // ❌ Letter l instead of 1
+  "year": "2O24"                      // ❌ Letter O instead of zero
+}}
+```
+
+**CORRECT extraction**:
+```json
+{{
+  "substance_name": "HFC-134a",
+  "allocated_quota_kg": 5000.0,      // ✅ Pure number
+  "adjusted_quota_kg": 1000.0,       // ✅ Pure number
+  "total_quota_kg": 6000.0,          // ✅ Pure number
+  "average_price": 10.5,             // ✅ Pure number
+  "year": 2024                        // ✅ Pure number
+}}
+```
+
+**CRITICAL**: If you're unsure about a character:
+- Zoom in on the image
+- Compare with same character elsewhere in document
+- Check if result makes sense in context
+- When truly unclear → set to null rather than guess wrong
+
 ## TABLE PRESENCE LOGIC
 
 - has_table_2_1 = true IF any(production, import, export) checked
@@ -617,6 +1542,95 @@ Return JSON ARRAY with {{count}} objects (one per page):
   }},
   // ... repeat for all {{count}} pages
 ]
+
+## ⚠️ CRITICAL: UNDERSTANDING is_title FIELD ⚠️
+
+**is_title is NOT the table header!**
+
+is_title = true → **MERGED ROW** that acts as a **SECTION DIVIDER** within the table
+is_title = false → **DATA ROW** with actual numerical/text data
+
+**Example from Table 1.1 (Substance Usage):**
+
+┌─────────────────────────────────────────┐
+│ TABLE 1.1 HEADER (do not extract)      │  ← Table header (NOT a row)
+├──────────┬──────┬──────┬──────┬────────┤
+│ Chất     │ 2022 │ 2023 │ 2024 │ TB     │  ← Column headers (NOT a row)
+├──────────┴──────┴──────┴──────┴────────┤
+│ SECTION: Sản xuất chất được kiểm soát  │  ← is_title=TRUE (merged cell section)
+├──────────┬──────┬──────┬──────┬────────┤
+│ HFC-134a │ 100  │ 120  │ 110  │ 110    │  ← is_title=FALSE (data row)
+│ R-410A   │ 200  │ 210  │ 205  │ 205    │  ← is_title=FALSE (data row)
+├──────────┴──────┴──────┴──────┴────────┤
+│ SECTION: Nhập khẩu chất được kiểm soát │  ← is_title=TRUE (merged cell section)
+├──────────┬──────┬──────┬──────┬────────┤
+│ HFC-32   │ 50   │ 60   │ 55   │ 55     │  ← is_title=FALSE (data row)
+└──────────┴──────┴──────┴──────┴────────┘
+
+**How to extract:**
+```json
+[
+  {{
+    "is_title": true,
+    "substance_name": "Sản xuất chất được kiểm soát",  // Section title
+    "usage_type": "production",
+    // All other fields: null
+  }},
+  {{
+    "is_title": false,
+    "substance_name": "HFC-134a",  // Actual substance
+    "usage_type": "production",
+    "year_1_quantity_kg": 100,
+    // ... data fields
+  }},
+  {{
+    "is_title": true,
+    "substance_name": "Nhập khẩu chất được kiểm soát",  // Section title
+    "usage_type": "import",
+    // All other fields: null
+  }},
+  {{
+    "is_title": false,
+    "substance_name": "HFC-32",
+    "usage_type": "import",
+    "year_1_quantity_kg": 50,
+    // ... data fields
+  }}
+]
+```
+
+**Key Rules:**
+1. Title rows have substance_name = section description (Vietnamese text)
+2. Title rows have all numeric fields = null
+3. Data rows have substance_name = standardized substance (from official list)
+4. Sequence numbers continue across title and data rows
+
+## 📄 TABLE CONTINUATION ACROSS PAGES
+
+**Problem**: A table may span multiple pages. Page 2+ may NOT show the table header.
+
+**How AI Should Handle This:**
+
+1. **Use Context Memory** from previous batch:
+   - Remember which table you were extracting
+   - Remember table structure (column count, format)
+   - Continue sequence numbers
+
+2. **Recognition Patterns**:
+   - If page starts with data rows (no header) → it's a continuation
+   - Look at column structure: does it match previous table?
+   - Check sequence: are row numbers continuing?
+
+3. **Chat Memory is KEY**:
+   - First batch: "I saw Table 1.1 starting with 3 rows"
+   - Second batch: "I see rows continuing with same column structure → must be Table 1.1 continuation"
+   - Keep extracting to same table array
+
+4. **What if uncertain?**
+   - Look at column count: Table 1.1 has ~8 columns
+   - Look at content: substance names + numbers = likely Table 1.1
+   - Look at section titles: "Sản xuất", "Nhập khẩu" = Table 1.1
+   - Trust your context memory from previous batches!
 
 {critical_rules}
 
@@ -774,6 +1788,96 @@ Return JSON ARRAY with {{count}} objects (one per page):
   // ... repeat for all {{count}} pages
 ]
 
+## ⚠️ CRITICAL: UNDERSTANDING is_title FIELD ⚠️
+
+**is_title is NOT the table header!**
+
+is_title = true → **MERGED ROW** that acts as a **SECTION DIVIDER** within the table
+is_title = false → **DATA ROW** with actual numerical/text data
+
+**Example from Table 2.1 (Quota Usage):**
+
+┌─────────────────────────────────────────┐
+│ TABLE 2.1 HEADER (do not extract)      │  ← Table header (NOT a row)
+├──────────┬──────┬──────┬──────┬────────┤
+│ Chất     │ Cấp  │ Đã SD │ Còn │ HS    │  ← Column headers (NOT a row)
+├──────────┴──────┴──────┴──────┴────────┤
+│ SECTION: Sản xuất chất được kiểm soát  │  ← is_title=TRUE (merged cell section)
+├──────────┬──────┬──────┬──────┬────────┤
+│ HFC-134a │ 500  │ 400  │ 100  │ 3824  │  ← is_title=FALSE (data row)
+│ R-410A   │ 600  │ 550  │ 50   │ 3824  │  ← is_title=FALSE (data row)
+├──────────┴──────┴──────┴──────┴────────┤
+│ SECTION: Nhập khẩu chất được kiểm soát │  ← is_title=TRUE (merged cell section)
+├──────────┬──────┬──────┬──────┬────────┤
+│ HFC-32   │ 300  │ 250  │ 50   │ 3824  │  ← is_title=FALSE (data row)
+└──────────┴──────┴──────┴──────┴────────┘
+
+**How to extract:**
+```json
+[
+  {{
+    "is_title": true,
+    "substance_name": "Sản xuất chất được kiểm soát",  // Section title
+    "usage_type": "production",
+    // All other fields: null
+  }},
+  {{
+    "is_title": false,
+    "substance_name": "HFC-134a",  // Actual substance
+    "usage_type": "production",
+    "allocated_quota_kg": 500,
+    // ... data fields
+  }},
+  {{
+    "is_title": true,
+    "substance_name": "Nhập khẩu chất được kiểm soát",  // Section title
+    "usage_type": "import",
+    // All other fields: null
+  }},
+  {{
+    "is_title": false,
+    "substance_name": "HFC-32",
+    "usage_type": "import",
+    "allocated_quota_kg": 300,
+    // ... data fields
+  }}
+]
+```
+
+**Key Rules:**
+1. Title rows have substance_name = section description (Vietnamese text)
+2. Title rows have all numeric fields = null
+3. Data rows have substance_name = standardized substance (from official list)
+4. Sequence numbers continue across title and data rows
+5. **Table 2.4 EXCEPTION**: NO is_title field (all rows are data rows)
+
+## 📄 TABLE CONTINUATION ACROSS PAGES
+
+**Problem**: A table may span multiple pages. Page 2+ may NOT show the table header.
+
+**How AI Should Handle This:**
+
+1. **Use Context Memory** from previous batch:
+   - Remember which table you were extracting
+   - Remember table structure (column count, format)
+   - Continue sequence numbers
+
+2. **Recognition Patterns**:
+   - If page starts with data rows (no header) → it's a continuation
+   - Look at column structure: does it match previous table?
+   - Check sequence: are row numbers continuing?
+
+3. **Chat Memory is KEY**:
+   - First batch: "I saw Table 2.1 starting with 3 rows"
+   - Second batch: "I see rows continuing with same column structure → must be Table 2.1 continuation"
+   - Keep extracting to same table array
+
+4. **What if uncertain?**
+   - Look at column count: Table 2.1 has ~10 columns
+   - Look at content: substance names + quota numbers = likely Table 2.1
+   - Look at section titles: "Sản xuất", "Nhập khẩu" = Table 2.1
+   - Trust your context memory from previous batches!
+
 {critical_rules}
 
 ## BATCH-SPECIFIC INSTRUCTIONS
@@ -820,7 +1924,6 @@ Return ONLY valid JSON array.
             ValueError: If extraction fails
         """
         import os
-        import time
 
         _logger.info("=" * 70)
         _logger.info("BATCH EXTRACTION STRATEGY")
@@ -1222,6 +2325,29 @@ Return JSON ARRAY with {count} objects (one per page):
   // ... repeat for all {count} pages
 ]
 
+## ⚠️ CRITICAL: UNDERSTANDING is_title FIELD ⚠️
+
+**is_title is NOT the table header!**
+
+is_title = true → **MERGED ROW** that acts as a **SECTION DIVIDER** within the table
+is_title = false → **DATA ROW** with actual numerical/text data
+
+**Key Rules:**
+1. Title rows have substance_name = section description (Vietnamese text)
+2. Title rows have all numeric fields = null
+3. Data rows have substance_name = standardized substance (from official list)
+4. Sequence numbers continue across title and data rows
+
+## 📄 TABLE CONTINUATION ACROSS PAGES
+
+**Problem**: A table may span multiple pages. Page 2+ may NOT show the table header.
+
+**How to Handle:**
+1. Use context memory from previous batch
+2. If page starts with data rows (no header) → it's a continuation
+3. Continue sequence numbers
+4. Trust your context memory from previous batches!
+
 {critical_rules}
 
 ## BATCH-SPECIFIC INSTRUCTIONS
@@ -1370,6 +2496,30 @@ Return JSON ARRAY with {count} objects (one per page):
   // ... repeat for all {count} pages
 ]
 
+## ⚠️ CRITICAL: UNDERSTANDING is_title FIELD ⚠️
+
+**is_title is NOT the table header!**
+
+is_title = true → **MERGED ROW** that acts as a **SECTION DIVIDER** within the table
+is_title = false → **DATA ROW** with actual numerical/text data
+
+**Key Rules:**
+1. Title rows have substance_name = section description (Vietnamese text)
+2. Title rows have all numeric fields = null
+3. Data rows have substance_name = standardized substance (from official list)
+4. Sequence numbers continue across title and data rows
+5. **Table 2.4 EXCEPTION**: NO is_title field (all rows are data rows)
+
+## 📄 TABLE CONTINUATION ACROSS PAGES
+
+**Problem**: A table may span multiple pages. Page 2+ may NOT show the table header.
+
+**How to Handle:**
+1. Use context memory from previous batch
+2. If page starts with data rows (no header) → it's a continuation
+3. Continue sequence numbers
+4. Trust your context memory from previous batches!
+
 {critical_rules}
 
 ## BATCH-SPECIFIC INSTRUCTIONS
@@ -1405,8 +2555,7 @@ Return ONLY valid JSON array.
         1. Merge metadata from all pages
         2. Aggregate table rows
         3. Deduplicate by sequence number
-        4. Compute flags
-        5. Validate
+        4. Validate
 
         Args:
             page_results (list): List of page result dicts
@@ -1427,10 +2576,6 @@ Return ONLY valid JSON array.
         # Aggregate tables
         _logger.info("  Aggregating tables...")
         final_json = self._aggregate_tables(final_json, page_results, document_type)
-
-        # Compute flags
-        _logger.info("  Computing flags...")
-        final_json = self._compute_flags(final_json, document_type)
 
         # Validate
         _logger.info("  Validating...")
@@ -1510,6 +2655,17 @@ Return ONLY valid JSON array.
             for flag_key in all_flag_keys:
                 if flag_key in final_json and final_json.get(flag_key) is None and page.get(flag_key) is not None:
                     final_json[flag_key] = page[flag_key]
+
+        # Default remaining null flags to False
+        all_flag_keys = [
+            'has_table_1_1', 'has_table_1_2', 'has_table_1_3', 'has_table_1_4',
+            'has_table_2_1', 'has_table_2_2', 'has_table_2_3', 'has_table_2_4',
+            'is_capacity_merged_table_1_2', 'is_capacity_merged_table_1_3',
+            'is_capacity_merged_table_2_2', 'is_capacity_merged_table_2_3'
+        ]
+        for flag_key in all_flag_keys:
+            if flag_key in final_json and final_json[flag_key] is None:
+                final_json[flag_key] = False
 
         # Convert activity codes set back to list for JSON serialization
         final_json['activity_field_codes'] = list(activity_codes_set)
@@ -1594,130 +2750,6 @@ Return ONLY valid JSON array.
                 unique_rows.append(row)
 
         return unique_rows
-
-    def _compute_flags(self, final_json, document_type):
-        """
-        Validate and compute flags as FALLBACK
-
-        Flags should come from AI extraction. This method:
-        1. Validates AI-extracted flags against actual data
-        2. Computes missing flags as fallback (logs warning)
-
-        Args:
-            final_json (dict): Final JSON structure
-            document_type (str): '01' or '02'
-
-        Returns:
-            dict: Updated final_json with validated flags
-        """
-        if document_type == '01':
-            # Validate/fallback for has_table_* flags
-            for table_num, table_key in [
-                ('1_1', 'substance_usage'),
-                ('1_2', 'equipment_product'),
-                ('1_3', 'equipment_ownership'),
-                ('1_4', 'collection_recycling')
-            ]:
-                flag_key = f'has_table_{table_num}'
-                has_data = len(final_json.get(table_key, [])) > 0
-
-                if final_json.get(flag_key) is None:
-                    # AI didn't extract flag - compute from data as fallback
-                    final_json[flag_key] = has_data
-                    _logger.warning(f"{flag_key} was None - computed from data: {has_data}")
-                elif final_json[flag_key] != has_data:
-                    # AI flag conflicts with actual data - trust data
-                    _logger.warning(f"{flag_key} mismatch: AI said {final_json[flag_key]}, data says {has_data}. Using data.")
-                    final_json[flag_key] = has_data
-
-            # Validate capacity merge flags (if still None after merge)
-            if final_json.get('is_capacity_merged_table_1_2') is None:
-                final_json['is_capacity_merged_table_1_2'] = self._detect_capacity_merge_flag(
-                    final_json.get('equipment_product', [])
-                )
-                _logger.warning("is_capacity_merged_table_1_2 was None - detected from data")
-
-            if final_json.get('is_capacity_merged_table_1_3') is None:
-                final_json['is_capacity_merged_table_1_3'] = self._detect_capacity_merge_flag(
-                    final_json.get('equipment_ownership', [])
-                )
-                _logger.warning("is_capacity_merged_table_1_3 was None - detected from data")
-
-        else:  # '02'
-            # Validate/fallback for has_table_* flags
-            for table_num, table_key in [
-                ('2_1', 'quota_usage'),
-                ('2_2', 'equipment_product_report'),
-                ('2_3', 'equipment_ownership_report'),
-                ('2_4', 'collection_recycling_report')
-            ]:
-                flag_key = f'has_table_{table_num}'
-                has_data = len(final_json.get(table_key, [])) > 0
-
-                if final_json.get(flag_key) is None:
-                    final_json[flag_key] = has_data
-                    _logger.warning(f"{flag_key} was None - computed from data: {has_data}")
-                elif final_json[flag_key] != has_data:
-                    _logger.warning(f"{flag_key} mismatch: AI said {final_json[flag_key]}, data says {has_data}. Using data.")
-                    final_json[flag_key] = has_data
-
-            # Validate capacity flags
-            if final_json.get('is_capacity_merged_table_2_2') is None:
-                final_json['is_capacity_merged_table_2_2'] = self._detect_capacity_merge_flag(
-                    final_json.get('equipment_product_report', [])
-                )
-                _logger.warning("is_capacity_merged_table_2_2 was None - detected from data")
-
-            if final_json.get('is_capacity_merged_table_2_3') is None:
-                final_json['is_capacity_merged_table_2_3'] = self._detect_capacity_merge_flag(
-                    final_json.get('equipment_ownership_report', [])
-                )
-                _logger.warning("is_capacity_merged_table_2_3 was None - detected from data")
-
-        return final_json
-
-    def _detect_capacity_merge_flag(self, table_rows):
-        """
-        Detect if capacity columns are merged by analyzing actual data
-
-        Logic:
-        - If ANY row has 'capacity' field populated → merged (True)
-        - If ANY row has 'cooling_capacity' OR 'power_capacity' → separate (False)
-        - If no rows with capacity data → default to True (merged format is more common)
-
-        Args:
-            table_rows (list): List of table row dicts
-
-        Returns:
-            bool: True if merged, False if separate
-        """
-        has_merged = False
-        has_separate = False
-
-        for row in table_rows:
-            if row.get('is_title'):
-                continue
-
-            # Check if merged capacity exists
-            if row.get('capacity'):
-                has_merged = True
-
-            # Check if separate capacities exist
-            if row.get('cooling_capacity') or row.get('power_capacity'):
-                has_separate = True
-
-        # Prioritize actual data presence
-        if has_merged and not has_separate:
-            return True  # Merged format
-        elif has_separate and not has_merged:
-            return False  # Separate format
-        elif has_merged and has_separate:
-            # Conflict - both formats present (shouldn't happen, but default to merged)
-            _logger.warning("Capacity data conflict: both merged and separate fields populated")
-            return True
-        else:
-            # No capacity data at all - default to True (merged is more common in Vietnamese forms)
-            return True
 
     def _validate_aggregated_json(self, final_json, document_type):
         """

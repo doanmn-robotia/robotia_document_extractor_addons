@@ -29,10 +29,54 @@ class ExtractionHelper(models.AbstractModel):
 
         # Helper: Build One2many commands
         def build_o2m_commands(data_list):
+            """
+            Build One2many commands from data list
+
+            Also cleans empty title sections:
+            - Title row (is_title=True) without data children (is_title=False) → removed
+            """
             if not data_list:
                 return []
-            filtered = [row for row in data_list if not row.get('is_title')]
-            return [(0, 0, row) for row in filtered]
+
+            # Clean empty sections first
+            cleaned_data = []
+            i = 0
+
+            while i < len(data_list):
+                row = data_list[i]
+
+                # If not a title row, always keep
+                if not row.get('is_title'):
+                    cleaned_data.append(row)
+                    i += 1
+                    continue
+
+                # Title row: check if it has children
+                # Look ahead to find next title or end of list
+                has_children = False
+                j = i + 1
+
+                while j < len(data_list):
+                    next_row = data_list[j]
+
+                    # If next row is also a title, this section is empty
+                    if next_row.get('is_title'):
+                        break
+
+                    # Found a data row child
+                    has_children = True
+                    break
+
+                # Only keep title if it has children
+                if has_children:
+                    cleaned_data.append(row)
+                else:
+                    _logger.debug(f"Removing empty section: {row.get('substance_name', 'Unknown')}")
+
+                i += 1
+
+            # Build One2many commands from cleaned data
+            return [(0, 0, row) for row in cleaned_data]
 
         # Helper: Populate substance IDs
         def populate_substance_ids(table_data, substance_lookup):
@@ -52,8 +96,6 @@ class ExtractionHelper(models.AbstractModel):
         for table_key in table_keys:
             table_data = extracted_data.get(table_key, [])
             for row in table_data:
-                if row.get('is_title'):
-                    continue
                 substance_name = (row.get('substance_name') or '').strip()
                 hs_code = (row.get('hs_code') or '').strip() or None
                 if substance_name:
