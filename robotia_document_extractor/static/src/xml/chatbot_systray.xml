@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="robotia_document_extractor.ChatbotSystray">
+        <button
+            class="chatbot-systray-button"
+            t-on-click="openChatbot"
+            aria-label="AI Assistant"
+            title="AI Assistant">
+
+            <div class="sparkle-icon">
+                <!-- Main sparkle with vibrant gradient -->
+                <div class="sparkle-main">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="sparkleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#4285f4"/>
+                                <stop offset="25%" stop-color="#9b72f2"/>
+                                <stop offset="50%" stop-color="#d96aff"/>
+                                <stop offset="75%" stop-color="#f538a0"/>
+                                <stop offset="100%" stop-color="#ffa600"/>
+                            </linearGradient>
+                        </defs>
+                        <path fill="url(#sparkleGradient)"
+                              d="M12 0 L14 10 L24 12 L14 14 L12 24 L10 14 L0 12 L10 10 Z"/>
+                    </svg>
+                </div>
+
+                <!-- Small accent sparkle (top-right) - Blue -->
+                <div class="sparkle-accent sparkle-accent-1">
+                    <svg viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg">
+                        <path fill="#4285f4"
+                              d="M5 0 L5.8 4 L10 5 L5.8 6 L5 10 L4.2 6 L0 5 L4.2 4 Z"/>
+                    </svg>
+                </div>
+
+                <!-- Small accent sparkle (bottom-left) - Orange/Yellow -->
+                <div class="sparkle-accent sparkle-accent-2">
+                    <svg viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg">
+                        <path fill="#ffa600"
+                              d="M5 0 L5.8 4 L10 5 L5.8 6 L5 10 L4.2 6 L0 5 L4.2 4 Z"/>
+                    </svg>
+                </div>
+
+                <!-- Additional accent sparkle (middle-right) - Purple -->
+                <div class="sparkle-accent sparkle-accent-3">
+                    <svg viewBox="0 0 8 8" xmlns="http://www.w3.org/2000/svg">
+                        <path fill="#9b72f2"
+                              d="M4 0 L4.6 3 L8 4 L4.6 5 L4 8 L3.4 5 L0 4 L3.4 3 Z"/>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Pulse ring for hover animation -->
+            <div class="pulse-ring"></div>
+        </button>
+    </t>
+
+</templates>

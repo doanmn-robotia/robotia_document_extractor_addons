@@ -88,7 +88,7 @@
     <!-- Dashboard Client Actions -->
     <!-- ========================================== -->
     <record id="action_dashboard" model="ir.actions.client">
-        <field name="name">Dashboard</field>
+        <field name="name">Ingestion</field>
         <field name="tag">document_extractor.dashboard</field>
     </record>
 
@@ -98,15 +98,15 @@
         <field name="tag">document_extractor.overview_dashboard</field>
     </record>
 
-    <!-- HFC Dashboard -->
+    <!-- HFC Dashboard (Reports & Analysis) -->
     <record id="action_hfc_dashboard" model="ir.actions.client">
-        <field name="name">HFC Dashboard</field>
+        <field name="name">Reports &amp; Analysis</field>
         <field name="tag">document_extractor.hfc_dashboard</field>
     </record>
 
     <!-- ChatBot -->
     <record id="action_chatbot" model="ir.actions.client">
-        <field name="name">Trợ lý AI</field>
+        <field name="name">AI Assistant</field>
         <field name="tag">document_extractor.chatbot</field>
     </record>
 
@@ -128,39 +128,25 @@
               web_icon="robotia_document_extractor,static/description/icon.png"
               sequence="10"/>
 
-    <!-- Dashboard Menu -->
+    <!-- Dashboard Menu (mapped to Overview Dashboard) -->
     <menuitem id="menu_dashboard"
               name="Dashboard"
               parent="menu_document_extractor_root"
-              action="action_dashboard"
+              action="action_overview_dashboard"
               sequence="1"/>
 
-    <!-- Overview Dashboard Menu -->
+    <!-- Ingestion Menu (mapped to Overview Dashboard) -->
     <menuitem id="menu_overview_dashboard"
-              name="Overview Dashboard"
+              name="Ingestion"
               parent="menu_document_extractor_root"
-              action="action_overview_dashboard"
+              action="action_dashboard"
               sequence="2"/>
-
-    <!-- HFC Dashboard Menu -->
-    <menuitem id="menu_hfc_dashboard"
-              name="HFC Dashboard"
-              parent="menu_document_extractor_root"
-              action="action_hfc_dashboard"
-              sequence="3"/>
-
-    <!-- ChatBot Menu -->
-    <menuitem id="menu_chatbot"
-              name="Trợ lý AI"
-              parent="menu_document_extractor_root"
-              action="action_chatbot"
-              sequence="4"/>
 
     <!-- Documents Menu -->
     <menuitem id="menu_documents"
               name="Documents"
               parent="menu_document_extractor_root"
-              sequence="10"/>
+              sequence="3"/>
 
     <menuitem id="menu_all_documents"
               name="All Documents"
@@ -174,11 +160,17 @@
               action="action_document_extraction_registration"
               sequence="2"/>
 
-    <menuitem id="menu_reports"
+    <menuitem id="menu_form02_reports"
               name="Reports (Form 02)"
               parent="menu_documents"
               action="action_document_extraction_report"
               sequence="3"/>
+
+    <menuitem id="menu_reports"
+              name="Reports"
+              parent="menu_document_extractor_root"
+              action="action_hfc_dashboard"
+              sequence="4"/>
 
     <!-- Master Data Menu -->
     <menuitem id="menu_master_data"
@@ -386,12 +378,12 @@
     <!-- Recovery Dashboard Client Action -->
     <!-- ========================================== -->
     <record id="action_recovery_dashboard" model="ir.actions.client">
-        <field name="name">Thu gom - Tái chế Dashboard</field>
+        <field name="name">Collection &amp; Recycling Dashboard</field>
         <field name="tag">document_extractor.recovery_dashboard</field>
     </record>
 
     <menuitem id="menu_recovery_dashboard"
-              name="Thu gom - Tái chế"
+              name="Collection &amp; Recycling"
               parent="menu_master_data"
               action="action_recovery_dashboard"
               sequence="9"/>

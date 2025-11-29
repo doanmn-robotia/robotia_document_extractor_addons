@@ -207,6 +207,16 @@ msgid "Collection & Recycling"
 msgstr "Thu gom và tái chế"
 
 #. module: robotia_document_extractor
+#: model:ir.actions.client,name:robotia_document_extractor.action_recovery_dashboard
+msgid "Collection & Recycling Dashboard"
+msgstr "Dashboard Thu gom - Tái chế"
+
+#. module: robotia_document_extractor
+#: model:ir.ui.menu,name:robotia_document_extractor.menu_recovery_dashboard
+msgid "Collection & Recycling"
+msgstr "Thu gom - Tái chế"
+
+#. module: robotia_document_extractor
 #. odoo-javascript
 #: code:addons/robotia_document_extractor/static/src/js/grouped_one2many/extraction_grouped_one2many_field.js:0
 msgid "Year %s"
@@ -297,10 +307,20 @@ msgid "Chemical Formula"
 msgstr "Công thức hóa học"
 
 #. module: robotia_document_extractor
-#: model:ir.actions.client,name:robotia_document_extractor.action_dashboard
 #: model:ir.ui.menu,name:robotia_document_extractor.menu_dashboard
 msgid "Dashboard"
 msgstr "Tổng quan"
+
+#. module: robotia_document_extractor
+#: model:ir.actions.client,name:robotia_document_extractor.action_overview_dashboard
+msgid "Overview Dashboard"
+msgstr "Tổng quan"
+
+#. module: robotia_document_extractor
+#: model:ir.ui.menu,name:robotia_document_extractor.menu_overview_dashboard
+#: model:ir.actions.client,name:robotia_document_extractor.action_dashboard
+msgid "Ingestion"
+msgstr "Nhập dữ liệu"
 
 #. module: robotia_document_extractor
 #: model:ir.model.fields,field_description:robotia_document_extractor.field_activity_field__description
@@ -694,9 +714,14 @@ msgstr "Báo cáo (Mẫu 02)"
 
 #. module: robotia_document_extractor
 #: model:ir.actions.act_window,name:robotia_document_extractor.action_document_extraction_report
-#: model:ir.ui.menu,name:robotia_document_extractor.menu_reports
+#: model:ir.ui.menu,name:robotia_document_extractor.menu_form02_reports
 msgid "Reports (Form 02)"
 msgstr "Báo cáo (Mẫu 02)"
+
+#. module: robotia_document_extractor
+#: model:ir.ui.menu,name:robotia_document_extractor.menu_reports
+msgid "Reports"
+msgstr "Báo cáo & Phân tích"
 
 #. module: robotia_document_extractor
 #: model:ir.model.fields,field_description:robotia_document_extractor.field_collection_recycling_report__reuse_quantity_kg
@@ -2329,9 +2354,8 @@ msgstr "Lỗi không xác định"
 
 #. module: robotia_document_extractor
 #: model:ir.actions.client,name:robotia_document_extractor.action_hfc_dashboard
-#: model:ir.ui.menu,name:robotia_document_extractor.menu_hfc_dashboard
-msgid "HFC Dashboard"
-msgstr "Dashboard HFC Tổng hợp"
+msgid "Reports & Analysis"
+msgstr "Báo cáo & Phân tích"
 
 #. module: robotia_document_extractor
 #: model:ir.model.fields,field_description:robotia_document_extractor.field_document_extraction__source
