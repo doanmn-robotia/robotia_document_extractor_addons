@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="robotia_document_extractor.SettingsOCRTab">
+        <div class="ocr-tab">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="card shadow-sm">
+                        <div class="card-body text-center py-5">
+                            <i class="fa fa-file-text fa-4x text-muted mb-3"/>
+                            <h4 class="mb-3">OCR Configuration</h4>
+                            <p class="text-muted mb-4">
+                                Optical Character Recognition settings will be available in a future update.
+                            </p>
+                            <div class="alert alert-light">
+                                <i class="fa fa-info-circle me-2"/>
+                                Currently, document extraction uses Gemini AI's built-in OCR capabilities.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

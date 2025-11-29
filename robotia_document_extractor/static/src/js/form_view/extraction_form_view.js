@@ -120,6 +120,30 @@ export class DocumentExtractionFormController extends FormController {
 
         }, () => []);
     }
+
+    async beforeExecuteActionButton(clickParams) {
+
+        if (clickParams.name == 'action_reanalyze_with_ai') {
+            try {
+                const saved = super.beforeExecuteActionButton(clickParams)
+                if (saved == false) {
+                    return saved
+                }
+                this.ui.block()
+                const res = await this.orm.call(this.model.root.resModel, 'action_reanalyze_with_ai', [[this.model.root.resId]])
+                // res should be an array of: json data to change and brief message to notify user
+                // extract data to update and message from res
+                const [data, message] = res
+                // update record:
+                // this.model.root.update(data)
+
+            } finally {
+                this.ui.unblock()
+            }
+
+            return false
+        }
+    }
 }
 
 

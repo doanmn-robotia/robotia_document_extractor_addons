@@ -7,6 +7,7 @@
     'description': "",
     'depends': ['web'],
     'data': [
+        'data/security_groups.xml',
         'security/ir.model.access.csv',
         'data/hs_code_data.xml',
         'data/master_data.xml',
@@ -80,6 +81,35 @@
             'robotia_document_extractor/static/src/js/fields/ace_copy_field.js',
             'robotia_document_extractor/static/src/xml/ace_copy_field.xml',
             'robotia_document_extractor/static/src/scss/ace_copy_field.scss',
+
+            # Settings Dashboard (Main Component)
+            'robotia_document_extractor/static/src/js/dashboard/settings_dashboard.js',
+
+            # Settings Dashboard Tab Components
+            'robotia_document_extractor/static/src/js/dashboard/settings/users_tab.js',
+            'robotia_document_extractor/static/src/js/dashboard/settings/permissions_tab.js',
+            'robotia_document_extractor/static/src/js/dashboard/settings/ai_tab.js',
+            'robotia_document_extractor/static/src/js/dashboard/settings/ocr_tab.js',
+            'robotia_document_extractor/static/src/js/dashboard/settings/backup_tab.js',
+            'robotia_document_extractor/static/src/js/dashboard/settings/logs_tab.js',
+
+            # Settings Dashboard Templates
+            'robotia_document_extractor/static/src/xml/settings_dashboard.xml',
+            'robotia_document_extractor/static/src/xml/settings/users_tab.xml',
+            'robotia_document_extractor/static/src/xml/settings/permissions_tab.xml',
+            'robotia_document_extractor/static/src/xml/settings/ai_tab.xml',
+            'robotia_document_extractor/static/src/xml/settings/ocr_tab.xml',
+            'robotia_document_extractor/static/src/xml/settings/backup_tab.xml',
+            'robotia_document_extractor/static/src/xml/settings/logs_tab.xml',
+
+            # Settings Dashboard Styles
+            'robotia_document_extractor/static/src/scss/settings_dashboard.scss',
+            'robotia_document_extractor/static/src/scss/settings/users_tab.scss',
+            'robotia_document_extractor/static/src/scss/settings/permissions_tab.scss',
+            'robotia_document_extractor/static/src/scss/settings/ai_tab.scss',
+            'robotia_document_extractor/static/src/scss/settings/ocr_tab.scss',
+            'robotia_document_extractor/static/src/scss/settings/backup_tab.scss',
+            'robotia_document_extractor/static/src/scss/settings/logs_tab.scss',
 
             # Other existing files
             'robotia_document_extractor/static/src/**/*'

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="robotia_document_extractor.SettingsDashboard">
+        <div class="settings-dashboard">
+            <!-- Header -->
+            <div class="dashboard-header">
+                <h2>Settings</h2>
+                <p class="text-muted">Manage users, permissions, and system configuration</p>
+            </div>
+
+            <!-- Tabs Navigation -->
+            <div class="tabs-navigation bg-white rounded shadow-sm border mb-3">
+                <div class="d-flex overflow-auto">
+                    <button
+                        t-att-class="state.activeTab === 'USERS' ? 'tab-button tab-active' : 'tab-button'"
+                        t-on-click="() => this.switchTab('USERS')">
+                        <i class="fa fa-users me-2"/>Users
+                    </button>
+                    <button
+                        t-att-class="state.activeTab === 'PERMISSIONS' ? 'tab-button tab-active' : 'tab-button'"
+                        t-on-click="() => this.switchTab('PERMISSIONS')">
+                        <i class="fa fa-shield me-2"/>Permissions
+                    </button>
+                    <button
+                        t-att-class="state.activeTab === 'AI' ? 'tab-button tab-active' : 'tab-button'"
+                        t-on-click="() => this.switchTab('AI')">
+                        <i class="fa fa-magic me-2"/>AI
+                    </button>
+                    <button
+                        t-att-class="state.activeTab === 'OCR' ? 'tab-button tab-active' : 'tab-button'"
+                        t-on-click="() => this.switchTab('OCR')">
+                        <i class="fa fa-file-text me-2"/>OCR
+                    </button>
+                    <button
+                        t-att-class="state.activeTab === 'BACKUP' ? 'tab-button tab-active' : 'tab-button'"
+                        t-on-click="() => this.switchTab('BACKUP')">
+                        <i class="fa fa-database me-2"/>Backup
+                    </button>
+                    <button
+                        t-att-class="state.activeTab === 'LOGS' ? 'tab-button tab-active' : 'tab-button'"
+                        t-on-click="() => this.switchTab('LOGS')">
+                        <i class="fa fa-list me-2"/>Logs
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="tab-content-container">
+                <UsersTab t-if="state.activeTab === 'USERS'"/>
+                <PermissionsTab t-if="state.activeTab === 'PERMISSIONS'"/>
+                <AITab t-if="state.activeTab === 'AI'"/>
+                <OCRTab t-if="state.activeTab === 'OCR'"/>
+                <BackupTab t-if="state.activeTab === 'BACKUP'"/>
+                <LogsTab t-if="state.activeTab === 'LOGS'"/>
+            </div>
+        </div>
+    </t>
+</templates>

@@ -227,8 +227,21 @@
               sequence="90"
               groups="base.group_system"/>
 
+    <!-- Settings Dashboard (Client Action) -->
+    <record id="action_settings_dashboard" model="ir.actions.client">
+        <field name="name">Settings Dashboard</field>
+        <field name="tag">document_extractor.settings_dashboard</field>
+    </record>
+
+    <menuitem id="menu_settings_dashboard"
+              name="Settings Dashboard"
+              parent="menu_configuration"
+              action="action_settings_dashboard"
+              sequence="0"
+              groups="base.group_system"/>
+
     <menuitem id="menu_settings"
-              name="Settings"
+              name="System Settings"
               parent="menu_configuration"
               action="action_document_extractor_settings"
               sequence="1"
