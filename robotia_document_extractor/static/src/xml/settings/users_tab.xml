@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="robotia_document_extractor.SettingsUsersTab">
+        <div class="users-tab">
+            <!-- Loading State -->
+            <div t-if="state.loading" class="text-center py-5">
+                <i class="fa fa-spinner fa-spin fa-3x text-primary"/>
+                <p class="mt-3">Loading users...</p>
+            </div>
+
+            <!-- Content -->
+            <div t-else="">
+                <!-- KPI Dashboard -->
+                <div class="kpi-cards mb-4">
+                    <div class="kpi-card kpi-primary">
+                        <div class="kpi-label">Total Users</div>
+                        <div class="kpi-value" t-esc="state.stats.total"/>
+                    </div>
+                    <div class="kpi-card kpi-purple">
+                        <div class="kpi-label">Admin</div>
+                        <div class="kpi-value" t-esc="state.stats.admin"/>
+                    </div>
+                    <div class="kpi-card kpi-green">
+                        <div class="kpi-label">Maker</div>
+                        <div class="kpi-value" t-esc="state.stats.maker"/>
+                    </div>
+                    <div class="kpi-card kpi-orange">
+                        <div class="kpi-label">Checker</div>
+                        <div class="kpi-value" t-esc="state.stats.checker"/>
+                    </div>
+                    <div class="kpi-card kpi-gray">
+                        <div class="kpi-label">Viewer</div>
+                        <div class="kpi-value" t-esc="state.stats.viewer"/>
+                    </div>
+                </div>
+
+                <!-- Search & Filters -->
+                <div class="search-filter-bar bg-white p-3 rounded shadow-sm border mb-3">
+                    <div class="row g-3 align-items-center">
+                        <div class="col-md-4">
+                            <div class="search-box position-relative">
+                                <i class="fa fa-search position-absolute" style="left: 12px; top: 50%; transform: translateY(-50%); color: #6c757d;"/>
+                                <input
+                                    type="text"
+                                    class="form-control ps-5"
+                                    placeholder="Search by Name, Email, Phone..."
+                                    t-att-value="state.searchQuery"
+                                    t-on-input="onSearchInput"/>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select" t-att-value="state.roleFilter" t-on-change="onRoleFilter">
+                                <option value="All">All Roles</option>
+                                <option value="Admin">Admin</option>
+                                <option value="Maker">Maker</option>
+                                <option value="Checker">Checker</option>
+                                <option value="Viewer">Viewer</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select" t-att-value="state.statusFilter" t-on-change="onStatusFilter">
+                                <option value="All">All Status</option>
+                                <option value="Active">Active</option>
+                                <option value="Inactive">Inactive</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <button class="btn btn-primary" t-on-click="onAddUserClick">
+                                <i class="fa fa-plus me-2"/>Add User
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Users Table -->
+                <div class="users-table-container bg-white rounded shadow-sm border overflow-hidden">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="px-4 py-3">User</th>
+                                <th class="px-4 py-3">Contact</th>
+                                <th class="px-4 py-3">Role(s)</th>
+                                <th class="px-4 py-3">Status</th>
+                                <th class="px-4 py-3">Created At</th>
+                                <th class="px-4 py-3 text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="filteredUsers" t-as="user" t-key="user.id"
+                                t-on-click="() => this.onRowClick(user.id)">
+                                <td class="px-4 py-3">
+                                    <div class="d-flex align-items-center">
+                                        <div class="user-avatar me-3" t-esc="getUserInitial(user.name)"/>
+                                        <div>
+                                            <div class="fw-bold" t-esc="user.name"/>
+                                            <div class="small text-muted">ID: <t t-esc="user.id"/></div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <div class="small">
+                                        <div class="mb-1">
+                                            <i class="fa fa-envelope text-muted me-2"/>
+                                            <t t-esc="user.email || 'N/A'"/>
+                                        </div>
+                                        <div>
+                                            <i class="fa fa-phone text-muted me-2"/>
+                                            <t t-esc="user.phone || 'N/A'"/>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <div class="d-flex flex-wrap gap-1">
+                                        <span t-if="isAdmin(user)" class="badge bg-purple">
+                                            Admin
+                                        </span>
+                                        <span t-else="" class="badge bg-secondary">
+                                            User
+                                        </span>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <span t-att-class="user.active ? 'badge bg-success' : 'badge bg-danger'">
+                                        <i t-att-class="user.active ? 'fa fa-circle me-1' : 'fa fa-circle-o me-1'" style="font-size: 8px;"/>
+                                        <t t-esc="user.active ? 'Active' : 'Inactive'"/>
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <div class="small text-muted">
+                                        <i class="fa fa-calendar me-2"/>
+                                        <t t-esc="formatDate(user.create_date)"/>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3 text-end">
+                                    <button
+                                        class="btn btn-sm btn-light me-1"
+                                        t-on-click="(ev) => this.onEditClick(user.id, ev)"
+                                        title="Edit User">
+                                        <i class="fa fa-edit"/>
+                                    </button>
+                                    <button
+                                        class="btn btn-sm btn-light"
+                                        t-on-click="(ev) => this.onArchiveClick(user.id, ev)"
+                                        title="Archive User">
+                                        <i class="fa fa-archive"/>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- Empty State -->
+                    <div t-if="filteredUsers.length === 0" class="text-center py-5">
+                        <i class="fa fa-users fa-3x text-muted mb-3"/>
+                        <p class="text-muted">No users found matching your filters</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

@@ -3543,3 +3543,454 @@ msgstr "Đã xử lý %s"
 #: code:addons/robotia_document_extractor/controllers/extraction_controller.py:0
 msgid "System"
 msgstr "Hệ thống"
+
+#. module: robotia_document_extractor
+#: model:ir.actions.client,name:robotia_document_extractor.action_settings_dashboard
+#: model:ir.ui.menu,name:robotia_document_extractor.menu_settings_dashboard
+msgid "Settings Dashboard"
+msgstr "Bảng điều khiển Cài đặt"
+
+#. module: robotia_document_extractor
+#: model:ir.ui.menu,name:robotia_document_extractor.menu_settings
+msgid "System Settings"
+msgstr "Cài đặt Hệ thống"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.settings_dashboard
+msgid "Settings"
+msgstr "Cài đặt"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.settings_dashboard
+msgid "Manage users, permissions, and system configuration"
+msgstr "Quản lý người dùng, quyền hạn và cấu hình hệ thống"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings_dashboard.xml:0
+msgid "Users"
+msgstr "Người dùng"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings_dashboard.xml:0
+msgid "Permissions"
+msgstr "Quyền hạn"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings_dashboard.xml:0
+msgid "AI"
+msgstr "AI"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings_dashboard.xml:0
+msgid "OCR"
+msgstr "OCR"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings_dashboard.xml:0
+msgid "Backup"
+msgstr "Sao lưu"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings_dashboard.xml:0
+msgid "Logs"
+msgstr "Nhật ký"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/users_tab.xml:0
+msgid "Loading users..."
+msgstr "Đang tải người dùng..."
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/users_tab.xml:0
+msgid "Total Users"
+msgstr "Tổng số Người dùng"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/users_tab.xml:0
+msgid "Admin"
+msgstr "Quản trị viên"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/users_tab.xml:0
+msgid "Maker"
+msgstr "Người tạo"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/users_tab.xml:0
+msgid "Checker"
+msgstr "Người kiểm tra"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/users_tab.xml:0
+msgid "Viewer"
+msgstr "Người xem"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/users_tab.xml:0
+msgid "Search by Name, Email, Phone..."
+msgstr "Tìm kiếm theo Tên, Email, Số điện thoại..."
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/users_tab.xml:0
+msgid "All Roles"
+msgstr "Tất cả Vai trò"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/users_tab.xml:0
+msgid "All Status"
+msgstr "Tất cả Trạng thái"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/users_tab.xml:0
+msgid "Active"
+msgstr "Hoạt động"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/users_tab.xml:0
+msgid "Inactive"
+msgstr "Không hoạt động"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/users_tab.xml:0
+msgid "Add User"
+msgstr "Thêm Người dùng"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/users_tab.xml:0
+msgid "User"
+msgstr "Người dùng"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/users_tab.xml:0
+msgid "Contact"
+msgstr "Liên hệ"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/users_tab.xml:0
+msgid "Role(s)"
+msgstr "Vai trò"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/users_tab.xml:0
+msgid "Status"
+msgstr "Trạng thái"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/users_tab.xml:0
+msgid "Created At"
+msgstr "Ngày tạo"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/users_tab.xml:0
+msgid "Actions"
+msgstr "Hành động"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/users_tab.xml:0
+msgid "No roles"
+msgstr "Không có vai trò"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/users_tab.xml:0
+msgid "No users found matching your filters"
+msgstr "Không tìm thấy người dùng nào phù hợp với bộ lọc"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/logs_tab.xml:0
+msgid "Loading device logs..."
+msgstr "Đang tải nhật ký thiết bị..."
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/logs_tab.xml:0
+msgid "Search by device, IP, location, user..."
+msgstr "Tìm kiếm theo thiết bị, IP, vị trí, người dùng..."
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/logs_tab.xml:0
+msgid "Current"
+msgstr "Hiện tại"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/logs_tab.xml:0
+msgid "First seen:"
+msgstr "Lần đầu xuất hiện:"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/logs_tab.xml:0
+msgid "Revoke"
+msgstr "Thu hồi"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/logs_tab.xml:0
+msgid "Revoked"
+msgstr "Đã thu hồi"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/logs_tab.xml:0
+msgid "No device sessions found"
+msgstr "Không tìm thấy phiên làm việc nào"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/permissions_tab.xml:0
+msgid "Loading permissions..."
+msgstr "Đang tải quyền hạn..."
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/permissions_tab.xml:0
+msgid "Role-Based Access Control"
+msgstr "Kiểm soát Truy cập dựa trên Vai trò"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/permissions_tab.xml:0
+msgid "Manage permissions for Document Extractor roles"
+msgstr "Quản lý quyền hạn cho các vai trò trong Module Trích xuất Tài liệu"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/permissions_tab.xml:0
+msgid "Manage in Settings"
+msgstr "Quản lý trong Cài đặt"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/permissions_tab.xml:0
+msgid "Access Rights:"
+msgstr "Quyền truy cập:"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/permissions_tab.xml:0
+msgid "No specific access rights defined"
+msgstr "Chưa định nghĩa quyền truy cập cụ thể"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/permissions_tab.xml:0
+msgid "No groups found"
+msgstr "Không tìm thấy nhóm nào"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/ai_tab.xml:0
+msgid "AI Configuration"
+msgstr "Cấu hình AI"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/ai_tab.xml:0
+msgid "Configure Gemini API settings for document extraction and AI assistant features."
+msgstr "Cấu hình Gemini API cho trích xuất tài liệu và tính năng trợ lý AI."
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/ai_tab.xml:0
+msgid "AI Settings"
+msgstr "Cài đặt AI"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/ai_tab.xml:0
+msgid "Manage your Gemini API key, model selection, and system prompts through the settings panel."
+msgstr "Quản lý API key Gemini, lựa chọn mô hình và prompt hệ thống qua bảng cài đặt."
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/ai_tab.xml:0
+msgid "Open AI Settings"
+msgstr "Mở Cài đặt AI"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/ai_tab.xml:0
+msgid "AI Features:"
+msgstr "Tính năng AI:"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/ai_tab.xml:0
+msgid "Document Extraction"
+msgstr "Trích xuất Tài liệu"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/ai_tab.xml:0
+msgid "Extract structured data from Vietnamese regulatory forms"
+msgstr "Trích xuất dữ liệu có cấu trúc từ biểu mẫu pháp lý tiếng Việt"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/ai_tab.xml:0
+msgid "AI Chat Assistant"
+msgstr "Trợ lý Chat AI"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/ai_tab.xml:0
+msgid "Interactive chatbot for data queries and insights"
+msgstr "Chatbot tương tác để truy vấn dữ liệu và phân tích"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/ai_tab.xml:0
+msgid "Batch Processing"
+msgstr "Xử lý hàng loạt"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/ai_tab.xml:0
+msgid "Process multiple documents from Google Drive"
+msgstr "Xử lý nhiều tài liệu từ Google Drive"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/ocr_tab.xml:0
+msgid "OCR Configuration"
+msgstr "Cấu hình OCR"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/ocr_tab.xml:0
+msgid "Optical Character Recognition settings will be available in a future update."
+msgstr "Cài đặt Nhận dạng Ký tự Quang học sẽ có trong bản cập nhật tương lai."
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/ocr_tab.xml:0
+msgid "Currently, document extraction uses Gemini AI's built-in OCR capabilities."
+msgstr "Hiện tại, trích xuất tài liệu sử dụng khả năng OCR tích hợp của Gemini AI."
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/backup_tab.xml:0
+msgid "Database Backup"
+msgstr "Sao lưu Cơ sở dữ liệu"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/backup_tab.xml:0
+msgid "Manage database backups through Odoo's built-in database manager."
+msgstr "Quản lý sao lưu cơ sở dữ liệu qua trình quản lý database tích hợp của Odoo."
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/backup_tab.xml:0
+msgid "How to backup:"
+msgstr "Cách sao lưu:"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/backup_tab.xml:0
+msgid "Navigate to Database Manager to create, download, or restore backups."
+msgstr "Truy cập Trình quản lý Database để tạo, tải xuống hoặc khôi phục bản sao lưu."
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/backup_tab.xml:0
+msgid "Open Database Manager"
+msgstr "Mở Trình quản lý Database"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/backup_tab.xml:0
+msgid "Best Practices:"
+msgstr "Thực hành tốt nhất:"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/backup_tab.xml:0
+msgid "Schedule regular automatic backups"
+msgstr "Lập lịch sao lưu tự động định kỳ"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/backup_tab.xml:0
+msgid "Store backups in a secure, off-site location"
+msgstr "Lưu trữ bản sao lưu ở vị trí an toàn, ngoại vi"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/backup_tab.xml:0
+msgid "Test backup restoration periodically"
+msgstr "Kiểm tra khôi phục bản sao lưu định kỳ"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/backup_tab.xml:0
+msgid "Keep multiple backup versions"
+msgstr "Giữ nhiều phiên bản sao lưu"
+
+#. module: robotia_document_extractor
+#: model:res.groups,name:robotia_document_extractor.group_document_extractor_viewer
+msgid "Viewer"
+msgstr "Người xem"
+
+#. module: robotia_document_extractor
+#: model:res.groups,name:robotia_document_extractor.group_document_extractor_checker
+msgid "Checker"
+msgstr "Người kiểm tra"
+
+#. module: robotia_document_extractor
+#: model:res.groups,name:robotia_document_extractor.group_document_extractor_maker
+msgid "Maker"
+msgstr "Người tạo"
+
+#. module: robotia_document_extractor
+#: model:res.groups,name:robotia_document_extractor.group_document_extractor_admin
+msgid "Admin"
+msgstr "Quản trị viên"
+
+#. module: robotia_document_extractor
+#: model:res.groups,comment:robotia_document_extractor.group_document_extractor_viewer
+msgid "Can view documents and extractions"
+msgstr "Có thể xem tài liệu và trích xuất"
+
+#. module: robotia_document_extractor
+#: model:res.groups,comment:robotia_document_extractor.group_document_extractor_checker
+msgid "Can review and validate extractions"
+msgstr "Có thể xem xét và xác thực trích xuất"
+
+#. module: robotia_document_extractor
+#: model:res.groups,comment:robotia_document_extractor.group_document_extractor_maker
+msgid "Can create and edit document extractions"
+msgstr "Có thể tạo và chỉnh sửa trích xuất tài liệu"
+
+#. module: robotia_document_extractor
+#: model:res.groups,comment:robotia_document_extractor.group_document_extractor_admin
+msgid "Full access to Document Extractor module including settings"
+msgstr "Quyền truy cập đầy đủ vào module Trích xuất Tài liệu bao gồm cả cài đặt"
