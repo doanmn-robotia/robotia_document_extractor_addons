@@ -3994,3 +3994,8 @@ msgstr "Có thể tạo và chỉnh sửa trích xuất tài liệu"
 #: model:res.groups,comment:robotia_document_extractor.group_document_extractor_admin
 msgid "Full access to Document Extractor module including settings"
 msgstr "Quyền truy cập đầy đủ vào module Trích xuất Tài liệu bao gồm cả cài đặt"
+
+#. module: robotia_document_extractor
+#: model:ir.module.category,name:robotia_document_extractor.module_category_document_extractor
+msgid "Document Extractor"
+msgstr "Trích xuất tài liệu"

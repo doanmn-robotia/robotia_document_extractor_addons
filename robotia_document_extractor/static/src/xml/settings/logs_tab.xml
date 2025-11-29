@@ -11,7 +11,7 @@
             <!-- Content -->
             <div t-else="">
                 <!-- Search Bar -->
-                <div class="search-bar bg-white p-3 rounded shadow-sm border mb-3">
+                <div class="search-bar bg-white p-3 rounded-lg border mb-3">
                     <div class="row g-3 align-items-center">
                         <div class="col-md-8">
                             <div class="position-relative">
@@ -32,7 +32,7 @@
                     <div class="row g-3">
                         <t t-foreach="filteredDevices" t-as="device" t-key="device.id">
                             <div class="col-md-6 col-lg-4">
-                                <div class="device-card bg-white rounded shadow-sm border p-3 h-100">
+                                <div class="device-card bg-white rounded-lg hover border p-3 h-100">
                                     <div class="d-flex align-items-start">
                                         <!-- Device Icon -->
                                         <div class="device-icon me-3">

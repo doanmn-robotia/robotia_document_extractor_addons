@@ -25,6 +25,7 @@
                 font-weight: 700;
                 line-height: 1;
                 margin-top: 4px;
+                color: white !important;
             }
 
             // PRIMARY CARD - Total Users (ONLY GRADIENT)
@@ -108,7 +109,7 @@
     .search-filter-bar {
         background: white;
         border: 1px solid #e5e7eb;
-        border-radius: 12px;
+        border-radius: 12px !important;
         margin-bottom: 16px;
     }
 
@@ -130,7 +131,7 @@
     .users-table-container {
         background: white;
         border: 1px solid #e5e7eb;
-        border-radius: 12px;
+        border-radius: 12px !important;
         overflow: hidden;
 
         .table {
