@@ -94,7 +94,10 @@ export class UsersTab extends Component {
             res_id: userId,
             views: [[false, 'form']],
             view_mode: 'form',
-            target: 'current'  // Open in current window, not popup
+            target: 'current',  // Open in current window, not popup
+            context: {
+                'form_view_ref': 'base.view_users_form'
+            }
         });
     }
 
@@ -107,9 +110,12 @@ export class UsersTab extends Component {
             type: 'ir.actions.act_window',
             res_model: 'res.users',
             res_id: userId,
-            views: [[this.env.services.view.get('base.view_users_form_simple_modif'), 'form']],
+            views: [[false, 'form']],
             view_mode: 'form',
-            target: 'new'  // Open as popup
+            target: 'new',  // Open as popup
+            context: {
+                'form_view_ref': 'base.view_users_form_simple_modif'
+            }
         });
     }
 
@@ -136,7 +142,10 @@ export class UsersTab extends Component {
             res_model: 'res.users',
             views: [[false, 'form']],
             view_mode: 'form',
-            target: 'current'  // Open in current window
+            target: 'current', // Open in current window
+            context: {
+                'form_view_ref': 'base.view_users_form'
+            }
         });
     }
 

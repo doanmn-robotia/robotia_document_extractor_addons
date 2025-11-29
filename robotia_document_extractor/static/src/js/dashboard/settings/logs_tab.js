@@ -15,6 +15,8 @@ export class LogsTab extends Component {
             loading: true
         });
 
+        this.action = useService("action")
+
         onWillStart(async () => {
             await this.loadDevices();
             this.state.loading = false;
@@ -42,13 +44,18 @@ export class LogsTab extends Component {
 
     async revokeDevice(deviceId) {
         // Call revoke method on res.device
-        await this.orm.call(
-            "res.device",
-            "revoke",
-            [[deviceId]]
-        );
-        // Reload devices after revocation
-        await this.loadDevices(this.state.userFilter);
+   
+
+        return await this.action.doActionButton({
+            type: "object",
+            name: "revoke",
+            resModel: "res.device",
+            resId: deviceId,
+            onClose: async () => {
+                // Reload devices after revocation
+                await this.loadDevices(this.state.userFilter);
+            }
+        })
     }
 
     getRelativeTime(dateStr) {
