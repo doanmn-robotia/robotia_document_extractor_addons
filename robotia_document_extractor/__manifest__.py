@@ -40,6 +40,11 @@
             'robotia_document_extractor/static/src/xml/chatbot.xml',
             'robotia_document_extractor/static/src/scss/chatbot.scss',
 
+            # ChatBot Systray
+            'robotia_document_extractor/static/src/js/systray/chatbot_systray.js',
+            'robotia_document_extractor/static/src/xml/chatbot_systray.xml',
+            'robotia_document_extractor/static/src/scss/chatbot_systray.scss',
+
             # Templates (XML)
             'robotia_document_extractor/static/src/xml/substance_dashboard.xml',
             'robotia_document_extractor/static/src/xml/company_dashboard.xml',
