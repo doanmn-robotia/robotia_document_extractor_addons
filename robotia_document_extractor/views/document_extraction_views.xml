@@ -9,6 +9,12 @@
                   js_class="document_extraction_form"
                   class="o_form_extraction_split">
                 <header>
+                    <button name="action_reanalyze_with_ai"
+                            type="object"
+                            string="AI Re-analyze"
+                            class="btn-primary"
+                            invisible="not id"
+                            help="Re-analyze document with AI"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,validated,completed" options="{'clickable': '1'}"/>
                 </header>
 

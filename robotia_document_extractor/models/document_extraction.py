@@ -1,7 +1,13 @@
 # -*- coding: utf-8 -*-
 
+import json
+import base64
+import logging
+
 from odoo import models, fields, api
 from odoo.exceptions import ValidationError
+
+_logger = logging.getLogger(__name__)
 
 
 class DocumentExtraction(models.Model):
@@ -613,3 +619,139 @@ class DocumentExtraction(models.Model):
             'view_mode': 'form',
             'target': 'current',
         }
+
+    def action_reanalyze_with_ai(self):
+        """
+        Verify current form data against PDF and suggest corrections
+
+        Returns:
+            dict: Action to display JSON result
+        """
+        self.ensure_one()
+
+        # Validate PDF exists
+        if not self.pdf_attachment_id:
+            raise ValidationError("No PDF file attached to this record")
+
+        # Get current data JSON
+        current_data = self._serialize_current_data()
+
+        # Get PDF binary
+        pdf_binary = base64.b64decode(self.pdf_attachment_id.datas)
+
+        # Call verification service
+        reanalysis_service = self.env['document.reanalysis.service']
+
+        try:
+            delta_changes = reanalysis_service.verify_and_suggest_corrections(
+                pdf_binary=pdf_binary,
+                current_data=current_data,
+                document_type=self.document_type,
+                filename=self.pdf_filename or 'document.pdf'
+            )
+        except Exception as e:
+            _logger.error(f"Verification failed: {e}", exc_info=True)
+            raise ValidationError(f"Verification failed: {str(e)}")
+
+        # Show result in notification (temporary - sẽ improve sau)
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'AI Verification Complete',
+                'message': f'Delta changes: {json.dumps(delta_changes, ensure_ascii=False, indent=2)}',
+                'type': 'success',
+                'sticky': True,
+            }
+        }
+
+    def _serialize_current_data(self):
+        """
+        Serialize current form state to JSON
+
+        Returns:
+            dict: Current form data
+        """
+        self.ensure_one()
+
+        data = {
+            'year': self.year,
+            'year_1': self.year_1,
+            'year_2': self.year_2,
+            'year_3': self.year_3,
+            'organization_name': self.organization_name,
+            'business_license_number': self.business_license_number,
+            'business_license_date': str(self.business_license_date) if self.business_license_date else None,
+            'business_license_place': self.business_license_place,
+            'legal_representative_name': self.legal_representative_name,
+            'legal_representative_position': self.legal_representative_position,
+            'contact_person_name': self.contact_person_name,
+            'contact_address': self.contact_address,
+            'contact_phone': self.contact_phone,
+            'contact_fax': self.contact_fax,
+            'contact_email': self.contact_email,
+            'contact_country_code': self.contact_country_id.code if self.contact_country_id else None,
+            'contact_state_code': self.contact_state_id.code if self.contact_state_id else None,
+            'activity_field_codes': self.activity_field_ids.mapped('code'),
+        }
+
+        # Add table data
+        if self.document_type == '01':
+            data.update({
+                'has_table_1_1': self.has_table_1_1,
+                'has_table_1_2': self.has_table_1_2,
+                'has_table_1_3': self.has_table_1_3,
+                'has_table_1_4': self.has_table_1_4,
+                'substance_usage': self._serialize_one2many(self.substance_usage_ids),
+                'equipment_product': self._serialize_one2many(self.equipment_product_ids),
+                'equipment_ownership': self._serialize_one2many(self.equipment_ownership_ids),
+                'collection_recycling': self._serialize_one2many(self.collection_recycling_ids),
+            })
+        else:  # '02'
+            data.update({
+                'has_table_2_1': self.has_table_2_1,
+                'has_table_2_2': self.has_table_2_2,
+                'has_table_2_3': self.has_table_2_3,
+                'has_table_2_4': self.has_table_2_4,
+                'quota_usage': self._serialize_one2many(self.quota_usage_ids),
+                'equipment_product_report': self._serialize_one2many(self.equipment_product_report_ids),
+                'equipment_ownership_report': self._serialize_one2many(self.equipment_ownership_report_ids),
+                'collection_recycling_report': self._serialize_one2many(self.collection_recycling_report_ids),
+            })
+
+        return data
+
+    def _serialize_one2many(self, recordset):
+        """
+        Serialize One2many recordset to list of dicts
+
+        Args:
+            recordset: One2many recordset
+
+        Returns:
+            list: List of dicts with record data
+        """
+        result = []
+        for record in recordset:
+            vals = {'id': record.id, 'sequence': record.sequence if 'sequence' in record._fields else None}
+
+            for field_name, field in record._fields.items():
+                # Skip technical fields
+                if field_name in ['create_uid', 'create_date', 'write_uid', 'write_date',
+                                '__last_update', 'document_id', 'display_name', 'id']:
+                    continue
+
+                value = record[field_name]
+
+                # Handle Many2one
+                if field.type == 'many2one' and value:
+                    vals[field_name] = value.name
+                # Handle date/datetime
+                elif field.type in ['date', 'datetime'] and value:
+                    vals[field_name] = str(value)
+                else:
+                    vals[field_name] = value
+
+            result.append(vals)
+
+        return result

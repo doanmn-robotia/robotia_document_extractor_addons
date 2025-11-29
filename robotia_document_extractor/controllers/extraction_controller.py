@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from odoo import http
+from odoo import http, _
 from odoo.http import request
 import base64
 import logging
@@ -1739,3 +1739,123 @@ class ExtractionController(http.Controller):
             ws[f'G{row_idx}'] = usage['co2e_tons']
             ws[f'H{row_idx}'] = usage['hs_code']
             row_idx += 1
+
+    @http.route('/document_extractor/overview_dashboard_data', type='json', auth='user', methods=['POST'])
+    def get_overview_dashboard_data(self):
+        """
+        Get aggregated data for overview dashboard
+
+        Returns:
+            dict: Dashboard data with KPIs, charts, and recent activity
+        """
+        try:
+            env = request.env
+
+            # 1. Get data from substance.aggregate (ALREADY EXISTS!)
+            SubstanceAggregate = env['substance.aggregate'].sudo()
+            aggregate_data = SubstanceAggregate.get_dashboard_data()
+            # Returns: {kpis: {...}, charts: {...}, details: {...}}
+
+            # 2. Add document counts
+            Document = env['document.extraction'].sudo()
+            total_docs = Document.search_count([])
+            form01_count = Document.search_count([('document_type', '=', '01')])
+            form02_count = Document.search_count([('document_type', '=', '02')])
+
+            # 3. Add status counts (simplified - 3 statuses)
+            draft_count = Document.search_count([('state', '=', 'draft')])
+            validated_count = Document.search_count([('state', '=', 'validated')])
+            completed_count = Document.search_count([('state', '=', 'completed')])
+
+            # 4. Get recent activity from logs
+            Log = env['google.drive.extraction.log'].sudo()
+            logs = Log.search([], order='create_date desc', limit=5)
+
+            recent_activity = []
+            for log in logs:
+                # Format relative time
+                from odoo.fields import Datetime
+
+                create_date = log.create_date
+                if create_date:
+                    now = Datetime.now()
+                    diff = now - create_date
+
+                    if diff.days > 0:
+                        time_str = _("%d days ago") % diff.days
+                    elif diff.seconds >= 3600:
+                        hours = diff.seconds // 3600
+                        time_str = _("%d hours ago") % hours
+                    elif diff.seconds >= 60:
+                        minutes = diff.seconds // 60
+                        time_str = _("%d mins ago") % minutes
+                    else:
+                        time_str = _("just now")
+                else:
+                    time_str = _("Unknown")
+
+                recent_activity.append({
+                    'id': log.id,
+                    'action': _("Processed %s") % log.file_name,
+                    'user': log.create_uid.name if log.create_uid else _('System'),
+                    'time': time_str,
+                    'type': 'upload' if log.status == 'success' else 'processing'
+                })
+
+            # 5. Calculate Top Substances (optimized SQL query)
+            # Use direct SQL query to aggregate and sort in database
+            env.cr.execute("""
+                SELECT
+                    cs.id,
+                    cs.name,
+                    SUM(COALESCE(sa.total_co2e, 0)) as total_co2e
+                FROM substance_aggregate sa
+                INNER JOIN controlled_substance cs ON sa.substance_id = cs.id
+                WHERE sa.substance_id IS NOT NULL
+                GROUP BY cs.id, cs.name
+                ORDER BY total_co2e DESC
+                LIMIT 5
+            """)
+
+            top_substances_raw = env.cr.fetchall()
+            top_substances = [
+                {
+                    'name': row[1],
+                    'value': row[2]
+                }
+                for row in top_substances_raw
+            ]
+
+            # 6. Merge data and return
+            return {
+                'error': False,
+                'kpis': {
+                    # From substance.aggregate
+                    'total_usage_kg': aggregate_data['kpis']['total_usage_kg'],
+                    'total_co2e': aggregate_data['kpis']['total_co2e'],
+                    'organization_count': aggregate_data['kpis']['organization_count'],
+                    'document_count': aggregate_data['kpis']['document_count'],
+                    # Additional counts
+                    'total_docs': total_docs,
+                    'form01_count': form01_count,
+                    'form02_count': form02_count,
+                    'status_counts': {
+                        'draft': draft_count,
+                        'validated': validated_count,
+                        'completed': completed_count
+                    }
+                },
+                'charts': {
+                    'trend_by_year': aggregate_data['charts']['trend_by_year'],
+                    'top_substances': top_substances,  # Changed from top_companies
+                    'by_activity_type': aggregate_data['charts']['by_activity_type'],
+                },
+                'recent_activity': recent_activity
+            }
+
+        except Exception as e:
+            _logger.error(f'Error fetching overview dashboard data: {str(e)}', exc_info=True)
+            return {
+                'error': True,
+                'message': str(e)
+            }
