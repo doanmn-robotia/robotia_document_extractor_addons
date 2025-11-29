@@ -3467,3 +3467,55 @@ msgstr "Lấy Prompt Báo cáo Batch"
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
 msgid "Reset prompts for batch extraction strategy. These prompts are optimized for per-page extraction with context memory."
 msgstr "Đặt lại prompts cho chiến lược trích xuất hàng loạt. Các prompt này được tối ưu hóa cho trích xuất từng trang với bộ nhớ ngữ cảnh."
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_form
+msgid "AI Re-analyze"
+msgstr "Kiểm tra lại với AI"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_form
+msgid "Re-analyze document with AI"
+msgstr "Kiểm tra dữ liệu hiện tại với PDF bằng AI"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/controllers/extraction_controller.py:0
+msgid "%d days ago"
+msgstr "%d ngày trước"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/controllers/extraction_controller.py:0
+msgid "%d hours ago"
+msgstr "%d giờ trước"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/controllers/extraction_controller.py:0
+msgid "%d mins ago"
+msgstr "%d phút trước"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/controllers/extraction_controller.py:0
+msgid "just now"
+msgstr "vừa xong"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/controllers/extraction_controller.py:0
+msgid "Unknown"
+msgstr "Không xác định"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/controllers/extraction_controller.py:0
+msgid "Processed %s"
+msgstr "Đã xử lý %s"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/controllers/extraction_controller.py:0
+msgid "System"
+msgstr "Hệ thống"

@@ -33,6 +33,7 @@
             'robotia_document_extractor/static/src/js/dashboard/equipment_dashboard.js',
             'robotia_document_extractor/static/src/js/dashboard/recovery_dashboard.js',
             'robotia_document_extractor/static/src/js/dashboard/hfc_dashboard.js',
+            'robotia_document_extractor/static/src/js/dashboard/overview_dashboard.js',
 
             # ChatBot
             'robotia_document_extractor/static/src/js/chatbot/chatbot.js',
@@ -45,6 +46,7 @@
             'robotia_document_extractor/static/src/xml/equipment_dashboard.xml',
             'robotia_document_extractor/static/src/xml/recovery_dashboard.xml',
             'robotia_document_extractor/static/src/xml/hfc_dashboard.xml',
+            'robotia_document_extractor/static/src/xml/overview_dashboard.xml',
 
             # Styles (SCSS)
             'robotia_document_extractor/static/src/scss/substance_dashboard.scss',
@@ -52,6 +54,7 @@
             'robotia_document_extractor/static/src/scss/equipment_dashboard.scss',
             'robotia_document_extractor/static/src/scss/recovery_dashboard.scss',
             'robotia_document_extractor/static/src/scss/hfc_dashboard.scss',
+            'robotia_document_extractor/static/src/scss/overview_dashboard.scss',
 
             # Field Replacement for X2ManyField (Global Patch - must load before other X2Many widgets)
             'robotia_document_extractor/static/src/js/field_replacement/field_replacement_list_renderer.js',

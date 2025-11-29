@@ -92,6 +92,12 @@
         <field name="tag">document_extractor.dashboard</field>
     </record>
 
+    <!-- Overview Dashboard -->
+    <record id="action_overview_dashboard" model="ir.actions.client">
+        <field name="name">Overview Dashboard</field>
+        <field name="tag">document_extractor.overview_dashboard</field>
+    </record>
+
     <!-- HFC Dashboard -->
     <record id="action_hfc_dashboard" model="ir.actions.client">
         <field name="name">HFC Dashboard</field>
@@ -129,19 +135,26 @@
               action="action_dashboard"
               sequence="1"/>
 
+    <!-- Overview Dashboard Menu -->
+    <menuitem id="menu_overview_dashboard"
+              name="Overview Dashboard"
+              parent="menu_document_extractor_root"
+              action="action_overview_dashboard"
+              sequence="2"/>
+
     <!-- HFC Dashboard Menu -->
     <menuitem id="menu_hfc_dashboard"
               name="HFC Dashboard"
               parent="menu_document_extractor_root"
               action="action_hfc_dashboard"
-              sequence="2"/>
+              sequence="3"/>
 
     <!-- ChatBot Menu -->
     <menuitem id="menu_chatbot"
               name="Trợ lý AI"
               parent="menu_document_extractor_root"
               action="action_chatbot"
-              sequence="3"/>
+              sequence="4"/>
 
     <!-- Documents Menu -->
     <menuitem id="menu_documents"

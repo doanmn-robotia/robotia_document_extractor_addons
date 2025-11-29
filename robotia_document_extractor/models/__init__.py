@@ -28,6 +28,7 @@ from . import collection_recycling_report
 from . import extraction_service
 from . import extraction_service_batching
 from . import extraction_helper
+from . import document_reanalysis_service
 from . import fuzzy_matcher
 from . import res_config_settings
 from . import google_drive_service

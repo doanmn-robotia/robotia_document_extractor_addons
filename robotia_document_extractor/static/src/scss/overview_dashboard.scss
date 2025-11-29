@@ -1,0 +1,353 @@
+// Overview Dashboard - Match Dashboard.tsx 100%
+// Uses Tailwind-inspired custom styles
+
+.o_overview_dashboard {
+    padding: 1.5rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    background-color: #f3f4f6; // gray-50
+
+    // Loading/Error states
+    .loading-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 400px;
+    }
+
+    // Fade in animation
+    .animate-fade-in {
+        animation: fadeIn 0.3s ease-in;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+
+    // Dashboard Card (base)
+    .dashboard-card {
+        background-color: #ffffff;
+        border-radius: 0.75rem; // rounded-xl
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); // shadow-sm
+        border: 1px solid #f3f4f6; // border-gray-100
+        padding: 1.25rem; // p-5
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+        &:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+    }
+
+    // Card title (small, uppercase, gray-500)
+    .dashboard-card-title {
+        font-size: 0.875rem; // text-sm
+        font-weight: 600; // font-semibold
+        color: #6b7280; // text-gray-500
+        text-transform: uppercase;
+        letter-spacing: 0.05em; // tracking-wider
+        margin-bottom: 0.75rem; // mb-3
+    }
+
+    // KPI Cards - FIXED HEIGHT h-48 (192px)
+    .kpi-card {
+        height: 192px; // h-48 from Dashboard.tsx
+        display: flex;
+        flex-direction: column;
+    }
+
+    // Large KPI number
+    .kpi-number {
+        font-size: 2.25rem; // text-4xl
+        font-weight: 700; // font-bold
+        color: #111827; // text-gray-900
+        margin-bottom: 0.5rem; // mb-2
+    }
+
+    // Status dots (w-2 h-2 rounded-full)
+    .status-dot {
+        width: 0.5rem; // w-2
+        height: 0.5rem; // h-2
+        border-radius: 9999px; // rounded-full
+        flex-shrink: 0;
+
+        &.bg-blue { background-color: #3b82f6; } // blue-500
+        &.bg-purple { background-color: #a855f7; } // purple-500
+        &.bg-gray { background-color: #9ca3af; } // gray-400
+        &.bg-orange { background-color: #fb923c; } // orange-400
+        &.bg-green { background-color: #22c55e; } // green-500
+        &.bg-yellow { background-color: #facc15; } // yellow-400
+        &.bg-red { background-color: #ef4444; } // red-500
+    }
+
+    // Text colors
+    .text-gray-500 {
+        color: #6b7280;
+    }
+
+    .text-gray-600 {
+        color: #4b5563;
+    }
+
+    .text-gray-800 {
+        color: #1f2937;
+    }
+
+    .text-gray-900 {
+        color: #111827;
+    }
+
+    // Status List (Processing Status card)
+    .status-list {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        justify-content: space-between; // justify-between from tsx
+    }
+
+    .status-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem; // p-2
+        border-radius: 0.5rem; // rounded-lg
+        transition: background-color 0.2s ease;
+
+        &:hover {
+            background-color: #f9fafb; // hover:bg-gray-50
+        }
+    }
+
+    .status-label {
+        font-size: 0.875rem; // text-sm
+        color: #6b7280; // text-gray-600
+    }
+
+    .status-count {
+        font-size: 0.875rem; // text-sm
+        font-weight: 700; // font-bold
+        color: #111827; // text-gray-800
+    }
+
+    // Activity List (Recent Activity card)
+    .activity-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem; // gap-3
+        overflow-y: auto;
+        height: 100%; // h-full
+        padding-right: 0.25rem; // for scrollbar
+    }
+
+    .activity-item {
+        display: flex;
+        align-items: flex-start; // items-start
+        gap: 0.75rem; // gap-3
+        font-size: 0.875rem; // text-sm
+        border-bottom: 1px solid #f9fafb; // border-gray-50
+        padding-bottom: 0.5rem; // pb-2
+
+        &.border-0 {
+            border-bottom: none;
+            padding-bottom: 0; // last:pb-0
+        }
+    }
+
+    .activity-action {
+        font-weight: 500; // font-medium
+        color: #1f2937; // text-gray-800
+    }
+
+    .activity-meta {
+        font-size: 0.75rem; // text-xs
+        color: #6b7280; // text-gray-500
+    }
+
+    // Chart Cards - FIXED HEIGHT h-80 (320px)
+    .chart-card {
+        height: 320px; // h-80 from Dashboard.tsx
+    }
+
+    .chart-container {
+        height: calc(100% - 2rem); // subtract title height
+        position: relative;
+
+        canvas {
+            max-height: 100%;
+            width: 100% !important;
+        }
+    }
+
+    // Field List (Docs by Activity Type)
+    .field-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem; // gap-2
+        margin-top: 0.5rem; // mt-2
+    }
+
+    .field-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 0.875rem; // text-sm
+    }
+
+    .field-name {
+        color: #4b5563; // text-gray-600
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        padding-right: 0.5rem; // pr-2
+    }
+
+    .field-value {
+        font-weight: 600; // font-semibold
+        color: #111827; // text-gray-900
+    }
+
+    // Quick Actions Grid
+    .quick-actions-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr); // grid-cols-2
+        gap: 1rem; // gap-4
+
+        @media (min-width: 640px) {
+            grid-template-columns: repeat(4, 1fr); // sm:grid-cols-4
+        }
+    }
+
+    .quick-action-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem; // p-4
+        border-radius: 0.5rem; // rounded-lg
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease; // transition-colors
+        gap: 0.5rem; // gap-2
+        font-size: 0.875rem; // text-sm
+        font-weight: 600; // font-semibold
+
+        // Blue (Upload)
+        &.btn-blue {
+            background-color: #eff6ff; // bg-blue-50
+            color: #1d4ed8; // text-blue-700
+
+            &:hover {
+                background-color: #dbeafe; // hover:bg-blue-100
+            }
+        }
+
+        // Purple (Documents)
+        &.btn-purple {
+            background-color: #f5f3ff; // bg-purple-50
+            color: #7c3aed; // text-purple-700
+
+            &:hover {
+                background-color: #ede9fe; // hover:bg-purple-100
+            }
+        }
+
+        // Emerald (Reports)
+        &.btn-emerald {
+            background-color: #ecfdf5; // bg-emerald-50
+            color: #047857; // text-emerald-700
+
+            &:hover {
+                background-color: #d1fae5; // hover:bg-emerald-100
+            }
+        }
+
+        // Indigo (AI Chat)
+        &.btn-indigo {
+            background-color: #eef2ff; // bg-indigo-50
+            color: #4f46e5; // text-indigo-700
+
+            &:hover {
+                background-color: #e0e7ff; // hover:bg-indigo-100
+            }
+        }
+
+        i {
+            font-size: 2rem; // fa-2x
+        }
+    }
+
+    // Custom scrollbar (from Dashboard.tsx)
+    .custom-scrollbar {
+        &::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        &::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background: #d1d5db; // gray-300
+            border-radius: 3px;
+        }
+
+        &::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af; // gray-400
+        }
+    }
+
+    // Spacing between rows (gap-6 from tsx)
+    .row {
+        margin-bottom: 1.5rem; // gap-6 equivalent
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+    }
+
+    .g-4 {
+        --bs-gutter-x: 1.5rem; // gap-6
+        --bs-gutter-y: 1.5rem;
+    }
+
+    // Responsive adjustments
+    @media (max-width: 992px) {
+        padding: 1rem;
+
+        .kpi-number {
+            font-size: 2rem; // Smaller on tablet
+        }
+
+        .chart-card {
+            height: 280px; // Slightly shorter on tablet
+        }
+    }
+
+    @media (max-width: 768px) {
+        padding: 0.75rem;
+        background-color: #ffffff; // White on mobile
+
+        .kpi-number {
+            font-size: 1.75rem;
+        }
+
+        .chart-card {
+            height: 250px; // Shorter on mobile
+        }
+
+        .kpi-card {
+            height: auto; // Auto height on mobile
+            min-height: 150px;
+        }
+
+        .quick-actions-grid {
+            grid-template-columns: repeat(2, 1fr); // 2 cols on mobile
+        }
+    }
+}
