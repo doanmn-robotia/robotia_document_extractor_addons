@@ -1,0 +1,223 @@
+// Users Tab Styles - Modern Clean Design
+
+.users-tab {
+    // KPI Cards Grid
+    .kpi-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+
+        .kpi-card {
+            padding: 16px;
+            border-radius: 12px;
+
+            .kpi-label {
+                font-size: 12px;
+                font-weight: 500;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                margin-bottom: 4px;
+            }
+
+            .kpi-value {
+                font-size: 30px;
+                font-weight: 700;
+                line-height: 1;
+                margin-top: 4px;
+            }
+
+            // PRIMARY CARD - Total Users (ONLY GRADIENT)
+            &.kpi-primary {
+                background: linear-gradient(to bottom right, #3b82f6, #2563eb);
+                color: white;
+
+                .kpi-label {
+                    color: rgba(255, 255, 255, 0.9);
+                }
+            }
+
+            // SECONDARY CARDS - Flat White with Colored Left Border
+            &.kpi-purple {
+                background: white;
+                color: #6f42c1;
+                border: 1px solid #e5e7eb;
+                border-left: 4px solid #a855f7;
+
+                .kpi-label {
+                    color: #6b7280;
+                }
+
+                .kpi-value {
+                    font-size: 24px;
+                    color: #1f2937;
+                }
+            }
+
+            &.kpi-green {
+                background: white;
+                color: #16a34a;
+                border: 1px solid #e5e7eb;
+                border-left: 4px solid #22c55e;
+
+                .kpi-label {
+                    color: #6b7280;
+                }
+
+                .kpi-value {
+                    font-size: 24px;
+                    color: #1f2937;
+                }
+            }
+
+            &.kpi-orange {
+                background: white;
+                color: #ea580c;
+                border: 1px solid #e5e7eb;
+                border-left: 4px solid #f97316;
+
+                .kpi-label {
+                    color: #6b7280;
+                }
+
+                .kpi-value {
+                    font-size: 24px;
+                    color: #1f2937;
+                }
+            }
+
+            &.kpi-gray {
+                background: white;
+                color: #6b7280;
+                border: 1px solid #e5e7eb;
+                border-left: 4px solid #6b7280;
+
+                .kpi-label {
+                    color: #6b7280;
+                }
+
+                .kpi-value {
+                    font-size: 24px;
+                    color: #1f2937;
+                }
+            }
+        }
+    }
+
+    // Search & Filter Bar
+    .search-filter-bar {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        margin-bottom: 16px;
+    }
+
+    // User Avatar
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(to top right, #60a5fa, #818cf8);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 14px;
+    }
+
+    // Users Table
+    .users-table-container {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        overflow: hidden;
+
+        .table {
+            margin-bottom: 0;
+
+            thead {
+                background: #f9fafb;
+
+                th {
+                    padding: 12px 24px;
+                    font-weight: 500;
+                    font-size: 12px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.05em;
+                    color: #6b7280;
+                    border-bottom: 1px solid #e5e7eb;
+                }
+            }
+
+            tbody {
+                tr {
+                    border-top: 1px solid #e5e7eb;
+                    transition: background-color 0.15s ease;
+
+                    &:hover {
+                        background: #f9fafb;
+                    }
+
+                    td {
+                        padding: 16px 24px;
+                        vertical-align: middle;
+                        color: #374151;
+                    }
+                }
+            }
+        }
+    }
+
+    // Role Badges - Modern Flat Style
+    .badge {
+        padding: 4px 10px;
+        font-weight: 500;
+        font-size: 12px;
+        border-radius: 9999px;
+        border: 1px solid;
+
+        &.bg-purple {
+            background: #faf5ff;
+            color: #7c3aed;
+            border-color: #e9d5ff;
+        }
+
+        &.bg-success {
+            background: #f0fdf4;
+            color: #15803d;
+            border-color: #bbf7d0;
+        }
+
+        &.bg-warning {
+            background: #fff7ed;
+            color: #c2410c;
+            border-color: #fed7aa;
+        }
+
+        &.bg-secondary {
+            background: #f3f4f6;
+            color: #374151;
+            border-color: #e5e7eb;
+        }
+
+        &.bg-light {
+            background: #f9fafb;
+            color: #6b7280;
+            border-color: #e5e7eb;
+        }
+    }
+
+    // Status Badges
+    .badge.bg-success {
+        background: #dcfce7;
+        color: #166534;
+        border-color: #bbf7d0;
+    }
+
+    .badge.bg-danger {
+        background: #fee2e2;
+        color: #991b1b;
+        border-color: #fecaca;
+    }
+}

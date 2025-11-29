@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="robotia_document_extractor.SettingsBackupTab">
+        <div class="backup-tab">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="card shadow-sm">
+                        <div class="card-body text-center py-5">
+                            <i class="fa fa-database fa-4x text-info mb-3"/>
+                            <h4 class="mb-3">Database Backup</h4>
+                            <p class="text-muted mb-4">
+                                Manage database backups through Odoo's built-in database manager.
+                            </p>
+                            <div class="alert alert-info">
+                                <i class="fa fa-info-circle me-2"/>
+                                <strong>How to backup:</strong> Navigate to Database Manager to create, download, or restore backups.
+                            </div>
+                            <a href="/web/database/manager" class="btn btn-info" target="_blank">
+                                <i class="fa fa-external-link me-2"/>
+                                Open Database Manager
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Backup Best Practices -->
+                    <div class="mt-4">
+                        <h6 class="text-muted mb-3">Best Practices:</h6>
+                        <ul class="list-group">
+                            <li class="list-group-item">
+                                <i class="fa fa-check-circle text-success me-2"/>
+                                Schedule regular automatic backups
+                            </li>
+                            <li class="list-group-item">
+                                <i class="fa fa-check-circle text-success me-2"/>
+                                Store backups in a secure, off-site location
+                            </li>
+                            <li class="list-group-item">
+                                <i class="fa fa-check-circle text-success me-2"/>
+                                Test backup restoration periodically
+                            </li>
+                            <li class="list-group-item">
+                                <i class="fa fa-check-circle text-success me-2"/>
+                                Keep multiple backup versions
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

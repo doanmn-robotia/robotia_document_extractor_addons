@@ -1,0 +1,85 @@
+// Settings Dashboard Main Styles - Modern Clean Design
+
+.settings-dashboard {
+    padding: 24px;
+    max-width: 1400px;
+    margin: 0 auto;
+    background: #fafbfc;
+
+    .dashboard-header {
+        margin-bottom: 24px;
+
+        h2 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 8px;
+        }
+
+        p {
+            font-size: 14px;
+            color: #6b7280;
+        }
+    }
+
+    // Tabs Navigation - Clean Modern Style
+    .tabs-navigation {
+        .d-flex {
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .tab-button {
+            padding: 16px 24px;
+            border: none;
+            background: transparent;
+            color: #6b7280;
+            font-weight: 500;
+            font-size: 14px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+
+            &:hover {
+                color: #374151;
+                background: #f9fafb;
+            }
+
+            &.tab-active {
+                color: #2563eb;
+                border-bottom-color: #2563eb;
+                background: rgba(239, 246, 255, 0.5);
+            }
+
+            i {
+                font-size: 16px;
+            }
+        }
+    }
+
+    // Tab Content Container
+    .tab-content-container {
+        animation: fadeIn 0.3s ease;
+        padding: 32px;
+        background: rgba(249, 250, 251, 0.3);
+        border-radius: 0 0 12px 12px;
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+// Purple badge color (for Admin)
+.bg-purple {
+    background-color: #faf5ff !important;
+    color: #7c3aed !important;
+    border: 1px solid #e9d5ff !important;
+}
