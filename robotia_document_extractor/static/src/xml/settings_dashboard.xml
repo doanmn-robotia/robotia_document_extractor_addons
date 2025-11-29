@@ -9,7 +9,7 @@
             </div>
 
             <!-- Tabs Navigation -->
-            <div class="tabs-navigation bg-white rounded shadow-sm border mb-3">
+            <div class="tabs-navigation bg-white rounded shadow-sm border-gray-200 mb-3">
                 <div class="d-flex overflow-auto">
                     <button
                         t-att-class="state.activeTab === 'USERS' ? 'tab-button tab-active' : 'tab-button'"
@@ -42,17 +42,17 @@
                         <i class="fa fa-list me-2"/>Logs
                     </button>
                 </div>
+                <!-- Tab Content -->
+                <div class="tab-content-container">
+                    <UsersTab t-if="state.activeTab === 'USERS'"/>
+                    <PermissionsTab t-if="state.activeTab === 'PERMISSIONS'"/>
+                    <AITab t-if="state.activeTab === 'AI'"/>
+                    <OCRTab t-if="state.activeTab === 'OCR'"/>
+                    <BackupTab t-if="state.activeTab === 'BACKUP'"/>
+                    <LogsTab t-if="state.activeTab === 'LOGS'"/>
+                </div>
             </div>
 
-            <!-- Tab Content -->
-            <div class="tab-content-container">
-                <UsersTab t-if="state.activeTab === 'USERS'"/>
-                <PermissionsTab t-if="state.activeTab === 'PERMISSIONS'"/>
-                <AITab t-if="state.activeTab === 'AI'"/>
-                <OCRTab t-if="state.activeTab === 'OCR'"/>
-                <BackupTab t-if="state.activeTab === 'BACKUP'"/>
-                <LogsTab t-if="state.activeTab === 'LOGS'"/>
-            </div>
         </div>
     </t>
 </templates>

@@ -9,6 +9,61 @@
     min-height: calc(100vh - 50px);
     background: #f5f6fa;
     color: #222;
+
+
+    // ============= KPI CARDS =============
+    .kpi-row {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .kpi-card {
+        background: #fff;
+        border-radius: 10px;
+        padding: 12px 14px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        border: 1px solid #e8e8e8;
+        transition: box-shadow 0.2s ease;
+
+        &:hover {
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+        }
+
+        .kpi-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #777;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+        }
+
+        .kpi-value {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1a73e8;
+        }
+
+        .kpi-sub {
+            font-size: 11px;
+            color: #888;
+        }
+
+        .kpi-pill {
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: #e9f0ff;
+            color: #1a73e8;
+            font-weight: 600;
+        }
+    }
+
 }
 
 // ============= SIDEBAR FILTER =============
@@ -208,59 +263,6 @@
         .btn i {
             margin-right: 4px;
         }
-    }
-}
-
-// ============= KPI CARDS =============
-.kpi-row {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 12px;
-}
-
-.kpi-card {
-    background: #fff;
-    border-radius: 10px;
-    padding: 12px 14px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    border: 1px solid #e8e8e8;
-    transition: box-shadow 0.2s ease;
-
-    &:hover {
-        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
-    }
-
-    .kpi-label {
-        font-size: 11px;
-        text-transform: uppercase;
-        color: #777;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-weight: 600;
-    }
-
-    .kpi-value {
-        font-size: 22px;
-        font-weight: 700;
-        color: #1a73e8;
-    }
-
-    .kpi-sub {
-        font-size: 11px;
-        color: #888;
-    }
-
-    .kpi-pill {
-        font-size: 10px;
-        padding: 2px 8px;
-        border-radius: 999px;
-        background: #e9f0ff;
-        color: #1a73e8;
-        font-weight: 600;
     }
 }
 

@@ -24,9 +24,6 @@
 
     // Tabs Navigation - Clean Modern Style
     .tabs-navigation {
-        .d-flex {
-            border-bottom: 1px solid #e5e7eb;
-        }
 
         .tab-button {
             padding: 16px 24px;
@@ -64,6 +61,25 @@
         background: rgba(249, 250, 251, 0.3);
         border-radius: 0 0 12px 12px;
     }
+
+    .border-gray-200 {
+        border: 1px solid rgb(229, 231, 235);
+        border-radius: 0.75rem !important;
+    }
+
+}
+
+.alert {
+    border-radius: 8px;
+    padding: 12px 16px;
+    background: #f0f9ff;
+    border: 1px solid #bae6fd;
+    color: #0c4a6e;
+
+    i {
+        color: #0ea5e9;
+        margin-right: 8px;
+    }
 }
 
 @keyframes fadeIn {
@@ -77,9 +93,7 @@
     }
 }
 
-// Purple badge color (for Admin)
-.bg-purple {
-    background-color: #faf5ff !important;
-    color: #7c3aed !important;
-    border: 1px solid #e9d5ff !important;
+.hover:hover {
+    background-color: rgb(249, 250, 251) !important;
+    cursor: pointer;
 }
