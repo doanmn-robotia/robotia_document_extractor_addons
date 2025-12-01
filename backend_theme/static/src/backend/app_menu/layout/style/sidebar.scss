@@ -143,6 +143,7 @@ html .o_action_manager {
 
 .nav_sidebar {
     display: flex;
+    max-width: 250px;
     flex: 0 0 auto;
     flex-flow: column nowrap;
     background: var(--bg-white);
