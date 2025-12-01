@@ -20,6 +20,8 @@
         'views/google_drive_extraction_log_views.xml',
         'views/res_config_settings_views.xml',
         'views/menus.xml',
+        'views/client_actions.xml',
+        'views/extraction_review_wizard_views.xml',
     ],
     'installable': True,
     'application': True,
@@ -27,6 +29,14 @@
         'web.assets_backend': [
             # Utilities (must load first)
             'robotia_document_extractor/static/src/js/utils/chart_utils.js',
+
+            # Page Selector (Client Action)
+            'robotia_document_extractor/static/src/js/extraction_page_selector.js',
+            'robotia_document_extractor/static/src/xml/extraction_page_selector.xml',
+            
+            # Widgets
+            'robotia_document_extractor/static/src/js/validation_stats_widget.js',
+            'robotia_document_extractor/static/src/xml/validation_stats_widget.xml',
 
             # Dashboards (JS)
             'robotia_document_extractor/static/src/js/dashboard/substance_dashboard.js',

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="robotia_document_extractor.ExtractionPageSelector" owl="1">
+        <div class="o_extraction_page_selector h-100 d-flex flex-column bg-view">
+            <!-- Header -->
+            <div class="o_control_panel d-flex flex-column gap-3 px-3 py-2 border-bottom">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="o_control_panel_breadcrumbs d-flex align-items-center">
+                        <h1 class="display-6 mb-0">Document Extraction</h1>
+                    </div>
+                    <div class="o_control_panel_actions d-flex gap-2">
+                        <t t-if="state.images.length > 0">
+                            <button class="btn btn-secondary" t-on-click="selectAll">
+                                Select All
+                            </button>
+                            <button class="btn btn-secondary" t-on-click="deselectAll">
+                                Deselect All
+                            </button>
+                            <button class="btn btn-primary" t-on-click="onExtract" t-att-disabled="state.isProcessing">
+                                <i class="fa fa-cogs me-1"/>
+                                <t t-if="state.isProcessing">Extracting...</t>
+                                <t t-else="">Extract Selected Pages</t>
+                            </button>
+                        </t>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="o_content flex-grow-1 overflow-auto p-4">
+                <!-- Processing Indicator -->
+                <t t-if="state.isProcessing and state.images.length === 0">
+                    <div class="d-flex flex-column align-items-center justify-content-center h-100 text-center">
+                        <div class="spinner-border text-primary mb-3" role="status"/>
+                        <p class="text-muted">Processing PDF...</p>
+                    </div>
+                </t>
+
+                <!-- Page Selection Grid -->
+                <t t-if="state.images.length > 0">
+                    <div class="row g-4">
+                        <t t-foreach="state.images" t-as="image" t-key="image_index">
+                            <div class="col-6 col-md-4 col-lg-3 col-xl-2">
+                                <div class="card h-100 shadow-sm cursor-pointer position-relative" 
+                                     t-att-class="state.selectedPages.has(image_index) ? 'border-info border-2' : ''"
+                                     t-on-click="() => this.togglePage(image_index)"
+                                     t-on-dblclick="() => this.onPageDoubleClick(image_index)">
+                                    
+                                    <!-- Page Number & Checkbox (Centered) -->
+                                    <div class="card-header py-2 d-flex justify-content-between align-items-center">
+                                        <span class="small text-muted fw-bold">Page <t t-esc="image_index + 1"/></span>
+                                        <div class="form-check m-0">
+                                            <input class="form-check-input" type="checkbox" 
+                                                   t-att-checked="state.selectedPages.has(image_index)"
+                                                   style="pointer-events: none;"/>
+                                        </div>
+                                    </div>
+
+                                    <!-- Image -->
+                                    <div class="card-body p-0 d-flex align-items-center justify-content-center bg-light" style="height: 250px; overflow: hidden;">
+                                        <img t-att-src="'data:image/jpeg;base64,' + image" class="img-fluid" style="max-height: 100%; object-fit: contain;"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </t>
+                    </div>
+                </t>
+            </div>
+
+            <!-- Image Preview Modal -->
+            <t t-if="state.previewImage">
+                <div class="modal d-block" tabindex="-1" role="dialog" style="background-color: rgba(0,0,0,0.5); z-index: 1050;">
+                    <div class="modal-dialog modal-lg modal-dialog-centered" role="document" style="max-width: 90vw;">
+                        <div class="modal-content h-100">
+                            <div class="modal-header py-2">
+                                <h5 class="modal-title">Preview</h5>
+                                <button type="button" class="btn-close" t-on-click="closePreview"></button>
+                            </div>
+                            <div class="modal-body p-0 d-flex align-items-center justify-content-center bg-dark" style="height: 80vh;">
+                                <img t-att-src="'data:image/jpeg;base64,' + state.previewImage" class="img-fluid" style="max-height: 100%; max-width: 100%; object-fit: contain;"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </t>
+        </div>
+    </t>
+</templates>

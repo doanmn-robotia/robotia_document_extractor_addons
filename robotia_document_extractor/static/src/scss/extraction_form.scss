@@ -22,10 +22,10 @@
         }
 
         // Form sheet container (left side on desktop, top on mobile)
-        > .o_form_sheet_bg {
-            min-width: 0;         // Allow shrinking below content size
+        >.o_form_sheet_bg {
+            min-width: 0; // Allow shrinking below content size
             overflow-y: auto;
-            overflow-x: hidden;   // Prevent horizontal scroll
+            overflow-x: hidden; // Prevent horizontal scroll
 
             // RESPONSIVE: Mobile - Full width, auto height
             @media (max-width: 991px) {
@@ -41,16 +41,17 @@
         }
 
         // PDF preview container (right side on desktop, bottom on mobile)
-        > .o_pdf_preview,
-        > .o-pdf-container {
-            min-width: 0;         // Allow shrinking below content size
+        >.o_pdf_preview,
+        >.o-pdf-container {
+            min-width: 0; // Allow shrinking below content size
             overflow-y: auto;
-            overflow-x: hidden;   // Prevent horizontal scroll
+            overflow-x: hidden; // Prevent horizontal scroll
             background-color: #f8fafc; // slate-50
             padding: 10px;
 
             .o_notebook {
                 margin: 0 !important;
+
                 .nav-tabs {
                     margin-bottom: 0 !important;
                 }
@@ -119,7 +120,7 @@
             background-repeat: no-repeat;
             background-position: center;
             transition: all 0.2s ease;
-            flex-shrink: 0;           // Prevent gutter from shrinking
+            flex-shrink: 0; // Prevent gutter from shrinking
             position: relative;
 
             // RESPONSIVE: Hide on mobile (no split)
@@ -133,7 +134,7 @@
 
             &.gutter-horizontal {
                 cursor: col-resize;
-                width: 10px !important;  // Force width
+                width: 10px !important; // Force width
 
                 // Add visible grip indicator
                 &::before {
@@ -144,25 +145,21 @@
                     transform: translate(-50%, -50%);
                     width: 4px;
                     height: 40px;
-                    background: linear-gradient(
-                        to bottom,
-                        transparent 0%,
-                        #64748b 25%,
-                        #64748b 75%,
-                        transparent 100%
-                    );
+                    background: linear-gradient(to bottom,
+                            transparent 0%,
+                            #64748b 25%,
+                            #64748b 75%,
+                            transparent 100%);
                     border-radius: 2px;
                     pointer-events: none;
                 }
 
                 &:hover::before {
-                    background: linear-gradient(
-                        to bottom,
-                        transparent 0%,
-                        #1e293b 25%,
-                        #1e293b 75%,
-                        transparent 100%
-                    );
+                    background: linear-gradient(to bottom,
+                            transparent 0%,
+                            #1e293b 25%,
+                            #1e293b 75%,
+                            transparent 100%);
                 }
             }
         }
@@ -173,6 +170,7 @@
 .o_pdf_preview_content {
     height: 100%;
 }
+
 .o_field_pdf_viewer {
     height: 100%;
 
@@ -192,6 +190,7 @@
 // RESPONSIVE: Global form adjustments for mobile
 @media (max-width: 991px) {
     .o_form_view.o_form_extraction_split {
+
         // Ensure form takes full viewport on mobile
         .o_content {
             padding: 0.5rem;
@@ -218,5 +217,3 @@
         }
     }
 }
-
-
