@@ -142,6 +142,8 @@
               action="action_dashboard"
               sequence="2"/>
 
+
+
     <!-- Documents Menu -->
     <menuitem id="menu_documents"
               name="Documents"

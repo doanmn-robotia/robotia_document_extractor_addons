@@ -285,6 +285,321 @@ class ExtractionController(http.Controller):
                 }
             }
 
+    @http.route('/robotia/pdf_to_images', type='json', auth='user', methods=['POST'])
+    def pdf_to_images(self, pdf_file):
+        """
+        Convert PDF to images for page selection
+        Args:
+            pdf_file (str): Base64 encoded PDF
+        Returns:
+            list: List of base64 encoded images (one per page)
+        """
+        try:
+            # Decode PDF
+            pdf_binary = base64.b64decode(pdf_file)
+            
+            # Use the existing service method to convert to images
+            # We need to expose a public method or use the protected one if accessible
+            # Since we are in the same module, we can call the model method
+            
+            # However, the model method _pdf_to_images returns file paths.
+            # We need to read them back to base64 to send to client.
+            
+            ExtractionService = request.env['document.extraction.service'].sudo()
+            
+            # We might need to make _pdf_to_images public or accessible
+            # For now, let's assume we can call it or duplicate logic if needed.
+            # But better to use the model. Let's check if we can call it.
+            # It's a protected method `_pdf_to_images`. 
+            # Let's add a public wrapper in the model or use it directly if Python allows (it does).
+            
+            image_paths = ExtractionService._pdf_to_images(pdf_binary, "temp_upload.pdf")
+            
+            images_base64 = []
+            for path in image_paths:
+                with open(path, "rb") as image_file:
+                    encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
+                    images_base64.append(encoded_string)
+                
+                # Clean up temp file immediately? 
+                # The model method creates temp files. We should probably clean them up.
+                try:
+                    import os
+                    os.remove(path)
+                except:
+                    pass
+
+            return {'status': 'success', 'images': images_base64}
+
+        except Exception as e:
+            _logger.exception("Error converting PDF to images")
+            return {'status': 'error', 'message': str(e)}
+
+    @http.route('/robotia/extract_pages', type='json', auth='user', methods=['POST'])
+    def extract_pages(self, pdf_file, page_indices, document_type='01'):
+        """
+        Extract specific pages from PDF
+        Args:
+            pdf_file (str): Base64 encoded PDF
+            page_indices (list): List of 0-based page indices to extract
+            document_type (str): '01' or '02'
+        Returns:
+            dict: Action to open the Review Wizard
+        """
+        try:
+            # 1. Create a new PDF with ONLY the selected pages
+            import fitz  # PyMuPDF
+            import io
+            
+            pdf_binary = base64.b64decode(pdf_file)
+            doc = fitz.open(stream=pdf_binary, filetype="pdf")
+            
+            new_doc = fitz.open()
+            for index in page_indices:
+                if 0 <= index < len(doc):
+                    new_doc.insert_pdf(doc, from_page=index, to_page=index)
+            
+            output_stream = io.BytesIO()
+            new_doc.save(output_stream)
+            new_pdf_binary = output_stream.getvalue()
+            doc.close()
+            new_doc.close()
+            
+            # 2. Run Extraction on the new PDF
+            ExtractionService = request.env['document.extraction.service'].sudo()
+            extracted_data = ExtractionService.extract_pdf(new_pdf_binary, document_type, "selected_pages.pdf")
+            
+            # 3. Create the Wizard with extracted data
+            ReviewWizard = request.env['extraction.review.wizard'].sudo()
+            
+            # Prepare wizard values - map top-level fields
+            wizard_vals = {
+                'document_type': document_type,
+                'year': extracted_data.get('year'),
+                'year_raw': str(extracted_data.get('year', '')) if extracted_data.get('year') is not None else '',
+                'organization_name': extracted_data.get('organization_name'),
+                'organization_name_raw': str(extracted_data.get('organization_name', '')) if extracted_data.get('organization_name') else '',
+                'business_license_number': extracted_data.get('business_license_number'),
+                'business_license_number_raw': str(extracted_data.get('business_license_number', '')) if extracted_data.get('business_license_number') else '',
+                'business_license_date': extracted_data.get('business_license_date'),
+                'business_license_date_raw': str(extracted_data.get('business_license_date', '')) if extracted_data.get('business_license_date') else '',
+                'business_license_place': extracted_data.get('business_license_place'),
+                'business_license_place_raw': str(extracted_data.get('business_license_place', '')) if extracted_data.get('business_license_place') else '',
+                'legal_representative_name': extracted_data.get('legal_representative_name'),
+                'legal_representative_name_raw': str(extracted_data.get('legal_representative_name', '')) if extracted_data.get('legal_representative_name') else '',
+                'legal_representative_position': extracted_data.get('legal_representative_position'),
+                'legal_representative_position_raw': str(extracted_data.get('legal_representative_position', '')) if extracted_data.get('legal_representative_position') else '',
+                'contact_person_name': extracted_data.get('contact_person_name'),
+                'contact_person_name_raw': str(extracted_data.get('contact_person_name', '')) if extracted_data.get('contact_person_name') else '',
+                'contact_address': extracted_data.get('contact_address'),
+                'contact_address_raw': str(extracted_data.get('contact_address', '')) if extracted_data.get('contact_address') else '',
+                'contact_phone': extracted_data.get('contact_phone'),
+                'contact_phone_raw': str(extracted_data.get('contact_phone', '')) if extracted_data.get('contact_phone') else '',
+                'contact_fax': extracted_data.get('contact_fax'),
+                'contact_fax_raw': str(extracted_data.get('contact_fax', '')) if extracted_data.get('contact_fax') else '',
+                'contact_email': extracted_data.get('contact_email'),
+                'contact_email_raw': str(extracted_data.get('contact_email', '')) if extracted_data.get('contact_email') else '',
+                'pdf_file': base64.b64encode(new_pdf_binary).decode('utf-8'),
+                'pdf_filename': f"extracted_pages_{document_type}.pdf",
+                'extracted_data_json': json.dumps(extracted_data),
+            }
+            
+            # Create the wizard record
+            wizard = ReviewWizard.create(wizard_vals)
+            
+            # 4. Populate One2many lines based on document type
+            if document_type == '01':
+                # Table 1.1: Substance Usage
+                if 'substance_usage' in extracted_data:
+                    for line_data in extracted_data['substance_usage']:
+                        request.env['extraction.review.substance.usage'].sudo().create({
+                            'wizard_id': wizard.id,
+                            'sequence': line_data.get('sequence', 10),
+                            'is_title': line_data.get('is_title', False),
+                            'usage_type': line_data.get('usage_type'),
+                            'usage_type_raw': str(line_data.get('usage_type', '')),
+                            'substance_name': line_data.get('substance_name'),
+                            'substance_name_raw': str(line_data.get('substance_name', '')),
+                            'year_1_quantity_kg': line_data.get('year_1_quantity_kg', 0),
+                            'year_1_quantity_kg_raw': str(line_data.get('year_1_quantity_kg', '')),
+                            'year_1_quantity_co2': line_data.get('year_1_quantity_co2', 0),
+                            'year_2_quantity_kg': line_data.get('year_2_quantity_kg', 0),
+                            'year_2_quantity_co2': line_data.get('year_2_quantity_co2', 0),
+                            'year_3_quantity_kg': line_data.get('year_3_quantity_kg', 0),
+                            'year_3_quantity_co2': line_data.get('year_3_quantity_co2', 0),
+                            'avg_quantity_kg': line_data.get('avg_quantity_kg', 0),
+                            'avg_quantity_co2': line_data.get('avg_quantity_co2', 0),
+                        })
+                
+                # Table 1.2: Equipment/Product
+                if 'equipment_product' in extracted_data:
+                    for line_data in extracted_data['equipment_product']:
+                        request.env['extraction.review.equipment.product'].sudo().create({
+                            'wizard_id': wizard.id,
+                            'sequence': line_data.get('sequence', 10),
+                            'is_title': line_data.get('is_title', False),
+                            'product_type': line_data.get('product_type'),
+                            'product_type_raw': str(line_data.get('product_type', '')),
+                            'hs_code': line_data.get('hs_code'),
+                            'capacity': line_data.get('capacity'),
+                            'cooling_capacity': line_data.get('cooling_capacity'),
+                            'power_capacity': line_data.get('power_capacity'),
+                            'quantity': line_data.get('quantity', 0),
+                            'quantity_raw': str(line_data.get('quantity', '')),
+                            'substance_name': line_data.get('substance_name'),
+                            'substance_quantity_per_unit': line_data.get('substance_quantity_per_unit', 0),
+                            'notes': line_data.get('notes'),
+                        })
+                
+                # Table 1.3: Equipment Ownership
+                if 'equipment_ownership' in extracted_data:
+                    for line_data in extracted_data['equipment_ownership']:
+                        request.env['extraction.review.equipment.ownership'].sudo().create({
+                            'wizard_id': wizard.id,
+                            'sequence': line_data.get('sequence', 10),
+                            'is_title': line_data.get('is_title', False),
+                            'product_type': line_data.get('product_type'),
+                            'product_type_raw': str(line_data.get('product_type', '')),
+                            'capacity': line_data.get('capacity'),
+                            'cooling_capacity': line_data.get('cooling_capacity'),
+                            'power_capacity': line_data.get('power_capacity'),
+                            'quantity': line_data.get('quantity', 0),
+                            'quantity_raw': str(line_data.get('quantity', '')),
+                            'substance_name': line_data.get('substance_name'),
+                            'substance_quantity_per_unit': line_data.get('substance_quantity_per_unit', 0),
+                            'total_substance_quantity': line_data.get('total_substance_quantity', 0),
+                            'operation_status': line_data.get('operation_status'),
+                            'notes': line_data.get('notes'),
+                        })
+                
+                # Table 1.4: Collection & Recycling
+                if 'collection_recycling' in extracted_data:
+                    for line_data in extracted_data['collection_recycling']:
+                        request.env['extraction.review.collection.recycling'].sudo().create({
+                            'wizard_id': wizard.id,
+                            'sequence': line_data.get('sequence', 10),
+                            'activity_type': line_data.get('activity_type'),
+                            'substance_name': line_data.get('substance_name'),
+                            'substance_name_raw': str(line_data.get('substance_name', '')),
+                            'quantity_kg': line_data.get('quantity_kg', 0),
+                            'quantity_kg_raw': str(line_data.get('quantity_kg', '')),
+                            'facility_name': line_data.get('facility_name'),
+                            'technology_name': line_data.get('technology_name'),
+                            'notes': line_data.get('notes'),
+                        })
+            
+            elif document_type == '02':
+                # Table 2.1: Quota Usage
+                if 'quota_usage' in extracted_data:
+                    for line_data in extracted_data['quota_usage']:
+                        request.env['extraction.review.quota.usage'].sudo().create({
+                            'wizard_id': wizard.id,
+                            'sequence': line_data.get('sequence', 10),
+                            'is_title': line_data.get('is_title', False),
+                            'usage_type': line_data.get('usage_type'),
+                            'substance_name': line_data.get('substance_name'),
+                            'substance_name_raw': str(line_data.get('substance_name', '')),
+                            'hs_code': line_data.get('hs_code'),
+                            'hs_code_raw': str(line_data.get('hs_code', '')),
+                            'allocated_quota_kg': line_data.get('allocated_quota_kg', 0),
+                            'allocated_quota_kg_raw': str(line_data.get('allocated_quota_kg', '')),
+                            'allocated_quota_co2': line_data.get('allocated_quota_co2', 0),
+                            'allocated_quota_co2_raw': str(line_data.get('allocated_quota_co2', '')),
+                            'adjusted_quota_kg': line_data.get('adjusted_quota_kg', 0),
+                            'adjusted_quota_kg_raw': str(line_data.get('adjusted_quota_kg', '')),
+                            'adjusted_quota_co2': line_data.get('adjusted_quota_co2', 0),
+                            'adjusted_quota_co2_raw': str(line_data.get('adjusted_quota_co2', '')),
+                            'total_quota_kg': line_data.get('total_quota_kg', 0),
+                            'total_quota_kg_raw': str(line_data.get('total_quota_kg', '')),
+                            'total_quota_co2': line_data.get('total_quota_co2', 0),
+                            'average_price': line_data.get('average_price', 0),
+            'country_text': line_data.get('country_text'),
+                            'customs_declaration_number': line_data.get('customs_declaration_number'),
+                            'next_year_quota_kg': line_data.get('next_year_quota_kg', 0),
+                            'next_year_quota_co2': line_data.get('next_year_quota_co2', 0),
+                        })
+                
+                # Table 2.2: Equipment/Product Report
+                if 'equipment_product_report' in extracted_data:
+                    for line_data in extracted_data['equipment_product_report']:
+                        request.env['extraction.review.equipment.product.report'].sudo().create({
+                            'wizard_id': wizard.id,
+                            'sequence': line_data.get('sequence', 10),
+                            'is_title': line_data.get('is_title', False),
+                            'production_type': line_data.get('production_type'),
+                            'product_type': line_data.get('product_type'),
+                            'product_type_raw': str(line_data.get('product_type', '')),
+                            'hs_code': line_data.get('hs_code'),
+                            'capacity': line_data.get('capacity'),
+                            'cooling_capacity': line_data.get('cooling_capacity'),
+                            'power_capacity': line_data.get('power_capacity'),
+                            'quantity': line_data.get('quantity', 0),
+                            'quantity_raw': str(line_data.get('quantity', '')),
+                            'substance_name': line_data.get('substance_name'),
+                            'substance_quantity_per_unit': line_data.get('substance_quantity_per_unit', 0),
+                            'notes': line_data.get('notes'),
+                        })
+                
+                # Table 2.3: Equipment Ownership Report
+                if 'equipment_ownership_report' in extracted_data:
+                    for line_data in extracted_data['equipment_ownership_report']:
+                        request.env['extraction.review.equipment.ownership.report'].sudo().create({
+                            'wizard_id': wizard.id,
+                            'sequence': line_data.get('sequence', 10),
+                            'is_title': line_data.get('is_title', False),
+                            'ownership_type': line_data.get('ownership_type'),
+                            'equipment_type': line_data.get('equipment_type'),
+                            'equipment_type_raw': str(line_data.get('equipment_type', '')),
+                            'equipment_quantity': line_data.get('equipment_quantity', 0),
+                            'equipment_quantity_raw': str(line_data.get('equipment_quantity', '')),
+                            'substance_name': line_data.get('substance_name'),
+                            'capacity': line_data.get('capacity'),
+                            'cooling_capacity': line_data.get('cooling_capacity'),
+                            'power_capacity': line_data.get('power_capacity'),
+                            'start_year': line_data.get('start_year', 0),
+                            'refill_frequency': line_data.get('refill_frequency', 0),
+                            'substance_quantity_per_refill': line_data.get('substance_quantity_per_refill', 0),
+                            'notes': line_data.get('notes'),
+                        })
+                
+                # Table 2.4: Collection & Recycling Report
+                if 'collection_recycling_report' in extracted_data:
+                    for line_data in extracted_data['collection_recycling_report']:
+                        request.env['extraction.review.collection.recycling.report'].sudo().create({
+                            'wizard_id': wizard.id,
+                            'substance_name': line_data.get('substance_name'),
+                            'substance_name_raw': str(line_data.get('substance_name', '')),
+                            'collection_quantity_kg': line_data.get('collection_quantity_kg', 0),
+                            'collection_quantity_kg_raw': str(line_data.get('collection_quantity_kg', '')),
+                            'collection_location': line_data.get('collection_location'),
+                            'storage_location': line_data.get('storage_location'),
+                            'reuse_quantity_kg': line_data.get('reuse_quantity_kg', 0),
+                            'reuse_technology': line_data.get('reuse_technology'),
+                            'recycle_quantity_kg': line_data.get('recycle_quantity_kg', 0),
+                            'recycle_technology': line_data.get('recycle_technology'),
+                            'recycle_usage_location': line_data.get('recycle_usage_location'),
+                            'disposal_quantity_kg': line_data.get('disposal_quantity_kg', 0),
+                            'disposal_technology': line_data.get('disposal_technology'),
+                            'disposal_facility': line_data.get('disposal_facility'),
+                        })
+            
+            # 5. Return action to open the wizard
+            return {
+                'status': 'success',
+                'action': {
+                    'type': 'ir.actions.act_window',
+                    'res_model': 'extraction.review.wizard',
+                    'view_mode': 'form',
+                    'views': [(False, 'form')],
+                    'target': 'current',
+                    'res_id': wizard.id,
+                }
+            }
+
+        except Exception as e:
+            _logger.exception("Error extracting pages")
+            return {'status': 'error', 'message': str(e)}
+
     @http.route('/document_extractor/substance_dashboard_data', type='json', auth='user', methods=['POST'])
     def get_substance_dashboard_data(self, substance_id=None, organization_id=None, year_from=None, year_to=None):
         """
@@ -1432,7 +1747,7 @@ class ExtractionController(http.Controller):
                     'phone': org.phone or '',
                     'fax': org.fax or '',
                     'email': org.email or '',
-                    'activity_fields': doc.activity_field_ids.mapped('name'),
+                    'activity_fields': doc.activity_field_ids.mapped('code'),
                 })
 
             # Sheet 2: Equipment ownership (Form 01)
@@ -1507,7 +1822,7 @@ class ExtractionController(http.Controller):
                         'license_number': org.business_license_number or '',
                         'year': doc.year,
                         'data_source': 'Mẫu 02',
-                        'activity': eq.production_type or '',
+                        'activity': eq.production_type,
                         'product_type': eq.product_type or '',
                         'hs_code': eq.hs_code_id.code if eq.hs_code_id else '',
                         'capacity': eq.capacity or 0,
@@ -1526,7 +1841,7 @@ class ExtractionController(http.Controller):
                         'license_number': org.business_license_number or '',
                         'year': doc.year,
                         'substance_name': rec.substance_id.name if rec.substance_id else rec.substance_name or '',
-                        'activity': rec.activity_type or '',
+                        'activity': rec.activity_type,
                         'quantity_kg': rec.quantity_kg or 0,
                         'detail_1': '',  # Field doesn't exist in collection.recycling
                         'detail_2': '',  # Field doesn't exist in collection.recycling
@@ -1545,7 +1860,7 @@ class ExtractionController(http.Controller):
                             'license_number': org.business_license_number or '',
                             'year': doc.year,
                             'substance_name': substance_name,
-                            'activity': 'Thu gom',
+                            'activity': 'collection',
                             'quantity_kg': rep.collection_quantity_kg or 0,
                             'detail_1': rep.collection_location or '',
                             'detail_2': '',
@@ -1556,7 +1871,7 @@ class ExtractionController(http.Controller):
                             'license_number': org.business_license_number or '',
                             'year': doc.year,
                             'substance_name': substance_name,
-                            'activity': 'Tái sử dụng',
+                            'activity': 'reuse',
                             'quantity_kg': rep.reuse_quantity_kg or 0,
                             'detail_1': '',
                             'detail_2': '',
@@ -1567,7 +1882,7 @@ class ExtractionController(http.Controller):
                             'license_number': org.business_license_number or '',
                             'year': doc.year,
                             'substance_name': substance_name,
-                            'activity': 'Tái chế',
+                            'activity': 'recycling',
                             'quantity_kg': rep.recycle_quantity_kg or 0,
                             'detail_1': rep.recycle_technology or '',
                             'detail_2': rep.recycle_facility_id.name if rep.recycle_facility_id else '',
@@ -1578,7 +1893,7 @@ class ExtractionController(http.Controller):
                             'license_number': org.business_license_number or '',
                             'year': doc.year,
                             'substance_name': substance_name,
-                            'activity': 'Tiêu hủy',
+                            'activity': 'disposal',
                             'quantity_kg': rep.disposal_quantity_kg or 0,
                             'detail_1': rep.disposal_technology or '',
                             'detail_2': rep.disposal_facility or '',
@@ -1591,14 +1906,7 @@ class ExtractionController(http.Controller):
                         continue
 
                     # Determine activity type from usage_type field
-                    if usage.usage_type == 'production':
-                        activity = 'Sản xuất'
-                    elif usage.usage_type == 'import':
-                        activity = 'Nhập khẩu'
-                    elif usage.usage_type == 'export':
-                        activity = 'Xuất khẩu'
-                    else:
-                        activity = ''
+                    activity = usage.usage_type
 
                     bulk_substances_data.append({
                         'license_number': org.business_license_number or '',
@@ -1619,7 +1927,7 @@ class ExtractionController(http.Controller):
                     bulk_substances_data.append({
                         'license_number': org.business_license_number or '',
                         'data_source': 'Mẫu 02',
-                        'activity': quota.usage_type or 'Sử dụng hạn ngạch',
+                        'activity': quota.usage_type,
                         'substance_name': quota.substance_id.name if quota.substance_id else quota.substance_name or '',
                         'year': doc.year,
                         'quantity_kg': quota.total_quota_kg or 0,
@@ -1641,14 +1949,14 @@ class ExtractionController(http.Controller):
 
         # Activity field column mapping
         activity_field_cols = {
-            'Sản xuất chất': 'K',
-            'Nhập khẩu chất': 'L',
-            'Xuất khẩu chất': 'M',
-            'Sản xuất thiết bị': 'N',
-            'Nhập khẩu thiết bị': 'O',
-            'Sở hữu điều hòa': 'P',
-            'Sở hữu thiết bị lạnh': 'Q',
-            'Thu gom xử lý': 'R',
+            'production': 'K',
+            'import': 'L',
+            'export': 'M',
+            'equipment_production': 'N',
+            'equipment_import': 'O',
+            'ac_ownership': 'P',
+            'refrigeration_ownership': 'Q',
+            'collection_recycling': 'R',
         }
 
         row_idx = 2  # Start after header
@@ -1665,8 +1973,8 @@ class ExtractionController(http.Controller):
             ws[f'J{row_idx}'] = company['email']
 
             # Activity fields - mark with 'X' if present
-            for field_name, col in activity_field_cols.items():
-                if any(field_name.lower() in af.lower() for af in company['activity_fields']):
+            for field_code, col in activity_field_cols.items():
+                if field_code in company['activity_fields']:
                     ws[f'{col}{row_idx}'] = 'X'
 
             row_idx += 1
@@ -1718,7 +2026,13 @@ class ExtractionController(http.Controller):
             ws[f'A{row_idx}'] = rec['license_number']
             ws[f'B{row_idx}'] = rec['year']
             ws[f'C{row_idx}'] = rec['substance_name']
-            ws[f'D{row_idx}'] = rec['activity']
+            activity_map = {
+                'collection': 'Thu gom',
+                'reuse': 'Tái sử dụng',
+                'recycling': 'Tái chế',
+                'disposal': 'Tiêu hủy'
+            }
+            ws[f'D{row_idx}'] = activity_map.get(rec['activity'], rec['activity'])
             ws[f'E{row_idx}'] = rec['quantity_kg']
             ws[f'F{row_idx}'] = rec['detail_1']
             ws[f'G{row_idx}'] = rec['detail_2']
@@ -1732,7 +2046,13 @@ class ExtractionController(http.Controller):
         for usage in bulk_substances_data:
             ws[f'A{row_idx}'] = usage['license_number']
             ws[f'B{row_idx}'] = usage['data_source']
-            ws[f'C{row_idx}'] = usage['activity']
+            activity_map = {
+                'production': 'Sản xuất',
+                'import': 'Nhập khẩu',
+                'export': 'Xuất khẩu',
+                'collection': 'Thu gom',
+            }
+            ws[f'C{row_idx}'] = activity_map.get(usage['activity'], usage['activity'])
             ws[f'D{row_idx}'] = usage['substance_name']
             ws[f'E{row_idx}'] = usage['year']
             ws[f'F{row_idx}'] = usage['quantity_kg']

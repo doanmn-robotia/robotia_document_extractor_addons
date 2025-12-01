@@ -118,15 +118,21 @@ export class UploadArea extends Component {
             // Read file as base64
             const base64Data = await this.readFileAsBase64(file);
 
-            // Call extraction controller
-            const result = await rpc('/document_extractor/extract', {
-                pdf_data: base64Data,
-                filename: file.name,
-                document_type: this.state.documentType
+            // Open Page Selector Client Action
+            await this.action.doAction({
+                type: 'ir.actions.client',
+                tag: 'robotia_document_extractor.page_selector',
+                target: 'inline',
+                name: _t('Select pages'),
+                params: {
+                    file: base64Data,
+                    fileName: file.name,
+                    documentType: this.state.documentType
+                }
             });
 
             this.state.uploading = false;
-            // Clear selected file after extraction
+            // Clear selected file after handoff
             this.state.selectedFile = null;
             this.state.filePreview = null;
 
@@ -135,38 +141,16 @@ export class UploadArea extends Component {
                 this.props.onUploadEnd();
             }
 
-            // Handle result
-            if (result.type === 'ir.actions.act_window') {
-                // Success - open form with extracted data
-                this.notification.add(
-                    _t('Document extracted successfully! Please review the data.'),
-                    { type: 'success' }
-                );
-
-                // Notify parent to reload statistics
-                if (this.props.onExtractionComplete) {
-                    await this.props.onExtractionComplete();
-                }
-                await this.action.doAction(result);
-            } else if (result.type === 'ir.actions.client') {
-                // Error notification already displayed by controller
-                await this.action.doAction(result);
-            }
-
         } catch (error) {
-            console.error('Extraction error:', error);
+            console.error('Error starting page selector:', error);
             this.state.uploading = false;
-            // Clear selected file on error
-            this.state.selectedFile = null;
-            this.state.filePreview = null;
 
-            // Notify parent that upload has ended (even on error)
             if (this.props.onUploadEnd) {
                 this.props.onUploadEnd();
             }
 
             this.notification.add(
-                _t('Extraction failed: %s', error.message || _t('Unknown error')),
+                _t('Failed to open page selector: %s', error.message || _t('Unknown error')),
                 { type: 'danger', sticky: true }
             );
         }
