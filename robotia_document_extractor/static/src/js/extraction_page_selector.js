@@ -14,19 +14,19 @@ export class ExtractionPageSelector extends Component {
 
         this.state = useState({
             fileName: "",
-            images: [], // Array of base64 strings
-            selectedPages: new Set(), // Set of page indices
+            pages: [], // Array of {attachment_id, url, page_num}
+            selectedPages: new Set(), // Set of attachment IDs
             isProcessing: false,
             base64File: null, // Store base64 of the PDF
-            previewImage: null, // Image to show in preview modal
+            previewUrl: null, // URL to show in preview modal
             documentType: null, // Document type from upload screen
         });
 
-        // Get file and documentType from action params
+        // Get file URL and documentType from action params
         const params = this.props.action.params;
-        if (params && params.file) {
+        if (params && params.fileUrl) {
             this.state.documentType = params.documentType || '01'; // Default to '01' if not provided
-            this.processInitialFile(params.file, params.fileName);
+            this.processInitialFile(params.fileUrl, params.fileName);
         } else {
             // No file provided (e.g., page reload) - redirect to dashboard
             this.notification.add(_t("No file selected. Please upload a file first."), { type: "warning" });
@@ -37,10 +37,45 @@ export class ExtractionPageSelector extends Component {
         }
     }
 
-    async processInitialFile(base64File, fileName) {
+    async processInitialFile(fileUrl, fileName) {
         this.state.fileName = fileName;
         this.state.isProcessing = true;
-        await this.convertPdfToImages(base64File);
+
+        try {
+            // Fetch the file from the blob URL
+            const response = await fetch(fileUrl);
+            const blob = await response.blob();
+
+            // Convert blob to base64
+            const base64File = await this.readFileAsBase64(blob);
+
+            // Clean up the blob URL after reading
+            URL.revokeObjectURL(fileUrl);
+
+            await this.convertPdfToImages(base64File);
+        } catch (error) {
+            console.error("Error reading file from URL:", error);
+            this.notification.add(_t("Error reading file"), { type: "danger" });
+            this.state.isProcessing = false;
+        }
+    }
+
+    readFileAsBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+
+            reader.onload = (e) => {
+                // Remove the data:application/pdf;base64, prefix
+                const base64 = e.target.result.split(',')[1];
+                resolve(base64);
+            };
+
+            reader.onerror = (error) => {
+                reject(error);
+            };
+
+            reader.readAsDataURL(file);
+        });
     }
 
     // File upload is handled by upload_area.js, this component only receives the file
@@ -52,39 +87,44 @@ export class ExtractionPageSelector extends Component {
             });
 
             if (result.status === "success") {
-                this.state.images = result.images;
-                // Auto-select all pages by default
-                this.state.selectedPages = new Set(result.images.map((_, i) => i));
-                // Store base64 for extraction step
+                this.state.pages = result.pages; // Metadata array
+                // Auto-select all pages (using attachment IDs)
+                this.state.selectedPages = new Set(
+                    result.pages.map(page => page.attachment_id)
+                );
+                // Store original PDF base64 for extraction
                 this.state.base64File = base64File;
             } else {
                 this.notification.add(result.message || _t("Error converting PDF"), { type: "danger" });
             }
         } catch (error) {
+            console.error("PDF conversion error:", error);
             this.notification.add(_t("Error processing file"), { type: "danger" });
         } finally {
             this.state.isProcessing = false;
         }
     }
 
-    togglePage(index) {
-        if (this.state.selectedPages.has(index)) {
-            this.state.selectedPages.delete(index);
+    togglePage(attachmentId) {
+        if (this.state.selectedPages.has(attachmentId)) {
+            this.state.selectedPages.delete(attachmentId);
         } else {
-            this.state.selectedPages.add(index);
+            this.state.selectedPages.add(attachmentId);
         }
     }
 
-    onPageDoubleClick(index) {
-        this.state.previewImage = this.state.images[index];
+    onPageDoubleClick(page) {
+        this.state.previewUrl = page.url; // Use URL instead of base64
     }
 
     closePreview() {
-        this.state.previewImage = null;
+        this.state.previewUrl = null;
     }
 
     selectAll() {
-        this.state.images.forEach((_, i) => this.state.selectedPages.add(i));
+        this.state.selectedPages = new Set(
+            this.state.pages.map(page => page.attachment_id)
+        );
     }
 
     deselectAll() {
@@ -98,28 +138,33 @@ export class ExtractionPageSelector extends Component {
         }
 
         if (!this.state.base64File) {
-            this.notification.add(_t("No file data found"), { type: "danger" });
+            this.notification.add(_t("File data is missing"), { type: "danger" });
             return;
         }
 
         this.state.isProcessing = true;
 
         try {
+            // Send attachment IDs instead of page indices
+            const selectedAttachmentIds = Array.from(this.state.selectedPages);
+
             const result = await this.rpc("/robotia/extract_pages", {
                 pdf_file: this.state.base64File,
-                page_indices: Array.from(this.state.selectedPages).sort((a, b) => a - b),
-                document_type: this.state.documentType, // Use documentType from upload screen
+                attachment_ids: selectedAttachmentIds, // NEW: Send attachment IDs
+                document_type: this.state.documentType,
             });
 
-            if (result.status === "success") {
-                this.action.doAction(result.action);
-            } else {
-                this.notification.add(result.message || "Error extracting pages", { type: "danger" });
+            if (result.type === 'ir.actions.act_window') {
+                await this.action.doAction(result);
+            } else if (result.type === 'ir.actions.client') {
+                this.notification.add(result.params.message, {
+                    type: result.params.type
+                });
             }
-            this.state.isProcessing = false;
-
         } catch (error) {
-            this.notification.add("Error starting extraction", { type: "danger" });
+            console.error("Extraction error:", error);
+            this.notification.add(_t("Error during extraction"), { type: "danger" });
+        } finally {
             this.state.isProcessing = false;
         }
     }

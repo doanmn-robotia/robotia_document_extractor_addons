@@ -4803,3 +4803,92 @@ msgstr "Năm báo cáo"
 #: model:ir.model.fields,field_description:robotia_document_extractor.field_extraction_review_wizard__document_type
 msgid "Document Type"
 msgstr "Loại báo cáo"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/raw_ocr_viewer.xml:0
+msgid "No OCR data available"
+msgstr "Không có dữ liệu OCR"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/raw_ocr_viewer.xml:0
+msgid "This document was extracted without OCR processing."
+msgstr "Tài liệu này được trích xuất mà không có xử lý OCR."
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/raw_ocr_viewer.xml:0
+msgid "OCR Preview"
+msgstr "Xem trước OCR"
+
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/raw_ocr_viewer.xml:0
+msgid "Click any text region to highlight it on the PDF"
+msgstr "Nhấp vào bất kỳ vùng văn bản nào để làm nổi bật nó trên PDF"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/raw_ocr_viewer.xml:0
+msgid "page"
+msgstr "trang"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/raw_ocr_viewer.xml:0
+msgid "pages"
+msgstr "trang"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/raw_ocr_viewer.xml:0
+msgid "Page"
+msgstr "Trang"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/raw_ocr_viewer.xml:0
+msgid "region"
+msgstr "vùng"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/raw_ocr_viewer.xml:0
+msgid "regions"
+msgstr "vùng"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/raw_ocr_viewer.xml:0
+msgid "Confidence:"
+msgstr "Độ tin cậy:"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/raw_ocr_viewer.xml:0
+msgid "High"
+msgstr "Cao"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/raw_ocr_viewer.xml:0
+msgid "Medium"
+msgstr "Trung bình"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/raw_ocr_viewer.xml:0
+msgid "Low"
+msgstr "Thấp"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_document_extraction__raw_ocr_data
+msgid "Raw OCR Data"
+msgstr "Dữ liệu OCR thô"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_document_extraction__raw_ocr_data
+msgid "Structured OCR data with bounding boxes (JSON format)"
+msgstr "Dữ liệu OCR có cấu trúc với khung giới hạn (định dạng JSON)"

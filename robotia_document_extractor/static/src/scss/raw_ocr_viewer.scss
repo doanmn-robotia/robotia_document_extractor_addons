@@ -1,0 +1,134 @@
+// Raw OCR Viewer Widget Styles
+
+.o_raw_ocr_viewer {
+    // Header section
+    .ocr-header {
+        h5 {
+            margin: 0;
+            font-size: 1.1rem;
+            color: #2c3e50;
+        }
+
+        small {
+            font-size: 0.85rem;
+        }
+
+        .badge {
+            font-size: 0.85rem;
+            padding: 0.4em 0.8em;
+        }
+    }
+
+    // Accordion customization
+    .accordion-button {
+        font-weight: 500;
+        font-size: 0.95rem;
+        padding: 1rem 1.25rem;
+
+        &:not(.collapsed) {
+            background-color: #e7f3ff;
+            color: #0d6efd;
+        }
+
+        &:focus {
+            box-shadow: none;
+            border-color: rgba(0, 0, 0, 0.125);
+        }
+
+        i.fa {
+            color: #6c757d;
+        }
+    }
+
+    // Text regions list
+    .list-group-item {
+        cursor: pointer;
+        font-size: 0.9em;
+        transition: all 0.2s ease;
+
+        &:hover {
+            background-color: #f8f9fa;
+        }
+
+        &.active {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+            color: white;
+
+            .text-muted {
+                color: rgba(255, 255, 255, 0.7) !important;
+            }
+
+            .badge {
+                background-color: rgba(255, 255, 255, 0.2) !important;
+                color: white !important;
+            }
+        }
+
+        .font-monospace {
+            font-family: 'Courier New', monospace;
+            font-size: 0.95em;
+        }
+
+        .fa-quote-left {
+            opacity: 0.5;
+        }
+    }
+
+    // Confidence badges
+    .badge {
+        font-size: 0.75em;
+        min-width: 45px;
+        font-weight: 600;
+        padding: 0.4em 0.6em;
+
+        &.text-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        &.text-warning {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        &.text-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    }
+
+    // Footer
+    .ocr-footer {
+        font-size: 0.85rem;
+    }
+
+    // Alert customization
+    .alert-info {
+        background-color: #e7f3ff;
+        border-color: #bee5eb;
+        color: #31708f;
+
+        i.fa {
+            font-size: 1.2em;
+            vertical-align: middle;
+        }
+    }
+}
+
+// Highlight overlay styles (injected into PDF iframe)
+.ocr-highlight {
+    animation: pulse-border 1s ease-in-out;
+    border-radius: 2px;
+}
+
+@keyframes pulse-border {
+    0%, 100% {
+        border-color: #ffcc00;
+        box-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+    }
+    50% {
+        border-color: #ff9900;
+        box-shadow: 0 0 15px rgba(255, 153, 0, 0.7);
+    }
+}
