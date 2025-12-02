@@ -21,7 +21,6 @@
         'views/res_config_settings_views.xml',
         'views/menus.xml',
         'views/client_actions.xml',
-        'views/extraction_review_wizard_views.xml',
     ],
     'installable': True,
     'application': True,
@@ -37,6 +36,11 @@
             # Widgets
             'robotia_document_extractor/static/src/js/validation_stats_widget.js',
             'robotia_document_extractor/static/src/xml/validation_stats_widget.xml',
+
+            # OCR Preview Widget
+            'robotia_document_extractor/static/src/js/raw_ocr_viewer/raw_ocr_viewer.js',
+            'robotia_document_extractor/static/src/xml/raw_ocr_viewer.xml',
+            'robotia_document_extractor/static/src/scss/raw_ocr_viewer.scss',
 
             # Dashboards (JS)
             'robotia_document_extractor/static/src/js/dashboard/substance_dashboard.js',

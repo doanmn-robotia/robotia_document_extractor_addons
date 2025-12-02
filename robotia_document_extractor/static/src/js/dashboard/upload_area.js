@@ -115,8 +115,8 @@ export class UploadArea extends Component {
         this.state.uploading = true;
 
         try {
-            // Read file as base64
-            const base64Data = await this.readFileAsBase64(file);
+            // Create a URL for the file instead of converting to base64
+            const fileUrl = URL.createObjectURL(file);
 
             // Open Page Selector Client Action
             await this.action.doAction({
@@ -125,7 +125,7 @@ export class UploadArea extends Component {
                 target: 'inline',
                 name: _t('Select pages'),
                 params: {
-                    file: base64Data,
+                    fileUrl: fileUrl,
                     fileName: file.name,
                     documentType: this.state.documentType
                 }
@@ -164,23 +164,7 @@ export class UploadArea extends Component {
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
 
-    readFileAsBase64(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
 
-            reader.onload = (e) => {
-                // Remove the data:application/pdf;base64, prefix
-                const base64 = e.target.result.split(',')[1];
-                resolve(base64);
-            };
-
-            reader.onerror = (error) => {
-                reject(error);
-            };
-
-            reader.readAsDataURL(file);
-        });
-    }
 
     onDocumentTypeChange(ev) {
         this.state.documentType = ev.target.value;
