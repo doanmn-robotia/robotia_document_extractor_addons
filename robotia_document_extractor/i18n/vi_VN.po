@@ -5115,3 +5115,313 @@ msgstr "Dữ liệu tệp bị thiếu"
 #: code:addons/robotia_document_extractor/static/src/js/extraction_page_selector.js:0
 msgid "Error during extraction"
 msgstr "Lỗi trong quá trình trích xuất"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid ""
+"<i class=\"fa fa-check-circle\"/> Google Drive is configured and ready to use.\n"
+"                                            Click \"Configure Service Account\" to update credentials or folder settings."
+msgstr ""
+"<i class=\"fa fa-check-circle\"/> Google Drive đã được cấu hình và sẵn sàng sử dụng.\n"
+"                                            Nhấp \"Cấu hình Service Account\" để cập nhật thông tin xác thực hoặc cài đặt thư mục."
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid ""
+"<i class=\"fa fa-exclamation-triangle\"/> Google Drive is not configured yet.\n"
+"                                            Click \"Configure Service Account\" to upload your service account JSON file."
+msgstr ""
+"<i class=\"fa fa-exclamation-triangle\"/> Google Drive chưa được cấu hình.\n"
+"                                            Nhấp \"Cấu hình Service Account\" để tải lên tệp JSON service account của bạn."
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_form
+msgid ""
+"<span class=\"o_stat_text\">Extraction</span>\n"
+"                                <span class=\"o_stat_text\">Log</span>"
+msgstr ""
+"<span class=\"o_stat_text\">Nhật ký</span>\n"
+"                                <span class=\"o_stat_text\">Trích xuất</span>"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_google_drive_extraction_log_form
+msgid "<span>Create Extraction</span>"
+msgstr "<span>Tạo Trích xuất</span>"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_google_drive_extraction_log_form
+msgid "<span>View Record</span>"
+msgstr "<span>Xem Bản ghi</span>"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid ""
+"<strong>100% AI (Recommended):</strong> Gemini processes PDF directly, understanding layout and structure.<br/>\n"
+"                                    <strong>Text Extract + AI:</strong> Extract text first with PyMuPDF, then structure with AI. May be faster for very large PDFs.<br/>\n"
+"                                    <strong>Batch Extraction:</strong> Convert PDF to images, process in batches with adaptive sizing. Best for very large documents (20+ pages)."
+msgstr ""
+"<strong>100% AI (Khuyến nghị):</strong> Gemini xử lý PDF trực tiếp, hiểu bố cục và cấu trúc.<br/>\n"
+"                                    <strong>Trích xuất văn bản + AI:</strong> Trích xuất văn bản trước bằng PyMuPDF, sau đó cấu trúc hóa bằng AI. Có thể nhanh hơn cho PDF rất lớn.<br/>\n"
+"                                    <strong>Trích xuất theo lô:</strong> Chuyển đổi PDF thành hình ảnh, xử lý theo lô với kích thước thích ứng. Tốt nhất cho tài liệu rất lớn (20+ trang)."
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.google_drive_config_wizard_form
+msgid "<strong>Form 01</strong> - For Form 01 Registration documents"
+msgstr "<strong>Mẫu 01</strong> - Cho tài liệu Đăng ký Mẫu 01"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.google_drive_config_wizard_form
+msgid "<strong>Form 02</strong> - For Form 02 Report documents"
+msgstr "<strong>Mẫu 02</strong> - Cho tài liệu Báo cáo Mẫu 02"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.google_drive_config_wizard_form
+msgid "<strong>Processed</strong> - For processed files"
+msgstr "<strong>Đã xử lý</strong> - Cho các tệp đã xử lý"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.google_drive_config_wizard_form
+msgid "<strong>Upload that file here</strong>"
+msgstr "<strong>Tải tệp đó lên đây</strong>"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings_dashboard.xml:0
+msgid "AI"
+msgstr "AI"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/chatbot_systray.xml:0
+#: model:ir.actions.client,name:robotia_document_extractor.action_chatbot
+msgid "AI Assistant"
+msgstr "Trợ lý AI"
+
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_document_extraction__year_1
+msgid "Actual year represented by year_1 column (e.g., 2023)"
+msgstr "Năm thực tế được biểu thị bởi cột năm_1 (ví dụ: 2023)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_document_extraction__year_2
+msgid "Actual year represented by year_2 column (e.g., 2024)"
+msgstr "Năm thực tế được biểu thị bởi cột năm_2 (ví dụ: 2024)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_document_extraction__year_3
+msgid "Actual year represented by year_3 column (e.g., 2025)"
+msgstr "Năm thực tế được biểu thị bởi cột năm_3 (ví dụ: 2025)"
+
+#. module: robotia_document_extractor
+#. HS Code Data Updates - Chapter 29.03 (HFC/HCFC Single Components)
+#: model:hs.code,name:robotia_document_extractor.hs_code_29034100
+msgid "Trifluoromethane (HFC-23)"
+msgstr "Trifluoromethane (HFC-23)"
+
+#. module: robotia_document_extractor
+#: model:hs.code,name:robotia_document_extractor.hs_code_29034200
+msgid "Difluoromethane (HFC-32)"
+msgstr "Difluoromethane (HFC-32)"
+
+#. module: robotia_document_extractor
+#: model:hs.code,name:robotia_document_extractor.hs_code_29034600
+msgid "Hexafluoropropanes (HFC-227ea, HFC-236cb, HFC-236ea, HFC-236fa)"
+msgstr "Hexafluoropropanes (HFC-227ea, HFC-236cb, HFC-236ea, HFC-236fa)"
+
+#. module: robotia_document_extractor
+#: model:hs.code,name:robotia_document_extractor.hs_code_29034900
+msgid "Other pure HFC substances"
+msgstr "Các chất HFC nguyên chất khác"
+
+#. module: robotia_document_extractor
+#: model:hs.code,name:robotia_document_extractor.hs_code_29037200
+msgid "Dichlorotrifluoroethanes (HCFC-123 / R-123)"
+msgstr "Dichlorotrifluoroethanes (HCFC-123 / R-123)"
+
+#. module: robotia_document_extractor
+#: model:hs.code,name:robotia_document_extractor.hs_code_29037300
+msgid "Dichlorofluoroethanes (HCFC-141 / R-141)"
+msgstr "Dichlorofluoroethanes (HCFC-141 / R-141)"
+
+#. module: robotia_document_extractor
+#: model:hs.code,name:robotia_document_extractor.hs_code_29037400
+msgid "Chlorodifluoroethanes (HCFC-142, HCFC-142b / R-142, R-142b)"
+msgstr "Chlorodifluoroethanes (HCFC-142, HCFC-142b / R-142, R-142b)"
+
+#. module: robotia_document_extractor
+#: model:hs.code,name:robotia_document_extractor.hs_code_29037500
+msgid "Dichloropentafluoropropanes (HCFC-225, HCFC-225ca, HCFC-225cb / R-225 series)"
+msgstr "Dichloropentafluoropropanes (HCFC-225, HCFC-225ca, HCFC-225cb / R-225 series)"
+
+#. module: robotia_document_extractor
+#. HS Code Data Updates - Chapter 38.27 (Refrigerant Mixtures)
+#: model:hs.code,name:robotia_document_extractor.hs_code_38273100
+msgid "Refrigerant mixtures R-401A, R-401B, R-408A, R-415B (R-22/152a/124 based)"
+msgstr "Hỗn hợp môi chất lạnh R-401A, R-401B, R-408A, R-415B (gốc R-22/152a/124)"
+
+#. module: robotia_document_extractor
+#: model:hs.code,name:robotia_document_extractor.hs_code_38273200
+msgid "Refrigerant mixtures R-406A, R-409A (R-22/hydrocarbon/142b based)"
+msgstr "Hỗn hợp môi chất lạnh R-406A, R-409A (gốc R-22/hydrocarbon/142b)"
+
+#. module: robotia_document_extractor
+#: model:hs.code,name:robotia_document_extractor.hs_code_38273990
+msgid "Other HCFC-based refrigerant mixtures"
+msgstr "Các hỗn hợp môi chất lạnh gốc HCFC khác"
+
+#. module: robotia_document_extractor
+#: model:hs.code,name:robotia_document_extractor.hs_code_38275100
+msgid "Refrigerant mixture R-508B (R-23/116)"
+msgstr "Hỗn hợp môi chất lạnh R-508B (R-23/116)"
+
+#. module: robotia_document_extractor
+#: model:hs.code,name:robotia_document_extractor.hs_code_38275900
+msgid "Refrigerant mixture R-508A and other HFC-23 containing mixtures (without perfluorocarbon)"
+msgstr "Hỗn hợp môi chất lạnh R-508A và các hỗn hợp chứa HFC-23 khác (không có perfluorocarbon)"
+
+#. module: robotia_document_extractor
+#: model:hs.code,name:robotia_document_extractor.hs_code_38276110
+msgid "Refrigerant mixture R-404A (R-125/143a/134a)"
+msgstr "Hỗn hợp môi chất lạnh R-404A (R-125/143a/134a)"
+
+#. module: robotia_document_extractor
+#: model:hs.code,name:robotia_document_extractor.hs_code_38276120
+msgid "Refrigerant mixture R-507A (R-125/143a)"
+msgstr "Hỗn hợp môi chất lạnh R-507A (R-125/143a)"
+
+#. module: robotia_document_extractor
+#: model:hs.code,name:robotia_document_extractor.hs_code_38276200
+msgid "Refrigerant mixtures R-422A, R-422D (R-125/134a/600a - HFC with hydrocarbon)"
+msgstr "Hỗn hợp môi chất lạnh R-422A, R-422D (R-125/134a/600a - HFC với hydrocarbon)"
+
+#. module: robotia_document_extractor
+#: model:hs.code,name:robotia_document_extractor.hs_code_38276310
+msgid "Refrigerant mixture R-410A (R-32/125)"
+msgstr "Hỗn hợp môi chất lạnh R-410A (R-32/125)"
+
+#. module: robotia_document_extractor
+#: model:hs.code,name:robotia_document_extractor.hs_code_38276390
+msgid "Refrigerant mixtures R-407A, R-417A, R-438A (R-32/125/134a/600/601a based)"
+msgstr "Hỗn hợp môi chất lạnh R-407A, R-417A, R-438A (gốc R-32/125/134a/600/601a)"
+
+#. module: robotia_document_extractor
+#: model:hs.code,name:robotia_document_extractor.hs_code_38276400
+msgid "Refrigerant mixtures R-407C, R-407F, R-407H, R-427A (R-32/125/134a)"
+msgstr "Hỗn hợp môi chất lạnh R-407C, R-407F, R-407H, R-427A (R-32/125/134a)"
+
+#. module: robotia_document_extractor
+#: model:hs.code,name:robotia_document_extractor.hs_code_38276500
+msgid "Refrigerant mixtures R-448A, R-449A, R-449B (R-32/125/1234yf/134a/1234ze)"
+msgstr "Hỗn hợp môi chất lạnh R-448A, R-449A, R-449B (R-32/125/1234yf/134a/1234ze)"
+
+#. module: robotia_document_extractor
+#: model:hs.code,name:robotia_document_extractor.hs_code_38276900
+msgid "Other HFC-based refrigerant mixtures"
+msgstr "Các hỗn hợp môi chất lạnh gốc HFC khác"
+
+#. module: robotia_document_extractor
+#. HS Code Product Categories
+#: model:hs.code,product_category:robotia_document_extractor.hs_code_29034100
+msgid "HFC - Trifluoromethane"
+msgstr "HFC - Trifluoromethane"
+
+#. module: robotia_document_extractor
+#: model:hs.code,product_category:robotia_document_extractor.hs_code_29034200
+msgid "HFC - Difluoromethane"
+msgstr "HFC - Difluoromethane"
+
+#. module: robotia_document_extractor
+#: model:hs.code,product_category:robotia_document_extractor.hs_code_29034600
+msgid "HFC - Hexafluoropropanes"
+msgstr "HFC - Hexafluoropropanes"
+
+#. module: robotia_document_extractor
+#: model:hs.code,product_category:robotia_document_extractor.hs_code_29034900
+msgid "HFC - Other pure substances"
+msgstr "HFC - Các chất nguyên chất khác"
+
+#. module: robotia_document_extractor
+#: model:hs.code,product_category:robotia_document_extractor.hs_code_29037200
+msgid "HCFC - Dichlorotrifluoroethanes"
+msgstr "HCFC - Dichlorotrifluoroethanes"
+
+#. module: robotia_document_extractor
+#: model:hs.code,product_category:robotia_document_extractor.hs_code_29037300
+msgid "HCFC - Dichlorofluoroethanes"
+msgstr "HCFC - Dichlorofluoroethanes"
+
+#. module: robotia_document_extractor
+#: model:hs.code,product_category:robotia_document_extractor.hs_code_29037400
+msgid "HCFC - Chlorodifluoroethanes"
+msgstr "HCFC - Chlorodifluoroethanes"
+
+#. module: robotia_document_extractor
+#: model:hs.code,product_category:robotia_document_extractor.hs_code_29037500
+msgid "HCFC - Dichloropentafluoropropanes"
+msgstr "HCFC - Dichloropentafluoropropanes"
+
+#. module: robotia_document_extractor
+#: model:hs.code,product_category:robotia_document_extractor.hs_code_38273100
+msgid "Refrigerant Blends - HCFC R-22 based"
+msgstr "Hỗn hợp môi chất - Gốc HCFC R-22"
+
+#. module: robotia_document_extractor
+#: model:hs.code,product_category:robotia_document_extractor.hs_code_38273200
+msgid "Refrigerant Blends - HCFC with hydrocarbon"
+msgstr "Hỗn hợp môi chất - HCFC với hydrocarbon"
+
+#. module: robotia_document_extractor
+#: model:hs.code,product_category:robotia_document_extractor.hs_code_38273990
+msgid "Refrigerant Blends - Other HCFC mixtures"
+msgstr "Hỗn hợp môi chất - Các hỗn hợp HCFC khác"
+
+#. module: robotia_document_extractor
+#: model:hs.code,product_category:robotia_document_extractor.hs_code_38275100
+msgid "Refrigerant Blends - R-508B (HFC-23/PFC)"
+msgstr "Hỗn hợp môi chất - R-508B (HFC-23/PFC)"
+
+#. module: robotia_document_extractor
+#: model:hs.code,product_category:robotia_document_extractor.hs_code_38275900
+msgid "Refrigerant Blends - HFC-23 based (no PFC)"
+msgstr "Hỗn hợp môi chất - Gốc HFC-23 (không PFC)"
+
+#. module: robotia_document_extractor
+#: model:hs.code,product_category:robotia_document_extractor.hs_code_38276110
+msgid "Refrigerant Blends - R-404A"
+msgstr "Hỗn hợp môi chất - R-404A"
+
+#. module: robotia_document_extractor
+#: model:hs.code,product_category:robotia_document_extractor.hs_code_38276120
+msgid "Refrigerant Blends - R-507A"
+msgstr "Hỗn hợp môi chất - R-507A"
+
+#. module: robotia_document_extractor
+#: model:hs.code,product_category:robotia_document_extractor.hs_code_38276200
+msgid "Refrigerant Blends - HFC with hydrocarbon"
+msgstr "Hỗn hợp môi chất - HFC với hydrocarbon"
+
+#. module: robotia_document_extractor
+#: model:hs.code,product_category:robotia_document_extractor.hs_code_38276310
+msgid "Refrigerant Blends - R-410A"
+msgstr "Hỗn hợp môi chất - R-410A"
+
+#. module: robotia_document_extractor
+#: model:hs.code,product_category:robotia_document_extractor.hs_code_38276390
+msgid "Refrigerant Blends - R-32/125/134a variants"
+msgstr "Hỗn hợp môi chất - Các biến thể R-32/125/134a"
+
+#. module: robotia_document_extractor
+#: model:hs.code,product_category:robotia_document_extractor.hs_code_38276400
+msgid "Refrigerant Blends - R-407 and R-427 series"
+msgstr "Hỗn hợp môi chất - Dòng R-407 và R-427"
+
+#. module: robotia_document_extractor
+#: model:hs.code,product_category:robotia_document_extractor.hs_code_38276500
+msgid "Refrigerant Blends - R-448/449 series (HFO/HFC)"
+msgstr "Hỗn hợp môi chất - Dòng R-448/449 (HFO/HFC)"
+
+#. module: robotia_document_extractor
+#: model:hs.code,product_category:robotia_document_extractor.hs_code_38276900
+msgid "Refrigerant Blends - Other HFC mixtures"
+msgstr "Hỗn hợp môi chất - Các hỗn hợp HFC khác"

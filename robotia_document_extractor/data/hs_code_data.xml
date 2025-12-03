@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <data noupdate="1">
+    <data>
         <!-- HS Codes for Controlled Substances -->
 
         <!-- Chapter 29: Organic chemicals - HFC compounds -->
@@ -85,6 +85,137 @@
             <field name="code">38276800</field>
             <field name="name">Refrigerant mixtures containing hydrofluoroolefins (HFOs) - Low-GWP blends (R-448A, R-449, R-450A, R-452, R-454, R-466A, R-513)</field>
             <field name="product_category">Refrigerant Blends - New generation (HFO/HFC)</field>
+        </record>
+
+        <!-- HS Code Updates 2025-12-04 - Additional detailed codes -->
+        <!-- Chapter 29.03: Organic chemicals - HFC/HCFC compounds -->
+
+        <record id="hs_code_29034100" model="hs.code">
+            <field name="code">29034100</field>
+            <field name="name">Trifluoromethane (HFC-23)</field>
+            <field name="product_category">HFC - Trifluoromethane</field>
+        </record>
+
+        <record id="hs_code_29034200" model="hs.code">
+            <field name="code">29034200</field>
+            <field name="name">Difluoromethane (HFC-32)</field>
+            <field name="product_category">HFC - Difluoromethane</field>
+        </record>
+
+        <record id="hs_code_29034600" model="hs.code">
+            <field name="code">29034600</field>
+            <field name="name">Hexafluoropropanes (HFC-227ea, HFC-236cb, HFC-236ea, HFC-236fa)</field>
+            <field name="product_category">HFC - Hexafluoropropanes</field>
+        </record>
+
+        <record id="hs_code_29034900" model="hs.code">
+            <field name="code">29034900</field>
+            <field name="name">Other pure HFC substances</field>
+            <field name="product_category">HFC - Other pure substances</field>
+        </record>
+
+        <record id="hs_code_29037200" model="hs.code">
+            <field name="code">29037200</field>
+            <field name="name">Dichlorotrifluoroethanes (HCFC-123 / R-123)</field>
+            <field name="product_category">HCFC - Dichlorotrifluoroethanes</field>
+        </record>
+
+        <record id="hs_code_29037300" model="hs.code">
+            <field name="code">29037300</field>
+            <field name="name">Dichlorofluoroethanes (HCFC-141 / R-141)</field>
+            <field name="product_category">HCFC - Dichlorofluoroethanes</field>
+        </record>
+
+        <record id="hs_code_29037400" model="hs.code">
+            <field name="code">29037400</field>
+            <field name="name">Chlorodifluoroethanes (HCFC-142, HCFC-142b / R-142, R-142b)</field>
+            <field name="product_category">HCFC - Chlorodifluoroethanes</field>
+        </record>
+
+        <record id="hs_code_29037500" model="hs.code">
+            <field name="code">29037500</field>
+            <field name="name">Dichloropentafluoropropanes (HCFC-225, HCFC-225ca, HCFC-225cb / R-225 series)</field>
+            <field name="product_category">HCFC - Dichloropentafluoropropanes</field>
+        </record>
+
+        <!-- Chapter 38.27: Refrigerant Mixtures (NEW CHAPTER) -->
+
+        <record id="hs_code_38273100" model="hs.code">
+            <field name="code">38273100</field>
+            <field name="name">Refrigerant mixtures R-401A, R-401B, R-408A, R-415B (R-22/152a/124 based)</field>
+            <field name="product_category">Refrigerant Blends - HCFC R-22 based</field>
+        </record>
+
+        <record id="hs_code_38273200" model="hs.code">
+            <field name="code">38273200</field>
+            <field name="name">Refrigerant mixtures R-406A, R-409A (R-22/hydrocarbon/142b based)</field>
+            <field name="product_category">Refrigerant Blends - HCFC with hydrocarbon</field>
+        </record>
+
+        <record id="hs_code_38273990" model="hs.code">
+            <field name="code">38273990</field>
+            <field name="name">Other HCFC-based refrigerant mixtures</field>
+            <field name="product_category">Refrigerant Blends - Other HCFC mixtures</field>
+        </record>
+
+        <record id="hs_code_38275100" model="hs.code">
+            <field name="code">38275100</field>
+            <field name="name">Refrigerant mixture R-508B (R-23/116)</field>
+            <field name="product_category">Refrigerant Blends - R-508B (HFC-23/PFC)</field>
+        </record>
+
+        <record id="hs_code_38275900" model="hs.code">
+            <field name="code">38275900</field>
+            <field name="name">Refrigerant mixture R-508A and other HFC-23 containing mixtures (without perfluorocarbon)</field>
+            <field name="product_category">Refrigerant Blends - HFC-23 based (no PFC)</field>
+        </record>
+
+        <record id="hs_code_38276110" model="hs.code">
+            <field name="code">38276110</field>
+            <field name="name">Refrigerant mixture R-404A (R-125/143a/134a)</field>
+            <field name="product_category">Refrigerant Blends - R-404A</field>
+        </record>
+
+        <record id="hs_code_38276120" model="hs.code">
+            <field name="code">38276120</field>
+            <field name="name">Refrigerant mixture R-507A (R-125/143a)</field>
+            <field name="product_category">Refrigerant Blends - R-507A</field>
+        </record>
+
+        <record id="hs_code_38276200" model="hs.code">
+            <field name="code">38276200</field>
+            <field name="name">Refrigerant mixtures R-422A, R-422D (R-125/134a/600a - HFC with hydrocarbon)</field>
+            <field name="product_category">Refrigerant Blends - HFC with hydrocarbon</field>
+        </record>
+
+        <record id="hs_code_38276310" model="hs.code">
+            <field name="code">38276310</field>
+            <field name="name">Refrigerant mixture R-410A (R-32/125)</field>
+            <field name="product_category">Refrigerant Blends - R-410A</field>
+        </record>
+
+        <record id="hs_code_38276390" model="hs.code">
+            <field name="code">38276390</field>
+            <field name="name">Refrigerant mixtures R-407A, R-417A, R-438A (R-32/125/134a/600/601a based)</field>
+            <field name="product_category">Refrigerant Blends - R-32/125/134a variants</field>
+        </record>
+
+        <record id="hs_code_38276400" model="hs.code">
+            <field name="code">38276400</field>
+            <field name="name">Refrigerant mixtures R-407C, R-407F, R-407H, R-427A (R-32/125/134a)</field>
+            <field name="product_category">Refrigerant Blends - R-407 and R-427 series</field>
+        </record>
+
+        <record id="hs_code_38276500" model="hs.code">
+            <field name="code">38276500</field>
+            <field name="name">Refrigerant mixtures R-448A, R-449A, R-449B (R-32/125/1234yf/134a/1234ze)</field>
+            <field name="product_category">Refrigerant Blends - R-448/449 series (HFO/HFC)</field>
+        </record>
+
+        <record id="hs_code_38276900" model="hs.code">
+            <field name="code">38276900</field>
+            <field name="name">Other HFC-based refrigerant mixtures</field>
+            <field name="product_category">Refrigerant Blends - Other HFC mixtures</field>
         </record>
 
     </data>

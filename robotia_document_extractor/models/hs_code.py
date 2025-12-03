@@ -35,11 +35,11 @@ class HSCode(models.Model):
         store=True,
         help='HS Chapter (first 2 digits)'
     )
-    controlled_substance_ids = fields.One2many(
+    controlled_substance_ids = fields.Many2many(
         comodel_name='controlled.substance',
-        inverse_name='hs_code_id',
         string='Related Controlled Substances',
-        help='Substances using this HS code (auto-populated from controlled.substance)'
+        compute='_compute_controlled_substance_ids',
+        help='Substances using this HS code as main or sub HS code'
     )
     active = fields.Boolean(
         string='Active',
@@ -114,6 +114,29 @@ class HSCode(models.Model):
         """Extract chapter (first 2 digits) from HS code"""
         for record in self:
             record.chapter = record.code[:2] if record.code and len(record.code) >= 2 else ''
+
+    def _compute_controlled_substance_ids(self):
+        """
+        Compute controlled substances that use this HS code.
+        Includes substances where:
+        - hs_code_id = this HS code (main HS code)
+        - sub_hs_code_ids contains this HS code (sub HS codes)
+        """
+        for record in self:
+            ControlledSubstance = self.env['controlled.substance']
+
+            # Find substances with this HS code as main code
+            substances_main = ControlledSubstance.search([
+                ('hs_code_id', '=', record.id)
+            ])
+
+            # Find substances with this HS code in sub codes
+            substances_sub = ControlledSubstance.search([
+                ('sub_hs_code_ids', 'in', record.id)
+            ])
+
+            # Combine and remove duplicates
+            record.controlled_substance_ids = substances_main | substances_sub
 
     @api.model
     def name_create(self, name):

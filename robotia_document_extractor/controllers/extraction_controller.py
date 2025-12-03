@@ -214,10 +214,9 @@ class ExtractionController(http.Controller):
                 if not extracted_data.get('year_3'):
                     extracted_data['year_3'] = year + 1
 
-            # 9. Validate extracted data keys against model schema
-            extracted_data = self._validate_extracted_data_keys(extracted_data, document_type)
+            # 9. Update log (success)
+            # Note: Validation now happens in extraction_helper.build_extraction_values()
 
-            # 10. Update log (success)
             log_data = {
                 'status': 'success',
                 'ai_response_json': json.dumps(extracted_data, ensure_ascii=False, indent=2),
@@ -251,139 +250,6 @@ class ExtractionController(http.Controller):
                     'type': 'danger',
                 }
             }
-
-    def _validate_extracted_data_keys(self, extracted_data, document_type):
-        """
-        Validate that all keys in extracted_data exist in corresponding Odoo models
-        
-        This method checks:
-        1. Main document fields exist in document.extraction model
-        2. One2many relation fields exist (substance_usage, equipment_product, etc.)
-        3. Nested record fields exist in their respective models
-        
-        Args:
-            extracted_data (dict): Extracted data from AI
-            document_type (str): '01' or '02'
-            
-        Returns:
-            dict: Validated extracted_data with invalid keys removed
-        """
-        _logger.info(f"Validating extracted data keys for document type {document_type}")
-        
-        # Get document.extraction model
-        DocumentModel = request.env['document.extraction']
-        main_model_fields = set(DocumentModel._fields.keys())
-        
-        # Define One2many relation field mappings
-        # Format: {extracted_key: (model_name, field_name_in_main_model)}
-        relation_mappings = {
-            # Form 01
-            'substance_usage': ('substance.usage', 'substance_usage_ids'),
-            'equipment_product': ('equipment.product', 'equipment_product_ids'),
-            'equipment_ownership': ('equipment.ownership', 'equipment_ownership_ids'),
-            'collection_recycling': ('collection.recycling', 'collection_recycling_ids'),
-            # Form 02
-            'quota_usage': ('quota.usage', 'quota_usage_ids'),
-            'equipment_product_report': ('equipment.product.report', 'equipment_product_report_ids'),
-            'equipment_ownership_report': ('equipment.ownership.report', 'equipment_ownership_report_ids'),
-            'collection_recycling_report': ('collection.recycling.report', 'collection_recycling_report_ids'),
-        }
-        
-        validated_data = {}
-        invalid_keys = []
-        
-        # Validate main-level keys
-        for key, value in extracted_data.items():
-            # Check if key is a relation field
-            if key in relation_mappings:
-                model_name, field_name = relation_mappings[key]
-                
-                # Validate that the relation field exists in main model
-                if field_name not in main_model_fields:
-                    _logger.warning(f"Invalid relation field '{field_name}' for key '{key}' - skipping")
-                    invalid_keys.append(key)
-                    continue
-                
-                # Validate nested records
-                if isinstance(value, list):
-                    validated_records = []
-                    RelationModel = request.env[model_name]
-                    relation_model_fields = set(RelationModel._fields.keys())
-                    
-                    for idx, record in enumerate(value):
-                        if not isinstance(record, dict):
-                            _logger.warning(f"Invalid record format in '{key}[{idx}]' - expected dict, got {type(record)}")
-                            continue
-                        
-                        validated_record = {}
-                        invalid_record_keys = []
-                        
-                        for record_key, record_value in record.items():
-                            # Skip technical fields that will be auto-generated
-                            if record_key in ['id', 'create_uid', 'create_date', 'write_uid', 'write_date', 
-                                            '__last_update', 'display_name', 'document_id']:
-                                continue
-                            
-                            # Check if field exists in relation model
-                            if record_key not in relation_model_fields:
-                                _logger.warning(
-                                    f"Invalid field '{record_key}' in {model_name} "
-                                    f"(record {idx} of '{key}') - skipping"
-                                )
-                                invalid_record_keys.append(record_key)
-                                continue
-                            
-                            validated_record[record_key] = record_value
-                        
-                        if invalid_record_keys:
-                            _logger.info(
-                                f"Removed {len(invalid_record_keys)} invalid keys from {model_name} record {idx}: "
-                                f"{invalid_record_keys}"
-                            )
-                        
-                        if validated_record:  # Only add if there are valid fields
-                            validated_records.append(validated_record)
-                    
-                    validated_data[key] = validated_records
-                    _logger.info(f"Validated '{key}': {len(validated_records)} records")
-                else:
-                    _logger.warning(f"Expected list for relation field '{key}', got {type(value)} - skipping")
-                    invalid_keys.append(key)
-                    
-            else:
-                # Regular field - check if it exists in main model
-                # Special handling for activity_field_codes (maps to activity_field_ids)
-                if key == 'activity_field_codes':
-                    if 'activity_field_ids' in main_model_fields:
-                        validated_data[key] = value
-                    else:
-                        _logger.warning(f"Field 'activity_field_ids' not found in document.extraction model")
-                        invalid_keys.append(key)
-                # Special handling for contact_country_code/contact_state_code (map to Many2one IDs)
-                elif key in ['contact_country_code', 'contact_state_code']:
-                    # These are valid - they'll be converted to IDs by extraction_helper
-                    validated_data[key] = value
-                else:
-                    # Check if field exists in main model
-                    if key in main_model_fields:
-                        validated_data[key] = value
-                    else:
-                        _logger.warning(f"Invalid field '{key}' in document.extraction model - skipping")
-                        invalid_keys.append(key)
-        
-        # Log summary
-        if invalid_keys:
-            _logger.warning(
-                f"Removed {len(invalid_keys)} invalid top-level keys: {invalid_keys}"
-            )
-        
-        _logger.info(
-            f"Validation complete: {len(validated_data)} valid keys, "
-            f"{len(invalid_keys)} invalid keys removed"
-        )
-        
-        return validated_data
-
 
     @http.route('/document_extractor/extract', type='json', auth='user', methods=['POST'])
     def extract_document(self, pdf_data, filename, document_type):
