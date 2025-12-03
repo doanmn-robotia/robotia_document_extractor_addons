@@ -6,9 +6,340 @@ from odoo import models, api
 _logger = logging.getLogger(__name__)
 
 
+# ========== VALIDATION CONSTANTS ==========
+
+# Technical fields to skip during validation
+TECHNICAL_FIELDS = {
+    'id', 'create_uid', 'create_date', 'write_uid', 'write_date',
+    '__last_update', 'display_name', 'document_id'
+}
+
+# Special field mappings (extracted_key → model_field)
+SPECIAL_FIELD_MAPPINGS = {
+    'activity_field_codes': 'activity_field_ids',
+    'contact_country_code': 'contact_country_id',
+    'contact_state_code': 'contact_state_id',
+}
+
+# One2many relation field mappings
+# Format: {extracted_key: (model_name, field_name_in_main_model)}
+RELATION_MAPPINGS = {
+    # Form 01
+    'substance_usage': ('substance.usage', 'substance_usage_ids'),
+    'equipment_product': ('equipment.product', 'equipment_product_ids'),
+    'equipment_ownership': ('equipment.ownership', 'equipment_ownership_ids'),
+    'collection_recycling': ('collection.recycling', 'collection_recycling_ids'),
+    # Form 02
+    'quota_usage': ('quota.usage', 'quota_usage_ids'),
+    'equipment_product_report': ('equipment.product.report', 'equipment_product_report_ids'),
+    'equipment_ownership_report': ('equipment.ownership.report', 'equipment_ownership_report_ids'),
+    'collection_recycling_report': ('collection.recycling.report', 'collection_recycling_report_ids'),
+}
+
+
 class ExtractionHelper(models.AbstractModel):
     _name = 'extraction.helper'
     _description = 'Extraction Helper Service'
+
+    # ========== VALIDATION METHODS ==========
+
+    def _validate_integer_field(self, value, field_name):
+        """
+        Validate and convert value to integer
+        
+        Args:
+            value: Value to validate
+            field_name (str): Field name for logging
+            
+        Returns:
+            int: Converted integer value, or 0 if conversion fails
+        """
+        if value is None:
+            return 0
+            
+        try:
+            # Handle float → int (e.g., 1.1 → 1)
+            if isinstance(value, float):
+                converted = int(value)
+                if value != converted:
+                    _logger.info(f"Converted float to int for '{field_name}': {value} → {converted}")
+                return converted
+            
+            # Handle string → int (e.g., "5" → 5)
+            if isinstance(value, str):
+                converted = int(float(value))  # float() first to handle "1.1"
+                _logger.info(f"Converted string to int for '{field_name}': '{value}' → {converted}")
+                return converted
+            
+            # Already int
+            if isinstance(value, int):
+                return value
+                
+            # Unknown type
+            _logger.warning(f"Cannot convert {type(value)} to int for '{field_name}': {value}, using 0")
+            return 0
+            
+        except (ValueError, TypeError) as e:
+            _logger.warning(f"Failed to convert '{field_name}' value '{value}' to int: {e}, using 0")
+            return 0
+
+    def _validate_many2one_field(self, value, field_name):
+        """
+        Validate Many2one field value (must be integer ID)
+        
+        Args:
+            value: Value to validate
+            field_name (str): Field name for logging
+            
+        Returns:
+            int or False: Valid integer ID, or False if invalid
+        """
+        if value is None or value is False:
+            return False
+            
+        try:
+            # Convert to int
+            if isinstance(value, (int, float, str)):
+                id_value = int(float(str(value)))
+                if id_value <= 0:
+                    _logger.warning(f"Invalid Many2one ID for '{field_name}': {value} (must be > 0)")
+                    return False
+                return id_value
+            
+            _logger.warning(f"Invalid Many2one value type for '{field_name}': {type(value)}")
+            return False
+            
+        except (ValueError, TypeError) as e:
+            _logger.warning(f"Cannot convert '{field_name}' value '{value}' to Many2one ID: {e}")
+            return False
+
+    def _validate_selection_field(self, value, field_obj, field_name):
+        """
+        Validate Selection field value against allowed values
+        
+        Args:
+            value: Value to validate
+            field_obj: Odoo field object
+            field_name (str): Field name for logging
+            
+        Returns:
+            str or None: Valid selection value, field default, or None
+        """
+        if value is None:
+            # Use field default if available
+            return field_obj.default if hasattr(field_obj, 'default') else None
+        
+        # Get allowed selection values
+        selection = field_obj.selection
+        if callable(selection):
+            # Dynamic selection - cannot validate, return as-is
+            _logger.info(f"Selection field '{field_name}' has dynamic values, skipping validation")
+            return value
+        
+        # Static selection - validate
+        allowed_values = [sel[0] for sel in selection] if selection else []
+        
+        if value in allowed_values:
+            return value
+        
+        # Invalid value - use default
+        default_value = field_obj.default if hasattr(field_obj, 'default') else None
+        _logger.warning(
+            f"Invalid selection value '{value}' for '{field_name}'. "
+            f"Allowed: {allowed_values}. Using default: {default_value}"
+        )
+        return default_value
+
+    def _validate_field_value(self, field_name, field_obj, value):
+        """
+        Validate and convert field value based on field type
+        
+        Args:
+            field_name (str): Field name
+            field_obj: Odoo field object
+            value: Value to validate
+            
+        Returns:
+            Validated/converted value
+        """
+        field_type = field_obj.type
+        
+        if field_type == 'integer':
+            return self._validate_integer_field(value, field_name)
+        
+        elif field_type == 'many2one':
+            return self._validate_many2one_field(value, field_name)
+        
+        elif field_type == 'selection':
+            return self._validate_selection_field(value, field_obj, field_name)
+        
+        # Other types - return as-is
+        # TODO: Add validation for float, boolean, date, datetime if needed
+        return value
+
+    def _validate_extracted_data_keys(self, extracted_data, document_type):
+        """
+        Validate that all keys in extracted_data exist in corresponding Odoo models
+        and validate field types (Integer, Many2one, Selection)
+        
+        This method checks:
+        1. Main document fields exist in document.extraction model
+        2. One2many relation fields exist (substance_usage, equipment_product, etc.)
+        3. Nested record fields exist in their respective models
+        4. Field values match expected types (Integer, Many2one, Selection)
+        
+        Args:
+            extracted_data (dict): Extracted data from AI
+            document_type (str): '01' or '02'
+            
+        Returns:
+            dict: Validated extracted_data with invalid keys removed and types validated
+        """
+        _logger.info(f"Validating extracted data keys for document type {document_type}")
+        
+        # Get document.extraction model
+        DocumentModel = self.env['document.extraction']
+        main_model_fields = DocumentModel._fields
+        
+        validated_data = {}
+        invalid_keys = []
+        
+        # Validate main-level keys
+        for key, value in extracted_data.items():
+            # Check if key is a relation field
+            if key in RELATION_MAPPINGS:
+                validated_value = self._validate_relation_field(
+                    key, value, main_model_fields
+                )
+                if validated_value is not None:
+                    validated_data[key] = validated_value
+                else:
+                    invalid_keys.append(key)
+                    
+            else:
+                # Regular field - validate and apply type checking
+                validated_value = self._validate_regular_field(
+                    key, value, main_model_fields, DocumentModel
+                )
+                if validated_value is not None:
+                    validated_data[key] = validated_value
+                else:
+                    invalid_keys.append(key)
+        
+        # Log summary
+        if invalid_keys:
+            _logger.warning(
+                f"Removed {len(invalid_keys)} invalid top-level keys: {invalid_keys}"
+            )
+        
+        _logger.info(
+            f"Validation complete: {len(validated_data)} valid keys, "
+            f"{len(invalid_keys)} invalid keys removed"
+        )
+        
+        return validated_data
+
+    def _validate_relation_field(self, key, value, main_model_fields):
+        """
+        Validate One2many/Many2many relation field
+        
+        Args:
+            key (str): Extracted data key
+            value: List of record dicts
+            main_model_fields (dict): Main model fields
+            
+        Returns:
+            list or None: Validated records, or None if invalid
+        """
+        model_name, field_name = RELATION_MAPPINGS[key]
+        
+        # Validate that the relation field exists in main model
+        if field_name not in main_model_fields:
+            _logger.warning(f"Invalid relation field '{field_name}' for key '{key}' - skipping")
+            return None
+        
+        # Validate nested records
+        if not isinstance(value, list):
+            _logger.warning(f"Expected list for relation field '{key}', got {type(value)} - skipping")
+            return None
+        
+        validated_records = []
+        RelationModel = self.env[model_name]
+        relation_model_fields = RelationModel._fields
+        
+        for idx, record in enumerate(value):
+            if not isinstance(record, dict):
+                _logger.warning(f"Invalid record format in '{key}[{idx}]' - expected dict, got {type(record)}")
+                continue
+            
+            validated_record = {}
+            invalid_record_keys = []
+            
+            for record_key, record_value in record.items():
+                # Skip technical fields that will be auto-generated
+                if record_key in TECHNICAL_FIELDS:
+                    continue
+                
+                # Check if field exists in relation model
+                if record_key not in relation_model_fields:
+                    _logger.warning(
+                        f"Invalid field '{record_key}' in {model_name} "
+                        f"(record {idx} of '{key}') - skipping"
+                    )
+                    invalid_record_keys.append(record_key)
+                    continue
+                
+                # Validate field type
+                field_obj = relation_model_fields[record_key]
+                validated_value = self._validate_field_value(record_key, field_obj, record_value)
+                validated_record[record_key] = validated_value
+            
+            if invalid_record_keys:
+                _logger.info(
+                    f"Removed {len(invalid_record_keys)} invalid keys from {model_name} record {idx}: "
+                    f"{invalid_record_keys}"
+                )
+            
+            if validated_record:  # Only add if there are valid fields
+                validated_records.append(validated_record)
+        
+        _logger.info(f"Validated '{key}': {len(validated_records)} records")
+        return validated_records
+
+    def _validate_regular_field(self, key, value, main_model_fields, DocumentModel):
+        """
+        Validate regular (non-relation) field
+        
+        Args:
+            key (str): Field key
+            value: Field value
+            main_model_fields (dict): Main model fields
+            DocumentModel: Document extraction model
+            
+        Returns:
+            Validated value or None if invalid
+        """
+        # Special handling for mapped fields
+        if key in SPECIAL_FIELD_MAPPINGS:
+            target_field = SPECIAL_FIELD_MAPPINGS[key]
+            if target_field in main_model_fields:
+                # No type validation for special fields (handled by extraction_helper)
+                return value
+            else:
+                _logger.warning(f"Field '{target_field}' not found in document.extraction model")
+                return None
+        
+        # Check if field exists in main model
+        if key not in main_model_fields:
+            _logger.warning(f"Invalid field '{key}' in document.extraction model - skipping")
+            return None
+        
+        # Validate field type
+        field_obj = main_model_fields[key]
+        validated_value = self._validate_field_value(key, field_obj, value)
+        return validated_value
+
+    # ========== MAIN HELPER METHOD ==========
 
     @api.model
     def build_extraction_values(self, extracted_data, attachment, document_type, file_id=None, log_id=None):
@@ -26,6 +357,10 @@ class ExtractionHelper(models.AbstractModel):
         :param log_id: extraction.log ID (optional, for cron)
         :return: Dict of values ready for document.extraction
         """
+
+        # Validate extracted data first (type checking + field validation)
+        # This ensures ALL extraction flows are validated (manual, page selector, log, cron)
+        extracted_data = self._validate_extracted_data_keys(extracted_data, document_type)
 
         # Helper: Build One2many commands
         def build_o2m_commands(data_list):
