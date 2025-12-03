@@ -29,7 +29,6 @@ export class ExtractionPageSelector extends Component {
             this.processInitialFile(params.fileUrl, params.fileName);
         } else {
             // No file provided (e.g., page reload) - redirect to dashboard
-            this.notification.add(_t("No file selected. Please upload a file first."), { type: "warning" });
             this.action.doAction({
                 type: 'ir.actions.client',
                 tag: 'document_extractor.dashboard',
@@ -54,9 +53,11 @@ export class ExtractionPageSelector extends Component {
 
             await this.convertPdfToImages(base64File);
         } catch (error) {
-            console.error("Error reading file from URL:", error);
-            this.notification.add(_t("Error reading file"), { type: "danger" });
             this.state.isProcessing = false;
+            this.action.doAction({
+                type: 'ir.actions.client',
+                tag: 'document_extractor.dashboard',
+            });
         }
     }
 

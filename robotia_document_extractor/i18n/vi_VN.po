@@ -235,6 +235,16 @@ msgid "Configuration"
 msgstr "Cấu hình"
 
 #. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_res_config_settings__extract_pages_run_ocr
+msgid "Run OCR for Page Extraction"
+msgstr "Chạy OCR khi trích xuất trang"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_res_config_settings__extract_pages_run_ocr
+msgid "If enabled, OCR will be run on the extracted pages before AI processing. Enable this if the source PDF is an image scan without text layer. Default: Disabled"
+msgstr "Nếu bật, OCR sẽ được chạy trên các trang đã trích xuất trước khi AI xử lý. Bật tính năng này nếu PDF nguồn là bản scan hình ảnh không có lớp văn bản. Mặc định: Tắt"
+
+#. module: robotia_document_extractor
 #: model:ir.model.fields,field_description:robotia_document_extractor.field_document_extraction__contact_address
 msgid "Contact Address"
 msgstr "Địa chỉ liên hệ"
@@ -4892,3 +4902,45 @@ msgstr "Dữ liệu OCR thô"
 #: model:ir.model.fields,help:robotia_document_extractor.field_document_extraction__raw_ocr_data
 msgid "Structured OCR data with bounding boxes (JSON format)"
 msgstr "Dữ liệu OCR có cấu trúc với khung giới hạn (định dạng JSON)"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/extraction_page_selector.js:0
+msgid "No file selected. Please upload a file first."
+msgstr "Chưa chọn tệp. Vui lòng tải lên một tệp trước."
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/extraction_page_selector.js:0
+msgid "Error reading file"
+msgstr "Lỗi khi đọc tệp"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/extraction_page_selector.js:0
+msgid "Error converting PDF"
+msgstr "Lỗi khi chuyển đổi PDF"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/extraction_page_selector.js:0
+msgid "Error processing file"
+msgstr "Lỗi khi xử lý tệp"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/extraction_page_selector.js:0
+msgid "Please select at least one page"
+msgstr "Vui lòng chọn ít nhất một trang"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/extraction_page_selector.js:0
+msgid "File data is missing"
+msgstr "Dữ liệu tệp bị thiếu"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/extraction_page_selector.js:0
+msgid "Error during extraction"
+msgstr "Lỗi trong quá trình trích xuất"

@@ -18,12 +18,13 @@
                     <field name="state" widget="statusbar" statusbar_visible="draft,validated,completed" options="{'clickable': '1'}"/>
                 </header>
 
-                <!-- OCR Preview Widget (only visible in draft state) -->
-                <widget name="raw_ocr_viewer"
-                        class="mb-3"
-                        invisible="state != 'draft'"/>
-
+                <field name="raw_ocr_data" invisible="1"/>
+                
                 <sheet>
+                    <!-- OCR Preview Widget (only visible in draft state) -->
+                    <widget name="raw_ocr_viewer"
+                            class="mb-3"
+                            invisible="state != 'draft'"/>
                     <!-- Smart Buttons -->
                     <div class="oe_button_box" name="button_box">
                         <button name="action_view_extraction_log" type="object"
