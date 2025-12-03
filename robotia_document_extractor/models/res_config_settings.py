@@ -50,6 +50,15 @@ class ResConfigSettings(models.TransientModel):
              'See Google AI documentation for available models.'
     )
 
+    extract_pages_run_ocr = fields.Boolean(
+        string='Run OCR for Page Extraction',
+        config_parameter='robotia_document_extractor.extract_pages_run_ocr',
+        default=False,
+        help='If enabled, OCR will be run on the extracted pages before AI processing. '
+             'Enable this if the source PDF is an image scan without text layer. '
+             'Default: Disabled'
+    )
+
     extraction_strategy = fields.Selection(
         selection=[
             ('ai_native', _('100% AI (Gemini processes PDF directly)')),

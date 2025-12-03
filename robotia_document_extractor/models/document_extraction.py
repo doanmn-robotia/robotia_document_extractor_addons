@@ -53,6 +53,13 @@ class DocumentExtraction(models.Model):
     pdf_filename = fields.Char(
         string='PDF Filename'
     )
+
+    # OCR Raw Data
+    raw_ocr_data = fields.Text(
+        string='Raw OCR Data',
+        help='Structured OCR data with bounding boxes (JSON format). '
+             'Contains text regions with coordinates for PDF highlighting.'
+    )
     extraction_date = fields.Datetime(
         string='Extraction Date',
         default=fields.Datetime.now,
@@ -61,7 +68,8 @@ class DocumentExtraction(models.Model):
     year = fields.Integer(
         string='Year',
         required=True,
-        index=True
+        index=True,
+        aggregator=False
     )
     year_1 = fields.Integer(
         string='Year 1 (Past Year)',

@@ -78,29 +78,59 @@ export class DocumentExtractionFormController extends FormController {
             }
 
             let splitInstance = null;
+            let currentDirection = null;
 
             // Function to initialize/destroy split based on screen size
             const handleResize = () => {
-                const isDesktop = window.matchMedia('(min-width: 992px)').matches;
+                const windowWidth = window.innerWidth;
 
-                if (isDesktop && !splitInstance) {
-                    // Desktop: Initialize Split.js
-                    splitInstance = Split([formSheet, pdfPreview], {
-                        sizes: [55, 45],              // More balanced split
-                        minSize: [300, 250],          // Smaller minimum sizes
-                        expandToMin: false,            // Don't expand to min automatically
-                        gutterSize: 10,                // Slightly larger gutter for easier dragging
-                        snapOffset: 0,                 // Disable snapping
-                        dragInterval: 1,               // Smooth dragging
-                        cursor: 'col-resize',          // Explicit cursor
-                    });
-                } else if (!isDesktop && splitInstance) {
-                    // Mobile: Destroy Split.js
-                    splitInstance.destroy();
-                    splitInstance = null;
-                    // Reset inline styles set by Split.js
+                // Determine direction based on window width
+                // Wide screen (>1400px): vertical split (side by side)
+                // Medium screen (<=1400px): horizontal split (top/bottom)
+                const shouldBeVertical = windowWidth > 1400;
+                const newDirection = shouldBeVertical ? 'vertical' : 'horizontal';
+
+                // If direction changed, destroy and recreate
+                if (currentDirection !== newDirection) {
+                    if (splitInstance) {
+                        splitInstance.destroy();
+                        splitInstance = null;
+                    }
+
+                    // Reset inline styles
                     formSheet.style.width = '';
+                    formSheet.style.height = '';
                     pdfPreview.style.width = '';
+                    pdfPreview.style.height = '';
+
+                    // Create new split with appropriate direction
+                    if (shouldBeVertical) {
+                        // Vertical split (side by side)
+                        splitInstance = Split([formSheet, pdfPreview], {
+                            direction: 'horizontal', // Split.js uses 'horizontal' for vertical layout
+                            sizes: [55, 45],
+                            minSize: [300, 250],
+                            expandToMin: false,
+                            gutterSize: 10,
+                            snapOffset: 0,
+                            dragInterval: 1,
+                            cursor: 'col-resize',
+                        });
+                    } else {
+                        // Horizontal split (top/bottom)
+                        splitInstance = Split([formSheet, pdfPreview], {
+                            direction: 'vertical', // Split.js uses 'vertical' for horizontal layout
+                            sizes: [60, 40],
+                            minSize: [200, 150],
+                            expandToMin: false,
+                            gutterSize: 10,
+                            snapOffset: 0,
+                            dragInterval: 1,
+                            cursor: 'row-resize',
+                        });
+                    }
+
+                    currentDirection = newDirection;
                 }
             };
 

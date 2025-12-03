@@ -61,6 +61,17 @@
                                 </div>
                             </div>
                         </setting>
+                        <setting id="extract_pages_run_ocr_setting"
+                                 string="Run OCR for Page Extraction"
+                                 help="If enabled, OCR will be run on the extracted pages before AI processing.">
+                            <field name="extract_pages_run_ocr"/>
+                            <div class="content-group mt8">
+                                <div class="text-muted">
+                                    Enable this if the source PDF is an image scan without text layer.
+                                    Disable to speed up processing for digital PDFs.
+                                </div>
+                            </div>
+                        </setting>
                         <setting id="extraction_strategy_setting"
                                  string="Extraction Strategy"
                                  help="Choose how PDF documents are processed for extraction">

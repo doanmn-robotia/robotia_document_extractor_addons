@@ -88,15 +88,10 @@ export class UsersTab extends Component {
 
     onRowClick(userId) {
         // Click row opens full form view (not popup)
-        this.action.doAction({
-            type: 'ir.actions.act_window',
-            res_model: 'res.users',
-            res_id: userId,
-            views: [[false, 'form']],
-            view_mode: 'form',
-            target: 'current',  // Open in current window, not popup
-            context: {
-                'form_view_ref': 'base.view_users_form'
+        this.action.doAction('base.action_res_users', {
+            viewType: 'form',
+            props: {
+                resId: userId
             }
         });
     }
@@ -106,15 +101,10 @@ export class UsersTab extends Component {
         ev.stopPropagation();
 
         // Edit button opens base.view_users_form_simple_modif in popup
-        this.action.doAction({
-            type: 'ir.actions.act_window',
-            res_model: 'res.users',
-            res_id: userId,
-            views: [[false, 'form']],
-            view_mode: 'form',
-            target: 'new',  // Open as popup
-            context: {
-                'form_view_ref': 'base.view_users_form_simple_modif'
+        this.action.doAction('base.action_res_users_my', {
+            viewType: 'form',
+            props: {
+                resId: userId
             }
         });
     }
@@ -137,15 +127,8 @@ export class UsersTab extends Component {
 
     onAddUserClick() {
         // Add User opens full form view (not popup)
-        this.action.doAction({
-            type: 'ir.actions.act_window',
-            res_model: 'res.users',
-            views: [[false, 'form']],
-            view_mode: 'form',
-            target: 'current', // Open in current window
-            context: {
-                'form_view_ref': 'base.view_users_form'
-            }
+        this.action.doAction('base.action_res_users', {
+            viewType: 'form'
         });
     }
 

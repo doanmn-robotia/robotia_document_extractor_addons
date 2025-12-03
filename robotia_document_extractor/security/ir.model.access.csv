@@ -33,3 +33,5 @@ access_google_drive_service_manager,google.drive.service manager,model_google_dr
 access_google_drive_config_wizard,google.drive.config.wizard,model_google_drive_config_wizard,base.group_system,1,1,1,1
 access_google_drive_extraction_log_user,google.drive.extraction.log.user,model_google_drive_extraction_log,base.group_user,1,0,0,0
 access_google_drive_extraction_log_manager,google.drive.extraction.log.manager,model_google_drive_extraction_log,base.group_system,1,1,1,1
+
+
