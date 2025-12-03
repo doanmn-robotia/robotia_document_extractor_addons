@@ -43,9 +43,21 @@ class GoogleDriveExtractionLog(models.Model):
         index=True
     )
 
+    attachment_id = fields.Many2one(
+        'ir.attachment',
+        string='Attachment',
+        ondelete='set null',
+        help='Original PDF file'
+    )
+
     ai_response_json = fields.Text(
         string='AI Response JSON',
         help='Raw JSON response from Gemini AI'
+    )
+
+    ocr_response_json = fields.Text(
+        string='OCR Response JSON',
+        help='Raw OCR data with bounding boxes (if OCR was performed)'
     )
 
     # Error Handling
@@ -99,3 +111,76 @@ class GoogleDriveExtractionLog(models.Model):
             'view_mode': 'form',
             'target': 'current',
         }
+
+    def action_create_extraction_from_log(self):
+        """Create document.extraction record from log data"""
+        self.ensure_one()
+
+        # Check if log has successful data
+        if self.status != 'success' or not self.ai_response_json:
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': 'Cannot Create',
+                    'message': 'Cannot create extraction from failed or incomplete log.',
+                    'type': 'danger',
+                    'sticky': False,
+                }
+            }
+
+        try:
+            import json
+
+            # Parse extracted data from log
+            extracted_data = json.loads(self.ai_response_json)
+
+            # Get or create attachment (if we have file data, otherwise skip)
+            # Note: For logs from Google Drive, we might not have the PDF binary
+            # So we'll create extraction without attachment
+            attachment = self.attachment_id
+
+            # Build form values using extraction helper
+            helper = self.env['extraction.helper']
+            vals = helper.build_extraction_values(
+                extracted_data=extracted_data,
+                attachment=attachment,
+                document_type=self.document_type
+            )
+
+            # Add OCR data and status
+            if self.ocr_response_json:
+                vals['raw_ocr_data'] = self.ocr_response_json
+                vals['ocr_status'] = 'completed'
+            else:
+                vals['raw_ocr_data'] = None
+
+            # Convert to context for form defaults
+            context = {f'default_{key}': value for key, value in vals.items()}
+            context['default_extraction_log_id'] = self.id
+            context['default_source'] = 'from_user_upload'
+
+            _logger.info(f"Creating extraction from log ID {self.id}")
+
+            # Return form action
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'document.extraction',
+                'view_mode': 'form',
+                'views': [[False, 'form']],
+                'target': 'current',
+                'context': context,
+            }
+
+        except Exception as e:
+            _logger.error(f"Failed to create extraction from log: {e}", exc_info=True)
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': 'Error',
+                    'message': f'Failed to create extraction: {str(e)}',
+                    'type': 'danger',
+                    'sticky': True,
+                }
+            }

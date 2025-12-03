@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="robotia_document_extractor.ValidationStatsWidget" owl="1">
+        <div class="o_validation_stats d-flex gap-2 mb-3 rounded">
+            <div class="flex-fill text-center p-3 bg-white rounded border-2">
+                <div class="text-success fw-bold fs-1">
+                    <t t-esc="stats.clean"/>
+                </div>
+                <div class="text-muted small">Clean</div>
+            </div>
+            
+            <div class="flex-fill text-center p-3 bg-white rounded border-2">
+                <div class="text-warning fw-bold fs-1">
+                    <t t-esc="stats.autoFixed"/>
+                </div>
+                <div class="text-muted small">Auto-Fixed</div>
+            </div>
+            
+            <div class="flex-fill text-center p-3 bg-white rounded border-2">
+                <div class="text-danger fw-bold fs-1">
+                    <t t-esc="stats.needsReview"/>
+                </div>
+                <div class="text-muted small">Needs Review</div>
+            </div>
+        </div>
+    </t>
+</templates>

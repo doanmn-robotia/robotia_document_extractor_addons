@@ -29,6 +29,11 @@
                                 invisible="not extraction_record_id">
                             <span>View Record</span>
                         </button>
+                        <button name="action_create_extraction_from_log" type="object"
+                                class="oe_stat_button" icon="fa-plus-square"
+                                string="Create Extraction">
+                            <span>Create Extraction</span>
+                        </button>
                     </div>
 
                     <group>
@@ -41,12 +46,16 @@
                             <field name="drive_file_id"/>
                             <field name="processed_date"/>
                             <field name="extraction_record_id"/>
+                            <field name="attachment_id"/>
                         </group>
                     </group>
 
                     <notebook>
                         <page string="AI Response" invisible="not ai_response_json">
                             <field name="ai_response_json" widget="text"/>
+                        </page>
+                        <page string="OCR Response" invisible="not ocr_response_json">
+                            <field name="ocr_response_json" widget="text"/>
                         </page>
                         <page string="Error" invisible="status != 'error'">
                             <field name="error_message" widget="text"/>

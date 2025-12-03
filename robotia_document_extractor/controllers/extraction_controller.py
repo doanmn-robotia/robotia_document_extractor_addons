@@ -56,18 +56,33 @@ class ExtractionController(http.Controller):
 
         return (avg_kg, avg_co2)
 
-    @http.route('/document_extractor/extract', type='json', auth='user', methods=['POST'])
-    def extract_document(self, pdf_data, filename, document_type):
+    def _process_pdf_extraction(self, pdf_binary, filename, document_type, run_ocr=False):
         """
-        Extract data from PDF using AI
+        SHARED HELPER: Process PDF extraction with validation, logging, OCR, and AI
+
+        This method centralizes all common extraction logic:
+        - Validation (extension, size, magic bytes)
+        - Rate limiting
+        - Logging
+        - OCR extraction (optional)
+        - AI extraction
+        - Attachment creation
 
         Args:
-            pdf_data (str): Base64 encoded PDF file
+            pdf_binary (bytes): PDF binary data
             filename (str): Original filename
-            document_type (str): '01' for Registration, '02' for Report
+            document_type (str): '01' or '02'
+            run_ocr (bool): Whether to run OCR extraction (default: False)
 
         Returns:
-            dict: Action dictionary to open form in CREATE mode with extracted data
+            dict: {
+                'success': True/False,
+                'extracted_data': {...},  # AI extracted data
+                'raw_ocr_data': {...},    # OCR data with bbox (None if run_ocr=False or OCR fails)
+                'attachment': ir.attachment record,
+                'log': google.drive.extraction.log record,
+                'error': None or dict with error notification params
+            }
         """
         # Constants
         MAX_PDF_SIZE_MB = 50
@@ -81,143 +96,115 @@ class ExtractionController(http.Controller):
             'document_type': document_type,
             'status': 'processing',
         })
-        try:
-            _logger.info(f"Starting extraction for {filename} (Type: {document_type})")
 
-            # Validate file extension
+        try:
+            _logger.info(f"Starting extraction for {filename} (Type: {document_type}, OCR: {run_ocr})")
+
+            # 1. Validate file extension
             if not filename.lower().endswith('.pdf'):
-                log.write({
-                    'status': 'error',
-                    'error_message': 'Invalid file type: Only PDF files are allowed',
-                })
+                log.write({'status': 'error', 'error_message': 'Invalid file type'})
                 return {
-                    'type': 'ir.actions.client',
-                    'tag': 'display_notification',
-                    'params': {
+                    'success': False,
+                    'error': {
                         'title': 'Invalid File Type',
                         'message': 'Only PDF files are allowed',
                         'type': 'danger',
-                        'sticky': False,
                     }
                 }
 
-            # Decode PDF binary
-            try:
-                pdf_binary = base64.b64decode(pdf_data)
-            except Exception as e:
-                _logger.error(f"Failed to decode PDF: {e}")
-                log.write({
-                    'status': 'error',
-                    'error_message': f'Failed to decode PDF file: {str(e)}',
-                })
-                return {
-                    'type': 'ir.actions.client',
-                    'tag': 'display_notification',
-                    'params': {
-                        'title': 'Error',
-                        'message': 'Failed to decode PDF file',
-                        'type': 'danger',
-                        'sticky': False,
-                    }
-                }
-
-            # Validate file size
+            # 2. Validate file size
             pdf_size_bytes = len(pdf_binary)
             if pdf_size_bytes > MAX_PDF_SIZE_BYTES:
                 pdf_size_mb = pdf_size_bytes / 1024 / 1024
-                log.write({
-                    'status': 'error',
-                    'error_message': f'File size ({pdf_size_mb:.1f}MB) exceeds maximum allowed size ({MAX_PDF_SIZE_MB}MB)',
-                })
+                log.write({'status': 'error', 'error_message': f'File too large: {pdf_size_mb:.1f}MB'})
                 return {
-                    'type': 'ir.actions.client',
-                    'tag': 'display_notification',
-                    'params': {
+                    'success': False,
+                    'error': {
                         'title': 'File Too Large',
-                        'message': f'File size ({pdf_size_mb:.1f}MB) exceeds maximum allowed size ({MAX_PDF_SIZE_MB}MB)',
+                        'message': f'File size ({pdf_size_mb:.1f}MB) exceeds {MAX_PDF_SIZE_MB}MB',
                         'type': 'danger',
-                        'sticky': False,
                     }
                 }
 
-            # Validate PDF magic bytes
+            # 3. Validate PDF magic bytes
             if not pdf_binary.startswith(b'%PDF'):
-                log.write({
-                    'status': 'error',
-                    'error_message': 'The uploaded file does not appear to be a valid PDF',
-                })
+                log.write({'status': 'error', 'error_message': 'Invalid PDF format'})
                 return {
-                    'type': 'ir.actions.client',
-                    'tag': 'display_notification',
-                    'params': {
+                    'success': False,
+                    'error': {
                         'title': 'Invalid PDF',
                         'message': 'The uploaded file does not appear to be a valid PDF',
                         'type': 'danger',
-                        'sticky': False,
                     }
                 }
 
-            # Simple rate limiting (session-based)
+            # 4. Rate limiting (session-based)
             import time
             last_extract_time = request.session.get('last_extract_time', 0)
             current_time = time.time()
             if current_time - last_extract_time < EXTRACTION_RATE_LIMIT_SECONDS:
                 wait_seconds = int(EXTRACTION_RATE_LIMIT_SECONDS - (current_time - last_extract_time))
-                log.write({
-                    'status': 'error',
-                    'error_message': f'Rate limit exceeded. Please wait {wait_seconds} seconds before extracting another document',
-                })
+                log.write({'status': 'error', 'error_message': f'Rate limit: wait {wait_seconds}s'})
                 return {
-                    'type': 'ir.actions.client',
-                    'tag': 'display_notification',
-                    'params': {
+                    'success': False,
+                    'error': {
                         'title': 'Please Wait',
                         'message': f'Please wait {wait_seconds} seconds before extracting another document',
                         'type': 'warning',
-                        'sticky': False,
                     }
                 }
             request.session['last_extract_time'] = current_time
 
-            # Call extraction service
-            extraction_service = request.env['document.extraction.service']
+            # 5. Run OCR if requested (NEW)
+            raw_ocr_data = None
+            if run_ocr:
+                try:
+                    _logger.info("Running OCR extraction...")
+                    OCRService = request.env['document.ocr.raw.service'].sudo()
+                    raw_ocr_data = OCRService.extract_ocr_with_bbox(pdf_binary, filename)
 
+                    if raw_ocr_data:
+                        total_regions = sum(len(p.get('text_regions', [])) for p in raw_ocr_data.get('pages', []))
+                        _logger.info(f"OCR completed: {len(raw_ocr_data.get('pages', []))} pages, {total_regions} text regions")
+                    else:
+                        _logger.warning("OCR returned no data - continuing with AI only")
+                except Exception as e:
+                    _logger.warning(f"OCR failed (continuing with AI only): {e}")
+                    raw_ocr_data = None
+                    # Continue without OCR - graceful degradation
+
+            # 6. Run AI extraction
             try:
+                extraction_service = request.env['document.extraction.service']
                 extracted_data = extraction_service.extract_pdf(pdf_binary, document_type, filename)
             except Exception as e:
-                _logger.error(f"Extraction failed: {e}")
-
-                # Update log with AI error
+                _logger.error(f"AI extraction failed: {e}")
                 log.write({
                     'status': 'error',
-                    'error_message': f"AI extraction failed: {str(e)}",
+                    'error_message': f'AI extraction failed: {str(e)}'
                 })
-
                 return {
-                    'type': 'ir.actions.client',
-                    'tag': 'display_notification',
-                    'params': {
+                    'success': False,
+                    'error': {
                         'title': 'Extraction Failed',
                         'message': str(e),
                         'type': 'danger',
-                        'sticky': True,
                     }
                 }
 
-            # Create public attachment for PDF (without res_id for preview)
-            # This allows viewing PDF before saving the record
+            # 7. Create public attachment (res_id=0 for preview before save)
             attachment = request.env['ir.attachment'].sudo().create({
                 'name': filename,
                 'type': 'binary',
-                'datas': pdf_data,
+                'datas': base64.b64encode(pdf_binary).decode('utf-8'),
                 'res_model': 'document.extraction',
-                'res_id': 0,  # No res_id yet - will be updated on record save
-                'public': True,  # Make public so it can be viewed without res_id
+                'res_id': 0,  # Public for preview
+                'public': True,
                 'mimetype': 'application/pdf',
             })
-            _logger.info(f"Created public attachment ID {attachment.id} for PDF preview")
+            _logger.info(f"Created public attachment ID {attachment.id}")
 
-            # Auto-calculate year_1, year_2, year_3 if not extracted by AI
+            # 8. Auto-calculate years if not extracted
             year = extracted_data.get('year')
             if year:
                 if not extracted_data.get('year_1'):
@@ -227,36 +214,458 @@ class ExtractionController(http.Controller):
                 if not extracted_data.get('year_3'):
                     extracted_data['year_3'] = year + 1
 
-            # ========== USE EXTRACTION HELPER TO BUILD VALUES ==========
-            # Get extraction helper service
-            helper = request.env['extraction.helper']
+            # 9. Validate extracted data keys against model schema
+            extracted_data = self._validate_extracted_data_keys(extracted_data, document_type)
 
-            # Build values dict (without 'default_' prefix)
+            # 10. Update log (success)
+            log_data = {
+                'status': 'success',
+                'ai_response_json': json.dumps(extracted_data, ensure_ascii=False, indent=2),
+                'attachment_id': attachment.id,
+            }
+            # Add OCR data if available
+            if raw_ocr_data:
+                log_data['ocr_response_json'] = json.dumps(raw_ocr_data, ensure_ascii=False, indent=2)
+            
+            log.write(log_data)
+
+            _logger.info(f"Extraction successful: Log ID {log.id}")
+
+            return {
+                'success': True,
+                'extracted_data': extracted_data,
+                'raw_ocr_data': raw_ocr_data,
+                'attachment': attachment,
+                'log': log,
+                'error': None,
+            }
+
+        except Exception as e:
+            _logger.error(f"Unexpected error in _process_pdf_extraction: {e}", exc_info=True)
+            log.write({'status': 'error', 'error_message': str(e)})
+            return {
+                'success': False,
+                'error': {
+                    'title': 'Error',
+                    'message': str(e),
+                    'type': 'danger',
+                }
+            }
+
+    def _validate_extracted_data_keys(self, extracted_data, document_type):
+        """
+        Validate that all keys in extracted_data exist in corresponding Odoo models
+        
+        This method checks:
+        1. Main document fields exist in document.extraction model
+        2. One2many relation fields exist (substance_usage, equipment_product, etc.)
+        3. Nested record fields exist in their respective models
+        
+        Args:
+            extracted_data (dict): Extracted data from AI
+            document_type (str): '01' or '02'
+            
+        Returns:
+            dict: Validated extracted_data with invalid keys removed
+        """
+        _logger.info(f"Validating extracted data keys for document type {document_type}")
+        
+        # Get document.extraction model
+        DocumentModel = request.env['document.extraction']
+        main_model_fields = set(DocumentModel._fields.keys())
+        
+        # Define One2many relation field mappings
+        # Format: {extracted_key: (model_name, field_name_in_main_model)}
+        relation_mappings = {
+            # Form 01
+            'substance_usage': ('substance.usage', 'substance_usage_ids'),
+            'equipment_product': ('equipment.product', 'equipment_product_ids'),
+            'equipment_ownership': ('equipment.ownership', 'equipment_ownership_ids'),
+            'collection_recycling': ('collection.recycling', 'collection_recycling_ids'),
+            # Form 02
+            'quota_usage': ('quota.usage', 'quota_usage_ids'),
+            'equipment_product_report': ('equipment.product.report', 'equipment_product_report_ids'),
+            'equipment_ownership_report': ('equipment.ownership.report', 'equipment_ownership_report_ids'),
+            'collection_recycling_report': ('collection.recycling.report', 'collection_recycling_report_ids'),
+        }
+        
+        validated_data = {}
+        invalid_keys = []
+        
+        # Validate main-level keys
+        for key, value in extracted_data.items():
+            # Check if key is a relation field
+            if key in relation_mappings:
+                model_name, field_name = relation_mappings[key]
+                
+                # Validate that the relation field exists in main model
+                if field_name not in main_model_fields:
+                    _logger.warning(f"Invalid relation field '{field_name}' for key '{key}' - skipping")
+                    invalid_keys.append(key)
+                    continue
+                
+                # Validate nested records
+                if isinstance(value, list):
+                    validated_records = []
+                    RelationModel = request.env[model_name]
+                    relation_model_fields = set(RelationModel._fields.keys())
+                    
+                    for idx, record in enumerate(value):
+                        if not isinstance(record, dict):
+                            _logger.warning(f"Invalid record format in '{key}[{idx}]' - expected dict, got {type(record)}")
+                            continue
+                        
+                        validated_record = {}
+                        invalid_record_keys = []
+                        
+                        for record_key, record_value in record.items():
+                            # Skip technical fields that will be auto-generated
+                            if record_key in ['id', 'create_uid', 'create_date', 'write_uid', 'write_date', 
+                                            '__last_update', 'display_name', 'document_id']:
+                                continue
+                            
+                            # Check if field exists in relation model
+                            if record_key not in relation_model_fields:
+                                _logger.warning(
+                                    f"Invalid field '{record_key}' in {model_name} "
+                                    f"(record {idx} of '{key}') - skipping"
+                                )
+                                invalid_record_keys.append(record_key)
+                                continue
+                            
+                            validated_record[record_key] = record_value
+                        
+                        if invalid_record_keys:
+                            _logger.info(
+                                f"Removed {len(invalid_record_keys)} invalid keys from {model_name} record {idx}: "
+                                f"{invalid_record_keys}"
+                            )
+                        
+                        if validated_record:  # Only add if there are valid fields
+                            validated_records.append(validated_record)
+                    
+                    validated_data[key] = validated_records
+                    _logger.info(f"Validated '{key}': {len(validated_records)} records")
+                else:
+                    _logger.warning(f"Expected list for relation field '{key}', got {type(value)} - skipping")
+                    invalid_keys.append(key)
+                    
+            else:
+                # Regular field - check if it exists in main model
+                # Special handling for activity_field_codes (maps to activity_field_ids)
+                if key == 'activity_field_codes':
+                    if 'activity_field_ids' in main_model_fields:
+                        validated_data[key] = value
+                    else:
+                        _logger.warning(f"Field 'activity_field_ids' not found in document.extraction model")
+                        invalid_keys.append(key)
+                # Special handling for contact_country_code/contact_state_code (map to Many2one IDs)
+                elif key in ['contact_country_code', 'contact_state_code']:
+                    # These are valid - they'll be converted to IDs by extraction_helper
+                    validated_data[key] = value
+                else:
+                    # Check if field exists in main model
+                    if key in main_model_fields:
+                        validated_data[key] = value
+                    else:
+                        _logger.warning(f"Invalid field '{key}' in document.extraction model - skipping")
+                        invalid_keys.append(key)
+        
+        # Log summary
+        if invalid_keys:
+            _logger.warning(
+                f"Removed {len(invalid_keys)} invalid top-level keys: {invalid_keys}"
+            )
+        
+        _logger.info(
+            f"Validation complete: {len(validated_data)} valid keys, "
+            f"{len(invalid_keys)} invalid keys removed"
+        )
+        
+        return validated_data
+
+
+    @http.route('/document_extractor/extract', type='json', auth='user', methods=['POST'])
+    def extract_document(self, pdf_data, filename, document_type):
+        """
+        Extract data from PDF using AI only (no OCR)
+
+        Args:
+            pdf_data (str): Base64 encoded PDF file
+            filename (str): Original filename
+            document_type (str): '01' for Registration, '02' for Report
+
+        Returns:
+            dict: Action to open form OR error notification
+        """
+        # Decode PDF
+        try:
+            pdf_binary = base64.b64decode(pdf_data)
+        except Exception as e:
+            _logger.error(f"Failed to decode PDF: {e}")
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': 'Error',
+                    'message': 'Failed to decode PDF file',
+                    'type': 'danger',
+                    'sticky': False,
+                }
+            }
+
+        # Call shared helper (NO OCR for direct upload route)
+        result = self._process_pdf_extraction(
+            pdf_binary=pdf_binary,
+            filename=filename,
+            document_type=document_type,
+            run_ocr=False  # AI-only extraction
+        )
+
+        # Handle error
+        if not result['success']:
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    **result['error'],
+                    'sticky': result['error']['type'] == 'danger',
+                }
+            }
+
+        # Build form values using extraction helper
+        helper = request.env['extraction.helper']
+        vals = helper.build_extraction_values(
+            extracted_data=result['extracted_data'],
+            attachment=result['attachment'],
+            document_type=document_type
+        )
+
+        # Add raw_ocr_data (will be None for this route)
+        vals['raw_ocr_data'] = json.dumps(result['raw_ocr_data']) if result['raw_ocr_data'] else None
+
+        # Convert to context
+        context = {f'default_{key}': value for key, value in vals.items()}
+        context['default_extraction_log_id'] = result['log'].id
+        context['default_source'] = 'from_user_upload'
+
+        _logger.info(f"Returning form action for {filename}")
+
+        # Return form action
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'document.extraction',
+            'view_mode': 'form',
+            'views': [[False, 'form']],
+            'target': 'current',
+            'context': context,
+        }
+
+    @http.route('/robotia/pdf_to_images', type='json', auth='user', methods=['POST'])
+    def pdf_to_images(self, pdf_file):
+        """
+        Convert PDF to images and store as public attachments
+
+        Args:
+            pdf_file (str): Base64 encoded PDF
+
+        Returns:
+            dict: {
+                'status': 'success',
+                'pages': [
+                    {
+                        'attachment_id': 123,
+                        'url': '/web/content/123',
+                        'page_num': 0,
+                        'filename': 'page_0.png'
+                    },
+                    ...
+                ]
+            }
+        """
+        try:
+            # Decode PDF
+            pdf_binary = base64.b64decode(pdf_file)
+
+            # Convert to images
+            ExtractionService = request.env['document.extraction.service'].sudo()
+            image_paths = ExtractionService._pdf_to_images(pdf_binary, "temp_upload.pdf")
+
+            # Create attachments for each image
+            Attachment = request.env['ir.attachment'].sudo()
+            pages_metadata = []
+
+            for idx, path in enumerate(image_paths):
+                try:
+                    # Read image file
+                    with open(path, "rb") as image_file:
+                        image_binary = image_file.read()
+
+                    # Create public attachment
+                    filename = f"page_{idx}.png"
+                    attachment = Attachment.create({
+                        'name': filename,
+                        'type': 'binary',
+                        'datas': base64.b64encode(image_binary).decode('utf-8'),
+                        'res_model': 'document.extraction',
+                        'res_id': 0,  # Temporary attachment
+                        'public': True,  # Makes accessible via URL
+                        'mimetype': 'image/png',
+                        'description': f'PDF page preview {idx}',
+                    })
+
+                    # Build metadata
+                    pages_metadata.append({
+                        'attachment_id': attachment.id,
+                        'url': f'/web/content/{attachment.id}',
+                        'page_num': idx,
+                        'filename': filename,
+                    })
+
+                    _logger.info(f"Created attachment {attachment.id} for page {idx}")
+
+                finally:
+                    # Clean up temp file
+                    try:
+                        import os
+                        os.remove(path)
+                    except Exception as cleanup_error:
+                        _logger.warning(f"Failed to cleanup {path}: {cleanup_error}")
+
+            return {
+                'status': 'success',
+                'pages': pages_metadata
+            }
+
+        except Exception as e:
+            _logger.exception("Error converting PDF to images")
+            return {'status': 'error', 'message': str(e)}
+
+    @http.route('/robotia/extract_pages', type='json', auth='user', methods=['POST'])
+    def extract_pages(self, pdf_file, attachment_ids, document_type='01'):
+        """
+        Extract specific pages from PDF with OCR + AI
+
+        Args:
+            pdf_file (str): Base64 encoded PDF (original full PDF)
+            attachment_ids (list): List of attachment IDs representing selected pages
+            document_type (str): '01' or '02'
+
+        Returns:
+            dict: Action to open document.extraction form
+        """
+        try:
+            import fitz  # PyMuPDF
+            import io
+
+            # 1. Get page numbers from attachments
+            Attachment = request.env['ir.attachment'].sudo()
+            attachments = Attachment.browse(attachment_ids)
+
+            if not attachments:
+                return {
+                    'type': 'ir.actions.client',
+                    'tag': 'display_notification',
+                    'params': {
+                        'title': 'Invalid Selection',
+                        'message': 'No valid pages selected',
+                        'type': 'danger',
+                    }
+                }
+
+            # Extract page numbers from attachment names
+            # Assuming attachment.name = "page_0.png", "page_1.png", etc.
+            page_indices = []
+            for att in attachments:
+                try:
+                    # Extract number from "page_0.png" → 0
+                    page_num = int(att.name.replace('page_', '').replace('.png', ''))
+                    page_indices.append(page_num)
+                except ValueError:
+                    _logger.warning(f"Could not parse page number from {att.name}")
+
+            if not page_indices:
+                return {
+                    'type': 'ir.actions.client',
+                    'tag': 'display_notification',
+                    'params': {
+                        'title': 'Invalid Selection',
+                        'message': 'Could not determine page numbers',
+                        'type': 'danger',
+                    }
+                }
+
+            # Sort to maintain order
+            page_indices.sort()
+            _logger.info(f"Extracting pages: {page_indices}")
+
+            # 2. Create PDF with selected pages
+            pdf_binary = base64.b64decode(pdf_file)
+            doc = fitz.open(stream=pdf_binary, filetype="pdf")
+
+            new_doc = fitz.open()
+            for index in page_indices:
+                if 0 <= index < len(doc):
+                    new_doc.insert_pdf(doc, from_page=index, to_page=index)
+
+            output_stream = io.BytesIO()
+            new_doc.save(output_stream)
+            new_pdf_binary = output_stream.getvalue()
+            doc.close()
+            new_doc.close()
+
+            filename = f"extracted_pages_{document_type}.pdf"
+
+            # 3. Call shared helper (WITH OCR if configured)
+            run_ocr = request.env['ir.config_parameter'].sudo().get_param(
+                'robotia_document_extractor.extract_pages_run_ocr', 'False'
+            ).lower() == 'true'
+
+            result = self._process_pdf_extraction(
+                pdf_binary=new_pdf_binary,
+                filename=filename,
+                document_type=document_type,
+                run_ocr=run_ocr
+            )
+
+            # Handle error
+            if not result['success']:
+                return {
+                    'type': 'ir.actions.client',
+                    'tag': 'display_notification',
+                    'params': {
+                        'title': 'Extraction Failed',
+                        'message': result['error']['message'],
+                        'type': 'danger',
+                    }
+                }
+
+            # Build form values using extraction helper
+            helper = request.env['extraction.helper']
             vals = helper.build_extraction_values(
-                extracted_data=extracted_data,
-                attachment=attachment,
+                extracted_data=result['extracted_data'],
+                attachment=result['attachment'],
                 document_type=document_type
             )
 
-            # Convert to context with 'default_' prefix
-            context = {
-                f'default_{key}': value
-                for key, value in vals.items()
-            }
+            # Add raw_ocr_data (will have data from OCR)
+            vals['raw_ocr_data'] = json.dumps(result['raw_ocr_data']) if result['raw_ocr_data'] else None
 
-            # Update log with AI response (extraction successful)
-            log.write({
-                'status': 'success',
-                'ai_response_json': json.dumps(extracted_data, ensure_ascii=False, indent=2),
-            })
+            # Convert to context
+            context = {f'default_{key}': value for key, value in vals.items()}
+            context['default_extraction_log_id'] = result['log'].id
+            context['default_source'] = 'from_user_upload'  # Page selector is user upload with selected pages
 
-            # Add log_id to context so it can be linked when record is created
-            context['default_extraction_log_id'] = log.id
-            context['default_source'] = 'from_user_upload'  # Explicitly set source
+            # 4. Clean up temporary page attachments
+            try:
+                Attachment.browse(attachment_ids).unlink()
+                _logger.info(f"Cleaned up {len(attachment_ids)} temporary attachments")
+            except Exception as e:
+                _logger.warning(f"Could not cleanup temp attachments: {e}")
 
-            _logger.info(f"Extraction successful for {filename} (Type: {document_type}), Log ID: {log.id}")
+            _logger.info(f"Returning form action for selected pages")
 
-            # Return action to open form in CREATE mode
+            # Return form action
             return {
                 'type': 'ir.actions.act_window',
                 'res_model': 'document.extraction',
@@ -267,24 +676,16 @@ class ExtractionController(http.Controller):
             }
 
         except Exception as e:
-            _logger.exception(f"Unexpected error in extraction controller: {e}")
-
-            # Try to update log if it exists
-            log.write({
-                'status': 'error',
-                'error_message': f"Unexpected system error: {str(e)}\n\n{traceback.format_exc()}",
-            })
+            _logger.exception("Extract pages failed")
             return {
                 'type': 'ir.actions.client',
                 'tag': 'display_notification',
                 'params': {
-                    'title': 'System Error',
-                    'message': f'An unexpected error occurred: {str(e)}',
+                    'title': 'Extraction Failed',
+                    'message': str(e),
                     'type': 'danger',
-                    'sticky': True,
                 }
             }
-
     @http.route('/document_extractor/substance_dashboard_data', type='json', auth='user', methods=['POST'])
     def get_substance_dashboard_data(self, substance_id=None, organization_id=None, year_from=None, year_to=None):
         """
@@ -1428,11 +1829,11 @@ class ExtractionController(http.Controller):
                     'legal_representative': org.legal_representative_name or '',
                     'legal_representative_position': org.legal_representative_position or '',
                     'contact_person': org.contact_person_name or '',
-                    'address': org.contact_address or org.street or '',
+                    'address': doc.contact_address,
                     'phone': org.phone or '',
                     'fax': org.fax or '',
                     'email': org.email or '',
-                    'activity_fields': doc.activity_field_ids.mapped('name'),
+                    'activity_fields': doc.activity_field_ids.mapped('code'),
                 })
 
             # Sheet 2: Equipment ownership (Form 01)
@@ -1507,7 +1908,7 @@ class ExtractionController(http.Controller):
                         'license_number': org.business_license_number or '',
                         'year': doc.year,
                         'data_source': 'Mẫu 02',
-                        'activity': eq.production_type or '',
+                        'activity': eq.production_type,
                         'product_type': eq.product_type or '',
                         'hs_code': eq.hs_code_id.code if eq.hs_code_id else '',
                         'capacity': eq.capacity or 0,
@@ -1526,7 +1927,7 @@ class ExtractionController(http.Controller):
                         'license_number': org.business_license_number or '',
                         'year': doc.year,
                         'substance_name': rec.substance_id.name if rec.substance_id else rec.substance_name or '',
-                        'activity': rec.activity_type or '',
+                        'activity': rec.activity_type,
                         'quantity_kg': rec.quantity_kg or 0,
                         'detail_1': '',  # Field doesn't exist in collection.recycling
                         'detail_2': '',  # Field doesn't exist in collection.recycling
@@ -1545,7 +1946,7 @@ class ExtractionController(http.Controller):
                             'license_number': org.business_license_number or '',
                             'year': doc.year,
                             'substance_name': substance_name,
-                            'activity': 'Thu gom',
+                            'activity': 'collection',
                             'quantity_kg': rep.collection_quantity_kg or 0,
                             'detail_1': rep.collection_location or '',
                             'detail_2': '',
@@ -1556,7 +1957,7 @@ class ExtractionController(http.Controller):
                             'license_number': org.business_license_number or '',
                             'year': doc.year,
                             'substance_name': substance_name,
-                            'activity': 'Tái sử dụng',
+                            'activity': 'reuse',
                             'quantity_kg': rep.reuse_quantity_kg or 0,
                             'detail_1': '',
                             'detail_2': '',
@@ -1567,7 +1968,7 @@ class ExtractionController(http.Controller):
                             'license_number': org.business_license_number or '',
                             'year': doc.year,
                             'substance_name': substance_name,
-                            'activity': 'Tái chế',
+                            'activity': 'recycling',
                             'quantity_kg': rep.recycle_quantity_kg or 0,
                             'detail_1': rep.recycle_technology or '',
                             'detail_2': rep.recycle_facility_id.name if rep.recycle_facility_id else '',
@@ -1578,7 +1979,7 @@ class ExtractionController(http.Controller):
                             'license_number': org.business_license_number or '',
                             'year': doc.year,
                             'substance_name': substance_name,
-                            'activity': 'Tiêu hủy',
+                            'activity': 'disposal',
                             'quantity_kg': rep.disposal_quantity_kg or 0,
                             'detail_1': rep.disposal_technology or '',
                             'detail_2': rep.disposal_facility or '',
@@ -1591,14 +1992,7 @@ class ExtractionController(http.Controller):
                         continue
 
                     # Determine activity type from usage_type field
-                    if usage.usage_type == 'production':
-                        activity = 'Sản xuất'
-                    elif usage.usage_type == 'import':
-                        activity = 'Nhập khẩu'
-                    elif usage.usage_type == 'export':
-                        activity = 'Xuất khẩu'
-                    else:
-                        activity = ''
+                    activity = usage.usage_type
 
                     bulk_substances_data.append({
                         'license_number': org.business_license_number or '',
@@ -1619,7 +2013,7 @@ class ExtractionController(http.Controller):
                     bulk_substances_data.append({
                         'license_number': org.business_license_number or '',
                         'data_source': 'Mẫu 02',
-                        'activity': quota.usage_type or 'Sử dụng hạn ngạch',
+                        'activity': quota.usage_type,
                         'substance_name': quota.substance_id.name if quota.substance_id else quota.substance_name or '',
                         'year': doc.year,
                         'quantity_kg': quota.total_quota_kg or 0,
@@ -1641,14 +2035,14 @@ class ExtractionController(http.Controller):
 
         # Activity field column mapping
         activity_field_cols = {
-            'Sản xuất chất': 'K',
-            'Nhập khẩu chất': 'L',
-            'Xuất khẩu chất': 'M',
-            'Sản xuất thiết bị': 'N',
-            'Nhập khẩu thiết bị': 'O',
-            'Sở hữu điều hòa': 'P',
-            'Sở hữu thiết bị lạnh': 'Q',
-            'Thu gom xử lý': 'R',
+            'production': 'K',
+            'import': 'L',
+            'export': 'M',
+            'equipment_production': 'N',
+            'equipment_import': 'O',
+            'ac_ownership': 'P',
+            'refrigeration_ownership': 'Q',
+            'collection_recycling': 'R',
         }
 
         row_idx = 2  # Start after header
@@ -1665,8 +2059,8 @@ class ExtractionController(http.Controller):
             ws[f'J{row_idx}'] = company['email']
 
             # Activity fields - mark with 'X' if present
-            for field_name, col in activity_field_cols.items():
-                if any(field_name.lower() in af.lower() for af in company['activity_fields']):
+            for field_code, col in activity_field_cols.items():
+                if field_code in company['activity_fields']:
                     ws[f'{col}{row_idx}'] = 'X'
 
             row_idx += 1
@@ -1718,7 +2112,13 @@ class ExtractionController(http.Controller):
             ws[f'A{row_idx}'] = rec['license_number']
             ws[f'B{row_idx}'] = rec['year']
             ws[f'C{row_idx}'] = rec['substance_name']
-            ws[f'D{row_idx}'] = rec['activity']
+            activity_map = {
+                'collection': 'Thu gom',
+                'reuse': 'Tái sử dụng',
+                'recycling': 'Tái chế',
+                'disposal': 'Tiêu hủy'
+            }
+            ws[f'D{row_idx}'] = activity_map.get(rec['activity'], rec['activity'])
             ws[f'E{row_idx}'] = rec['quantity_kg']
             ws[f'F{row_idx}'] = rec['detail_1']
             ws[f'G{row_idx}'] = rec['detail_2']
@@ -1732,7 +2132,13 @@ class ExtractionController(http.Controller):
         for usage in bulk_substances_data:
             ws[f'A{row_idx}'] = usage['license_number']
             ws[f'B{row_idx}'] = usage['data_source']
-            ws[f'C{row_idx}'] = usage['activity']
+            activity_map = {
+                'production': 'Sản xuất',
+                'import': 'Nhập khẩu',
+                'export': 'Xuất khẩu',
+                'collection': 'Thu gom',
+            }
+            ws[f'C{row_idx}'] = activity_map.get(usage['activity'], usage['activity'])
             ws[f'D{row_idx}'] = usage['substance_name']
             ws[f'E{row_idx}'] = usage['year']
             ws[f'F{row_idx}'] = usage['quantity_kg']

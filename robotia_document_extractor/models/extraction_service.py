@@ -942,7 +942,7 @@ CASE 2 - Table 1.3 has SEPARATE columns (is_capacity_merged_table_1_3 = FALSE):
 Return JSON with ALL fields below (no omissions, no "..."):
 
 {
-  "year": <integer>,
+  "year": <integer - actual year of report, normally it is specified in tables or the day that the form is submited>,
   "year_1": <integer>,
   "year_2": <integer>,
   "year_3": <integer>,
@@ -1006,7 +1006,7 @@ Return JSON with ALL fields below (no omissions, no "..."):
       "cooling_capacity": "<string or null - ONLY if is_capacity_merged_table_1_2=FALSE. Extract from 'Năng suất lạnh' column. ONLY HP/BTU/TR/RT units>",
       "power_capacity": "<string or null - ONLY if is_capacity_merged_table_1_2=FALSE. Extract from 'Công suất điện' column. ONLY kW/W units>",
       "quantity": <float or null>,
-      "substance_name": "<standardized substance name>",
+      "substance_name": "<standardized substance name, null if is_titile is true>",
       "substance_quantity_per_unit": <float or null>,
       "notes": "<string or null>"
     }
@@ -1231,7 +1231,7 @@ CASE 2 - Table 2.3 has SEPARATE columns (is_capacity_merged_table_2_3 = FALSE):
 Return JSON with ALL fields below (no omissions, no "..."):
 
 {
-  "year": <integer>,
+  "year": <integer: actual year of report, normally it is specified in tables, the day that the form is submited>,
   "year_1": <integer>,
   "year_2": <integer>,
   "year_3": <integer>,
@@ -1297,7 +1297,7 @@ Return JSON with ALL fields below (no omissions, no "..."):
       "cooling_capacity": "<string or null - ONLY if is_capacity_merged_table_2_2=FALSE. Extract from 'Năng suất lạnh' column. ONLY HP/BTU/TR/RT units>",
       "power_capacity": "<string or null - ONLY if is_capacity_merged_table_2_2=FALSE. Extract from 'Công suất điện' column. ONLY kW/W units>",
       "quantity": <float or null>,
-      "substance_name": "<standardized substance name>",
+      "substance_name": "<standardized substance name, null if is_title is true>",
       "substance_quantity_per_unit": <float or null>,
       "notes": "<string or null>"
     }
