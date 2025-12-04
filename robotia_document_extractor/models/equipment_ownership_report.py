@@ -32,8 +32,9 @@ class EquipmentOwnershipReport(models.Model):
             ('refrigeration', 'Refrigeration')
         ],
         string='Ownership Type',
-        required=True,
-        index=True
+        required=False,
+        index=True,
+        help='Type of equipment ownership. Auto-filled by AI extraction if available.'
     )
     equipment_type_id = fields.Many2one('equipment.type', string='Equipment Type', ondelete='restrict', index=True)
     equipment_type = fields.Char(string='Equipment Type Text', compute='_compute_equipment_type', store=True, readonly=False)
