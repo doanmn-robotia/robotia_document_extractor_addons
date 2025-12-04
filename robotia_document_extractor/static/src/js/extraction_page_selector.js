@@ -163,10 +163,6 @@ export class ExtractionPageSelector extends Component {
                 });
             }
 
-            await this.action.doAction('robotia_document_extractor.action_document_extraction_registration', {
-                viewType: 'form'
-            })
-
         } catch (error) {
             console.error("Extraction error:", error);
             this.notification.add(_t("Error during extraction"), { type: "danger" });
