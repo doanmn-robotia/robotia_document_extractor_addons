@@ -5432,3 +5432,13 @@ msgstr "Hỗn hợp môi chất - Dòng R-448/449 (HFO/HFC)"
 #: model:hs.code,product_category:robotia_document_extractor.hs_code_38276900
 msgid "Refrigerant Blends - Other HFC mixtures"
 msgstr "Hỗn hợp môi chất - Các hỗn hợp HFC khác"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_document_extraction__write_uid
+msgid "Last Updated by"
+msgstr "Cập nhật lần cuối bởi"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_document_extraction__write_date
+msgid "Last Updated on"
+msgstr "Cập nhật lần cuối vào"
