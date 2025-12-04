@@ -149,19 +149,19 @@ export class ExtractionPageSelector extends Component {
             // Send attachment IDs instead of page indices
             const selectedAttachmentIds = Array.from(this.state.selectedPages);
 
-            // const result = await this.rpc("/robotia/extract_pages", {
-            //     pdf_file: this.state.base64File,
-            //     attachment_ids: selectedAttachmentIds, // NEW: Send attachment IDs
-            //     document_type: this.state.documentType,
-            // });
+            const result = await this.rpc("/robotia/extract_pages", {
+                pdf_file: this.state.base64File,
+                attachment_ids: selectedAttachmentIds, // NEW: Send attachment IDs
+                document_type: this.state.documentType,
+            });
 
-            // if (result.type === 'ir.actions.act_window') {
-            //     await this.action.doAction(result);
-            // } else if (result.type === 'ir.actions.client') {
-            //     this.notification.add(result.params.message, {
-            //         type: result.params.type
-            //     });
-            // }
+            if (result.type === 'ir.actions.act_window') {
+                await this.action.doAction(result);
+            } else if (result.type === 'ir.actions.client') {
+                this.notification.add(result.params.message, {
+                    type: result.params.type
+                });
+            }
 
             await this.action.doAction('robotia_document_extractor.action_document_extraction_registration', {
                 viewType: 'form'
