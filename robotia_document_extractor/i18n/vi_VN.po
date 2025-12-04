@@ -4218,6 +4218,13 @@ msgstr "Vui lòng chọn ít nhất một trang"
 
 #. module: robotia_document_extractor
 #. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/dashboard/upload_area.js:0
+#, python-format
+msgid "Select pages"
+msgstr "Chọn trang trích xuất"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
 #: code:addons/robotia_document_extractor/static/src/xml/extraction_page_selector.xml:0
 #, python-format
 msgid "Document Extraction"

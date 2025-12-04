@@ -187,7 +187,7 @@
                                     <field name="cooling_capacity" column_invisible="parent.is_capacity_merged_table_1_2"/>
                                     <field name="power_capacity" column_invisible="parent.is_capacity_merged_table_1_2"/>
                                     <field name="quantity" options="{'enable_formatting': false}"/>
-                                    <field name="substance_id" required="1" options="{'no_quick_create': True}"/>
+                                    <field name="substance_id" options="{'no_quick_create': True}"/>
                                     <field name="substance_quantity_per_unit" options="{'enable_formatting': false}"/>
                                     <field name="notes"/>
                                     <field name="is_title" column_invisible="1"/>
@@ -211,7 +211,7 @@
                                     <field name="capacity" column_invisible="not parent.is_capacity_merged_table_1_3"/>
                                     <field name="cooling_capacity" column_invisible="parent.is_capacity_merged_table_1_3"/>
                                     <field name="power_capacity" column_invisible="parent.is_capacity_merged_table_1_3"/>
-                                    <field name="substance_id" required="1" options="{'no_quick_create': True}"/>
+                                    <field name="substance_id" options="{'no_quick_create': True}"/>
                                     <field name="equipment_quantity" options="{'enable_formatting': false}"/>
                                     <field name="refill_frequency" options="{'enable_formatting': false}"/>
                                     <field name="substance_quantity_per_refill" options="{'enable_formatting': false}"/>
@@ -233,7 +233,7 @@
                                     <field name="sequence" widget="handle" options="{'enable_formatting': false}"/>
                                     <field name="activity_type" column_invisible="1"/>
                                     <field name="substance_name" column_invisible="1"/>
-                                    <field name="substance_id" required="1" widget="extraction_title_field" options="{'no_quick_create': True}"/>
+                                    <field name="substance_id" widget="extraction_title_field" options="{'no_quick_create': True}"/>
                                     <field name="quantity_kg" options="{'enable_formatting': false}"/>
                                     <field name="quantity_co2" options="{'enable_formatting': false}"/>
                                     <field name="is_title" column_invisible="1"/>
@@ -253,7 +253,7 @@
                                 <list editable="bottom">
                                     <field name="sequence" widget="handle" options="{'enable_formatting': false}"/>
                                     <field name="substance_name" column_invisible="1"/>
-                                    <field name="substance_id" required="1" widget="extraction_title_field" options="{'no_quick_create': True}"/>
+                                    <field name="substance_id" widget="extraction_title_field" options="{'no_quick_create': True}"/>
                                     <field name="hs_code"/>
                                     <field name="allocated_quota_kg" options="{'enable_formatting': false}"/>
                                     <field name="allocated_quota_co2" options="{'enable_formatting': false}"/>
@@ -289,7 +289,7 @@
                                     <field name="cooling_capacity" column_invisible="parent.is_capacity_merged_table_2_2"/>
                                     <field name="power_capacity" column_invisible="parent.is_capacity_merged_table_2_2"/>
                                     <field name="quantity" options="{'enable_formatting': false}"/>
-                                    <field name="substance_id" required="1" options="{'no_quick_create': True}"/>
+                                    <field name="substance_id" options="{'no_quick_create': True}"/>
                                     <field name="substance_quantity_per_unit" options="{'enable_formatting': false}"/>
                                     <field name="notes"/>
                                     <field name="is_title" column_invisible="1"/>
@@ -311,7 +311,7 @@
                                     <field name="sequence" widget="handle" options="{'enable_formatting': false}"/>
                                     <field name="equipment_type" widget="extraction_title_field"/>
                                     <field name="equipment_quantity" options="{'enable_formatting': false}"/>
-                                    <field name="substance_id" required="1" options="{'no_quick_create': True}"/>
+                                    <field name="substance_id" options="{'no_quick_create': True}"/>
                                     <field name="capacity" column_invisible="not parent.is_capacity_merged_table_2_3"/>
                                     <field name="cooling_capacity" column_invisible="parent.is_capacity_merged_table_2_3"/>
                                     <field name="power_capacity" column_invisible="parent.is_capacity_merged_table_2_3"/>
@@ -335,7 +335,7 @@
                               invisible="document_type != '02' or not has_table_2_4">
                             <field widget="x2many_no_magic_width_list" name="collection_recycling_report_ids">
                                 <list editable="bottom">
-                                    <field name="substance_id" required="1" options="{'no_create': True, 'no_quick_create': True}"/>
+                                    <field name="substance_id" options="{'no_create': True, 'no_quick_create': True}"/>
                                     <!-- Collection -->
                                     <field name="collection_quantity_kg" options="{'enable_formatting': false}"/>
                                     <field name="collection_location"/>
