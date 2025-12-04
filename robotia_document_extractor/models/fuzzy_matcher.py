@@ -96,7 +96,7 @@ class FuzzyMatcher(models.AbstractModel):
         Returns:
             recordset: controlled.substance records (may be empty)
         """
-        if not search_term:
+        if not search_term and not hs_code_term:
             return self.env['controlled.substance']
 
         search_term = search_term.strip()

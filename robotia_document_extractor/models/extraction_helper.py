@@ -416,7 +416,7 @@ class ExtractionHelper(models.AbstractModel):
         # Helper: Populate substance IDs
         def populate_substance_ids(table_data, substance_lookup):
             for row in table_data:
-                substance_name = (row.get('substance_name') or '').strip()
+                substance_name = (row.get('substance_name') or row.get('hs_code')).strip()
                 if substance_name and substance_name in substance_lookup:
                     row['substance_id'] = substance_lookup[substance_name]
 
@@ -433,8 +433,8 @@ class ExtractionHelper(models.AbstractModel):
             for row in table_data:
                 substance_name = (row.get('substance_name') or '').strip()
                 hs_code = (row.get('hs_code') or '').strip() or None
-                if substance_name:
-                    all_substance_info.append((substance_name, hs_code))
+                if substance_name or hs_code:
+                    all_substance_info.append((substance_name or hs_code, hs_code))
 
         # Build substance lookup
         substance_lookup = {}
