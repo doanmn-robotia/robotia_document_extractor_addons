@@ -3,9 +3,9 @@
 .equipment-dashboard-page {
     margin: 0;
     padding: 0;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    background: #f5f6fa;
-    color: #222;
+    font-family: var(--font-body);
+    background: var(--bg-body);
+    color: var(--text-primary);
 
     // Loading & Error States
     .dashboard-loading,
@@ -14,7 +14,7 @@
         justify-content: center;
         align-items: center;
         min-height: 400px;
-        padding: 20px;
+        padding: var(--space-5);
     }
 
     .dashboard-error .alert {
@@ -23,10 +23,10 @@
 
     // Main Page Container
     .page {
-        padding: 20px 26px;
+        padding: var(--space-5) var(--space-6);
         display: flex;
         flex-direction: column;
-        gap: 20px;
+        gap: var(--space-5);
     }
 
     // HEADER
@@ -36,46 +36,47 @@
         align-items: flex-end;
 
         .header-title {
-            font-size: 24px;
+            font-size: var(--space-6);
             font-weight: 700;
+            font-family: var(--font-heading);
         }
 
         .header-sub {
             font-size: 13px;
-            color: #666;
-            margin-top: 4px;
+            color: var(--text-secondary);
+            margin-top: var(--space-1);
         }
 
         .header-actions {
             display: flex;
-            gap: 10px;
+            gap: var(--space-2-5);
         }
 
         .btn {
-            padding: 6px 12px;
-            border-radius: 4px;
+            padding: var(--space-1-5) var(--space-3);
+            border-radius: var(--radius-sm);
             font-size: 12px;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all var(--transition-base);
 
             i {
-                margin-right: 4px;
+                margin-right: var(--space-1);
             }
 
             &.btn-outline {
-                background: #fff;
-                border: 1px solid #ccc;
+                background: var(--bg-white);
+                border: 1px solid var(--border-color);
 
                 &:hover {
                     border-color: #999;
-                    background: #f9f9f9;
+                    background: var(--gray-50);
                 }
             }
 
             &.btn-primary {
-                background: #1a73e8;
+                background: var(--primary-accent);
                 border: none;
-                color: #fff;
+                color: var(--bg-white);
 
                 &:hover {
                     background: #1557b0;
@@ -88,7 +89,7 @@
     .grid-2 {
         display: grid;
         grid-template-columns: 1.4fr 1fr;
-        gap: 20px;
+        gap: var(--space-5);
     }
 
     .grid-4 {
@@ -99,9 +100,9 @@
 
     // CARD
     .card {
-        background: #fff;
-        border-radius: 10px;
-        padding: 14px 18px;
+        background: var(--bg-white);
+        border-radius: var(--radius-lg);
+        padding: 14px var(--space-4-5);
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
         display: flex;
         flex-direction: column;
@@ -109,7 +110,8 @@
 
         .card-title {
             font-weight: 700;
-            font-size: 16px;
+            font-size: var(--space-4);
+            font-family: var(--font-heading);
         }
 
         .info-table {
@@ -119,26 +121,26 @@
 
             .info-label {
                 width: 180px;
-                color: #666;
+                color: var(--text-secondary);
                 font-weight: 600;
-                padding: 4px 0;
+                padding: var(--space-1) 0;
             }
 
             .info-value {
-                padding: 4px 0;
+                padding: var(--space-1) 0;
             }
         }
     }
 
     // KPI
     .kpi-card {
-        background: #fff;
-        border-radius: 10px;
-        padding: 12px 14px;
+        background: var(--bg-white);
+        border-radius: var(--radius-lg);
+        padding: var(--space-3) 14px;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
         display: flex;
         flex-direction: column;
-        gap: 6px;
+        gap: var(--space-1-5);
 
         .kpi-label {
             font-size: 11px;
@@ -149,6 +151,7 @@
         .kpi-value {
             font-size: 22px;
             font-weight: 700;
+            font-family: var(--font-heading);
         }
 
         .kpi-sub {
@@ -159,13 +162,13 @@
 
     // PANELS
     .panel {
-        background: #fff;
-        border-radius: 10px;
-        padding: 14px 16px;
+        background: var(--bg-white);
+        border-radius: var(--radius-lg);
+        padding: 14px var(--space-4);
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: var(--space-2-5);
         min-height: 240px;
 
         .panel-header {
@@ -177,6 +180,7 @@
         .panel-title {
             font-size: 15px;
             font-weight: 600;
+            font-family: var(--font-heading);
         }
 
         .chart-container {
@@ -196,7 +200,7 @@
             justify-content: center;
             align-items: center;
             color: #999;
-            gap: 8px;
+            gap: var(--space-2);
 
             i {
                 font-size: 32px;
@@ -214,8 +218,8 @@
     .table-wrapper {
         max-height: 260px;
         overflow-y: auto;
-        border: 1px solid #eee;
-        border-radius: 6px;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-sm);
 
         table {
             width: 100%;
@@ -226,8 +230,8 @@
                 th {
                     background: #f7f8fc;
                     font-weight: 600;
-                    padding: 8px;
-                    border-bottom: 1px solid #eee;
+                    padding: var(--space-2);
+                    border-bottom: 1px solid var(--border-color);
                     position: sticky;
                     top: 0;
                     z-index: 1;
@@ -238,14 +242,14 @@
 
             tbody {
                 tr {
-                    transition: background-color 0.15s ease;
+                    transition: background-color var(--transition-fast);
 
                     &:hover {
-                        background: #fafbfc;
+                        background: var(--gray-50);
                     }
 
                     td {
-                        padding: 6px 8px;
+                        padding: var(--space-1-5) var(--space-2);
                         border-bottom: 1px solid #f2f2f2;
                     }
                 }
@@ -254,8 +258,8 @@
     }
 
     .badge {
-        padding: 3px 6px;
-        border-radius: 999px;
+        padding: 3px var(--space-1-5);
+        border-radius: var(--radius-full);
         font-size: 10px;
 
         &.badge-success {
@@ -287,14 +291,14 @@
 
     @media (max-width: 768px) {
         .page {
-            padding: 16px;
-            gap: 16px;
+            padding: var(--space-4);
+            gap: var(--space-4);
         }
 
         .header {
             flex-direction: column;
             align-items: flex-start;
-            gap: 12px;
+            gap: var(--space-3);
 
             .header-actions {
                 width: 100%;
@@ -318,9 +322,18 @@
                 font-size: 11px;
 
                 th, td {
-                    padding: 6px;
+                    padding: var(--space-1-5);
                 }
             }
+        }
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .equipment-dashboard-page {
+        .btn,
+        tr {
+            transition: none;
         }
     }
 }

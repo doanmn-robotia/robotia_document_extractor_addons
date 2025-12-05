@@ -1,22 +1,45 @@
-// OCR Tab Styles - Clean Design
+// OCR Tab Styles - Placeholder Content with CSS Variables
 
 .ocr-tab {
-    .card {
-        background: white;
-        border: 1px solid #e5e7eb;
-        border-radius: 12px;
-    }
+    .alert-info {
+        background: var(--info-light);
+        border: 1px solid var(--info);
+        color: var(--info-dark);
+        border-radius: var(--radius-md);
+        padding: var(--space-4);
+        font-family: var(--font-body);
 
-    h4 {
-        color: #111827;
-        font-weight: 700;
+        i {
+            color: var(--info);
+            margin-right: var(--space-2);
+        }
+
+        p {
+            font-size: var(--font-size-sm);
+            line-height: 1.5;
+            margin-bottom: 0;
+        }
     }
 
     .text-muted {
-        color: #6b7280;
+        color: var(--text-muted);
+        font-family: var(--font-body);
+        font-size: var(--font-size-sm);
+    }
+
+    .card {
+        background: var(--bg-white);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+    }
+
+    h4 {
+        font-family: var(--font-heading);
+        color: var(--text-primary);
+        font-weight: 700;
     }
 
     i.fa-file-text {
-        color: #d1d5db;
+        color: var(--gray-300);
     }
 }

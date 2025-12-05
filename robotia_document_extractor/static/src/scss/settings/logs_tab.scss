@@ -1,104 +1,195 @@
-// Logs Tab Styles - Device Kanban Clean Design
+// Logs Tab Styles - Device Kanban Clean Design with CSS Variables
 
 .logs-tab {
     .search-bar {
-        background: white;
-        border: 1px solid #e5e7eb;
-        border-radius: 12px;
-        margin-bottom: 16px;
+        background: var(--bg-white);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        margin-bottom: var(--space-4);
+        padding: var(--space-3);
+        box-shadow: var(--shadow-xs);
+
+        .form-control {
+            font-family: var(--font-body);
+            font-size: var(--font-size-sm);
+            border-color: var(--border-color);
+            border-radius: var(--radius-md);
+            transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+
+            &:focus {
+                border-color: var(--primary-accent);
+                box-shadow: 0 0 0 3px var(--primary-hover-05);
+                outline: none;
+            }
+
+            &::placeholder {
+                color: var(--text-muted);
+            }
+        }
+
+        i.fa-search {
+            color: var(--text-muted);
+        }
     }
 
     .devices-kanban {
+        .row {
+            gap: var(--space-3);
+        }
+
         .device-card {
-            background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 16px;
-            transition: box-shadow 0.15s ease;
+            background: var(--bg-white);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--space-4);
+            transition: box-shadow var(--transition-fast), transform var(--transition-fast);
+            box-shadow: var(--shadow-xs);
+
+            &:hover {
+                box-shadow: var(--shadow-md);
+                transform: translateY(-2px);
+            }
 
             .device-icon {
                 i {
                     opacity: 0.7;
-                    color: #3b82f6;
+                    transition: opacity var(--transition-fast);
+
+                    &.fa-laptop {
+                        color: var(--primary-accent);
+                    }
 
                     &.fa-mobile {
-                        color: #06b6d4;
+                        color: var(--info);
                     }
                 }
             }
 
+            &:hover .device-icon i {
+                opacity: 1;
+            }
+
             .device-header {
                 .badge {
-                    font-size: 10px;
-                    padding: 3px 8px;
+                    font-family: var(--font-body);
+                    font-size: var(--font-size-xs);
+                    padding: var(--space-1) var(--space-2);
                     font-weight: 600;
-                    border-radius: 9999px;
+                    border-radius: var(--radius-full);
+                    line-height: 1.2;
 
                     &.bg-success {
-                        background: #dcfce7;
-                        color: #166534;
-                        border: 1px solid #bbf7d0;
+                        background: var(--success-light);
+                        color: var(--success-dark);
+                        border: 1px solid var(--success);
+
+                        i {
+                            font-size: 6px;
+                            vertical-align: middle;
+                        }
                     }
+                }
+
+                .fw-bold {
+                    font-family: var(--font-heading);
+                    font-weight: 700;
                 }
             }
 
             .device-info {
                 .device-name {
+                    font-family: var(--font-body);
                     font-weight: 700;
-                    color: #111827;
-                    font-size: 14px;
+                    color: var(--text-primary);
+                    font-size: var(--font-size-sm);
                 }
             }
 
             .device-detail {
-                font-size: 13px;
-                color: #6b7280;
-                margin-bottom: 4px;
+                font-family: var(--font-body);
+                font-size: var(--font-size-xs);
+                color: var(--text-secondary);
+                margin-bottom: var(--space-1);
+                line-height: 1.5;
 
                 i {
                     width: 16px;
                     opacity: 0.6;
-                    margin-right: 4px;
+                    margin-right: var(--space-1);
+                    color: var(--text-muted);
+                }
+
+                .text-muted {
+                    color: var(--text-muted);
                 }
             }
 
             .btn-revoke {
-                font-size: 13px;
-                padding: 6px 12px;
-                border-radius: 6px;
+                font-family: var(--font-body);
+                font-size: var(--font-size-xs);
+                padding: var(--space-1) var(--space-3);
+                border-radius: var(--radius-sm);
+                font-weight: 500;
+                transition: all var(--transition-fast);
 
                 &.btn-outline-danger {
-                    color: #dc2626;
-                    border-color: #dc2626;
+                    color: var(--error);
+                    border-color: var(--error);
 
                     &:hover {
-                        background: #dc2626;
-                        color: white;
+                        background: var(--error);
+                        color: var(--color-white);
+                        transform: translateY(-1px);
+                        box-shadow: var(--shadow-sm);
+                    }
+
+                    &:focus-visible {
+                        outline: 2px solid var(--error);
+                        outline-offset: 2px;
                     }
                 }
 
                 &.btn-secondary {
-                    background: #f3f4f6;
-                    color: #6b7280;
-                    border-color: #e5e7eb;
+                    background: var(--gray-100);
+                    color: var(--text-secondary);
+                    border-color: var(--border-color);
+                    cursor: not-allowed;
+                    opacity: 0.6;
                 }
+            }
+        }
+
+        // Responsive: Single column on mobile
+        @media (max-width: 768px) {
+            .col-md-6,
+            .col-lg-4 {
+                flex: 0 0 100%;
+                max-width: 100%;
             }
         }
     }
 
     // Empty State
-    .empty-state {
-        padding: 48px 24px;
+    .empty-state,
+    .text-center.py-5 {
+        padding: var(--space-12) var(--space-6);
         text-align: center;
 
         i {
-            color: #d1d5db;
-            margin-bottom: 16px;
+            color: var(--gray-300);
+            margin-bottom: var(--space-4);
         }
 
         p {
-            color: #6b7280;
-            font-size: 14px;
+            font-family: var(--font-body);
+            color: var(--text-muted);
+            font-size: var(--font-size-sm);
+            line-height: 1.5;
         }
+    }
+
+    // Loading State
+    .fa-spinner {
+        color: var(--primary-accent);
     }
 }

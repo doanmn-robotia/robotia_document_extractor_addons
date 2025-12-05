@@ -1,82 +1,185 @@
-// Backup Tab Styles - Clean Design
+// Backup Tab Styles - Clean Info Card Design with CSS Variables
 
 .backup-tab {
     .card {
-        background: white;
-        border: 1px solid #e5e7eb;
-        border-radius: 12px;
-    }
+        background: var(--bg-white);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-sm);
+        transition: box-shadow var(--transition-fast), transform var(--transition-fast);
 
-    h4 {
-        color: #111827;
-        font-weight: 700;
-    }
+        &:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
 
-    .text-muted {
-        color: #6b7280;
+        .card-body {
+            padding: var(--space-5);
+        }
+
+        .card-title {
+            font-family: var(--font-heading);
+            color: var(--text-primary);
+            font-weight: 700;
+            font-size: var(--font-size-lg);
+            margin-bottom: var(--space-2);
+
+            i {
+                color: var(--primary-accent);
+                margin-right: var(--space-2);
+            }
+        }
+
+        .card-text {
+            font-family: var(--font-body);
+            color: var(--text-secondary);
+            font-size: var(--font-size-sm);
+            line-height: 1.5;
+        }
     }
 
     .alert-info {
-        background: #dbeafe;
-        border: 1px solid #bfdbfe;
-        color: #1e40af;
-        border-radius: 8px;
-        padding: 12px 16px;
+        background: var(--info-light);
+        border: 1px solid var(--info);
+        color: var(--info-dark);
+        border-radius: var(--radius-md);
+        padding: var(--space-4);
+        font-family: var(--font-body);
 
-        strong {
-            color: #1e3a8a;
-            font-weight: 600;
+        .alert-heading {
+            font-family: var(--font-heading);
+            color: var(--info-dark);
+            font-weight: 700;
+            font-size: var(--font-size-lg);
         }
 
         i {
-            color: #3b82f6;
-            margin-right: 8px;
+            color: var(--info);
+        }
+
+        p {
+            font-size: var(--font-size-sm);
+            line-height: 1.5;
+        }
+
+        strong {
+            color: var(--info-dark);
+            font-weight: 600;
         }
     }
 
+    h4 {
+        font-family: var(--font-heading);
+        color: var(--text-primary);
+        font-weight: 700;
+        font-size: var(--font-size-xl);
+    }
+
+    .text-muted {
+        color: var(--text-secondary);
+        font-family: var(--font-body);
+        font-size: var(--font-size-sm);
+    }
+
     .btn-info {
-        background: #06b6d4;
-        border-color: #06b6d4;
-        color: white;
-        border-radius: 8px;
-        padding: 8px 16px;
-        font-size: 14px;
+        background: var(--info);
+        border-color: var(--info);
+        color: var(--color-white);
+        border-radius: var(--radius-md);
+        padding: var(--space-2) var(--space-4);
+        font-family: var(--font-body);
+        font-size: var(--font-size-sm);
         font-weight: 500;
+        transition: all var(--transition-fast);
 
         &:hover {
-            background: #0891b2;
-            border-color: #0891b2;
+            background: var(--info-dark);
+            border-color: var(--info-dark);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        &:focus-visible {
+            outline: 2px solid var(--info);
+            outline-offset: 2px;
         }
 
         i {
-            margin-right: 8px;
+            margin-right: var(--space-2);
         }
     }
 
     .list-group-item {
-        border: 1px solid #e5e7eb;
+        background: var(--bg-white);
+        border: 1px solid var(--border-color);
         border-left: 3px solid transparent;
-        transition: border-color 0.15s ease, background-color 0.15s ease;
-        padding: 12px 16px;
+        transition: border-color var(--transition-fast), background-color var(--transition-fast);
+        padding: var(--space-3) var(--space-4);
+        font-family: var(--font-body);
+
+        &:first-child {
+            border-top-left-radius: var(--radius-md);
+            border-top-right-radius: var(--radius-md);
+        }
+
+        &:last-child {
+            border-bottom-left-radius: var(--radius-md);
+            border-bottom-right-radius: var(--radius-md);
+        }
 
         &:hover {
-            border-left-color: #06b6d4;
-            background: #f9fafb;
+            border-left-color: var(--info);
+            background: var(--gray-50);
+        }
+
+        strong {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        small {
+            color: var(--text-secondary);
+            font-size: var(--font-size-xs);
         }
 
         i {
-            color: #22c55e;
-            margin-right: 8px;
+            color: var(--success);
+            margin-right: var(--space-2);
         }
     }
 
     h6 {
-        color: #6b7280;
+        font-family: var(--font-body);
+        color: var(--text-secondary);
         font-weight: 500;
-        font-size: 14px;
+        font-size: var(--font-size-sm);
     }
 
     i.fa-database {
-        color: #06b6d4;
+        color: var(--info);
+    }
+
+    // Empty state
+    .empty-state {
+        padding: var(--space-12) var(--space-6);
+        text-align: center;
+
+        i {
+            color: var(--gray-300);
+            margin-bottom: var(--space-4);
+        }
+
+        p {
+            font-family: var(--font-body);
+            color: var(--text-muted);
+            font-size: var(--font-size-sm);
+        }
+    }
+
+    // Responsive
+    @media (max-width: 768px) {
+        .card-body {
+            padding: var(--space-4);
+        }
     }
 }

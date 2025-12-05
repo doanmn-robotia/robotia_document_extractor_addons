@@ -26,6 +26,9 @@
     'application': True,
     'assets': {
         'web.assets_backend': [
+            # Google Fonts for Modern Professional Typography
+            ('prepend', 'https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Open+Sans:wght@400;500;600&display=swap'),
+
             # Utilities (must load first)
             'robotia_document_extractor/static/src/js/utils/chart_utils.js',
 

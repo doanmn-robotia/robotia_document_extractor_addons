@@ -3,27 +3,46 @@
 /**
  * Chart utilities for dashboard analytics
  * Provides color palettes, default options, and helper functions for Chart.js
+ *
+ * IMPORTANT: Chart colors are aligned with backend_theme CSS variables.
+ * These colors match the default theme palette (Indigo/Slate) but are hardcoded
+ * in JavaScript since Chart.js cannot directly use CSS variables.
+ *
+ * If you change the theme colors in Settings > Backend Theme, you may want to
+ * update these values to match your custom theme.
  */
 
-// Color palette for charts
+// Color palette for charts - Aligned with backend_theme CSS variables
 export const CHART_COLORS = {
-    primary: '#1A73E8',      // Blue
-    success: '#34A853',      // Green
-    warning: '#FBBC04',      // Yellow
-    danger: '#EA4335',       // Red
-    info: '#4285F4',         // Light Blue
-    purple: '#9C27B0',       // Purple
-    orange: '#FF9800',       // Orange
-    teal: '#009688',         // Teal
-    pink: '#E91E63',         // Pink
-    indigo: '#3F51B5',       // Indigo
+    primary: '#6366f1',      // Indigo-500 (matches var(--primary-accent))
+    success: '#10b981',      // Emerald-500 (matches var(--success))
+    warning: '#f59e0b',      // Amber-500 (matches var(--warning))
+    danger: '#ef4444',       // Red-500 (matches var(--error))
+    info: '#3b82f6',         // Blue-500 (matches var(--info))
+    purple: '#a855f7',       // Purple-500
+    orange: '#fb923c',       // Orange-400
+    teal: '#14b8a6',         // Teal-500
+    pink: '#ec4899',         // Pink-500
+    indigo: '#6366f1',       // Indigo-500 (same as primary)
 };
 
-// Array of colors for multi-series charts
+// Array of colors for multi-series charts - Aligned with theme palette
 export const CHART_COLOR_ARRAY = [
-    '#1A73E8', '#34A853', '#FBBC04', '#EA4335', '#4285F4',
-    '#9C27B0', '#FF9800', '#009688', '#E91E63', '#3F51B5',
-    '#795548', '#607D8B', '#FF5722', '#00BCD4', '#8BC34A'
+    '#6366f1', // Primary (Indigo)
+    '#10b981', // Success (Emerald)
+    '#f59e0b', // Warning (Amber)
+    '#ef4444', // Error (Red)
+    '#3b82f6', // Info (Blue)
+    '#a855f7', // Purple
+    '#fb923c', // Orange
+    '#14b8a6', // Teal
+    '#ec4899', // Pink
+    '#8b5cf6', // Violet
+    '#06b6d4', // Cyan
+    '#84cc16', // Lime
+    '#f97316', // Orange-600
+    '#eab308', // Yellow
+    '#22c55e'  // Green
 ];
 
 // Default chart options (common for all charts)
@@ -37,7 +56,7 @@ export const DEFAULT_CHART_OPTIONS = {
                 padding: 15,
                 font: {
                     size: 12,
-                    family: "'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+                    family: "'Open Sans', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
                 },
                 boxWidth: 12,
                 boxHeight: 12,

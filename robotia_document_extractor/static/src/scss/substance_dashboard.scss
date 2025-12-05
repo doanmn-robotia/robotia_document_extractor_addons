@@ -3,9 +3,9 @@
 .substance-dashboard-page {
     margin: 0;
     padding: 0;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    background: #f5f6fa;
-    color: #222;
+    font-family: var(--font-body);
+    background: var(--bg-body);
+    color: var(--text-primary);
 
     // Loading & Error States
     .dashboard-loading,
@@ -14,7 +14,7 @@
         justify-content: center;
         align-items: center;
         min-height: 400px;
-        padding: 20px;
+        padding: var(--space-5);
     }
 
     .dashboard-error .alert {
@@ -23,10 +23,10 @@
 
     // Main Page Container
     .page {
-        padding: 20px 26px;
+        padding: var(--space-5) var(--space-6);
         display: flex;
         flex-direction: column;
-        gap: 20px;
+        gap: var(--space-5);
     }
 
     // HEADER
@@ -36,47 +36,48 @@
         align-items: flex-end;
 
         .header-title {
-            font-size: 24px;
+            font-size: var(--space-6);
             font-weight: 700;
+            font-family: var(--font-heading);
         }
 
         .header-sub {
             font-size: 13px;
-            color: #666;
-            margin-top: 4px;
+            color: var(--text-secondary);
+            margin-top: var(--space-1);
         }
 
         .header-actions {
             display: flex;
-            gap: 8px;
+            gap: var(--space-2);
         }
 
         .btn {
-            padding: 6px 12px;
-            border-radius: 4px;
+            padding: var(--space-1-5) var(--space-3);
+            border-radius: var(--radius-sm);
             font-size: 12px;
             cursor: pointer;
             border: none;
             background: none;
-            transition: all 0.2s ease;
+            transition: all var(--transition-base);
 
             i {
-                margin-right: 4px;
+                margin-right: var(--space-1);
             }
 
             &.btn-outline {
-                border: 1px solid #ccc;
-                background: #fff;
+                border: 1px solid var(--border-color);
+                background: var(--bg-white);
 
                 &:hover {
                     border-color: #999;
-                    background: #f9f9f9;
+                    background: var(--gray-50);
                 }
             }
 
             &.btn-primary {
-                background: #1a73e8;
-                color: #fff;
+                background: var(--primary-accent);
+                color: var(--bg-white);
 
                 &:hover {
                     background: #1557b0;
@@ -87,14 +88,14 @@
 
     // PANELS
     .panel {
-        background: #fff;
-        border-radius: 10px;
-        padding: 12px 16px;
+        background: var(--bg-white);
+        border-radius: var(--radius-lg);
+        padding: var(--space-3) var(--space-4);
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         min-height: 240px;
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: var(--space-2-5);
 
         .panel-header {
             display: flex;
@@ -105,6 +106,7 @@
         .panel-title {
             font-size: 15px;
             font-weight: 600;
+            font-family: var(--font-heading);
         }
 
         .chart-container {
@@ -124,7 +126,7 @@
             justify-content: center;
             align-items: center;
             color: #999;
-            gap: 8px;
+            gap: var(--space-2);
 
             i {
                 font-size: 32px;
@@ -142,13 +144,13 @@
     .grid-2 {
         display: grid;
         grid-template-columns: 1.6fr 1fr;
-        gap: 18px;
+        gap: var(--space-4-5);
     }
 
     .grid-3 {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 12px;
+        gap: var(--space-3);
     }
 
     // KPI CARDS
@@ -159,13 +161,13 @@
     }
 
     .kpi-card {
-        background: #fff;
-        border-radius: 10px;
-        padding: 12px 14px;
+        background: var(--bg-white);
+        border-radius: var(--radius-lg);
+        padding: var(--space-3) 14px;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
         display: flex;
         flex-direction: column;
-        gap: 6px;
+        gap: var(--space-1-5);
 
         .kpi-label {
             font-size: 11px;
@@ -176,7 +178,8 @@
         .kpi-value {
             font-size: 22px;
             font-weight: 700;
-            color: #222;
+            color: var(--text-primary);
+            font-family: var(--font-heading);
         }
 
         .kpi-sub {
@@ -189,8 +192,8 @@
     .table-wrapper {
         max-height: 260px;
         overflow: auto;
-        border-radius: 6px;
-        border: 1px solid #eee;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border-color);
 
         table {
             width: 100%;
@@ -200,8 +203,8 @@
             thead {
                 th {
                     background: #f7f8fc;
-                    border-bottom: 1px solid #eee;
-                    padding: 8px;
+                    border-bottom: 1px solid var(--border-color);
+                    padding: var(--space-2);
                     position: sticky;
                     top: 0;
                     font-weight: 600;
@@ -212,25 +215,25 @@
 
             tbody {
                 tr {
-                    transition: background-color 0.15s ease;
+                    transition: background-color var(--transition-fast);
 
                     &:hover {
-                        background: #fafbfc;
+                        background: var(--gray-50);
                     }
 
                     td {
-                        padding: 6px 8px;
+                        padding: var(--space-1-5) var(--space-2);
                         border-bottom: 1px solid #f2f2f2;
                         vertical-align: middle;
 
                         strong {
-                            color: #222;
+                            color: var(--text-primary);
                         }
 
                         .badge {
-                            padding: 2px 6px;
+                            padding: 2px var(--space-1-5);
                             font-size: 10px;
-                            border-radius: 999px;
+                            border-radius: var(--radius-full);
                             display: inline-block;
 
                             &.badge-primary {
@@ -255,21 +258,21 @@
                         }
 
                         .btn-link {
-                            padding: 4px 8px;
+                            padding: var(--space-1) var(--space-2);
                             border: none;
                             background: none;
-                            color: #1a73e8;
+                            color: var(--primary-accent);
                             cursor: pointer;
                             font-size: 11px;
-                            border-radius: 4px;
-                            transition: background-color 0.15s ease;
+                            border-radius: var(--radius-sm);
+                            transition: background-color var(--transition-fast);
 
                             &:hover {
                                 background: rgba(26, 115, 232, 0.08);
                             }
 
                             i {
-                                margin-right: 4px;
+                                margin-right: var(--space-1);
                             }
                         }
                     }
@@ -295,7 +298,7 @@
         .header {
             flex-direction: column;
             align-items: flex-start;
-            gap: 12px;
+            gap: var(--space-3);
 
             .header-actions {
                 width: 100%;
@@ -313,13 +316,13 @@
 
     @media (max-width: 768px) {
         .page {
-            padding: 16px;
-            gap: 16px;
+            padding: var(--space-4);
+            gap: var(--space-4);
         }
 
         .kpi-row {
             grid-template-columns: 1fr;
-            gap: 10px;
+            gap: var(--space-2-5);
         }
 
         .table-wrapper {
@@ -331,9 +334,18 @@
                 font-size: 11px;
 
                 th, td {
-                    padding: 6px;
+                    padding: var(--space-1-5);
                 }
             }
+        }
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .substance-dashboard-page {
+        .btn,
+        tr {
+            transition: none;
         }
     }
 }
