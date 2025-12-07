@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_document_extractor_config_form_standalone" model="ir.ui.view">
+        <field name="name">document.extractor.config.form.standalone</field>
+        <field name="model">res.config.settings</field>
+        <field name="priority">1000</field>
+        <field name="arch" type="xml">
+            <form string="Document Extractor Settings" class="oe_form_configuration" js_class="base_settings">
+                <div class="app_settings_block">
+                    <block title="AI Configuration">
+                        <setting id="gemini_api_key_setting"
+                                 help="Configure your Google Gemini API key for AI-powered document extraction">
+                            <field name="gemini_api_key" password="True" placeholder="AIza..." class="oe_inline"/>
+                            <div class="content-group mt8">
+                                <div class="text-muted">
+                                    Get your API key from <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a>
+                                </div>
+                            </div>
+                        </setting>
+                        <setting id="gemini_max_output_tokens_setting"
+                                 string="Max Output Tokens"
+                                 help="Maximum number of tokens for Gemini API response. Increase if extraction fails for very long documents.">
+                            <field name="gemini_max_output_tokens" class="oe_inline"/>
+                            <div class="content-group mt8">
+                                <div class="text-muted">
+                                    Recommended: 65536 (maximum for Gemini 2.0 Flash). Reduce if you want to limit API costs.
+                                </div>
+                            </div>
+                        </setting>
+                        <setting id="gemini_max_retries_setting"
+                                 string="Max Retries"
+                                 help="Maximum retry attempts when Gemini API extraction fails. Retries are executed immediately without delay.">
+                            <field name="gemini_max_retries" class="oe_inline"/>
+                            <div class="content-group mt8">
+                                <div class="text-muted">
+                                    Default: 3 retries executed immediately. Increase for unreliable API responses.
+                                </div>
+                            </div>
+                        </setting>
+                        <setting id="gemini_allow_fallback_setting"
+                                 string="Allow Fallback Strategy"
+                                 help="Enable fallback to 2-step extraction when direct extraction fails.">
+                            <field name="gemini_allow_fallback"/>
+                            <div class="content-group mt8">
+                                <div class="text-muted">
+                                    When enabled, if direct PDF extraction fails, the system will automatically try 2-step extraction (PDF → Text → JSON).
+                                    Disable this to fail immediately without fallback.
+                                </div>
+                            </div>
+                        </setting>
+                        <setting id="gemini_model_setting"
+                                 string="Gemini Model"
+                                 help="Select the Gemini model to use for extraction. Different models have different capabilities and costs.">
+                            <field name="gemini_model" class="oe_inline" placeholder="gemini-2.5-pro"/>
+                            <div class="content-group mt8">
+                                <div class="text-muted">
+                                    Available models: gemini-3-pro-preview, gemini-2.5-pro
+                                    <br/>
+                                    See <a href="https://ai.google.dev/gemini-api/docs/models/gemini" target="_blank">Gemini Models documentation</a> for details.
+                                </div>
+                            </div>
+                        </setting>
+                        <setting id="extract_pages_run_ocr_setting"
+                                 string="Run OCR for Page Extraction"
+                                 help="If enabled, OCR will be run on the extracted pages before AI processing.">
+                            <field name="extract_pages_run_ocr"/>
+                            <div class="content-group mt8">
+                                <div class="text-muted">
+                                    Enable this if the source PDF is an image scan without text layer.
+                                    Disable to speed up processing for digital PDFs.
+                                </div>
+                            </div>
+                        </setting>
+                        <setting id="extraction_strategy_setting"
+                                 string="Extraction Strategy"
+                                 help="Choose how PDF documents are processed for extraction">
+                            <field name="extraction_strategy" widget="radio" class="o_light_label"/>
+                            <div class="content-group mt8">
+                                <div class="text-muted">
+                                    <strong>100% AI (Recommended):</strong> Gemini processes PDF directly, understanding layout and structure.<br/>
+                                    <strong>Text Extract + AI:</strong> Extract text first with PyMuPDF, then structure with AI. May be faster for very large PDFs.<br/>
+                                    <strong>Batch Extraction:</strong> Convert PDF to images, process in batches with adaptive sizing. Best for very large documents (20+ pages).
+                                </div>
+                            </div>
+                        </setting>
+                    </block>
+
+                    <!-- Batch Extraction Configuration -->
+                    <block title="Batch Extraction Configuration" invisible="extraction_strategy != 'batch_extract'">
+                        <setting id="batch_size_min_setting"
+                                 string="Minimum Batch Size"
+                                 help="Minimum pages per API call for complex documents with many table rows">
+                            <field name="batch_size_min" class="oe_inline"/>
+                            <div class="content-group mt8">
+                                <div class="text-muted">
+                                    For documents with many tables (complex): process fewer pages per API call for better accuracy.
+                                    Recommended: 3 pages.
+                                </div>
+                            </div>
+                        </setting>
+                        <setting id="batch_size_max_setting"
+                                 string="Maximum Batch Size"
+                                 help="Maximum pages per API call for simple documents with few table rows">
+                            <field name="batch_size_max" class="oe_inline"/>
+                            <div class="content-group mt8">
+                                <div class="text-muted">
+                                    For simple documents: process more pages per API call for efficiency.
+                                    Recommended: 7 pages.
+                                </div>
+                            </div>
+                        </setting>
+                        <setting id="batch_image_dpi_setting"
+                                 string="Image Resolution (DPI)"
+                                 help="Resolution when converting PDF to images">
+                            <field name="batch_image_dpi" class="oe_inline"/>
+                            <div class="content-group mt8">
+                                <div class="text-muted">
+                                    Higher DPI = better image quality but larger file sizes and longer processing time.
+                                    Recommended range: 150-300 DPI. Default: 200 DPI.
+                                </div>
+                            </div>
+                        </setting>
+                    </block>
+
+                    <block title="AI Extraction Prompts Configuration">
+                        <setting id="extraction_prompts_setting" string="Direct Extraction Prompts">
+                            <div class="d-flex gap-2">
+                                <button string="Get Register Prompt" name="action_get_prompt_form_01" type="object" class="btn btn-outline-primary"/>
+                                <button string="Get Report Prompt" name="action_get_prompt_form_02" type="object" class="btn btn-outline-primary"/>
+                            </div>
+                            <div class="content-group mt8">
+                                <div class="text-muted">
+                                    Reset prompts for direct extraction strategies (100% AI and Text Extract + AI).
+                                </div>
+                            </div>
+                        </setting>
+                        <setting id="batch_extraction_prompts_setting"
+                                 string="Batch Extraction Prompts"
+                                 invisible="extraction_strategy != 'batch_extract'">
+                            <div class="d-flex gap-2">
+                                <button string="Get Batch Register Prompt" name="action_get_batch_prompt_form_01" type="object" class="btn btn-outline-primary"/>
+                                <button string="Get Batch Report Prompt" name="action_get_batch_prompt_form_02" type="object" class="btn btn-outline-primary"/>
+                            </div>
+                            <div class="content-group mt8">
+                                <div class="text-muted">
+                                    Reset prompts for batch extraction strategy. These prompts are optimized for per-page extraction with context memory.
+                                </div>
+                            </div>
+                        </setting>
+                    </block>
+
+                    <block title="Integrations">
+                        <setting id="google_drive_integration_setting"
+                                 string="Google Drive Integration"
+                                 class="col w-100"
+                                 help="Configure Google Drive integration to sync documents for extraction">
+                            <div id="google_drive_enabled" class="col-12 col-lg-12 o_setting_box">
+                                <div class="o_setting_left_pane">
+                                    <field name="google_drive_enabled" readonly="False"/>
+                                </div>
+                                <div class="o_setting_right_pane">
+                                    <label for="google_drive_enabled"/>
+                                </div>
+                            </div>
+                            <div class="content-group" invisible="not google_drive_enabled">
+                                <!-- Hidden field that triggers recompute when JSON changes -->
+                                <field name="google_drive_service_account_json" invisible="1"/>
+
+                                <div class="row mt16">
+                                    <label class="col-lg-3 o_light_label" for="google_drive_configured" string="Service Account"/>
+                                    <div class="col-lg-9">
+                                        <field name="google_drive_configured" invisible="1"/>
+                                        <field name="google_drive_service_account_email" readonly="1" invisible="not google_drive_service_account_email" class="w-100"/>
+                                        <div class="mt-2 d-flex gap-2">
+                                            <button string="Configure Service Account"
+                                                    name="action_open_google_drive_config_wizard"
+                                                    type="object"
+                                                    class="btn btn-primary"
+                                                    icon="fa-upload"/>
+                                            <button string="Test Connection"
+                                                    name="action_test_google_drive_connection"
+                                                    type="object"
+                                                    class="btn btn-success ms-2"
+                                                    icon="fa-plug"
+                                                    invisible="not google_drive_configured"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row mt16" invisible="not google_drive_configured">
+                                    <div class="col-12">
+                                        <div class="alert alert-success">
+                                            <i class="fa fa-check-circle"/> Google Drive is configured and ready to use.
+                                            Click "Configure Service Account" to update credentials or folder settings.
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row mt16" invisible="google_drive_configured">
+                                    <div class="col-12">
+                                        <div class="alert alert-warning">
+                                            <i class="fa fa-exclamation-triangle"/> Google Drive is not configured yet.
+                                            Click "Configure Service Account" to upload your service account JSON file.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </setting>
+                    </block>
+                </div>
+            </form>
+        </field>
+    </record>
+</odoo>

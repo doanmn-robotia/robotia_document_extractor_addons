@@ -2,44 +2,46 @@
 <odoo>
     <data>
         <!-- Security Groups Category -->
-        <record id="module_category_document_extractor" model="ir.module.category">
+        <record id="base.module_category_document_extractor" model="ir.module.category">
             <field name="name">Document Extractor</field>
             <field name="description">User roles for Document Extractor module</field>
             <field name="sequence">10</field>
+            <field name="parent_id" eval="False"/>
+            <field name="exclusive" eval="True"/>
         </record>
 
-        <!-- Viewer Group (Base level) -->
+        <!-- Viewer Group (Read-only access) -->
         <record id="group_document_extractor_viewer" model="res.groups">
             <field name="name">Viewer</field>
-            <field name="category_id" ref="module_category_document_extractor"/>
-            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
-            <field name="comment">Can view documents and extractions</field>
+            <field name="category_id" ref="base.module_category_document_extractor"/>
+            <field name="implied_ids" eval="[
+                (4, ref('base.group_user'))
+            ]"/>
+            <field name="comment">Can view documents and extractions (read-only)</field>
         </record>
 
-        <!-- Checker Group -->
+        <!-- Checker Group (Review and validate) -->
         <record id="group_document_extractor_checker" model="res.groups">
             <field name="name">Checker</field>
-            <field name="category_id" ref="module_category_document_extractor"/>
+            <field name="category_id" ref="base.module_category_document_extractor"/>
             <field name="implied_ids" eval="[(4, ref('group_document_extractor_viewer'))]"/>
             <field name="comment">Can review and validate extractions</field>
         </record>
 
-        <!-- Maker Group -->
+        <!-- Maker Group (Create and edit) -->
         <record id="group_document_extractor_maker" model="res.groups">
             <field name="name">Maker</field>
-            <field name="category_id" ref="module_category_document_extractor"/>
-            <field name="implied_ids" eval="[(4, ref('group_document_extractor_viewer'))]"/>
+            <field name="category_id" ref="base.module_category_document_extractor"/>
+            <field name="implied_ids" eval="[(4, ref('group_document_extractor_checker'))]"/>
             <field name="comment">Can create and edit document extractions</field>
         </record>
 
-        <!-- Admin Group (Full access) -->
+        <!-- Admin Group (Full module access) -->
         <record id="group_document_extractor_admin" model="res.groups">
             <field name="name">Admin</field>
-            <field name="category_id" ref="module_category_document_extractor"/>
+            <field name="category_id" ref="base.module_category_document_extractor"/>
             <field name="implied_ids" eval="[
-                (4, ref('group_document_extractor_maker')),
-                (4, ref('group_document_extractor_checker')),
-                (4, ref('base.group_system'))
+                (4, ref('group_document_extractor_maker'))
             ]"/>
             <field name="comment">Full access to Document Extractor module including settings</field>
         </record>

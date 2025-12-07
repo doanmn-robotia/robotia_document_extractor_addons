@@ -48,8 +48,8 @@
                                             <div class="device-header mb-2">
                                                 <div class="d-flex align-items-center">
                                                     <span class="fw-bold me-2" t-esc="device.display_name"/>
-                                                    <span t-if="device.is_current" class="badge bg-success">
-                                                        <i class="fa fa-circle me-1" style="font-size: 6px;"/>
+                                                    <span t-if="device.is_current" class="badge badge-current">
+                                                        <i class="fa fa-circle"/>
                                                         Current
                                                     </span>
                                                 </div>

@@ -6,9 +6,11 @@
     'sequence': 10,
     'description': "",
     'depends': ['web'],
+    'category': "Document Extractor",
     'data': [
         'data/security_groups.xml',
         'security/ir.model.access.csv',
+        'security/ir_rules.xml',
         'data/hs_code_data.xml',
         'data/master_data.xml',
         'data/substance_groups_data.xml',
@@ -19,6 +21,7 @@
         'views/master_data_views.xml',
         'views/google_drive_extraction_log_views.xml',
         'views/res_config_settings_views.xml',
+        'views/res_config_settings_document_only.xml',
         'views/menus.xml',
         'views/client_actions.xml',
     ],
@@ -99,29 +102,23 @@
             # Settings Dashboard (Main Component)
             'robotia_document_extractor/static/src/js/dashboard/settings_dashboard.js',
 
-            # Settings Dashboard Tab Components
+            # Settings Dashboard Tab Components (OCR and Permissions removed)
             'robotia_document_extractor/static/src/js/dashboard/settings/users_tab.js',
-            'robotia_document_extractor/static/src/js/dashboard/settings/permissions_tab.js',
             'robotia_document_extractor/static/src/js/dashboard/settings/ai_tab.js',
-            'robotia_document_extractor/static/src/js/dashboard/settings/ocr_tab.js',
             'robotia_document_extractor/static/src/js/dashboard/settings/backup_tab.js',
             'robotia_document_extractor/static/src/js/dashboard/settings/logs_tab.js',
 
-            # Settings Dashboard Templates
+            # Settings Dashboard Templates (OCR and Permissions removed)
             'robotia_document_extractor/static/src/xml/settings_dashboard.xml',
             'robotia_document_extractor/static/src/xml/settings/users_tab.xml',
-            'robotia_document_extractor/static/src/xml/settings/permissions_tab.xml',
             'robotia_document_extractor/static/src/xml/settings/ai_tab.xml',
-            'robotia_document_extractor/static/src/xml/settings/ocr_tab.xml',
             'robotia_document_extractor/static/src/xml/settings/backup_tab.xml',
             'robotia_document_extractor/static/src/xml/settings/logs_tab.xml',
 
-            # Settings Dashboard Styles
+            # Settings Dashboard Styles (OCR and Permissions removed)
             'robotia_document_extractor/static/src/scss/settings_dashboard.scss',
             'robotia_document_extractor/static/src/scss/settings/users_tab.scss',
-            'robotia_document_extractor/static/src/scss/settings/permissions_tab.scss',
             'robotia_document_extractor/static/src/scss/settings/ai_tab.scss',
-            'robotia_document_extractor/static/src/scss/settings/ocr_tab.scss',
             'robotia_document_extractor/static/src/scss/settings/backup_tab.scss',
             'robotia_document_extractor/static/src/scss/settings/logs_tab.scss',
 

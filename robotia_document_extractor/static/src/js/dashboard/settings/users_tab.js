@@ -2,6 +2,8 @@
 
 import { Component, useState, onWillStart } from "@odoo/owl";
 import { useService } from "@web/core/utils/hooks";
+import { ConfirmationDialog } from "@web/core/confirmation_dialog/confirmation_dialog";
+import { _t } from "@web/core/l10n/translation";
 
 export class UsersTab extends Component {
     static template = "robotia_document_extractor.SettingsUsersTab";
@@ -9,10 +11,11 @@ export class UsersTab extends Component {
     setup() {
         this.orm = useService("orm");
         this.action = useService("action");
+        this.dialog = useService("dialog");
+
         this.state = useState({
             users: [],
-            systemGroupId: null,
-            stats: { total: 0, admin: 0, maker: 0, checker: 0, viewer: 0 },
+            stats: { total: 0, admin: 0, maker: 0, checker: 0 },
             searchQuery: '',
             roleFilter: 'All',
             statusFilter: 'All',
@@ -20,70 +23,97 @@ export class UsersTab extends Component {
         });
 
         onWillStart(async () => {
-            await this.loadSystemGroup();
             await this.loadUsers();
             this.computeStats();
             this.state.loading = false;
         });
     }
 
-    async loadSystemGroup() {
-        // Load base.group_system ID
-        const groups = await this.orm.searchRead(
-            "res.groups",
-            [["name", "=", "Settings"]],
-            ["id"]
-        );
-        if (groups.length > 0) {
-            this.state.systemGroupId = groups[0].id;
-        }
-    }
-
     async loadUsers() {
-        // Load all users with their groups
-        this.state.users = await this.orm.searchRead(
+        // webSearchRead with EMPTY domain [] - ir.rule automatically filters:
+        // - System Admin: sees ALL users
+        // - Doc Admin: sees only users with Document Extractor groups
+        const result = await this.orm.webSearchRead(
             "res.users",
-            [],
-            ["id", "name", "login", "email", "phone", "active", "create_date", "groups_id"],
+            [],  // Empty domain - let ir.rule handle filtering
             {
+                specification: {
+                    id: {},
+                    name: {},
+                    login: {},
+                    email: {},
+                    phone: {},
+                    active: {},
+                    create_date: {},
+                    is_doc_admin: {},
+                    is_doc_maker: {},
+                    is_doc_checker: {},
+                    is_system_admin: {}
+                },
                 order: "create_date desc"
             }
         );
+        this.state.users = result.records;
     }
 
     computeStats() {
-        const users = this.state.users;
-        this.state.stats.total = users.length;
+        const users = this.state.users.filter(u => u.active);
+        this.state.stats.total = this.state.users.length;
 
-        // Admin = users with base.group_system
-        this.state.stats.admin = users.filter(u =>
-            u.groups_id.includes(this.state.systemGroupId)
-        ).length;
-
-        // For now, Maker/Checker/Viewer stats are 0 (can be extended later)
+        // Admin card counts BOTH System Admin AND Document Admin
+        // Maker and Checker count only their respective roles
+        this.state.stats.admin = 0;
         this.state.stats.maker = 0;
         this.state.stats.checker = 0;
-        this.state.stats.viewer = 0;
+
+        users.forEach(user => {
+            // Admin card: count both System Admin and Document Admin
+            if (user.is_system_admin || user.is_doc_admin) {
+                this.state.stats.admin++;
+            }
+            // Only count Maker/Checker if user is NOT an admin
+            else if (user.is_doc_maker) {
+                this.state.stats.maker++;
+            } else if (user.is_doc_checker) {
+                this.state.stats.checker++;
+            }
+            // Users with no role are not counted in any category
+        });
     }
 
     get filteredUsers() {
         return this.state.users.filter(user => {
-            const matchSearch = user.name.toLowerCase().includes(this.state.searchQuery.toLowerCase()) ||
-                               (user.email && user.email.toLowerCase().includes(this.state.searchQuery.toLowerCase())) ||
-                               (user.phone && user.phone.includes(this.state.searchQuery));
+            const matchSearch = !this.state.searchQuery ||
+                user.name.toLowerCase().includes(this.state.searchQuery.toLowerCase()) ||
+                (user.email && user.email.toLowerCase().includes(this.state.searchQuery.toLowerCase()));
 
-            // Admin filter = check if user has base.group_system
             const matchRole = this.state.roleFilter === 'All' ||
-                             (this.state.roleFilter === 'Admin' && user.groups_id.includes(this.state.systemGroupId)) ||
-                             (this.state.roleFilter !== 'Admin' && !user.groups_id.includes(this.state.systemGroupId));
+                (this.state.roleFilter === 'Admin' && user.is_doc_admin) ||
+                (this.state.roleFilter === 'Maker' && user.is_doc_maker) ||
+                (this.state.roleFilter === 'Checker' && user.is_doc_checker);
 
-            // Status filter by active field
             const matchStatus = this.state.statusFilter === 'All' ||
-                               (this.state.statusFilter === 'Active' && user.active) ||
-                               (this.state.statusFilter === 'Inactive' && !user.active);
+                (this.state.statusFilter === 'Active' && user.active) ||
+                (this.state.statusFilter === 'Inactive' && !user.active);
 
             return matchSearch && matchRole && matchStatus;
         });
+    }
+
+    getUserRoles(user) {
+        // Return only the highest role (selection groups, not implied)
+        // Priority: System Admin > Document Admin > Maker > Checker > No role
+        if (user.is_system_admin) {
+            return [{ name: _t('System Admin'), class: 'bg-danger' }];
+        } else if (user.is_doc_admin) {
+            return [{ name: _t('Document Admin'), class: 'bg-danger' }];
+        } else if (user.is_doc_maker) {
+            return [{ name: _t('Maker'), class: 'bg-primary' }];
+        } else if (user.is_doc_checker) {
+            return [{ name: _t('Checker'), class: 'bg-warning' }];
+        } else {
+            return [{ name: _t('No Role'), class: 'bg-secondary' }];
+        }
     }
 
     onRowClick(userId) {
@@ -109,20 +139,19 @@ export class UsersTab extends Component {
         });
     }
 
-    async onArchiveClick(userId, ev) {
+    async onArchiveClick(user, ev) {
         // Stop propagation to prevent row click
         ev.stopPropagation();
 
-        // Call action_archive on user
-        await this.orm.call(
-            "res.users",
-            "action_archive",
-            [[userId]]
-        );
-
-        // Reload users
-        await this.loadUsers();
-        this.computeStats();
+        this.dialog.add(ConfirmationDialog, {
+            body: _t('Are you sure you want to archive user "%s"? This user will not be able to log in to the system.', user.name),
+            confirm: async () => {
+                await this.orm.call("res.users", "action_archive", [[user.id]]);
+                await this.loadUsers();
+                this.computeStats();
+            },
+            cancel: () => {}
+        });
     }
 
     onAddUserClick() {
@@ -144,25 +173,13 @@ export class UsersTab extends Component {
         this.state.statusFilter = ev.target.value;
     }
 
-    isAdmin(user) {
-        return user.groups_id.includes(this.state.systemGroupId);
-    }
-
-    getUserInitial(name) {
-        return name ? name[0].toUpperCase() : '?';
-    }
-
     formatDate(dateStr) {
-        luxon.DateTime.fromFormat
         if (!dateStr) return '';
         try {
-            const date = new Date(dateStr);
-            return date.toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric'
-            });
-        } catch (e) {
+            const { DateTime } = luxon;
+            const date = DateTime.fromJSDate(new Date(dateStr));
+            return date.toLocaleString(DateTime.DATE_MED);
+        } catch {
             return dateStr;
         }
     }

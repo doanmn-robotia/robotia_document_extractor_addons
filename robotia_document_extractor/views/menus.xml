@@ -225,7 +225,7 @@
               name="Configuration"
               parent="menu_document_extractor_root"
               sequence="90"
-              groups="base.group_system"/>
+              groups="group_document_extractor_admin"/>
 
     <!-- Settings Dashboard (Client Action) -->
     <record id="action_settings_dashboard" model="ir.actions.client">
@@ -238,14 +238,14 @@
               parent="menu_configuration"
               action="action_settings_dashboard"
               sequence="0"
-              groups="base.group_system"/>
+              groups="group_document_extractor_admin"/>
 
     <menuitem id="menu_settings"
               name="System Settings"
               parent="menu_configuration"
               action="action_document_extractor_settings"
               sequence="1"
-              groups="base.group_system"/>
+              groups="group_document_extractor_admin"/>
 
     <!-- ========================================== -->
     <!-- Partner (Organization) Custom Views -->

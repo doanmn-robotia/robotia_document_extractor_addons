@@ -229,3 +229,22 @@ class ResConfigSettings(models.TransientModel):
             raise
         except Exception as e:
             raise UserError(_('Connection Test Failed:\n\n%s') % str(e))
+
+    def is_doc_admin(self):
+        return self.env.user.has_group('robotia_document_extractor.group_document_extractor_admin') and self.env.context.get('module') == 'robotia_document_extractor'
+
+    def execute(self):
+        if self.is_doc_admin():
+            return super(ResConfigSettings, self.sudo()).execute()
+        return super().execute()
+
+    @api.model_create_single
+    def create(self, vals):
+        if self.is_doc_admin():
+            return super(ResConfigSettings, self.sudo()).create(vals)
+        return super().create(vals)
+
+    def write(self, vals):
+        if self.is_doc_admin():
+            return super(ResConfigSettings, self.sudo()).write(vals)
+        return super().write(vals)
