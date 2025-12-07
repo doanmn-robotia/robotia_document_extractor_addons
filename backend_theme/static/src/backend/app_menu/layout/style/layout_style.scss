@@ -601,40 +601,177 @@ html {
 }
 
 /* ========================================================================
-   BADGES & LABELS - Rounded pills with soft colors
+   BADGES & LABELS - Beautiful minimalist pill-style badges
    ======================================================================== */
 
-.badge-primary {
-    color: var(--primary-accent) !important;
-    background-color: var(--primary-light) !important;
-    font-weight: var(--font-weight-medium);
-    border-radius: var(--radius-full);
-    padding: var(--space-1) var(--space-3);
-    font-size: var(--font-size-xs);
-}
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 12px;
+    font-weight: 500;
+    font-size: 12px;
+    border-radius: 9999px;
+    border: 1.5px solid;
+    transition: all 0.15s ease;
 
-.badge-success {
-    color: var(--success-dark) !important;
-    background-color: var(--success-light) !important;
-    border-radius: var(--radius-full);
-}
+    i {
+        font-size: 11px;
+        opacity: 0.85;
+        margin-right: 4px;
+    }
 
-.badge-warning {
-    color: var(--warning-dark) !important;
-    background-color: var(--warning-light) !important;
-    border-radius: var(--radius-full);
-}
+    // Role Badges (Document Extractor specific but can be used elsewhere)
+    &.badge-admin,
+    &.bg-danger {
+        background: #fef2f2 !important;
+        color: #dc2626 !important;
+        border-color: #fecaca !important;
 
-.badge-danger, .badge-error {
-    color: var(--error-dark) !important;
-    background-color: var(--error-light) !important;
-    border-radius: var(--radius-full);
-}
+        &:hover {
+            background: #fee2e2 !important;
+            border-color: #fca5a5 !important;
+        }
 
-.badge-info {
-    color: var(--info-dark) !important;
-    background-color: var(--info-light) !important;
-    border-radius: var(--radius-full);
+        i {
+            color: #ef4444 !important;
+        }
+    }
+
+    &.badge-maker,
+    &.badge-primary,
+    &.bg-primary {
+        background: #eff6ff !important;
+        color: #2563eb !important;
+        border-color: #bfdbfe !important;
+
+        &:hover {
+            background: #dbeafe !important;
+            border-color: #93c5fd !important;
+        }
+
+        i {
+            color: #3b82f6 !important;
+        }
+    }
+
+    &.badge-checker,
+    &.badge-warning,
+    &.bg-warning {
+        background: #fffbeb !important;
+        color: #d97706 !important;
+        border-color: #fde68a !important;
+
+        &:hover {
+            background: #fef3c7 !important;
+            border-color: #fbbf24 !important;
+        }
+
+        i {
+            color: #f59e0b !important;
+        }
+    }
+
+    &.badge-no-role,
+    &.badge-secondary,
+    &.bg-secondary {
+        background: #f3f4f6 !important;
+        color: #6b7280 !important;
+        border-color: #e5e7eb !important;
+
+        &:hover {
+            background: #e5e7eb !important;
+            border-color: #d1d5db !important;
+        }
+
+        i {
+            color: #9ca3af !important;
+        }
+    }
+
+    // Status Badges
+    &.badge-active,
+    &.badge-success,
+    &.bg-success {
+        background: #f0fdf4 !important;
+        color: #15803d !important;
+        border-color: #bbf7d0 !important;
+
+        &:hover {
+            background: #dcfce7 !important;
+            border-color: #86efac !important;
+        }
+
+        i {
+            color: #16a34a !important;
+        }
+    }
+
+    &.badge-inactive,
+    &.badge-danger,
+    &.badge-error {
+        background: #fef2f2 !important;
+        color: #b91c1c !important;
+        border-color: #fecaca !important;
+
+        &:hover {
+            background: #fee2e2 !important;
+            border-color: #fca5a5 !important;
+        }
+
+        i {
+            color: #dc2626 !important;
+        }
+    }
+
+    // Info Badge
+    &.badge-info,
+    &.bg-info {
+        background: #f0f9ff !important;
+        color: #0369a1 !important;
+        border-color: #bae6fd !important;
+
+        &:hover {
+            background: #e0f2fe !important;
+            border-color: #7dd3fc !important;
+        }
+
+        i {
+            color: #0284c7 !important;
+        }
+    }
+
+    // Device/Current Badge (for device logs)
+    &.badge-current {
+        background: #ecfdf5 !important;
+        color: #047857 !important;
+        border-color: #a7f3d0 !important;
+        font-weight: 600;
+
+        &:hover {
+            background: #d1fae5 !important;
+            border-color: #6ee7b7 !important;
+        }
+
+        i {
+            color: #059669 !important;
+        }
+    }
+
+    // User Badge
+    &.badge-user {
+        background: #f9fafb !important;
+        color: #4b5563 !important;
+        border-color: #d1d5db !important;
+
+        &:hover {
+            background: #f3f4f6 !important;
+            border-color: #9ca3af !important;
+        }
+
+        i {
+            color: #6b7280 !important;
+        }
+    }
 }
 
 .text-bg-primary {

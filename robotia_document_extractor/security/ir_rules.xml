@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Rule 1: Document Admin chỉ xem users có Document Extractor groups -->
+        <record id="rule_res_users_doc_admin" model="ir.rule">
+            <field name="name">Document Admin: Only see Document users</field>
+            <field name="model_id" ref="base.model_res_users"/>
+            <field name="groups" eval="[(4, ref('group_document_extractor_admin'))]"/>
+            <field name="domain_force" eval="[
+                ('groups_id', 'in', [
+                    ref('group_document_extractor_admin'),
+                    ref('group_document_extractor_maker'),
+                    ref('group_document_extractor_checker')
+                ])
+            ]"></field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- Rule 2: System Admin xem tất cả (no restriction) -->
+        <record id="rule_res_users_system_admin" model="ir.rule">
+            <field name="name">System Admin: See all users</field>
+            <field name="model_id" ref="base.model_res_users"/>
+            <field name="groups" eval="[(4, ref('base.group_system'))]"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- Rule 3: User thường chỉ xem devices của mình -->
+        <record id="rule_res_device_user" model="ir.rule">
+            <field name="name">User: Only own devices</field>
+            <field name="model_id" ref="base.model_res_device"/>
+            <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+            <field name="domain_force">[('user_id', '=', user.id)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- Rule 4: Admin (cả 2 loại) xem all devices -->
+        <record id="rule_res_device_admin" model="ir.rule">
+            <field name="name">Admin: All devices</field>
+            <field name="model_id" ref="base.model_res_device"/>
+            <field name="groups" eval="[(4, ref('base.group_system')), (4, ref('group_document_extractor_admin'))]"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+    </data>
+</odoo>

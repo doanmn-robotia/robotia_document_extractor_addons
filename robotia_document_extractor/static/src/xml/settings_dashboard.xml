@@ -2,56 +2,62 @@
 <templates xml:space="preserve">
     <t t-name="robotia_document_extractor.SettingsDashboard">
         <div class="settings-dashboard">
-            <!-- Header -->
-            <div class="dashboard-header">
-                <h2>Settings</h2>
-                <p class="text-muted">Manage users, permissions, and system configuration</p>
-            </div>
+            <t t-if="state.loading">
+                <div class="d-flex justify-content-center p-5">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </t>
 
-            <!-- Tabs Navigation -->
-            <div class="tabs-navigation bg-white rounded shadow-sm border-gray-200 mb-3">
-                <div class="d-flex overflow-auto">
-                    <button
-                        t-att-class="state.activeTab === 'USERS' ? 'tab-button tab-active' : 'tab-button'"
-                        t-on-click="() => this.switchTab('USERS')">
-                        <i class="fa fa-users me-2"/>Users
-                    </button>
-                    <button
-                        t-att-class="state.activeTab === 'PERMISSIONS' ? 'tab-button tab-active' : 'tab-button'"
-                        t-on-click="() => this.switchTab('PERMISSIONS')">
-                        <i class="fa fa-shield me-2"/>Permissions
-                    </button>
-                    <button
-                        t-att-class="state.activeTab === 'AI' ? 'tab-button tab-active' : 'tab-button'"
-                        t-on-click="() => this.switchTab('AI')">
-                        <i class="fa fa-magic me-2"/>AI
-                    </button>
-                    <button
-                        t-att-class="state.activeTab === 'OCR' ? 'tab-button tab-active' : 'tab-button'"
-                        t-on-click="() => this.switchTab('OCR')">
-                        <i class="fa fa-file-text me-2"/>OCR
-                    </button>
-                    <button
-                        t-att-class="state.activeTab === 'BACKUP' ? 'tab-button tab-active' : 'tab-button'"
-                        t-on-click="() => this.switchTab('BACKUP')">
-                        <i class="fa fa-database me-2"/>Backup
-                    </button>
-                    <button
-                        t-att-class="state.activeTab === 'LOGS' ? 'tab-button tab-active' : 'tab-button'"
-                        t-on-click="() => this.switchTab('LOGS')">
-                        <i class="fa fa-list me-2"/>Logs
-                    </button>
+            <t t-else="">
+                <!-- Header -->
+                <div class="dashboard-header">
+                    <h2>Settings</h2>
+                    <p class="text-muted">Manage users, permissions, and system configuration</p>
                 </div>
-                <!-- Tab Content -->
-                <div class="tab-content-container">
-                    <UsersTab t-if="state.activeTab === 'USERS'"/>
-                    <PermissionsTab t-if="state.activeTab === 'PERMISSIONS'"/>
-                    <AITab t-if="state.activeTab === 'AI'"/>
-                    <OCRTab t-if="state.activeTab === 'OCR'"/>
-                    <BackupTab t-if="state.activeTab === 'BACKUP'"/>
-                    <LogsTab t-if="state.activeTab === 'LOGS'"/>
+
+                <!-- Tabs Navigation -->
+                <div class="tabs-navigation bg-white rounded shadow-sm border-gray-200 mb-3">
+                    <div class="d-flex overflow-auto">
+                        <t t-if="canViewTab('USERS')">
+                            <button
+                                t-att-class="state.activeTab === 'USERS' ? 'tab-button tab-active' : 'tab-button'"
+                                t-on-click="() => this.switchTab('USERS')">
+                                <i class="fa fa-users me-2"/>Users
+                            </button>
+                        </t>
+                        <t t-if="canViewTab('AI')">
+                            <button
+                                t-att-class="state.activeTab === 'AI' ? 'tab-button tab-active' : 'tab-button'"
+                                t-on-click="() => this.switchTab('AI')">
+                                <i class="fa fa-robot me-2"/>AI Configuration
+                            </button>
+                        </t>
+                        <t t-if="canViewTab('BACKUP')">
+                            <button
+                                t-att-class="state.activeTab === 'BACKUP' ? 'tab-button tab-active' : 'tab-button'"
+                                t-on-click="() => this.switchTab('BACKUP')">
+                                <i class="fa fa-database me-2"/>Backup
+                            </button>
+                        </t>
+                        <t t-if="canViewTab('LOGS')">
+                            <button
+                                t-att-class="state.activeTab === 'LOGS' ? 'tab-button tab-active' : 'tab-button'"
+                                t-on-click="() => this.switchTab('LOGS')">
+                                <i class="fa fa-history me-2"/>Device Logs
+                            </button>
+                        </t>
+                    </div>
+                    <!-- Tab Content -->
+                    <div class="tab-content-container">
+                        <UsersTab t-if="state.activeTab === 'USERS'"/>
+                        <AITab t-if="state.activeTab === 'AI'"/>
+                        <BackupTab t-if="state.activeTab === 'BACKUP'"/>
+                        <LogsTab t-if="state.activeTab === 'LOGS'"/>
+                    </div>
                 </div>
-            </div>
+            </t>
 
         </div>
     </t>

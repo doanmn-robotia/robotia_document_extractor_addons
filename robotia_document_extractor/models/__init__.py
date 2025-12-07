@@ -12,6 +12,7 @@ from . import collection_location
 
 # Partner Extensions
 from . import res_partner
+from . import res_users
 
 # Document Extraction
 from . import document_extraction
