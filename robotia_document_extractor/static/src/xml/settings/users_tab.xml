@@ -90,7 +90,9 @@
                                 t-on-click="() => this.onRowClick(user.id)">
                                 <td class="px-4 py-3">
                                     <div class="d-flex align-items-center">
-                                        <div class="user-avatar me-3" t-esc="getUserInitial(user.name)"/>
+                                        <img class="user-avatar me-3"
+                                             t-attf-src="/web/image/res.users/#{user.id}/avatar_128"
+                                             t-att-alt="user.name"/>
                                         <div>
                                             <div class="fw-bold" t-esc="user.name"/>
                                             <div class="small text-muted">ID: <t t-esc="user.id"/></div>
@@ -111,17 +113,16 @@
                                 </td>
                                 <td class="px-4 py-3">
                                     <div class="d-flex flex-wrap gap-1">
-                                        <span t-if="isAdmin(user)" class="badge bg-purple">
-                                            Admin
-                                        </span>
-                                        <span t-else="" class="badge bg-secondary">
-                                            User
-                                        </span>
+                                        <t t-foreach="getUserRoles(user)" t-as="role" t-key="role.name">
+                                            <span t-att-class="'badge ' + role.class">
+                                                <t t-esc="role.name"/>
+                                            </span>
+                                        </t>
                                     </div>
                                 </td>
                                 <td class="px-4 py-3">
-                                    <span t-att-class="user.active ? 'badge bg-success' : 'badge bg-danger'">
-                                        <i t-att-class="user.active ? 'fa fa-circle me-1' : 'fa fa-circle-o me-1'" style="font-size: 8px;"/>
+                                    <span t-att-class="user.active ? 'badge badge-active' : 'badge badge-inactive'">
+                                        <i t-att-class="user.active ? 'fa fa-check-circle me-1' : 'fa fa-times-circle me-1'"/>
                                         <t t-esc="user.active ? 'Active' : 'Inactive'"/>
                                     </span>
                                 </td>
@@ -140,7 +141,7 @@
                                     </button>
                                     <button
                                         class="btn btn-sm btn-light"
-                                        t-on-click="(ev) => this.onArchiveClick(user.id, ev)"
+                                        t-on-click="(ev) => this.onArchiveClick(user, ev)"
                                         title="Archive User">
                                         <i class="fa fa-archive"/>
                                     </button>

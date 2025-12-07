@@ -237,6 +237,7 @@ msgstr "Cấu hình"
 #. module: robotia_document_extractor
 #: model:ir.model.fields,field_description:robotia_document_extractor.field_res_config_settings__extract_pages_run_ocr
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Run OCR for Page Extraction"
 msgstr "Chạy OCR khi trích xuất trang"
 
@@ -333,6 +334,7 @@ msgstr "Bật <strong>Google Drive API</strong> cho dự án của bạn:"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid ""
 "Enable this if the source PDF is an image scan without text layer.\n"
 "                                    Disable to speed up processing for digital PDFs."
@@ -342,6 +344,7 @@ msgstr ""
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid ""
 "If enabled, OCR will be run on the extracted pages before AI processing."
 msgstr "Nếu bật, các file sẽ được xử lý OCR trước khi AI xử lý."
@@ -1055,76 +1058,91 @@ msgstr "Nhập khóa API Google Gemini để trích xuất tài liệu"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "AI Configuration"
 msgstr "Cấu hình AI"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Configure your Google Gemini API key for AI-powered document extraction"
 msgstr "Cấu hình khóa API Google Gemini để trích xuất tài liệu bằng AI"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Get your API key from"
 msgstr "Lấy khóa API từ"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Google AI Studio"
 msgstr "Google AI Studio"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Document Processing"
 msgstr "Xử lý tài liệu"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Extraction Information"
 msgstr "Thông tin trích xuất"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Model: Google Gemini 1.5 Flash (with PDF understanding)"
 msgstr "Mô hình: Google Gemini 1.5 Flash (hỗ trợ hiểu PDF)"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Supports Form 01 (Registration) and Form 02 (Report)"
 msgstr "Hỗ trợ Mẫu 01 (Đơn đăng ký) và Mẫu 02 (Báo cáo)"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Automatic data extraction from Vietnamese PDFs"
 msgstr "Trích xuất dữ liệu tự động từ PDF tiếng Việt"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Human-in-the-loop validation workflow"
 msgstr "Quy trình xác nhận với sự tham gia của con người"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "AI Extraction Prompts Configuration"
 msgstr "Cấu hình mẫu trích xuất AI"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Integrations"
 msgstr "Tích hợp"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Configure AI Extraction Prompts"
 msgstr "Cấu hình mẫu trích xuất AI"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Get Register Prompt"
 msgstr "Lấy mẫu Đăng ký"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Get Report Prompt"
 msgstr "Lấy mẫu Báo cáo"
 
@@ -2601,31 +2619,37 @@ msgstr "Số lượng tài liệu được xử lý trong mỗi lần chạy OCR
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Google Drive Integration"
 msgstr "Tích hợp Google Drive"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Enable automatic fetching and processing of PDF files from Google Drive"
 msgstr "Bật tự động lấy và xử lý file PDF từ Google Drive"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "The folder ID from which to fetch PDF files"
 msgstr "ID thư mục để lấy file PDF"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "You can find the folder ID in the URL: https://drive.google.com/drive/folders/<b>FOLDER_ID</b>"
 msgstr "Bạn có thể tìm thấy ID thư mục trong URL: https://drive.google.com/drive/folders/<b>FOLDER_ID</b>"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Service Account JSON"
 msgstr "JSON Service Account"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Google Cloud Service Account credentials in JSON format"
 msgstr "Thông tin xác thực Service Account Google Cloud dạng JSON"
 
@@ -2641,46 +2665,55 @@ msgstr "Google Cloud Console → IAM &amp; Admin → Service Accounts"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Create a service account at <a href=\"https://console.cloud.google.com/iam-admin/serviceaccounts\" target=\"_blank\">Google Cloud Console</a>"
 msgstr "Tạo service account tại <a href=\"https://console.cloud.google.com/iam-admin/serviceaccounts\" target=\"_blank\">Google Cloud Console</a>"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Enable Google Drive API for your project"
 msgstr "Bật Google Drive API cho dự án của bạn"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Create and download the JSON key file"
 msgstr "Tạo và tải xuống file khóa JSON"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Share your Google Drive folder with the service account email"
 msgstr "Chia sẻ thư mục Google Drive của bạn với email service account"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Paste the JSON content here"
 msgstr "Dán nội dung JSON vào đây"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "How often to check Google Drive for new files"
 msgstr "Tần suất kiểm tra file mới trên Google Drive"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Default: 30 minutes. Both fetch and OCR cron jobs run at this interval."
 msgstr "Mặc định: 30 phút. Cả hai tác vụ tự động lấy file và OCR đều chạy với khoảng thời gian này."
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Number of documents to process in each OCR run"
 msgstr "Số lượng tài liệu xử lý trong mỗi lần chạy OCR"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Default: 3 documents per run. Adjust based on your API limits and processing capacity."
 msgstr "Mặc định: 3 tài liệu mỗi lần. Điều chỉnh dựa trên giới hạn API và khả năng xử lý của bạn."
 
@@ -2882,6 +2915,7 @@ msgstr ""
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Test Connection"
 msgstr "Kiểm tra kết nối"
 
@@ -2943,11 +2977,13 @@ msgstr "Vui lòng cấu hình Tài khoản Dịch vụ trước bằng nút \"C�
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Service Account"
 msgstr "Tài khoản Dịch vụ"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Configure Service Account"
 msgstr "Cấu hình Tài khoản Dịch vụ"
 
@@ -2964,6 +3000,7 @@ msgstr "Trình hướng dẫn Cấu hình Google Drive"
 #. module: robotia_document_extractor
 #: model:ir.model.fields,field_description:robotia_document_extractor.field_res_config_settings__gemini_max_output_tokens
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Max Output Tokens"
 msgstr "Số Token Đầu ra Tối đa"
 
@@ -2981,6 +3018,7 @@ msgstr ""
 #. module: robotia_document_extractor
 #: model:ir.model.fields,field_description:robotia_document_extractor.field_res_config_settings__gemini_max_retries
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Max Retries"
 msgstr "Số Lần Thử lại Tối đa"
 
@@ -2998,6 +3036,7 @@ msgstr ""
 #. module: robotia_document_extractor
 #: model:ir.model.fields,field_description:robotia_document_extractor.field_res_config_settings__gemini_allow_fallback
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Allow Fallback Strategy"
 msgstr "Cho phép Chiến lược Dự phòng"
 
@@ -3053,36 +3092,43 @@ msgstr ""
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Maximum number of tokens for Gemini API response. Increase if extraction fails for very long documents."
 msgstr "Số lượng token tối đa cho phản hồi từ Gemini API. Tăng lên nếu trích xuất thất bại với tài liệu quá dài."
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Recommended: 65536 (maximum for Gemini 2.0 Flash). Reduce if you want to limit API costs."
 msgstr "Khuyến nghị: 65536 (tối đa cho Gemini 2.0 Flash). Giảm xuống nếu bạn muốn giới hạn chi phí API."
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Maximum retry attempts when Gemini API extraction fails. Retries are executed immediately without delay."
 msgstr "Số lần thử lại tối đa khi trích xuất từ Gemini API thất bại. Các lần thử lại được thực hiện ngay lập tức không có độ trễ."
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Default: 3 retries executed immediately. Increase for unreliable API responses."
 msgstr "Mặc định: 3 lần thử lại được thực hiện ngay lập tức. Tăng lên nếu API phản hồi không ổn định."
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Enable fallback to 2-step extraction when direct extraction fails."
 msgstr "Bật chế độ dự phòng sang trích xuất 2 bước khi trích xuất trực tiếp thất bại."
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "When enabled, if direct PDF extraction fails, the system will automatically try 2-step extraction (PDF → Text → JSON)."
 msgstr "Khi bật, nếu trích xuất PDF trực tiếp thất bại, hệ thống sẽ tự động thử trích xuất 2 bước (PDF → Văn bản → JSON)."
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid ""
 "When enabled, if direct PDF extraction fails, the system will automatically try 2-step extraction (PDF → Text → JSON).\n"
 "                                    Disable this to fail immediately without fallback."
@@ -3092,16 +3138,19 @@ msgstr ""
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Disable this to fail immediately without fallback."
 msgstr "Tắt để thất bại ngay lập tức mà không dự phòng."
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Select the Gemini model to use for extraction. Different models have different capabilities and costs."
 msgstr "Chọn mô hình Gemini để sử dụng cho trích xuất. Các mô hình khác nhau có khả năng và chi phí khác nhau."
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid ""
 "Available models: gemini-3-pro-preview, gemini-2.5-pro\n"
 "                                    <br/>\n"
@@ -3114,21 +3163,25 @@ msgstr ""
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Gemini Models documentation"
 msgstr "Gemini Models documentation"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "for details."
 msgstr "để biết thêm chi tiết."
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Choose how PDF documents are processed for extraction"
 msgstr "Chọn cách xử lý tài liệu PDF để trích xuất"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid ""
 "<strong>100% AI (Recommended):</strong> Gemini processes PDF directly, understanding layout and structure.<br/>\n"
 "                                    <strong>Text Extract + AI:</strong> Extract text first with PyMuPDF, then structure with AI. May be faster for very large PDFs.<br/>\n"
@@ -3140,6 +3193,7 @@ msgstr ""
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "<strong>Text Extract + AI:</strong> Extract text first with PyMuPDF, then structure with AI. May be faster for very large PDFs."
 msgstr "<strong>Trích xuất Văn bản + AI:</strong> Trích xuất văn bản trước bằng PyMuPDF, sau đó cấu trúc hóa bằng AI. Có thể nhanh hơn cho PDF rất lớn."
 
@@ -3552,26 +3606,31 @@ msgstr "Độ phân giải hình ảnh (DPI)"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "<strong>Batch Extraction:</strong> Convert PDF to images, process in batches with adaptive sizing. Best for very large documents (20+ pages)."
 msgstr "<strong>Trích xuất hàng loạt:</strong> Chuyển PDF sang hình ảnh, xử lý theo đợt với kích thước tự động. Tốt nhất cho tài liệu rất lớn (20+ trang)."
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Batch Extraction Configuration"
 msgstr "Cấu hình trích xuất hàng loạt"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Minimum Batch Size"
 msgstr "Kích thước đợt tối thiểu"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Minimum pages per API call for complex documents with many table rows"
 msgstr "Số trang tối thiểu mỗi lần gọi API cho tài liệu phức tạp có nhiều dòng bảng"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid ""
 "For documents with many tables (complex): process fewer pages per API call for better accuracy.\n"
 "                                    Recommended: 3 pages."
@@ -3581,16 +3640,19 @@ msgstr ""
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Maximum Batch Size"
 msgstr "Kích thước đợt tối đa"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Maximum pages per API call for simple documents with few table rows"
 msgstr "Số trang tối đa mỗi lần gọi API cho tài liệu đơn giản có ít dòng bảng"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid ""
 "For simple documents: process more pages per API call for efficiency.\n"
 "                                    Recommended: 7 pages."
@@ -3600,16 +3662,19 @@ msgstr ""
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Image Resolution (DPI)"
 msgstr "Độ phân giải hình ảnh (DPI)"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Resolution when converting PDF to images"
 msgstr "Độ phân giải khi chuyển PDF sang hình ảnh"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid ""
 "<i class=\"fa fa-check-circle\"/> Google Drive is configured and ready to use.\n"
 "                                            Click \"Configure Service Account\" to update credentials or folder settings."
@@ -3619,11 +3684,13 @@ msgstr ""
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Configure Google Drive integration to sync documents for extraction"
 msgstr "Cấu hình Google Drive để đồng bộ dữ liệu trích xuất cho tài liệu của bạn."
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid ""
 "Higher DPI = better image quality but larger file sizes and longer processing time.\n"
 "                                    Recommended range: 150-300 DPI. Default: 200 DPI."
@@ -3633,26 +3700,31 @@ msgstr ""
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Direct Extraction Prompts"
 msgstr "Prompt trích xuất trực tiếp"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Reset prompts for direct extraction strategies (100% AI and Text Extract + AI)."
 msgstr "Đặt lại prompts cho chiến lược trích xuất trực tiếp (100% AI và Trích xuất văn bản + AI)."
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Batch Extraction Prompts"
 msgstr "Prompt trích xuất hàng loạt"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Get Batch Register Prompt"
 msgstr "Lấy Prompt Đăng ký Batch"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Get Batch Report Prompt"
 msgstr "Lấy Prompt Báo cáo Batch"
 
@@ -3661,11 +3733,13 @@ msgstr "Lấy Prompt Báo cáo Batch"
 #: code:addons/robotia_document_extractor/models/res_config_settings.py:0
 #: model:ir.model.fields,field_description:robotia_document_extractor.field_res_config_settings__extraction_strategy
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Extraction Strategy"
 msgstr "Chiến lược trích xuất"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Reset prompts for batch extraction strategy. These prompts are optimized for per-page extraction with context memory."
 msgstr "Đặt lại prompts cho chiến lược trích xuất hàng loạt. Các prompt này được tối ưu hóa cho trích xuất từng trang với bộ nhớ ngữ cảnh."
 
@@ -4173,11 +4247,30 @@ msgid "Full access to Document Extractor module including settings"
 msgstr "Quyền truy cập đầy đủ vào module Trích xuất Tài liệu bao gồm cả cài đặt"
 
 #. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/controllers/extraction_controller.py:0
+msgid "%d days ago"
+msgstr "%d ngày trước"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/controllers/extraction_controller.py:0
+msgid "%d hours ago"
+msgstr "%d giờ trước"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/controllers/extraction_controller.py:0
+msgid "%d mins ago"
+msgstr "%d phút trước"
+
+#. module: robotia_document_extractor
 #. odoo-javascript
 #: code:addons/robotia_document_extractor/static/src/xml/dashboard.xml:0
-#: model:ir.module.category,name:robotia_document_extractor.module_category_document_extractor
+#: model:ir.module.category,name:base.module_category_document_extractor
 #: model:ir.ui.menu,name:robotia_document_extractor.menu_document_extractor_root
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid "Document Extractor"
 msgstr "Trích xuất tài liệu"
 
@@ -4229,6 +4322,12 @@ msgstr "Chọn trang trích xuất"
 #, python-format
 msgid "Document Extraction"
 msgstr "Trích xuất tài liệu"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings_dashboard.xml:0
+msgid "Manage users, permissions, and system configuration"
+msgstr "Quản lý users, quyền truy cập và cấu hình hệ thống"
 
 #. module: robotia_document_extractor
 #. odoo-javascript
@@ -5125,6 +5224,7 @@ msgstr "Lỗi trong quá trình trích xuất"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid ""
 "<i class=\"fa fa-check-circle\"/> Google Drive is configured and ready to use.\n"
 "                                            Click \"Configure Service Account\" to update credentials or folder settings."
@@ -5134,6 +5234,7 @@ msgstr ""
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid ""
 "<i class=\"fa fa-exclamation-triangle\"/> Google Drive is not configured yet.\n"
 "                                            Click \"Configure Service Account\" to upload your service account JSON file."
@@ -5162,6 +5263,7 @@ msgstr "<span>Xem Bản ghi</span>"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
 msgid ""
 "<strong>100% AI (Recommended):</strong> Gemini processes PDF directly, understanding layout and structure.<br/>\n"
 "                                    <strong>Text Extract + AI:</strong> Extract text first with PyMuPDF, then structure with AI. May be faster for very large PDFs.<br/>\n"
@@ -5442,3 +5544,70 @@ msgstr "Cập nhật lần cuối bởi"
 #: model:ir.model.fields,field_description:robotia_document_extractor.field_document_extraction__write_date
 msgid "Last Updated on"
 msgstr "Cập nhật lần cuối vào"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/dashboard/settings/logs_tab.js:0
+#: code:addons/robotia_document_extractor/static/src/js/dashboard/settings/users_tab.js:0
+msgid "1 minute ago"
+msgstr "1 phút trước"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/dashboard/settings/logs_tab.js:0
+msgid "%s minutes ago"
+msgstr "%s phút trước"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/dashboard/settings/logs_tab.js:0
+msgid "1 hour ago"
+msgstr "1 giờ trước"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/dashboard/settings/logs_tab.js:0
+msgid "%s hours ago"
+msgstr "%s giờ trước"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/dashboard/settings/logs_tab.js:0
+msgid "1 day ago"
+msgstr "1 ngày trước"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/dashboard/settings/logs_tab.js:0
+msgid "%s days ago"
+msgstr "%s ngày trước"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/dashboard/settings/logs_tab.js:0
+msgid "Are you sure you want to revoke device \"%s\"? This session will be logged out immediately."
+msgstr "Bạn có chắc muốn thu hồi thiết bị \"%s\"? Phiên làm việc này sẽ bị đăng xuất ngay lập tức."
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/dashboard/settings/users_tab.js:0
+msgid "Are you sure you want to archive user \"%s\"? This user will not be able to log in to the system."
+msgstr "Bạn có chắc muốn lưu trữ người dùng \"%s\"? Người dùng này sẽ không thể đăng nhập vào hệ thống."
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/dashboard/settings/users_tab.js:0
+msgid "No Role"
+msgstr "Không có vai trò"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/dashboard/settings/users_tab.js:0
+msgid "System Admin"
+msgstr "Quản trị hệ thống"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/dashboard/settings/users_tab.js:0
+msgid "Document Admin"
+msgstr "Quản trị tài liệu"
