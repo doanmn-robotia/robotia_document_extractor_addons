@@ -32,7 +32,7 @@ class EquipmentProductReport(models.Model):
             ('import', 'Import')
         ],
         string='Production Type',
-        required=True,
+        default="import",
         index=True
     )
     equipment_type_id = fields.Many2one('equipment.type', string='Equipment Type', ondelete='restrict', index=True)

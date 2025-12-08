@@ -34,7 +34,7 @@ class SubstanceUsage(models.Model):
             ('export', 'Export')
         ],
         string='Usage Type',
-        required=True,
+        default="import",
         index=True
     )
     substance_id = fields.Many2one(

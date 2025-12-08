@@ -772,6 +772,158 @@ html {
             color: #6b7280 !important;
         }
     }
+
+    // ========================================================================
+    // Override Bootstrap text-bg-* classes for Odoo Badge Field widget
+    // These apply to badges used in Odoo's BadgeField component
+    // ========================================================================
+
+    // text-bg-danger - Red/Error badges
+    &.text-bg-danger {
+        background: #fef2f2 !important;
+        color: #dc2626 !important;
+        border-color: #fecaca !important;
+
+        &:hover {
+            background: #fee2e2 !important;
+            border-color: #fca5a5 !important;
+        }
+
+        i {
+            color: #ef4444 !important;
+        }
+    }
+
+    // text-bg-primary - Blue/Primary badges
+    &.text-bg-primary {
+        background: #eff6ff !important;
+        color: #2563eb !important;
+        border-color: #bfdbfe !important;
+
+        &:hover {
+            background: #dbeafe !important;
+            border-color: #93c5fd !important;
+        }
+
+        i {
+            color: #3b82f6 !important;
+        }
+    }
+
+    // text-bg-warning - Yellow/Orange badges
+    &.text-bg-warning {
+        background: #fffbeb !important;
+        color: #d97706 !important;
+        border-color: #fde68a !important;
+
+        &:hover {
+            background: #fef3c7 !important;
+            border-color: #fbbf24 !important;
+        }
+
+        i {
+            color: #f59e0b !important;
+        }
+    }
+
+    // text-bg-secondary, text-bg-300, text-bg-muted - Gray badges (fallback)
+    &.text-bg-secondary,
+    &.text-bg-300,
+    &.text-bg-muted,
+    &.text-bg-default {
+        background: #f3f4f6 !important;
+        color: #6b7280 !important;
+        border-color: #e5e7eb !important;
+
+        &:hover {
+            background: #e5e7eb !important;
+            border-color: #d1d5db !important;
+        }
+
+        i {
+            color: #9ca3af !important;
+        }
+    }
+
+    // text-bg-success - Green badges
+    &.text-bg-success {
+        background: #f0fdf4 !important;
+        color: #15803d !important;
+        border-color: #bbf7d0 !important;
+
+        &:hover {
+            background: #dcfce7 !important;
+            border-color: #86efac !important;
+        }
+
+        i {
+            color: #16a34a !important;
+        }
+    }
+
+    // text-bg-info - Cyan/Info badges
+    &.text-bg-info {
+        background: #f0f9ff !important;
+        color: #0369a1 !important;
+        border-color: #bae6fd !important;
+
+        &:hover {
+            background: #e0f2fe !important;
+            border-color: #7dd3fc !important;
+        }
+
+        i {
+            color: #0284c7 !important;
+        }
+    }
+
+    // text-bg-dark - Dark badges
+    &.text-bg-dark {
+        background: #1f2937 !important;
+        color: #f9fafb !important;
+        border-color: #374151 !important;
+
+        &:hover {
+            background: #111827 !important;
+            border-color: #4b5563 !important;
+        }
+
+        i {
+            color: #9ca3af !important;
+        }
+    }
+
+    // text-bg-light - Light badges
+    &.text-bg-light {
+        background: #ffffff !important;
+        color: #374151 !important;
+        border-color: #e5e7eb !important;
+
+        &:hover {
+            background: #f9fafb !important;
+            border-color: #d1d5db !important;
+        }
+
+        i {
+            color: #6b7280 !important;
+        }
+    }
+
+    // text-bg-action - Action badges (used in search filters, groupBy)
+    &.text-bg-action {
+        background: #eff6ff !important;
+        color: #1e40af !important;
+        border-color: #bfdbfe !important;
+
+        &:hover {
+            background: #dbeafe !important;
+            border-color: #93c5fd !important;
+        }
+
+        i {
+            color: #2563eb !important;
+        }
+    }
 }
 
 .text-bg-primary {

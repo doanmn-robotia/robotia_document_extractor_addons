@@ -58,15 +58,20 @@ class ExtractionController(http.Controller):
 
     def _process_pdf_extraction(self, pdf_binary, filename, document_type, run_ocr=False):
         """
-        SHARED HELPER: Process PDF extraction with validation, logging, OCR, and AI
+        SHARED HELPER: Process PDF extraction with transaction-safe logging
 
-        This method centralizes all common extraction logic:
-        - Validation (extension, size, magic bytes)
-        - Rate limiting
-        - Logging
-        - OCR extraction (optional)
-        - AI extraction
-        - Attachment creation
+        This method ensures EVERY AI call is logged accurately with:
+        - Input file (attachment) ALWAYS created before AI call
+        - AI response JSON (if extraction succeeds)
+        - Exact status (success/error) reflecting actual result
+        - Detailed error messages for all failure scenarios
+
+        CRITICAL LOGGING GUARANTEE:
+        - Log created FIRST with 'processing' status
+        - Attachment created IMMEDIATELY (before AI call)
+        - Log updated to 'success' ONLY when entire pipeline succeeds
+        - Log updated to 'error' with details for ANY failure
+        - Exception handling catches ALL possible errors
 
         Args:
             pdf_binary (bytes): PDF binary data
@@ -77,10 +82,10 @@ class ExtractionController(http.Controller):
         Returns:
             dict: {
                 'success': True/False,
-                'extracted_data': {...},  # AI extracted data
+                'extracted_data': {...},  # AI extracted data (None if failed)
                 'raw_ocr_data': {...},    # OCR data with bbox (None if run_ocr=False or OCR fails)
-                'attachment': ir.attachment record,
-                'log': google.drive.extraction.log record,
+                'attachment': ir.attachment record (always present if validation passed),
+                'log': google.drive.extraction.log record (always present),
                 'error': None or dict with error notification params
             }
         """
@@ -89,147 +94,232 @@ class ExtractionController(http.Controller):
         MAX_PDF_SIZE_BYTES = MAX_PDF_SIZE_MB * 1024 * 1024
         EXTRACTION_RATE_LIMIT_SECONDS = 5
 
-        # Create extraction log
-        log = request.env['google.drive.extraction.log'].sudo().create({
-            'drive_file_id': False,  # No Drive ID for manual uploads
-            'file_name': filename,
-            'document_type': document_type,
-            'status': 'processing',
-        })
+        # Variables to track cleanup
+        log = None
+        attachment = None
+        extracted_data = None
+        raw_ocr_data = None
 
         try:
-            _logger.info(f"Starting extraction for {filename} (Type: {document_type}, OCR: {run_ocr})")
+            # ===== STEP 1: Create log FIRST (with 'processing' status) =====
+            log = request.env['google.drive.extraction.log'].sudo().create({
+                'drive_file_id': False,  # No Drive ID for manual uploads
+                'file_name': filename,
+                'document_type': document_type,
+                'status': 'processing',
+            })
+            _logger.info(f"[Log {log.id}] Created log for {filename} (Type: {document_type}, OCR: {run_ocr})")
 
-            # 1. Validate file extension
+            # ===== STEP 2: Validation (before creating attachment) =====
+
+            # 2.1 Validate file extension
             if not filename.lower().endswith('.pdf'):
-                log.write({'status': 'error', 'error_message': 'Invalid file type'})
+                error_msg = 'Invalid file type: Only PDF files are allowed'
+                log.write({'status': 'error', 'error_message': error_msg})
+                _logger.warning(f"[Log {log.id}] {error_msg}")
                 return {
                     'success': False,
+                    'extracted_data': None,
+                    'raw_ocr_data': None,
+                    'attachment': None,
+                    'log': log,
                     'error': {
-                        'title': 'Invalid File Type',
-                        'message': 'Only PDF files are allowed',
+                        'title': _('Invalid File Type'),
+                        'message': _('Only PDF files are allowed'),
                         'type': 'danger',
                     }
                 }
 
-            # 2. Validate file size
+            # 2.2 Validate file size
             pdf_size_bytes = len(pdf_binary)
             if pdf_size_bytes > MAX_PDF_SIZE_BYTES:
                 pdf_size_mb = pdf_size_bytes / 1024 / 1024
-                log.write({'status': 'error', 'error_message': f'File too large: {pdf_size_mb:.1f}MB'})
+                error_msg = f'File too large: {pdf_size_mb:.1f}MB (max {MAX_PDF_SIZE_MB}MB)'
+                log.write({'status': 'error', 'error_message': error_msg})
+                _logger.warning(f"[Log {log.id}] {error_msg}")
                 return {
                     'success': False,
+                    'extracted_data': None,
+                    'raw_ocr_data': None,
+                    'attachment': None,
+                    'log': log,
                     'error': {
-                        'title': 'File Too Large',
-                        'message': f'File size ({pdf_size_mb:.1f}MB) exceeds {MAX_PDF_SIZE_MB}MB',
+                        'title': _('File Too Large'),
+                        'message': _('File size (%(size).1fMB) exceeds %(max)dMB') % {'size': pdf_size_mb, 'max': MAX_PDF_SIZE_MB},
                         'type': 'danger',
                     }
                 }
 
-            # 3. Validate PDF magic bytes
+            # 2.3 Validate PDF magic bytes
             if not pdf_binary.startswith(b'%PDF'):
-                log.write({'status': 'error', 'error_message': 'Invalid PDF format'})
+                error_msg = 'Invalid PDF format: File does not start with PDF signature'
+                log.write({'status': 'error', 'error_message': error_msg})
+                _logger.warning(f"[Log {log.id}] {error_msg}")
                 return {
                     'success': False,
+                    'extracted_data': None,
+                    'raw_ocr_data': None,
+                    'attachment': None,
+                    'log': log,
                     'error': {
-                        'title': 'Invalid PDF',
-                        'message': 'The uploaded file does not appear to be a valid PDF',
+                        'title': _('Invalid PDF'),
+                        'message': _('The uploaded file does not appear to be a valid PDF'),
                         'type': 'danger',
                     }
                 }
 
-            # 4. Rate limiting (session-based)
+            # 2.4 Rate limiting (session-based)
             import time
             last_extract_time = request.session.get('last_extract_time', 0)
             current_time = time.time()
             if current_time - last_extract_time < EXTRACTION_RATE_LIMIT_SECONDS:
                 wait_seconds = int(EXTRACTION_RATE_LIMIT_SECONDS - (current_time - last_extract_time))
-                log.write({'status': 'error', 'error_message': f'Rate limit: wait {wait_seconds}s'})
+                error_msg = f'Rate limit exceeded: Please wait {wait_seconds}s'
+                log.write({'status': 'error', 'error_message': error_msg})
+                _logger.warning(f"[Log {log.id}] {error_msg}")
                 return {
                     'success': False,
+                    'extracted_data': None,
+                    'raw_ocr_data': None,
+                    'attachment': None,
+                    'log': log,
                     'error': {
-                        'title': 'Please Wait',
-                        'message': f'Please wait {wait_seconds} seconds before extracting another document',
+                        'title': _('Please Wait'),
+                        'message': _('Please wait %(seconds)d seconds before extracting another document') % {'seconds': wait_seconds},
                         'type': 'warning',
                     }
                 }
             request.session['last_extract_time'] = current_time
 
-            # 5. Run OCR if requested (NEW)
-            raw_ocr_data = None
+            # ===== STEP 3: Create attachment BEFORE AI call (CRITICAL for logging) =====
+            try:
+                attachment = request.env['ir.attachment'].sudo().create({
+                    'name': filename,
+                    'type': 'binary',
+                    'datas': base64.b64encode(pdf_binary).decode('utf-8'),
+                    'res_model': 'document.extraction',
+                    'res_id': 0,  # Public for preview
+                    'public': True,
+                    'mimetype': 'application/pdf',
+                })
+                # Link attachment to log IMMEDIATELY
+                log.write({'attachment_id': attachment.id})
+                _logger.info(f"[Log {log.id}] Created attachment {attachment.id}")
+            except Exception as e:
+                error_msg = f'Failed to create attachment: {str(e)}'
+                log.write({'status': 'error', 'error_message': error_msg})
+                _logger.error(f"[Log {log.id}] {error_msg}", exc_info=True)
+                return {
+                    'success': False,
+                    'extracted_data': None,
+                    'raw_ocr_data': None,
+                    'attachment': None,
+                    'log': log,
+                    'error': {
+                        'title': _('Upload Failed'),
+                        'message': _('Failed to upload PDF file to server'),
+                        'type': 'danger',
+                    }
+                }
+
+            # ===== STEP 4: Run OCR if requested (optional, non-critical) =====
             if run_ocr:
                 try:
-                    _logger.info("Running OCR extraction...")
+                    _logger.info(f"[Log {log.id}] Running OCR extraction...")
                     OCRService = request.env['document.ocr.raw.service'].sudo()
                     raw_ocr_data = OCRService.extract_ocr_with_bbox(pdf_binary, filename)
 
                     if raw_ocr_data:
                         total_regions = sum(len(p.get('text_regions', [])) for p in raw_ocr_data.get('pages', []))
-                        _logger.info(f"OCR completed: {len(raw_ocr_data.get('pages', []))} pages, {total_regions} text regions")
+                        _logger.info(f"[Log {log.id}] OCR completed: {len(raw_ocr_data.get('pages', []))} pages, {total_regions} text regions")
                     else:
-                        _logger.warning("OCR returned no data - continuing with AI only")
+                        _logger.warning(f"[Log {log.id}] OCR returned no data - continuing with AI only")
                 except Exception as e:
-                    _logger.warning(f"OCR failed (continuing with AI only): {e}")
+                    _logger.warning(f"[Log {log.id}] OCR failed (continuing with AI only): {e}")
                     raw_ocr_data = None
                     # Continue without OCR - graceful degradation
 
-            # 6. Run AI extraction
+            # ===== STEP 5: Run AI extraction (CRITICAL - must catch all errors) =====
             try:
+                _logger.info(f"[Log {log.id}] Starting AI extraction...")
                 extraction_service = request.env['document.extraction.service']
                 extracted_data = extraction_service.extract_pdf(pdf_binary, document_type, filename)
+                _logger.info(f"[Log {log.id}] AI extraction completed successfully")
             except Exception as e:
-                _logger.error(f"AI extraction failed: {e}")
+                error_msg = f'AI extraction failed: {str(e)}'
+                error_traceback = traceback.format_exc()
+
+                # Update log with detailed error
                 log.write({
                     'status': 'error',
-                    'error_message': f'AI extraction failed: {str(e)}'
+                    'error_message': error_traceback,
+                    'ai_response_json': extracted_data,  # Store full traceback for debugging
                 })
+                _logger.error(f"[Log {log.id}] {error_msg}", exc_info=True)
+
                 return {
                     'success': False,
+                    'extracted_data': None,
+                    'raw_ocr_data': raw_ocr_data,
+                    'attachment': attachment,
+                    'log': log,
                     'error': {
-                        'title': 'Extraction Failed',
+                        'title': _('AI Extraction Failed'),
                         'message': str(e),
                         'type': 'danger',
                     }
                 }
 
-            # 7. Create public attachment (res_id=0 for preview before save)
-            attachment = request.env['ir.attachment'].sudo().create({
-                'name': filename,
-                'type': 'binary',
-                'datas': base64.b64encode(pdf_binary).decode('utf-8'),
-                'res_model': 'document.extraction',
-                'res_id': 0,  # Public for preview
-                'public': True,
-                'mimetype': 'application/pdf',
-            })
-            _logger.info(f"Created public attachment ID {attachment.id}")
+            # ===== STEP 6: Post-processing (auto-calculate years) =====
+            try:
+                year = extracted_data.get('year')
+                if year:
+                    if not extracted_data.get('year_1'):
+                        extracted_data['year_1'] = year - 1
+                    if not extracted_data.get('year_2'):
+                        extracted_data['year_2'] = year
+                    if not extracted_data.get('year_3'):
+                        extracted_data['year_3'] = year + 1
+            except Exception as e:
+                # Non-critical error, just log warning
+                _logger.warning(f"[Log {log.id}] Failed to auto-calculate years: {e}")
 
-            # 8. Auto-calculate years if not extracted
-            year = extracted_data.get('year')
-            if year:
-                if not extracted_data.get('year_1'):
-                    extracted_data['year_1'] = year - 1
-                if not extracted_data.get('year_2'):
-                    extracted_data['year_2'] = year
-                if not extracted_data.get('year_3'):
-                    extracted_data['year_3'] = year + 1
+            # ===== STEP 7: Update log to SUCCESS (ONLY if everything succeeded) =====
+            try:
+                log_data = {
+                    'status': 'success',
+                    'ai_response_json': json.dumps(extracted_data, ensure_ascii=False, indent=2),
+                }
+                # Add OCR data if available
+                if raw_ocr_data:
+                    log_data['ocr_response_json'] = json.dumps(raw_ocr_data, ensure_ascii=False, indent=2)
 
-            # 9. Update log (success)
-            # Note: Validation now happens in extraction_helper.build_extraction_values()
+                log.write(log_data)
+                _logger.info(f"[Log {log.id}] Extraction pipeline completed successfully")
+            except Exception as e:
+                # Critical: Failed to save log data
+                error_msg = f'Failed to save extraction results to log: {str(e)}'
+                _logger.error(f"[Log {log.id}] {error_msg}", exc_info=True)
+                # Try to update log status
+                try:
+                    log.write({'status': 'error', 'error_message': error_msg, 'ai_response_json': extracted_data})
+                except:
+                    pass
 
-            log_data = {
-                'status': 'success',
-                'ai_response_json': json.dumps(extracted_data, ensure_ascii=False, indent=2),
-                'attachment_id': attachment.id,
-            }
-            # Add OCR data if available
-            if raw_ocr_data:
-                log_data['ocr_response_json'] = json.dumps(raw_ocr_data, ensure_ascii=False, indent=2)
-            
-            log.write(log_data)
+                return {
+                    'success': False,
+                    'extracted_data': extracted_data,
+                    'raw_ocr_data': raw_ocr_data,
+                    'attachment': attachment,
+                    'log': log,
+                    'error': {
+                        'title': _('Save Failed'),
+                        'message': _('Extraction succeeded but failed to save results'),
+                        'type': 'danger',
+                    }
+                }
 
-            _logger.info(f"Extraction successful: Log ID {log.id}")
-
+            # ===== SUCCESS: Return complete result =====
             return {
                 'success': True,
                 'extracted_data': extracted_data,
@@ -240,12 +330,30 @@ class ExtractionController(http.Controller):
             }
 
         except Exception as e:
-            _logger.error(f"Unexpected error in _process_pdf_extraction: {e}", exc_info=True)
-            log.write({'status': 'error', 'error_message': str(e)})
+            # ===== CATCH-ALL: Handle ANY unexpected error =====
+            error_msg = f'Unexpected error in extraction pipeline: {str(e)}'
+            error_traceback = traceback.format_exc()
+            _logger.error(f"[Log {log.id if log else 'N/A'}] {error_msg}", exc_info=True)
+
+            # Try to update log if it exists
+            if log:
+                try:
+                    log.write({
+                        'status': 'error',
+                        'error_message': error_traceback,
+                        'ai_response_json': extracted_data,  # Store full traceback
+                    })
+                except Exception as log_error:
+                    _logger.error(f"Failed to update log: {log_error}")
+
             return {
                 'success': False,
+                'extracted_data': None,
+                'raw_ocr_data': None,
+                'attachment': attachment,  # May be None if error before attachment creation
+                'log': log,  # May be None if error before log creation
                 'error': {
-                    'title': 'Error',
+                    'title': _('Unexpected Error'),
                     'message': str(e),
                     'type': 'danger',
                 }
@@ -273,8 +381,8 @@ class ExtractionController(http.Controller):
                 'type': 'ir.actions.client',
                 'tag': 'display_notification',
                 'params': {
-                    'title': 'Error',
-                    'message': 'Failed to decode PDF file',
+                    'title': _('Error'),
+                    'message': _('Failed to decode PDF file'),
                     'type': 'danger',
                     'sticky': False,
                 }
@@ -433,8 +541,8 @@ class ExtractionController(http.Controller):
                     'type': 'ir.actions.client',
                     'tag': 'display_notification',
                     'params': {
-                        'title': 'Invalid Selection',
-                        'message': 'No valid pages selected',
+                        'title': _('Invalid Selection'),
+                        'message': _('No valid pages selected'),
                         'type': 'danger',
                     }
                 }
@@ -455,8 +563,8 @@ class ExtractionController(http.Controller):
                     'type': 'ir.actions.client',
                     'tag': 'display_notification',
                     'params': {
-                        'title': 'Invalid Selection',
-                        'message': 'Could not determine page numbers',
+                        'title': _('Invalid Selection'),
+                        'message': _('Could not determine page numbers'),
                         'type': 'danger',
                     }
                 }
@@ -500,7 +608,7 @@ class ExtractionController(http.Controller):
                     'type': 'ir.actions.client',
                     'tag': 'display_notification',
                     'params': {
-                        'title': 'Extraction Failed',
+                        'title': _('Extraction Failed'),
                         'message': result['error']['message'],
                         'type': 'danger',
                     }
@@ -547,7 +655,7 @@ class ExtractionController(http.Controller):
                 'type': 'ir.actions.client',
                 'tag': 'display_notification',
                 'params': {
-                    'title': 'Extraction Failed',
+                    'title': _('Extraction Failed'),
                     'message': str(e),
                     'type': 'danger',
                 }

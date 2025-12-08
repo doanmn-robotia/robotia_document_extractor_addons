@@ -5611,3 +5611,124 @@ msgstr "Quản trị hệ thống"
 #: code:addons/robotia_document_extractor/static/src/js/dashboard/settings/users_tab.js:0
 msgid "Document Admin"
 msgstr "Quản trị tài liệu"
+
+#. module: robotia_document_extractor
+#: code:addons/robotia_document_extractor/controllers/extraction_controller.py:0
+#, python-format
+msgid "Invalid File Type"
+msgstr "Loại tệp không hợp lệ"
+
+#. module: robotia_document_extractor
+#: code:addons/robotia_document_extractor/controllers/extraction_controller.py:0
+#, python-format
+msgid "Only PDF files are allowed"
+msgstr "Chỉ chấp nhận tệp PDF"
+
+#. module: robotia_document_extractor
+#: code:addons/robotia_document_extractor/controllers/extraction_controller.py:0
+#, python-format
+msgid "File Too Large"
+msgstr "Tệp quá lớn"
+
+#. module: robotia_document_extractor
+#: code:addons/robotia_document_extractor/controllers/extraction_controller.py:0
+#, python-format
+msgid "File size (%(size).1fMB) exceeds %(max)dMB"
+msgstr "Kích thước tệp (%(size).1fMB) vượt quá %(max)dMB"
+
+#. module: robotia_document_extractor
+#: code:addons/robotia_document_extractor/controllers/extraction_controller.py:0
+#, python-format
+msgid "Invalid PDF"
+msgstr "Tệp PDF không hợp lệ"
+
+#. module: robotia_document_extractor
+#: code:addons/robotia_document_extractor/controllers/extraction_controller.py:0
+#, python-format
+msgid "The uploaded file does not appear to be a valid PDF"
+msgstr "Tệp tải lên không phải là tệp PDF hợp lệ"
+
+#. module: robotia_document_extractor
+#: code:addons/robotia_document_extractor/controllers/extraction_controller.py:0
+#, python-format
+msgid "Please Wait"
+msgstr "Vui lòng chờ"
+
+#. module: robotia_document_extractor
+#: code:addons/robotia_document_extractor/controllers/extraction_controller.py:0
+#, python-format
+msgid "Please wait %(seconds)d seconds before extracting another document"
+msgstr "Vui lòng chờ %(seconds)d giây trước khi trích xuất tài liệu khác"
+
+#. module: robotia_document_extractor
+#: code:addons/robotia_document_extractor/controllers/extraction_controller.py:0
+#, python-format
+msgid "Upload Failed"
+msgstr "Tải lên thất bại"
+
+#. module: robotia_document_extractor
+#: code:addons/robotia_document_extractor/controllers/extraction_controller.py:0
+#, python-format
+msgid "Failed to upload PDF file to server"
+msgstr "Không thể tải tệp PDF lên máy chủ"
+
+#. module: robotia_document_extractor
+#: code:addons/robotia_document_extractor/controllers/extraction_controller.py:0
+#, python-format
+msgid "AI Extraction Failed"
+msgstr "Trích xuất AI thất bại"
+
+#. module: robotia_document_extractor
+#: code:addons/robotia_document_extractor/controllers/extraction_controller.py:0
+#, python-format
+#, python-format
+msgid "Save Failed"
+msgstr "Lưu thất bại"
+
+#. module: robotia_document_extractor
+#: code:addons/robotia_document_extractor/controllers/extraction_controller.py:0
+#, python-format
+msgid "Extraction succeeded but failed to save results"
+msgstr "Trích xuất thành công nhưng không thể lưu kết quả"
+
+#. module: robotia_document_extractor
+#: code:addons/robotia_document_extractor/controllers/extraction_controller.py:0
+#, python-format
+msgid "Unexpected Error"
+msgstr "Lỗi không xác định"
+
+#. module: robotia_document_extractor
+#: code:addons/robotia_document_extractor/controllers/extraction_controller.py:0
+#, python-format
+msgid "Error"
+msgstr "Lỗi"
+
+#. module: robotia_document_extractor
+#: code:addons/robotia_document_extractor/controllers/extraction_controller.py:0
+#, python-format
+msgid "Failed to decode PDF file"
+msgstr "Không thể giải mã tệp PDF"
+
+#. module: robotia_document_extractor
+#: code:addons/robotia_document_extractor/controllers/extraction_controller.py:0
+#, python-format
+msgid "Invalid Selection"
+msgstr "Lựa chọn không hợp lệ"
+
+#. module: robotia_document_extractor
+#: code:addons/robotia_document_extractor/controllers/extraction_controller.py:0
+#, python-format
+msgid "No valid pages selected"
+msgstr "Không có trang hợp lệ được chọn"
+
+#. module: robotia_document_extractor
+#: code:addons/robotia_document_extractor/controllers/extraction_controller.py:0
+#, python-format
+msgid "Could not determine page numbers"
+msgstr "Không thể xác định số trang"
+
+#. module: robotia_document_extractor
+#: code:addons/robotia_document_extractor/controllers/extraction_controller.py:0
+#, python-format
+msgid "Extraction Failed"
+msgstr "Trích xuất thất bại"

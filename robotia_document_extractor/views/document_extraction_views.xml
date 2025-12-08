@@ -397,7 +397,7 @@
                 decoration-success="ocr_status == 'completed'"
                 decoration-danger="ocr_status == 'error'"/>
                 <field name="extraction_date"/>
-                <field name="state" widget="badge" decoration-info="state == 'draft'"
+                <field name="state" width="100px" widget="badge" decoration-info="state == 'draft'"
                 decoration-warning="state == 'validated'"
                 decoration-success="state == 'completed'"/>
                 <field name="write_uid"/>

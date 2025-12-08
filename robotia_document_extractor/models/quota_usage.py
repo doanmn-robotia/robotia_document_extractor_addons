@@ -34,7 +34,7 @@ class QuotaUsage(models.Model):
             ('export', 'Export')
         ],
         string='Usage Type',
-        required=True,
+        default="import",
         index=True
     )
     substance_id = fields.Many2one('controlled.substance', string='Controlled Substance', ondelete='cascade', index=True)
