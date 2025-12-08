@@ -122,6 +122,18 @@
         &:hover {
             background-color: #f9fafb; // hover:bg-gray-50
         }
+
+        &.clickable {
+            cursor: pointer;
+
+            &:hover {
+                background-color: #f3f4f6; // hover:bg-gray-100 (stronger on click)
+            }
+
+            &:active {
+                transform: scale(0.98);
+            }
+        }
     }
 
     .status-label {
@@ -152,10 +164,36 @@
         font-size: 0.875rem; // text-sm
         border-bottom: 1px solid #f9fafb; // border-gray-50
         padding-bottom: 0.5rem; // pb-2
+        padding: 0.5rem;
+        border-radius: 0.375rem; // rounded-md
+        transition: all 0.2s ease;
 
         &.border-0 {
             border-bottom: none;
             padding-bottom: 0; // last:pb-0
+        }
+
+        &.clickable {
+            cursor: pointer;
+
+            &:hover {
+                background-color: #f9fafb; // hover:bg-gray-50
+                transform: translateX(4px);
+            }
+
+            &:active {
+                transform: scale(0.98);
+            }
+
+            &.opacity-50 {
+                opacity: 0.5;
+                cursor: not-allowed;
+
+                &:hover {
+                    background-color: transparent;
+                    transform: none;
+                }
+            }
         }
     }
 

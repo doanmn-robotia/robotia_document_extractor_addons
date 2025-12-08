@@ -325,6 +325,47 @@ export class OverviewDashboard extends Component {
             target: 'current'
         });
     }
+
+    /**
+     * Click handler for status items (Draft/Validated/Completed)
+     * Opens list view with filter for the selected status
+     */
+    onStatusClick(status) {
+        // Use the existing action and add domain filter
+        this.action.doAction('robotia_document_extractor.action_document_extraction_all', {
+            additionalContext: {
+                search_default_filter_draft: status === 'draft' ? 1 : 0,
+                search_default_filter_validated: status === 'validated' ? 1 : 0,
+                search_default_filter_completed: status === 'completed' ? 1 : 0,
+            }
+        });
+    }
+
+    /**
+     * Click handler for activity items
+     * Opens document form if exists, otherwise opens log record form
+     */
+    onActivityClick(activity) {
+        if (activity.document_id) {
+            // Has document: open document form
+            this.action.doAction('robotia_document_extractor.action_document_extraction_all', {
+                viewType: 'form',
+                props: {
+                    resId: activity.document_id
+                }
+            });
+        } else if (activity.log_id) {
+            // No document: open log record form
+            this.action.doAction('robotia_document_extractor.action_google_drive_extraction_log', {
+                viewType: 'form',
+                props: {
+                    resId: activity.log_id
+                }
+            });
+        } else {
+            console.warn('No document or log ID available for this activity:', activity);
+        }
+    }
 }
 
 // Register the dashboard as a client action
