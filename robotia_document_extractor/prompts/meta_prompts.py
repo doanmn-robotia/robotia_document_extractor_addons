@@ -188,11 +188,24 @@ Table column years (year_1, year_2, year_3):
 
 These 3 fields are OFTEN CONFUSED - map EXACTLY:
 
-1. business_license_number (Số đăng ký doanh nghiệp):
-   - Look for: "Số đăng ký doanh nghiệp:", "Số ĐKKD:", "Business Registration No:"
-   - Format: Usually 10-13 digits (e.g., "0123456789-001")
+1. business_license_number (Mã số doanh nghiệp):
+   - Look for: "Mã số doanh nghiệp:", "MST DN:", "MSDN:"
+   - Format: Usually 10-13 digits (e.g., "0800666682", "0123456789-001")
    - Location: Business info section, near organization name
-   - IMPORTANT: This is NOT "Mã số thuế" (Tax ID/MST)
+
+   CRITICAL PRIORITY ORDER (use first match found):
+   ① "Mã số doanh nghiệp:" → USE THIS (highest priority)
+   ② "Số đăng ký doanh nghiệp:" → Use if ① not found
+   ③ "Số ĐKKD:" → Use if ①② not found
+
+   DO NOT USE (these are different fields):
+   ✗ "Số, ký hiệu của giấy phép đăng ký kinh doanh..." (legacy license info - IGNORE)
+   ✗ "Số giấy phép..." (industry-specific license - IGNORE)
+   ✗ "Mã số thuế:" (Tax ID/MST - IGNORE)
+
+   If document has BOTH "Mã số doanh nghiệp" AND "Số, ký hiệu của giấy phép...":
+   → ALWAYS use "Mã số doanh nghiệp" (the official registration code)
+   → IGNORE the legacy "Số giấy phép..." completely
 
 2. business_license_date (Ngày đăng ký kinh doanh):
    - Look for: "Ngày đăng ký:", "Ngày cấp:", "Cấp ngày:", "Date of registration:"
@@ -218,25 +231,43 @@ These 3 fields are OFTEN CONFUSED - map EXACTLY:
 
 Visual layout example (typical document structure):
 
-Example 1 (Single registration):
+Example 1 (Modern format with "Mã số doanh nghiệp"):
+┌──────────────────────────────────────────────────────┐
+│ Mã số doanh nghiệp: 0800666682                       │ → business_license_number (USE THIS)
+│ Số, ký hiệu của giấy phép đăng ký kinh doanh...     │
+│ 04102300049; Ngày cấp: 27/05/2008; Nơi cấp: ...     │ → IGNORE (legacy license info)
+└──────────────────────────────────────────────────────┘
+Result: business_license_number = "0800666682"
+
+Example 2 (Old format with "Số đăng ký doanh nghiệp"):
 ┌──────────────────────────────────────────────────────┐
 │ Số đăng ký doanh nghiệp: 0123456789-001              │ → business_license_number
 │ Ngày đăng ký: 15/03/2020                             │ → business_license_date (convert to 2020-03-15)
 │ Nơi đăng ký: Sở Kế hoạch và Đầu tư TP Hồ Chí Minh   │ → business_license_place
 └──────────────────────────────────────────────────────┘
 
-Example 2 (Multiple registrations - TAKE FIRST DATE):
+Example 3 (Multiple registrations - TAKE FIRST DATE):
 ┌──────────────────────────────────────────────────────┐
-│ Số đăng ký doanh nghiệp: 0123456789-001              │ → business_license_number
+│ Mã số doanh nghiệp: 0800666682                       │ → business_license_number
 │ Đăng ký lần đầu: 15/03/2020                          │ → business_license_date (USE THIS: 2020-03-15)
 │ Đăng ký thay đổi lần 3: 10/05/2023                   │ → IGNORE (amendment date)
 │ Nơi đăng ký: Sở Kế hoạch và Đầu tư TP Hồ Chí Minh   │ → business_license_place
 └──────────────────────────────────────────────────────┘
 
+Example 4 (Confusing format - both codes present):
+┌──────────────────────────────────────────────────────┐
+│ Tên: CÔNG TY TNHH FORD VIỆT NAM                      │
+│ Mã số doanh nghiệp: 0800666682                       │ → business_license_number (USE THIS!)
+│ Mã số thuế: 0800666682                               │ → IGNORE (Tax ID)
+│ Số, ký hiệu GPĐKKD: 04102300049                      │ → IGNORE (legacy license)
+└──────────────────────────────────────────────────────┘
+Result: business_license_number = "0800666682" (from "Mã số doanh nghiệp")
+
 Common mistakes to AVOID:
 ✗ Putting date value in business_license_number field
 ✗ Putting number value in business_license_date field
-✗ Confusing "Số đăng ký doanh nghiệp" with "Mã số thuế" (Tax ID)
+✗ Using "Số giấy phép..." instead of "Mã số doanh nghiệp" (CRITICAL!)
+✗ Confusing "Mã số doanh nghiệp" with "Mã số thuế" (Tax ID)
 ✗ Mixing up the 3 fields
 ✗ Using amendment date instead of initial registration date (CRITICAL!)
 

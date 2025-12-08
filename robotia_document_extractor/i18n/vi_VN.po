@@ -830,6 +830,8 @@ msgstr "Đơn đăng ký (Mẫu 01)"
 
 #. module: robotia_document_extractor
 #: model:ir.model.fields.selection,name:robotia_document_extractor.selection__document_extraction__document_type__02
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__substance_aggregate__document_type__02
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_search
 msgid "Report (Form 02)"
 msgstr "Báo cáo (Mẫu 02)"
 
@@ -1155,11 +1157,6 @@ msgstr "Tìm kiếm tài liệu"
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_search
 msgid "Registration (Form 01)"
 msgstr "Đơn đăng ký (Mẫu 01)"
-
-#. module: robotia_document_extractor
-#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_search
-msgid "Report (Form 02)"
-msgstr "Báo cáo (Mẫu 02)"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_search
