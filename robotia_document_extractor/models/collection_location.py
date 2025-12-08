@@ -36,7 +36,6 @@ class CollectionLocation(models.Model):
     )
     city = fields.Char(
         string='City/Province',
-        required=True,
         index=True,
         help='City or province'
     )

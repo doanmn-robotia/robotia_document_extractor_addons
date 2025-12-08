@@ -67,7 +67,6 @@ class DocumentExtraction(models.Model):
     )
     year = fields.Integer(
         string='Year',
-        required=True,
         index=True,
         aggregator=False
     )

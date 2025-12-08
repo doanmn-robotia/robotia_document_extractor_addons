@@ -38,7 +38,6 @@ class CollectionRecycling(models.Model):
             ('disposal', 'Disposal')
         ],
         string='Activity Type',
-        required=True,
         index=True,
         help='Type of activity: Collection, Reuse, Recycle, or Disposal'
     )
