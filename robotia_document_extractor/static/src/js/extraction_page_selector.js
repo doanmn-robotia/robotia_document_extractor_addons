@@ -153,6 +153,7 @@ export class ExtractionPageSelector extends Component {
                 pdf_file: this.state.base64File,
                 attachment_ids: selectedAttachmentIds, // NEW: Send attachment IDs
                 document_type: this.state.documentType,
+                filename: this.state.fileName, // Pass original filename
             });
 
             if (result.type === 'ir.actions.act_window') {

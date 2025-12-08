@@ -45,21 +45,21 @@
                         <div class="dashboard-card kpi-card">
                             <h6 class="dashboard-card-title">Trạng thái xử lý</h6>
                             <div class="status-list">
-                                <div class="status-item">
+                                <div class="status-item clickable" t-on-click="() => this.onStatusClick('draft')">
                                     <div class="d-flex align-items-center gap-2">
                                         <span class="status-dot bg-gray"/>
                                         <span class="status-label">Nháp</span>
                                     </div>
                                     <span class="status-count" t-esc="state.kpiData.status_counts.draft"/>
                                 </div>
-                                <div class="status-item">
+                                <div class="status-item clickable" t-on-click="() => this.onStatusClick('validated')">
                                     <div class="d-flex align-items-center gap-2">
                                         <span class="status-dot bg-orange"/>
                                         <span class="status-label">Đã xác thực</span>
                                     </div>
                                     <span class="status-count" t-esc="state.kpiData.status_counts.validated"/>
                                 </div>
-                                <div class="status-item">
+                                <div class="status-item clickable" t-on-click="() => this.onStatusClick('completed')">
                                     <div class="d-flex align-items-center gap-2">
                                         <span class="status-dot bg-green"/>
                                         <span class="status-label">Hoàn thành</span>
@@ -76,7 +76,9 @@
                             <h6 class="dashboard-card-title">Hoạt động gần đây</h6>
                             <div class="activity-list custom-scrollbar">
                                 <t t-foreach="state.recentActivity" t-as="activity" t-key="activity.id">
-                                    <div class="activity-item" t-att-class="{'border-0': activity_last}">
+                                    <div class="activity-item clickable"
+                                         t-att-class="{'border-0': activity_last}"
+                                         t-on-click="() => this.onActivityClick(activity)">
                                         <span t-if="activity.type === 'approval'" class="status-dot bg-green mt-1"/>
                                         <span t-elif="activity.type === 'report'" class="status-dot bg-purple mt-1"/>
                                         <span t-else="" class="status-dot bg-blue mt-1"/>

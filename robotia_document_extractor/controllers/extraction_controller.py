@@ -516,7 +516,7 @@ class ExtractionController(http.Controller):
             return {'status': 'error', 'message': str(e)}
 
     @http.route('/robotia/extract_pages', type='json', auth='user', methods=['POST'])
-    def extract_pages(self, pdf_file, attachment_ids, document_type='01'):
+    def extract_pages(self, pdf_file, attachment_ids, document_type='01', filename=None):
         """
         Extract specific pages from PDF with OCR + AI
 
@@ -524,6 +524,7 @@ class ExtractionController(http.Controller):
             pdf_file (str): Base64 encoded PDF (original full PDF)
             attachment_ids (list): List of attachment IDs representing selected pages
             document_type (str): '01' or '02'
+            filename (str): Original filename from user upload
 
         Returns:
             dict: Action to open document.extraction form
@@ -588,7 +589,9 @@ class ExtractionController(http.Controller):
             doc.close()
             new_doc.close()
 
-            filename = f"extracted_pages_{document_type}.pdf"
+            # Use original filename if provided, otherwise generate one
+            if not filename:
+                filename = f"extracted_pages_{document_type}.pdf"
 
             # 3. Call shared helper (WITH OCR if configured)
             run_ocr = request.env['ir.config_parameter'].sudo().get_param(
@@ -2174,12 +2177,24 @@ class ExtractionController(http.Controller):
                 else:
                     time_str = _("Unknown")
 
+                # Get document info if extraction record exists
+                document_id = False
+                display_name = log.file_name
+
+                if log.extraction_record_id:
+                    # Has document: use document name
+                    document_id = log.extraction_record_id.id
+                    display_name = log.extraction_record_id.name or log.file_name
+
                 recent_activity.append({
                     'id': log.id,
-                    'action': _("Processed %s") % log.file_name,
+                    'log_id': log.id,  # Always available for clicking log record
+                    'document_id': document_id,  # Document ID if exists, False otherwise
+                    'action': _("Processed %s") % display_name,
                     'user': log.create_uid.name if log.create_uid else _('System'),
                     'time': time_str,
-                    'type': 'upload' if log.status == 'success' else 'processing'
+                    'type': 'upload' if log.status == 'success' else 'processing',
+                    'display_name': display_name  # For tooltip
                 })
 
             # 5. Calculate Top Substances (optimized SQL query)
