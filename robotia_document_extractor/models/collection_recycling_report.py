@@ -20,7 +20,7 @@ class CollectionRecyclingReport(models.Model):
         index=True
     )
     substance_id = fields.Many2one('controlled.substance', string='Controlled Substance', ondelete='restrict', index=True)
-    substance_name = fields.Char(string='Substance Name', compute='_compute_substance_name', store=True, readonly=False, required=True)
+    substance_name = fields.Char(string='Substance Name', compute='_compute_substance_name', store=True, readonly=False, required=False)
 
     # Collection
     collection_quantity_kg = fields.Float(string='Collection Quantity (kg)', digits=(16, 4))
