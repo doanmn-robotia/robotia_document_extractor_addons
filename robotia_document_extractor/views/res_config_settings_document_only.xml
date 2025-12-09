@@ -60,6 +60,42 @@
                                 </div>
                             </div>
                         </setting>
+                        <setting id="gemini_temperature_setting"
+                                 string="Temperature"
+                                 help="Controls randomness in Gemini output. 0.0 = fully deterministic (recommended for accuracy).">
+                            <field name="gemini_temperature" class="oe_inline"/>
+                            <div class="content-group mt8">
+                                <div class="text-muted">
+                                    <strong>0.0:</strong> Fully deterministic (recommended for data extraction)<br/>
+                                    <strong>0.1-0.3:</strong> Low randomness, consistent results<br/>
+                                    <strong>0.5-1.0:</strong> Higher creativity (NOT recommended)
+                                </div>
+                            </div>
+                        </setting>
+                        <setting id="gemini_top_p_setting"
+                                 string="Top P (Nucleus Sampling)"
+                                 help="Controls diversity by limiting token selection. 0.95 = consider top 95% probability mass (recommended).">
+                            <field name="gemini_top_p" class="oe_inline"/>
+                            <div class="content-group mt8">
+                                <div class="text-muted">
+                                    <strong>0.95:</strong> Recommended - considers top 95% probability tokens<br/>
+                                    <strong>1.0:</strong> Maximum flexibility - considers all tokens<br/>
+                                    <strong>&lt;0.8:</strong> May miss rare but accurate tokens
+                                </div>
+                            </div>
+                        </setting>
+                        <setting id="gemini_top_k_setting"
+                                 string="Top K"
+                                 help="Limits vocabulary to top K tokens. 0 = no limit (recommended for precision).">
+                            <field name="gemini_top_k" class="oe_inline"/>
+                            <div class="content-group mt8">
+                                <div class="text-muted">
+                                    <strong>0:</strong> No limit (recommended for maximum accuracy with specialized terms)<br/>
+                                    <strong>40:</strong> Only consider 40 most likely tokens<br/>
+                                    Set to 0 for precision with rare/specialized terms
+                                </div>
+                            </div>
+                        </setting>
                         <setting id="extract_pages_run_ocr_setting"
                                  string="Run OCR for Page Extraction"
                                  help="If enabled, OCR will be run on the extracted pages before AI processing.">

@@ -50,6 +50,39 @@ class ResConfigSettings(models.TransientModel):
              'See Google AI documentation for available models.'
     )
 
+    gemini_temperature = fields.Float(
+        string='Temperature',
+        config_parameter='robotia_document_extractor.gemini_temperature',
+        default=0.0,
+        help='Controls randomness in Gemini output. '
+             '0.0 = Fully deterministic (recommended for accuracy). '
+             '0.1-0.3 = Low randomness (consistent results). '
+             '0.5-1.0 = Higher creativity (NOT recommended for data extraction). '
+             'Default: 0.0'
+    )
+
+    gemini_top_p = fields.Float(
+        string='Top P (Nucleus Sampling)',
+        config_parameter='robotia_document_extractor.gemini_top_p',
+        default=0.95,
+        help='Controls diversity by limiting token selection. '
+             '0.95 = Consider top 95% probability mass (recommended). '
+             '1.0 = Consider all tokens (maximum flexibility). '
+             '0.8 or lower = May miss rare but accurate tokens. '
+             'Default: 0.95'
+    )
+
+    gemini_top_k = fields.Integer(
+        string='Top K',
+        config_parameter='robotia_document_extractor.gemini_top_k',
+        default=0,
+        help='Limits vocabulary to top K tokens. '
+             '0 = No limit (recommended for precision). '
+             '40 = Only consider 40 most likely tokens. '
+             'Set to 0 for maximum accuracy with rare/specialized terms. '
+             'Default: 0 (no limit)'
+    )
+
     extract_pages_run_ocr = fields.Boolean(
         string='Run OCR for Page Extraction',
         config_parameter='robotia_document_extractor.extract_pages_run_ocr',

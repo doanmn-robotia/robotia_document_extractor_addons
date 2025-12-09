@@ -5,6 +5,85 @@ Meta prompts - Shared extraction rules applicable to all forms
 """
 
 
+
+def get_precision_philosophy():
+    """Precision-first extraction philosophy and confidence rules
+    
+    Returns:
+        str: Precision philosophy prompt
+    """
+    return """
+## EXTRACTION PHILOSOPHY (CRITICAL!)
+
+### Core Principle: PRECISION > RECALL
+
+Priority order:
+1. **ACCURACY** (100% correct data)
+2. **COMPLETENESS** (all available data)
+
+We prefer:
+✓ 50 fields extracted with 100% accuracy
+✗ 100 fields extracted with 90% accuracy (10 wrong fields)
+
+### Confidence-Based Extraction
+
+Extract data ONLY when you are highly confident it is correct.
+
+Confidence levels:
+✓ **100% confident** (clear, readable, unambiguous) → Extract
+✓ **90%+ confident** (slightly blurry but context confirms) → Extract
+✗ **<90% confident** (unclear, ambiguous, illegible) → Return null
+
+### When to Return NULL (Critical Decision Points)
+
+ALWAYS return null when:
+✗ Text is blurry and could be multiple interpretations
+✗ Number digits are unclear (5 vs S, 0 vs O, 1 vs l)
+✗ Checkbox state is ambiguous (cannot determine if ticked)
+✗ Field contains placeholder text only
+✗ Handwriting is illegible
+✗ Text is partially covered/obscured
+✗ Multiple valid interpretations exist
+
+### Golden Rules
+
+**NEVER:**
+- Guess when unclear
+- Infer from patterns/expectations
+- Auto-complete missing data based on assumptions
+- Fill fields because "it should have a value"
+- Choose randomly between multiple interpretations
+
+**ALWAYS:**
+- Be conservative with extraction
+- Prefer null over wrong data
+- Use context ONLY to confirm (not to guess)
+- Let users fill unclear fields manually
+
+### Examples
+
+| Scenario | Confidence | Action | Reasoning |
+|----------|-----------|--------|-----------|
+| Clear "123.45" | 100% | Extract: 123.45 | Perfectly readable |
+| Blurry "12?.45" (middle digit unclear) | <90% | null | Could be 123.45, 125.45, 128.45, etc. |
+| "HFC-134a" with fuzzy last char | 95% | Extract: "HFC-134a" | Database + context confirms |
+| Checkbox ☐ with faint mark | <90% | null | Cannot determine if ticked |
+| "100" in gray italic | <90% | null | Likely placeholder |
+| "Tổng cộng" row | N/A | Skip row | Summary row (don't extract) |
+| "Công ty..." without legal form | <90% | null | Likely placeholder text |
+
+### Validation Checklist
+
+Before finalizing extraction, verify:
+✓ All extracted numbers are 100% readable?
+✓ No fields contain placeholder/example text?
+✓ All substance names match database or marked [UNKNOWN]?
+✓ Years are in reasonable range (2020-2030)?
+✓ No ambiguous checkboxes extracted?
+✓ Used null for unclear fields (not empty string)?
+"""
+
+
 def get_extraction_rules():
     """Core extraction rules - real data vs template detection
     
@@ -143,6 +222,53 @@ Float fields (return as numbers, not strings):
 
 Text fields (preserve exact spelling, spacing, Vietnamese chars):
 - organization_name, contact_address, product_type, etc.
+
+### Number Precision Rules (CRITICAL!)
+
+**Ambiguous Digit Detection:**
+
+Common OCR misreadings - VERIFY carefully:
+- **0 vs O**: In numeric context → Use 0. Unclear → null
+- **1 vs l vs I**: In numeric context → Use 1. Unclear → null
+- **5 vs S**: In numeric field → Use 5. In text → Use S. Unclear → null
+- **8 vs B**: In numeric field → Use 8. In text → Use B. Unclear → null
+- **2 vs Z, 6 vs b, 9 vs g**: Check context carefully
+
+**Resolution strategy:**
+1. Check surrounding numbers for consistency
+2. Verify against reasonable value ranges
+3. Cross-reference with other cells/rows
+4. **If still unclear → Return null (NEVER guess)**
+
+**Number Format Handling:**
+
+Vietnamese number format (most common):
+- Thousands: "." (dot) → "1.000.000" = 1,000,000
+- Decimals: "," (comma) → "123,45" = 123.45
+
+Ambiguous cases:
+- "1,234.56" vs "1.234,56" → Check document consistency
+- If format unclear throughout → null
+
+**Decimal Precision:**
+- Preserve exact decimals: 123.45 NOT 123.4 or 123.450
+- Trailing zeros: "100.00" → 100.0 (preserve if shown)
+- Round numbers: "100" → 100 (integer, not 100.0)
+
+**Value Range Validation:**
+
+Sanity checks for common fields:
+- Year: 2020-2030 (report/registration years)
+- Quantity (kg): 0.01 - 1,000,000 (typical range)
+- GWP values: 1 - 15,000 (substance GWP range)
+- Prices (USD): 0.1 - 1000 (per kg, typical)
+- Temperature: -50 to 100°C
+
+If value outside reasonable range:
+1. Double-check reading
+2. Verify it's not a typo/OCR error
+3. **If truly outside range but clearly visible → Extract as-is**
+4. **If unclear AND outside range → null**
 
 ### Line Wrap Detection (CRITICAL!)
 

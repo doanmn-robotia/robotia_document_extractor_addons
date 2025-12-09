@@ -310,6 +310,23 @@ class DocumentExtractionService(models.AbstractModel):
             default='gemini-2.5-pro'
         )
 
+        # Get Gemini generation parameters from config
+        ICP = self.env['ir.config_parameter'].sudo()
+        GEMINI_TEMPERATURE = float(ICP.get_param(
+            'robotia_document_extractor.gemini_temperature',
+            default='0.0'
+        ))
+        GEMINI_TOP_P = float(ICP.get_param(
+            'robotia_document_extractor.gemini_top_p',
+            default='0.95'
+        ))
+        GEMINI_TOP_K = int(ICP.get_param(
+            'robotia_document_extractor.gemini_top_k',
+            default='0'
+        ))
+        # Convert top_k=0 to None (no limit)
+        GEMINI_TOP_K = None if GEMINI_TOP_K == 0 else GEMINI_TOP_K
+
         tmp_file_path = None
         uploaded_file = None
 
@@ -357,11 +374,11 @@ class DocumentExtractionService(models.AbstractModel):
                         model=GEMINI_MODEL,
                         contents=mega_context + [uploaded_file, prompt],
                         config=types.GenerateContentConfig(
-                            temperature=0.1,  # Low temperature for consistent structured output
+                            temperature=GEMINI_TEMPERATURE,
                             max_output_tokens=GEMINI_MAX_TOKENS,
                             response_mime_type='application/json',  # Force JSON output
-                            top_p=0.8,
-                            top_k=40
+                            top_p=GEMINI_TOP_P,
+                            top_k=GEMINI_TOP_K
                         )
                     )
 
@@ -714,20 +731,36 @@ class DocumentExtractionService(models.AbstractModel):
             # Build mega prompt context
             mega_context = self._build_mega_prompt_context()
 
-            # Get Gemini model from config
-            GEMINI_MODEL = self.env['ir.config_parameter'].sudo().get_param(
+            # Get Gemini model and generation parameters from config
+            ICP = self.env['ir.config_parameter'].sudo()
+            GEMINI_MODEL = ICP.get_param(
                 'robotia_document_extractor.gemini_model',
                 default='gemini-2.5-pro'
             )
+            GEMINI_TEMPERATURE = float(ICP.get_param(
+                'robotia_document_extractor.gemini_temperature',
+                default='0.0'
+            ))
+            GEMINI_TOP_P = float(ICP.get_param(
+                'robotia_document_extractor.gemini_top_p',
+                default='0.95'
+            ))
+            GEMINI_TOP_K = int(ICP.get_param(
+                'robotia_document_extractor.gemini_top_k',
+                default='0'
+            ))
+            GEMINI_TOP_K = None if GEMINI_TOP_K == 0 else GEMINI_TOP_K
 
             # Generate text content with mega context (using higher token limit for text)
             response = client.models.generate_content(
                 model=GEMINI_MODEL,
                 contents=mega_context + [uploaded_file, prompt],
                 config=types.GenerateContentConfig(
-                    temperature=0.1,
+                    temperature=GEMINI_TEMPERATURE,
                     max_output_tokens=65536,  # Max tokens for text extraction
                     response_mime_type='text/plain',  # Plain text output
+                    top_p=GEMINI_TOP_P,
+                    top_k=GEMINI_TOP_K
                 )
             )
 
@@ -786,15 +819,29 @@ class DocumentExtractionService(models.AbstractModel):
             )
         )
 
-        # Get Gemini model from config
-        GEMINI_MODEL = self.env['ir.config_parameter'].sudo().get_param(
+        # Get Gemini model and generation parameters from config
+        ICP = self.env['ir.config_parameter'].sudo()
+        GEMINI_MODEL = ICP.get_param(
             'robotia_document_extractor.gemini_model',
             default='gemini-2.5-pro'
         )
+        GEMINI_TEMPERATURE = float(ICP.get_param(
+            'robotia_document_extractor.gemini_temperature',
+            default='0.0'
+        ))
+        GEMINI_TOP_P = float(ICP.get_param(
+            'robotia_document_extractor.gemini_top_p',
+            default='0.95'
+        ))
+        GEMINI_TOP_K = int(ICP.get_param(
+            'robotia_document_extractor.gemini_top_k',
+            default='0'
+        ))
+        GEMINI_TOP_K = None if GEMINI_TOP_K == 0 else GEMINI_TOP_K
 
         # Get max retries from config (default: 3)
         GEMINI_MAX_RETRIES = int(
-            self.env['ir.config_parameter'].sudo().get_param(
+            ICP.get_param(
                 'robotia_document_extractor.gemini_max_retries',
                 default='3'
             )
@@ -815,11 +862,11 @@ class DocumentExtractionService(models.AbstractModel):
                     model=GEMINI_MODEL,
                     contents=mega_context + [prompt],
                     config=types.GenerateContentConfig(
-                        temperature=0.1,
+                        temperature=GEMINI_TEMPERATURE,
                         max_output_tokens=GEMINI_MAX_TOKENS,
                         response_mime_type='application/json',
-                        top_p=0.8,
-                        top_k=40
+                        top_p=GEMINI_TOP_P,
+                        top_k=GEMINI_TOP_K
                     )
                 )
 

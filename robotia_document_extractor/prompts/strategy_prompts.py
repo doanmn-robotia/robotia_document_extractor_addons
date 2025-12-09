@@ -26,6 +26,8 @@ def get_ai_native_prompt(form_type):
 
 You are a professional document auditor. Extract REAL DATA from {form_name}.
 
+{meta_prompts.get_precision_philosophy()}
+
 {meta_prompts.get_extraction_rules()}
 
 {meta_prompts.get_data_validation()}
@@ -105,6 +107,8 @@ EXTRACTED TEXT:
 ---
 
 Now convert the above text into JSON following these specifications:
+
+{meta_prompts.get_precision_philosophy()}
 
 {meta_prompts.get_extraction_rules()}
 
@@ -225,6 +229,8 @@ You are processing batches from same document.
   {{"page": 2, "substance_usage": [...], ...}},
   ...
 ]
+
+{meta_prompts.get_precision_philosophy()}
 
 {meta_prompts.get_extraction_rules()}
 

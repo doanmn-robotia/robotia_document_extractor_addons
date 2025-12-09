@@ -3065,6 +3065,99 @@ msgstr ""
 "Xem tài liệu Google AI để biết các mô hình khả dụng."
 
 #. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
+msgid ""
+"<strong>0.0:</strong> Fully deterministic (recommended for data extraction)<br/>\n"
+"                                    <strong>0.1-0.3:</strong> Low randomness, consistent results<br/>\n"
+"                                    <strong>0.5-1.0:</strong> Higher creativity (NOT recommended)"
+msgstr ""
+"<strong>0.0:</strong> Hoàn toàn xác định (khuyến nghị cho trích xuất dữ liệu)<br/>\n"
+"                                    <strong>0.1-0.3:</strong> Ngẫu nhiên thấp, kết quả nhất quán<br/>\n"
+"                                    <strong>0.5-1.0:</strong> Sáng tạo cao hơn (KHÔNG khuyến nghị)"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
+msgid ""
+"<strong>0.95:</strong> Recommended - considers top 95% probability tokens<br/>\n"
+"                                    <strong>1.0:</strong> Maximum flexibility - considers all tokens<br/>\n"
+"                                    <strong>&lt;0.8:</strong> May miss rare but accurate tokens"
+msgstr ""
+"<strong>0.95:</strong> Khuyến nghị - xem xét 95% token có xác suất cao nhất<br/>\n"
+"                                    <strong>1.0:</strong> Linh hoạt tối đa - xem xét tất cả token<br/>\n"
+"                                    <strong>&lt;0.8:</strong> Có thể bỏ lỡ token hiếm nhưng chính xác"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
+msgid ""
+"<strong>0:</strong> No limit (recommended for maximum accuracy with specialized terms)<br/>\n"
+"                                    <strong>40:</strong> Only consider 40 most likely tokens<br/>\n"
+"                                    Set to 0 for precision with rare/specialized terms"
+msgstr ""
+"<strong>0:</strong> Không giới hạn (khuyến nghị cho độ chính xác tối đa với thuật ngữ chuyên ngành)<br/>\n"
+"                                    <strong>40:</strong> Chỉ xem xét 40 token có khả năng cao nhất<br/>\n"
+"                                    Đặt 0 để có độ chính xác với thuật ngữ hiếm/chuyên ngành"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_res_config_settings__gemini_top_p
+msgid ""
+"Controls diversity by limiting token selection. 0.95 = Consider top 95% "
+"probability mass (recommended). 1.0 = Consider all tokens (maximum "
+"flexibility). 0.8 or lower = May miss rare but accurate tokens. Default: "
+"0.95"
+msgstr ""
+"Kiểm soát tính đa dạng bằng cách giới hạn lựa chọn token. 0.95 = Xem xét 95%"
+" khối xác suất cao nhất (khuyến nghị). 1.0 = Xem xét tất cả token (linh hoạt"
+" tối đa). 0.8 hoặc thấp hơn = Có thể bỏ lỡ token hiếm nhưng chính xác. Mặc "
+"định: 0.95"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
+msgid ""
+"Controls diversity by limiting token selection. 0.95 = consider top 95% "
+"probability mass (recommended)."
+msgstr ""
+"Kiểm soát tính đa dạng bằng cách giới hạn lựa chọn token. 0.95 = xem xét 95% khối xác suất cao nhất (khuyến nghị)."
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_res_config_settings__gemini_temperature
+msgid ""
+"Controls randomness in Gemini output. 0.0 = Fully deterministic (recommended"
+" for accuracy). 0.1-0.3 = Low randomness (consistent results). 0.5-1.0 = "
+"Higher creativity (NOT recommended for data extraction). Default: 0.0"
+msgstr ""
+"Kiểm soát tính ngẫu nhiên trong kết quả Gemini. 0.0 = Hoàn toàn xác định "
+"(khuyến nghị cho độ chính xác). 0.1-0.3 = Ngẫu nhiên thấp (kết quả nhất "
+"quán). 0.5-1.0 = Sáng tạo cao hơn (KHÔNG khuyến nghị cho trích xuất dữ "
+"liệu). Mặc định: 0.0"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
+msgid ""
+"Controls randomness in Gemini output. 0.0 = fully deterministic (recommended"
+" for accuracy)."
+msgstr ""
+"Kiểm soát tính ngẫu nhiên trong kết quả Gemini. 0.0 = hoàn toàn xác định (khuyến nghị cho độ chính xác)."
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_res_config_settings__gemini_top_k
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
+msgid "Top K"
+msgstr ""
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_res_config_settings__gemini_top_p
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
+msgid "Top P (Nucleus Sampling)"
+msgstr "Top P (Lấy mẫu nhân)"
+
+#. module: robotia_document_extractor
 #: model:ir.model.fields.selection,name:robotia_document_extractor.selection__res_config_settings__extraction_strategy__ai_native
 msgid "100% AI (Gemini processes PDF directly)"
 msgstr "100% AI (Gemini xử lý PDF trực tiếp)"
