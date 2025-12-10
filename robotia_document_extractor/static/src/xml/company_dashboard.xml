@@ -246,8 +246,8 @@
                                     <td t-esc="formatNumber(row.capacity, 2)"/>
                                     <td t-esc="formatNumber(row.quantity, 0)"/>
                                     <td t-esc="row.substance_name"/>
-                                    <td t-esc="formatNumber(row.refill_amount, 0)"/>
-                                    <td t-esc="formatNumber(row.refill_frequency, 2)"/>
+                                    <td t-esc="row.refill_amount || 'N/A'"/>
+                                    <td t-esc="row.refill_frequency || 'N/A'"/>
                                 </tr>
                             </tbody>
                         </table>

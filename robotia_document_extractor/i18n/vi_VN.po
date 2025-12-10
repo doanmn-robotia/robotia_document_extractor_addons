@@ -5213,6 +5213,14 @@ msgid "page"
 msgstr "trang"
 
 #. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_collection_recycling__substance_id
+#: model:ir.model.fields,help:robotia_document_extractor.field_equipment_ownership__substance_id
+#: model:ir.model.fields,help:robotia_document_extractor.field_equipment_product__substance_id
+#: model:ir.model.fields,help:robotia_document_extractor.field_substance_usage__substance_id
+msgid "Link to controlled substance master data"
+msgstr ""
+
+#. module: robotia_document_extractor
 #. odoo-javascript
 #: code:addons/robotia_document_extractor/static/src/xml/raw_ocr_viewer.xml:0
 msgid "pages"

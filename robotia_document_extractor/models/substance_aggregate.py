@@ -173,8 +173,9 @@ class SubstanceAggregate(models.Model):
                     0 as total_production_kg,
                     0 as total_import_kg,
                     0 as total_export_kg,
-                    SUM(COALESCE(eo.substance_quantity_per_refill, 0) * COALESCE(eo.equipment_quantity, 0) * COALESCE(eo.refill_frequency, 1)) as total_usage_kg,
-                    SUM(COALESCE(eo.substance_quantity_per_refill, 0) * COALESCE(eo.equipment_quantity, 0) * COALESCE(eo.refill_frequency, 1) * COALESCE(cs.gwp, 0) / 1000.0) as total_co2e,
+                    -- Disabled: refill fields are now Char type
+                    0 as total_usage_kg,
+                    0 as total_co2e,
                     COUNT(DISTINCT de.id) as document_count,
                     COUNT(DISTINCT de.organization_id) as organization_count
                 FROM equipment_ownership eo
@@ -244,8 +245,9 @@ class SubstanceAggregate(models.Model):
                     0 as total_production_kg,
                     0 as total_import_kg,
                     0 as total_export_kg,
-                    SUM(COALESCE(eor.substance_quantity_per_refill, 0) * COALESCE(eor.equipment_quantity, 0) * COALESCE(eor.refill_frequency, 1)) as total_usage_kg,
-                    SUM(COALESCE(eor.substance_quantity_per_refill, 0) * COALESCE(eor.equipment_quantity, 0) * COALESCE(eor.refill_frequency, 1) * COALESCE(cs.gwp, 0) / 1000.0) as total_co2e,
+                    -- Disabled: refill fields are now Char type
+                    0 as total_usage_kg,
+                    0 as total_co2e,
                     COUNT(DISTINCT de.id) as document_count,
                     COUNT(DISTINCT de.organization_id) as organization_count
                 FROM equipment_ownership_report eor

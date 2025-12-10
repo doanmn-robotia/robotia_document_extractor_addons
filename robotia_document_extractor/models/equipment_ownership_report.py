@@ -45,8 +45,8 @@ class EquipmentOwnershipReport(models.Model):
     cooling_capacity = fields.Char(string='Cooling Capacity', help='Cooling capacity with unit (e.g., 5 HP, 10 kW, 18000 BTU). Extract value AND unit from PDF.')
     power_capacity = fields.Char(string='Power Capacity', help='Power capacity with unit (e.g., 3.5 kW, 2.5 HP). Extract value AND unit from PDF.')
     start_year = fields.Integer(string='Year Started')
-    refill_frequency = fields.Float(string='Refill Frequency (times/year)', digits=(16, 4))
-    substance_quantity_per_refill = fields.Float(string='Substance Quantity per Refill', digits=(16, 4))
+    refill_frequency = fields.Char(string='Refill Frequency (times/year)')
+    substance_quantity_per_refill = fields.Char(string='Substance Quantity per Refill')
     notes = fields.Text(string='Notes')
 
     @api.depends('equipment_type_id')
