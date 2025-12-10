@@ -72,13 +72,11 @@ class EquipmentOwnership(models.Model):
         readonly=False,
         help='Substance name (auto-filled from substance_id)'
     )
-    refill_frequency = fields.Float(
-        string='Refill Frequency (times/year)',
-        digits=(16, 4)
+    refill_frequency = fields.Char(
+        string='Refill Frequency (times/year)'
     )
-    substance_quantity_per_refill = fields.Float(
-        string='Substance Quantity per Refill',
-        digits=(16, 4)
+    substance_quantity_per_refill = fields.Char(
+        string='Substance Quantity per Refill'
     )
 
     @api.depends('equipment_type_id')

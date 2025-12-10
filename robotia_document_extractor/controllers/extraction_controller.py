@@ -904,8 +904,8 @@ class ExtractionController(http.Controller):
                     'capacity': equipment.capacity or '',
                     'quantity': equipment.equipment_quantity or 0,
                     'substance_name': equipment.substance_name,
-                    'refill_amount': equipment.substance_quantity_per_refill or 0,
-                    'refill_frequency': equipment.refill_frequency or 0,
+                    'refill_amount': equipment.substance_quantity_per_refill or '',
+                    'refill_frequency': equipment.refill_frequency or '',
                 })
         return records
 
@@ -1027,17 +1027,15 @@ class ExtractionController(http.Controller):
             # Aggregate KPIs
             total_count = len(equipment_products) + len(equipment_ownerships)
 
-            # equipment.product: substance_quantity_per_unit * quantity
-            # equipment.ownership: substance_quantity_per_refill * equipment_quantity * refill_frequency
+            # Only count equipment.product
             total_kg = 0
             for eq in equipment_products:
                 total_kg += (eq.substance_quantity_per_unit or 0) * (eq.quantity or 0)
-            for eq in equipment_ownerships:
-                total_kg += (eq.substance_quantity_per_refill or 0) * (eq.equipment_quantity or 0) * (eq.refill_frequency or 1)
+            # equipment.ownership calculation removed (refill fields are now Char)
 
             # Capacity is Char field, try to parse or skip
             total_capacity = 0  # Skip for now as it's Char type
-            avg_refill_freq = sum(equipment_ownerships.mapped('refill_frequency')) / len(equipment_ownerships) if equipment_ownerships else 0
+            # avg_refill_freq removed (refill_frequency is now Char)
 
             # Pre-fetch all substances to avoid N+1 queries
             all_substance_names = set()
@@ -1058,10 +1056,7 @@ class ExtractionController(http.Controller):
                 gwp = gwp_by_name.get(eq.substance_name, 0)
                 kg = (eq.substance_quantity_per_unit or 0) * (eq.quantity or 0)
                 total_co2e += kg * gwp / 1000  # Convert to tons
-            for eq in equipment_ownerships:
-                gwp = gwp_by_name.get(eq.substance_name, 0)
-                kg = (eq.substance_quantity_per_refill or 0) * (eq.equipment_quantity or 0) * (eq.refill_frequency or 1)
-                total_co2e += kg * gwp / 1000  # Convert to tons
+            # equipment.ownership CO2e calculation removed (refill fields are now Char)
 
             # Charts data
             # Trend by year
@@ -1085,12 +1080,7 @@ class ExtractionController(http.Controller):
                     by_substance[substance] = 0
                 kg = (eq.substance_quantity_per_unit or 0) * (eq.quantity or 0)
                 by_substance[substance] += kg
-            for eq in equipment_ownerships:
-                substance = eq.substance_name
-                if substance not in by_substance:
-                    by_substance[substance] = 0
-                kg = (eq.substance_quantity_per_refill or 0) * (eq.equipment_quantity or 0)
-                by_substance[substance] += kg
+            # equipment.ownership removed from by_substance (refill fields are now Char)
 
             # By company
             by_company = {}
@@ -1114,8 +1104,8 @@ class ExtractionController(http.Controller):
                     'capacity': eq.capacity or '',
                     'quantity': eq.equipment_quantity or 0,
                     'substance_name': eq.substance_name,
-                    'refill_amount': eq.substance_quantity_per_refill or 0,
-                    'refill_frequency': eq.refill_frequency or 0,
+                    'refill_amount': eq.substance_quantity_per_refill or '',
+                    'refill_frequency': eq.refill_frequency or '',
                 })
 
             # Get unique companies and substances
@@ -1146,7 +1136,7 @@ class ExtractionController(http.Controller):
                     'total_count': total_count or 0,
                     'total_kg': total_kg or 0,
                     'total_co2e': total_co2e or 0,
-                    'avg_refill_frequency': round(avg_refill_freq, 2) if avg_refill_freq else 0,
+                    # avg_refill_frequency removed
                 },
                 'charts': {
                     'trend_by_year': [{'year': k, 'count': v} for k, v in sorted(trend_by_year.items())],
@@ -1830,8 +1820,8 @@ class ExtractionController(http.Controller):
                         'capacity': eq.capacity or 0,
                         'year_in_use': eq.start_year or 0,
                         'quantity': eq.equipment_quantity or 0,
-                        'refill_frequency': eq.refill_frequency or 0,
-                        'refill_quantity_kg': eq.substance_quantity_per_refill or 0,
+                        'refill_frequency': eq.refill_frequency or '',
+                        'refill_quantity_kg': eq.substance_quantity_per_refill or '',
                         'note': '',  # Field doesn't exist in model
                     })
 
@@ -1851,8 +1841,8 @@ class ExtractionController(http.Controller):
                         'capacity': eq.capacity or 0,
                         'year_in_use': eq.start_year or 0,
                         'quantity': eq.equipment_quantity or 0,
-                        'refill_frequency': eq.refill_frequency or 0,
-                        'refill_quantity_kg': eq.substance_quantity_per_refill or 0,
+                        'refill_frequency': eq.refill_frequency or '',
+                        'refill_quantity_kg': eq.substance_quantity_per_refill or '',
                         'note': eq.notes or '',
                     })
 

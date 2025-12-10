@@ -98,8 +98,8 @@ def get_form_01_schema():
 | power_capacity | str/null | ONLY if merged=FALSE |
 | equipment_quantity | int/null | Number of units |
 | substance_name | str | Standardized name |
-| refill_frequency | float/null | Times per year |
-| substance_quantity_per_refill | float/null | kg per refill |
+| refill_frequency | str/null | Tần suất nạp mới chất kiểm soát trên 1 năm |
+| substance_quantity_per_refill | str/null | Lượng chất được nạp vào trên 1 lần |
 
 ### Table 1.4: collection_recycling (array)
 
@@ -186,6 +186,33 @@ def get_form_02_schema():
 
 ### Table 2.1: quota_usage (array)
 
+**CRITICAL EXTRACTION RULES FOR TABLE 2.1:**
+
+⚠️ **COLUMN IDENTIFICATION - READ CAREFULLY:**
+
+Table 2.1 has THREE separate quota column groups (6 columns total for quotas):
+
+1. **Columns 4-5**: "Hạn ngạch được phân bổ phân bổ trong năm báo cáo" 
+   - → `allocated_quota_kg` and `allocated_quota_co2`
+   
+2. **Columns 6-7**: "Hạn ngạch được điều chỉnh sung trong năm báo cáo"
+   - → `adjusted_quota_kg` and `adjusted_quota_co2`
+   
+3. **Columns 8-9**: "Tổng hạn ngạch sử dụng trong năm báo cáo hết 31 tháng 12 của năm báo cáo"
+   - → `total_quota_kg` and `total_quota_co2`
+
+**⚠️ EMPTY CELL HANDLING - CRITICAL:**
+
+- If a cell is EMPTY/BLANK → use `null`
+- DO NOT copy values from one quota column to another
+- DO NOT assume empty columns should have the same value as filled columns
+- Each column group is INDEPENDENT - they can have different values or be empty
+
+**Example:**
+- If "Hạn ngạch được phân bổ" columns are EMPTY → `allocated_quota_kg: null, allocated_quota_co2: null`
+- If "Tổng hạn ngạch" columns have values 2260/9006.1 → `total_quota_kg: 2260.0, total_quota_co2: 9006.1`
+- DO NOT put 2260/9006.1 into allocated_quota fields!
+
 | Field | Type | Description |
 |-------|------|-------------|
 | is_title | bool | true=section header, false=data row |
@@ -193,15 +220,15 @@ def get_form_02_schema():
 | usage_type | str | production/import/export |
 | substance_name | str | Title: Vietnamese text. Data: standardized name |
 | hs_code | str | HS code from document |
-| allocated_quota_kg | float/null | Allocated quota (kg) |
-| allocated_quota_co2 | float/null | Allocated CO2 equivalent |
-| adjusted_quota_kg | float/null | Adjusted quota (can be negative) |
-| adjusted_quota_co2 | float/null | Adjusted CO2 (can be negative) |
-| total_quota_kg | float/null | Total quota (kg) |
-| total_quota_co2 | float/null | Total CO2 equivalent |
+| allocated_quota_kg | float/null | **Column 4** - Allocated quota (kg). null if empty! |
+| allocated_quota_co2 | float/null | **Column 5** - Allocated CO2. null if empty! |
+| adjusted_quota_kg | float/null | **Column 6** - Adjusted quota (can be negative). null if empty! |
+| adjusted_quota_co2 | float/null | **Column 7** - Adjusted CO2 (can be negative). null if empty! |
+| total_quota_kg | float/null | **Column 8** - Total quota (kg). null if empty! |
+| total_quota_co2 | float/null | **Column 9** - Total CO2. null if empty! |
 | average_price | float/null | Average price (USD) |
 | country_text | str | Country name from document |
-| customs_declaration_number | str/null | Customs declaration number |
+| customs_declaration_number | str/null | Customs declaration number (preserve exact format) |
 | next_year_quota_kg | float/null | Next year quota (kg) |
 | next_year_quota_co2 | float/null | Next year CO2 |
 
@@ -240,8 +267,8 @@ def get_form_02_schema():
 | cooling_capacity | str/null | ONLY if merged=FALSE |
 | power_capacity | str/null | ONLY if merged=FALSE |
 | start_year | int/null | Year put into use |
-| refill_frequency | float/null | Times per year |
-| substance_quantity_per_refill | float/null | kg per refill |
+| refill_frequency | str/null | Tần suất nạp mới chất kiểm soát trên 1 năm |
+| substance_quantity_per_refill | str/null | Lượng chất được nạp vào trên 1 lần |
 | notes | str/null | Notes/remarks |
 
 ### Table 2.4: collection_recycling_report (array)

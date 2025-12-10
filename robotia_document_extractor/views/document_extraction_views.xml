@@ -213,8 +213,8 @@
                                     <field name="power_capacity" column_invisible="parent.is_capacity_merged_table_1_3"/>
                                     <field name="substance_id" options="{'no_create': True, 'no_quick_create': True}"/>
                                     <field name="equipment_quantity" options="{'enable_formatting': false}"/>
-                                    <field name="refill_frequency" options="{'enable_formatting': false}"/>
-                                    <field name="substance_quantity_per_refill" options="{'enable_formatting': false}"/>
+                                    <field name="refill_frequency"/>
+                                    <field name="substance_quantity_per_refill"/>
                                     <field name="is_title" column_invisible="1"/>
                                     <control>
                                         <create name="add_data_control" string="Add equipment"/>
@@ -316,8 +316,8 @@
                                     <field name="cooling_capacity" column_invisible="parent.is_capacity_merged_table_2_3"/>
                                     <field name="power_capacity" column_invisible="parent.is_capacity_merged_table_2_3"/>
                                     <field name="start_year" options="{'enable_formatting': false}"/>
-                                    <field name="refill_frequency" options="{'enable_formatting': false}"/>
-                                    <field name="substance_quantity_per_refill" options="{'enable_formatting': false}"/>
+                                    <field name="refill_frequency"/>
+                                    <field name="substance_quantity_per_refill"/>
                                     <field name="notes"/>
                                     <field name="is_title" column_invisible="1"/>
                                     <field name="ownership_type" column_invisible="1"/>

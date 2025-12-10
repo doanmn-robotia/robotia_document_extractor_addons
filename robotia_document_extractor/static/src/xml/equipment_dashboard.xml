@@ -76,7 +76,7 @@
                     </div>
 
                     <!-- KPI -->
-                    <div class="grid-4">
+                    <div class="grid-3">
                         <div class="kpi-card">
                             <div class="kpi-label">Thiết bị đã ghi nhận</div>
                             <div class="kpi-value" t-esc="state.kpiData.totalCount"/>
@@ -93,14 +93,6 @@
                             <div class="kpi-label">Tổng CO₂e (t)</div>
                             <div class="kpi-value" t-esc="formatNumber(state.kpiData.totalCO2e, 2)"/>
                             <div class="kpi-sub">Theo hệ số GWP</div>
-                        </div>
-
-                        <div class="kpi-card">
-                            <div class="kpi-label">Tần suất nạp môi chất TB</div>
-                            <div class="kpi-value">
-                                <t t-esc="formatNumber(state.kpiData.avgRefillFrequency, 2)"/> lần/năm
-                            </div>
-                            <div class="kpi-sub">Từ dữ liệu thực tế</div>
                         </div>
                     </div>
 
@@ -185,8 +177,8 @@
                                     <td t-esc="formatNumber(row.capacity, 1)"/>
                                     <td t-esc="formatNumber(row.quantity, 0)"/>
                                     <td t-esc="row.substance_name"/>
-                                    <td t-esc="formatNumber(row.refill_amount, 0)"/>
-                                    <td t-esc="formatNumber(row.refill_frequency, 2)"/>
+                                    <td t-esc="row.refill_amount || 'N/A'"/>
+                                    <td t-esc="row.refill_frequency || 'N/A'"/>
                                 </tr>
                             </tbody>
                         </table>

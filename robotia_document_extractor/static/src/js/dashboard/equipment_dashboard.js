@@ -41,12 +41,12 @@ export class EquipmentDashboard extends Component {
 
         // Get equipment_type_id from params (priority), state (from URL), or context
         this.equipmentTypeId = this.props.action?.params?.equipment_type_id ||
-                              this.props.action?.state?.equipment_type_id ||
-                              this.props.action?.context?.default_equipment_type_id ||
-                              null;
+            this.props.action?.state?.equipment_type_id ||
+            this.props.action?.context?.default_equipment_type_id ||
+            null;
         this.equipmentTypeName = this.props.action?.params?.equipment_type_name ||
-                                this.props.action?.context?.default_equipment_type_name ||
-                                '';
+            this.props.action?.context?.default_equipment_type_name ||
+            '';
 
         // State
         this.state = useState({
@@ -59,7 +59,6 @@ export class EquipmentDashboard extends Component {
                 totalCount: 0,
                 totalKg: 0,
                 totalCO2e: 0,
-                avgRefillFrequency: 0,
             },
             trendByYear: [],
             bySubstance: [],
@@ -116,7 +115,6 @@ export class EquipmentDashboard extends Component {
                 totalCount: dashboardData.kpis?.total_count || 0,
                 totalKg: dashboardData.kpis?.total_kg || 0,
                 totalCO2e: dashboardData.kpis?.total_co2e || 0,
-                avgRefillFrequency: dashboardData.kpis?.avg_refill_frequency || 0,
             };
 
             // Update chart data
