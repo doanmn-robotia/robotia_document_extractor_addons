@@ -19,12 +19,9 @@
                 </header>
 
                 <field name="raw_ocr_data" invisible="1"/>
-                
+                <field name="validation_result" invisible="1"/>
+
                 <sheet>
-                    <!-- OCR Preview Widget (only visible in draft state) -->
-                    <widget name="raw_ocr_viewer"
-                            class="mb-3"
-                            invisible="state != 'draft'"/>
                     <!-- Smart Buttons -->
                     <div class="oe_button_box" name="button_box">
                         <button name="action_view_extraction_log" type="object"
@@ -166,6 +163,7 @@
                                     <field name="avg_quantity_co2" options="{'enable_formatting': false}"/>
                                     <field name="is_title" column_invisible="1"/>
                                     <field name="usage_type" column_invisible="1"/>
+                                    <field name="notes"/>
                                     <control>
                                         <create name="add_data_control" string="Add substance"/>
                                         <create name="add_section_control" string="Add section title"
@@ -211,8 +209,8 @@
                                     <field name="capacity" column_invisible="not parent.is_capacity_merged_table_1_3"/>
                                     <field name="cooling_capacity" column_invisible="parent.is_capacity_merged_table_1_3"/>
                                     <field name="power_capacity" column_invisible="parent.is_capacity_merged_table_1_3"/>
-                                    <field name="substance_id" options="{'no_create': True, 'no_quick_create': True}"/>
                                     <field name="equipment_quantity" options="{'enable_formatting': false}"/>
+                                    <field name="substance_id" options="{'no_create': True, 'no_quick_create': True}"/>
                                     <field name="refill_frequency"/>
                                     <field name="substance_quantity_per_refill"/>
                                     <field name="is_title" column_invisible="1"/>
@@ -236,6 +234,7 @@
                                     <field name="substance_id" widget="extraction_title_field" options="{'no_create': True, 'no_quick_create': True}"/>
                                     <field name="quantity_kg" options="{'enable_formatting': false}"/>
                                     <field name="quantity_co2" options="{'enable_formatting': false}"/>
+                                    <field name="notes"/>
                                     <field name="is_title" column_invisible="1"/>
                                     <control>
                                         <create name="add_data_control" string="Add substance"/>
@@ -266,6 +265,7 @@
                                     <field name="customs_declaration_number"/>
                                     <field name="next_year_quota_kg" options="{'enable_formatting': false}"/>
                                     <field name="next_year_quota_co2" options="{'enable_formatting': false}"/>
+                                    <field name="notes"/>
                                     <field name="is_title" column_invisible="1"/>
                                     <field name="usage_type" column_invisible="1"/>
                                     <control>
@@ -351,6 +351,7 @@
                                     <field name="disposal_quantity_kg" options="{'enable_formatting': false}"/>
                                     <field name="disposal_technology"/>
                                     <field name="disposal_facility"/>
+                                    <field name="notes"/>
                                 </list>
                             </field>
                         </page>
@@ -370,6 +371,12 @@
                         </page>
                         <page name="json" string="Json" invisible="not extraction_log_json">
                             <field name="extraction_log_json" options="{'mode': 'python'}" widget="ace_copy"/>
+                        </page>
+                        <page name="ocr_data" string="OCR Data" invisible="not raw_ocr_data">
+                            <widget name="raw_ocr_viewer"/>
+                        </page>
+                        <page name="validation" string="Validation Result" invisible="not validation_result">
+                            <field name="validation_result" options="{'mode': 'python'}" widget="ace_copy"/>
                         </page>
                     </notebook>
                 </div>

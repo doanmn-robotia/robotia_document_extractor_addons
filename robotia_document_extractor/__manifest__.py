@@ -132,6 +132,7 @@
             'google-api-python-client',
             'PyMuPDF',
             'Pillow',
+            'llama-cloud-services',
         ]
     },
     'license': 'LGPL-3',

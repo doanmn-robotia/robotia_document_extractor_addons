@@ -83,7 +83,6 @@ class ExtractionController(http.Controller):
             dict: {
                 'success': True/False,
                 'extracted_data': {...},  # AI extracted data (None if failed)
-                'raw_ocr_data': {...},    # OCR data with bbox (None if run_ocr=False or OCR fails)
                 'attachment': ir.attachment record (always present if validation passed),
                 'log': google.drive.extraction.log record (always present),
                 'error': None or dict with error notification params
@@ -98,7 +97,6 @@ class ExtractionController(http.Controller):
         log = None
         attachment = None
         extracted_data = None
-        raw_ocr_data = None
 
         try:
             # ===== STEP 1: Create log FIRST (with 'processing' status) =====
@@ -120,7 +118,6 @@ class ExtractionController(http.Controller):
                 return {
                     'success': False,
                     'extracted_data': None,
-                    'raw_ocr_data': None,
                     'attachment': None,
                     'log': log,
                     'error': {
@@ -140,7 +137,6 @@ class ExtractionController(http.Controller):
                 return {
                     'success': False,
                     'extracted_data': None,
-                    'raw_ocr_data': None,
                     'attachment': None,
                     'log': log,
                     'error': {
@@ -158,7 +154,6 @@ class ExtractionController(http.Controller):
                 return {
                     'success': False,
                     'extracted_data': None,
-                    'raw_ocr_data': None,
                     'attachment': None,
                     'log': log,
                     'error': {
@@ -180,7 +175,6 @@ class ExtractionController(http.Controller):
                 return {
                     'success': False,
                     'extracted_data': None,
-                    'raw_ocr_data': None,
                     'attachment': None,
                     'log': log,
                     'error': {
@@ -212,7 +206,6 @@ class ExtractionController(http.Controller):
                 return {
                     'success': False,
                     'extracted_data': None,
-                    'raw_ocr_data': None,
                     'attachment': None,
                     'log': log,
                     'error': {
@@ -222,28 +215,10 @@ class ExtractionController(http.Controller):
                     }
                 }
 
-            # ===== STEP 4: Run OCR if requested (optional, non-critical) =====
-            if run_ocr:
-                try:
-                    _logger.info(f"[Log {log.id}] Running OCR extraction...")
-                    OCRService = request.env['document.ocr.raw.service'].sudo()
-                    raw_ocr_data = OCRService.extract_ocr_with_bbox(pdf_binary, filename)
-
-                    if raw_ocr_data:
-                        total_regions = sum(len(p.get('text_regions', [])) for p in raw_ocr_data.get('pages', []))
-                        _logger.info(f"[Log {log.id}] OCR completed: {len(raw_ocr_data.get('pages', []))} pages, {total_regions} text regions")
-                    else:
-                        _logger.warning(f"[Log {log.id}] OCR returned no data - continuing with AI only")
-                except Exception as e:
-                    _logger.warning(f"[Log {log.id}] OCR failed (continuing with AI only): {e}")
-                    raw_ocr_data = None
-                    # Continue without OCR - graceful degradation
-
-            # ===== STEP 5: Run AI extraction (CRITICAL - must catch all errors) =====
             try:
                 _logger.info(f"[Log {log.id}] Starting AI extraction...")
                 extraction_service = request.env['document.extraction.service']
-                extracted_data = extraction_service.extract_pdf(pdf_binary, document_type, filename)
+                extracted_data = extraction_service.extract_pdf(pdf_binary, document_type, log_id=log)
                 _logger.info(f"[Log {log.id}] AI extraction completed successfully")
             except Exception as e:
                 error_msg = f'AI extraction failed: {str(e)}'
@@ -260,7 +235,6 @@ class ExtractionController(http.Controller):
                 return {
                     'success': False,
                     'extracted_data': None,
-                    'raw_ocr_data': raw_ocr_data,
                     'attachment': attachment,
                     'log': log,
                     'error': {
@@ -290,10 +264,6 @@ class ExtractionController(http.Controller):
                     'status': 'success',
                     'ai_response_json': json.dumps(extracted_data, ensure_ascii=False, indent=2),
                 }
-                # Add OCR data if available
-                if raw_ocr_data:
-                    log_data['ocr_response_json'] = json.dumps(raw_ocr_data, ensure_ascii=False, indent=2)
-
                 log.write(log_data)
                 _logger.info(f"[Log {log.id}] Extraction pipeline completed successfully")
             except Exception as e:
@@ -309,7 +279,6 @@ class ExtractionController(http.Controller):
                 return {
                     'success': False,
                     'extracted_data': extracted_data,
-                    'raw_ocr_data': raw_ocr_data,
                     'attachment': attachment,
                     'log': log,
                     'error': {
@@ -323,7 +292,6 @@ class ExtractionController(http.Controller):
             return {
                 'success': True,
                 'extracted_data': extracted_data,
-                'raw_ocr_data': raw_ocr_data,
                 'attachment': attachment,
                 'log': log,
                 'error': None,
@@ -349,7 +317,6 @@ class ExtractionController(http.Controller):
             return {
                 'success': False,
                 'extracted_data': None,
-                'raw_ocr_data': None,
                 'attachment': attachment,  # May be None if error before attachment creation
                 'log': log,  # May be None if error before log creation
                 'error': {
@@ -414,9 +381,6 @@ class ExtractionController(http.Controller):
             attachment=result['attachment'],
             document_type=document_type
         )
-
-        # Add raw_ocr_data (will be None for this route)
-        vals['raw_ocr_data'] = json.dumps(result['raw_ocr_data']) if result['raw_ocr_data'] else None
 
         # Convert to context
         context = {f'default_{key}': value for key, value in vals.items()}
@@ -624,9 +588,6 @@ class ExtractionController(http.Controller):
                 attachment=result['attachment'],
                 document_type=document_type
             )
-
-            # Add raw_ocr_data (will have data from OCR)
-            vals['raw_ocr_data'] = json.dumps(result['raw_ocr_data']) if result['raw_ocr_data'] else None
 
             # Convert to context
             context = {f'default_{key}': value for key, value in vals.items()}

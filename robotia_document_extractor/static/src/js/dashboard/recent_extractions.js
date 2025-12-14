@@ -83,7 +83,10 @@ export class RecentExtractions extends Component {
 
     formatDate(dateString) {
         if (!dateString) return '';
-        const date = new Date(dateString);
-        return luxon.DateTime.fromJSDate(date).toFormat('dd/MM/yyyy HH:mm')
+        const date = new Date(dateString + 'Z');
+
+        return luxon.DateTime.fromJSDate(date, {
+            zone: 'utc'
+        }).setZone('local').toFormat('dd/MM/yyyy HH:mm')
     }
 }

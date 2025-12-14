@@ -64,6 +64,7 @@ def get_form_01_schema():
 | year_3_quantity_co2 | float/null | CO2 equivalent for year_3 |
 | avg_quantity_kg | float/null | Average quantity (kg) |
 | avg_quantity_co2 | float/null | Average CO2 |
+| notes | str/null | From column "Other information" |
 
 ### Table 1.2: equipment_product (array)
 
@@ -81,7 +82,8 @@ def get_form_01_schema():
 | quantity | float/null | Equipment quantity |
 | substance_name | str | Standardized name (null if is_title=true) |
 | substance_quantity_per_unit | float/null | Substance per unit (kg) |
-| notes | str/null | Notes/remarks |
+| substance_quantity_per_unit | float/null | Substance per unit (kg) |
+| notes | str/null | From column "Notes" |
 
 ### Table 1.3: equipment_ownership (array)
 
@@ -111,6 +113,7 @@ def get_form_01_schema():
 | substance_name | str | Substance or section title |
 | quantity_kg | float/null | Quantity in kg |
 | quantity_co2 | float/null | CO2 equivalent |
+| notes | str/null | From column "Other information" |
 
 ### JSON Output Template
 
@@ -231,6 +234,7 @@ Table 2.1 has THREE separate quota column groups (6 columns total for quotas):
 | customs_declaration_number | str/null | Customs declaration number (preserve exact format) |
 | next_year_quota_kg | float/null | Next year quota (kg) |
 | next_year_quota_co2 | float/null | Next year CO2 |
+| notes | str/null | From column "Other information" |
 
 ### Table 2.2: equipment_product_report (array)
 
@@ -249,7 +253,8 @@ Table 2.1 has THREE separate quota column groups (6 columns total for quotas):
 | quantity | float/null | Equipment quantity |
 | substance_name | str | Standardized name |
 | substance_quantity_per_unit | float/null | Substance per unit (kg) |
-| notes | str/null | Notes/remarks |
+| substance_quantity_per_unit | float/null | Substance per unit (kg) |
+| notes | str/null | From column "Notes" |
 
 ### Table 2.3: equipment_ownership_report (array)
 
@@ -289,6 +294,7 @@ Table 2.1 has THREE separate quota column groups (6 columns total for quotas):
 | disposal_quantity_kg | float/null | Disposal quantity (kg) |
 | disposal_technology | str/null | Disposal technology |
 | disposal_facility | str/null | Disposal facility |
+| notes | str/null | From column "Other information" |
 
 ### JSON Output Template
 

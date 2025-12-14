@@ -57,9 +57,19 @@ class DocumentExtraction(models.Model):
     # OCR Raw Data
     raw_ocr_data = fields.Text(
         string='Raw OCR Data',
+        related="extraction_log_id.ocr_response_json",
         help='Structured OCR data with bounding boxes (JSON format). '
              'Contains text regions with coordinates for PDF highlighting.'
     )
+    
+    # AI Validation Result
+    validation_result = fields.Text(
+        string='AI Validation Result',
+        related="extraction_log_id.validation_result_json",
+        help='AI validation report comparing OCR output with PDF source (JSON format). '
+             'Contains accuracy metrics, error list, and correction suggestions.'
+    )
+    
     extraction_date = fields.Datetime(
         string='Extraction Date',
         default=fields.Datetime.now,

@@ -93,6 +93,9 @@ class QuotaUsage(models.Model):
         string='Next Year Quota (ton CO2)',
         digits=(16, 4)
     )
+    notes = fields.Text(
+        string='Other information'
+    )
 
     # SQL Constraints for data validation
     _sql_constraints = [

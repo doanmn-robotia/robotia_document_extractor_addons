@@ -5830,3 +5830,11 @@ msgstr "Không thể xác định số trang"
 #, python-format
 msgid "Extraction Failed"
 msgstr "Trích xuất thất bại"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_substance_usage__notes
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_collection_recycling__notes
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_quota_usage__notes
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_collection_recycling_report__notes
+msgid "Other information"
+msgstr "Thông tin khác"

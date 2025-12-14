@@ -1,10 +1,12 @@
 # Python dependencies for robotia_document_extractor module
 
-# Google Gemini AI API (used for both extraction and OCR)
+# Google Gemini AI API (used for extraction)
 google-genai>=0.1.0
 
 # PDF processing (text extraction and image conversion)
 PyMuPDF>=1.23.0
 
-# Note: OCR now uses Gemini Vision API (no additional OCR libraries needed)
-# Previous: EasyOCR, PaddleOCR (removed due to installation complexity)
+# LlamaIndex Cloud API for OCR with bounding boxes
+llama-cloud-services>=0.1.0
+
+# Note: Previous OCR libraries (EasyOCR, PaddleOCR) removed due to installation complexity

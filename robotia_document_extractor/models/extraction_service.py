@@ -3,21 +3,56 @@
 from odoo import models, api
 import json
 import logging
-
-try:
-    # Import Google Generative AI library
-    from google import genai
-    from google.genai import types
-except ImportError:
-    raise ValueError(
-        "Google Generative AI library not installed. "
-        "Please install it: pip install google-generativeai"
-    )
+import tempfile
+import os
+import time
+from google import genai
+from google.genai import types
 
 # Import prompt modules
 from odoo.addons.robotia_document_extractor.prompts import context_prompts, strategy_prompts
 
 _logger = logging.getLogger(__name__)
+
+        # Constants
+GEMINI_POLL_INTERVAL_SECONDS = 2
+GEMINI_MAX_POLL_RETRIES = 30  # 30 * 2s = 60s timeout
+
+# Shared keyword mappings for activity codes
+SUBSTANCE_KEYWORDS = {
+    'Sản xuất': 'production',
+    'Nhập khẩu': 'import',
+    'Xuất khẩu': 'export'
+}
+
+EQUIPMENT_KEYWORDS = {
+    'Sản xuất thiết bị': 'equipment_production',
+    'Nhập khẩu thiết bị': 'equipment_import'
+}
+
+OWNERSHIP_KEYWORDS = {
+    'Máy điều hòa': 'ac_ownership',
+    'Thiết bị lạnh': 'refrigeration_ownership'
+}
+
+COLLECTION_KEYWORDS = {
+    'Thu gom': 'collection_recycling',
+    'Tái sử dụng': 'collection_recycling',
+    'Tái chế': 'collection_recycling',
+    'Xử lý': 'collection_recycling'
+}
+
+# Table-to-field mapping
+TABLE_ACTIVITY_MAPPINGS = {
+    'substance_usage': {'field_name': 'substance_name', 'keywords': SUBSTANCE_KEYWORDS},
+    'quota_usage': {'field_name': 'substance_name', 'keywords': SUBSTANCE_KEYWORDS},
+    'equipment_product': {'field_name': 'product_type', 'keywords': EQUIPMENT_KEYWORDS},
+    'equipment_product_report': {'field_name': 'product_type', 'keywords': EQUIPMENT_KEYWORDS},
+    'equipment_ownership': {'field_name': 'equipment_type', 'keywords': OWNERSHIP_KEYWORDS},
+    'equipment_ownership_report': {'field_name': 'equipment_type', 'keywords': OWNERSHIP_KEYWORDS},
+    'collection_recycling': {'field_name': 'activity_type', 'keywords': COLLECTION_KEYWORDS},
+    'collection_recycling_report': {'field_name': 'substance_name', 'keywords': COLLECTION_KEYWORDS}
+}
 
 
 class DocumentExtractionService(models.AbstractModel):
@@ -29,6 +64,623 @@ class DocumentExtractionService(models.AbstractModel):
     """
     _name = 'document.extraction.service'
     _description = 'Document Extraction Service'
+
+    def make_temp_file(self, data):
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf', prefix="hfc_ai_extraction") as tmp_file:
+                tmp_file.write(data)
+                tmp_file_path = tmp_file.name
+
+        return tmp_file_path
+
+    def upload_file_to_gemini(self, client, path):
+        uploaded_file = client.files.upload(file=path)
+        _logger.info(f"File uploaded to Gemini: {uploaded_file.name}")
+
+        # Wait for file to be processed
+        poll_count = 0
+        while uploaded_file.state.name == "PROCESSING":
+            if poll_count >= GEMINI_MAX_POLL_RETRIES:
+                raise TimeoutError(f"Gemini file processing timeout after {GEMINI_MAX_POLL_RETRIES * GEMINI_POLL_INTERVAL_SECONDS}s")
+
+            time.sleep(GEMINI_POLL_INTERVAL_SECONDS)
+            uploaded_file = client.files.get(name=uploaded_file.name)
+            poll_count += 1
+
+        if uploaded_file.state.name == "FAILED":
+            raise ValueError("File processing failed in Gemini")
+
+        _logger.info(f"File processing completed: {uploaded_file.state.name}")
+
+        return uploaded_file
+
+    def generate_content(self, client, content):
+        # Get max output tokens from config (default: 65536 for Gemini 2.0 Flash)
+        # User can adjust this in Settings if needed
+        GEMINI_MAX_TOKENS = int(
+            self.env['ir.config_parameter'].sudo().get_param(
+                'robotia_document_extractor.gemini_max_output_tokens',
+                default='65536'
+            )
+        )
+
+        # Get Gemini model from config (default: gemini-2.0-flash-exp)
+        GEMINI_MODEL = self.env['ir.config_parameter'].sudo().get_param(
+            'robotia_document_extractor.gemini_model',
+            default='gemini-2.5-pro'
+        )
+
+        # Get Gemini generation parameters from config
+        ICP = self.env['ir.config_parameter'].sudo()
+        GEMINI_TEMPERATURE = float(ICP.get_param(
+            'robotia_document_extractor.gemini_temperature',
+            default='0.0'
+        ))
+        GEMINI_TOP_P = float(ICP.get_param(
+            'robotia_document_extractor.gemini_top_p',
+            default='0.95'
+        ))
+        GEMINI_TOP_K = int(ICP.get_param(
+            'robotia_document_extractor.gemini_top_k',
+            default='0'
+        ))
+        # Convert top_k=0 to None (no limit)
+        GEMINI_TOP_K = None if GEMINI_TOP_K == 0 else GEMINI_TOP_K
+
+        return client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=content,
+            config=types.GenerateContentConfig(
+                temperature=GEMINI_TEMPERATURE,
+                max_output_tokens=GEMINI_MAX_TOKENS,
+                response_mime_type='application/json',  # Force JSON output
+                top_p=GEMINI_TOP_P,
+                top_k=GEMINI_TOP_K
+            )
+        )
+
+    def create_chat_session(self, client, system_instruction):
+        """
+        Create a Gemini chat session with system instruction
+        
+        Similar to generate_content but returns a chat session for multi-turn conversation.
+        Uses same configuration parameters (temperature, top_p, top_k, max_tokens).
+        
+        Args:
+            client: Gemini client instance
+            system_instruction (str): System instruction for the chat
+            
+        Returns:
+            Chat session object
+        """
+        # Get configuration (same as generate_content)
+        ICP = self.env['ir.config_parameter'].sudo()
+        
+        GEMINI_MODEL = ICP.get_param(
+            'robotia_document_extractor.gemini_model',
+            default='gemini-2.5-pro'
+        )
+        
+        GEMINI_MAX_TOKENS = int(ICP.get_param(
+            'robotia_document_extractor.gemini_max_output_tokens',
+            default='65536'
+        ))
+        
+        GEMINI_TEMPERATURE = float(ICP.get_param(
+            'robotia_document_extractor.gemini_temperature',
+            default='0.0'
+        ))
+        
+        GEMINI_TOP_P = float(ICP.get_param(
+            'robotia_document_extractor.gemini_top_p',
+            default='0.95'
+        ))
+        
+        GEMINI_TOP_K = int(ICP.get_param(
+            'robotia_document_extractor.gemini_top_k',
+            default='0'
+        ))
+        GEMINI_TOP_K = None if GEMINI_TOP_K == 0 else GEMINI_TOP_K
+        
+        # Create chat session
+        chat = client.chats.create(
+            model=GEMINI_MODEL,
+            config=types.GenerateContentConfig(
+                system_instruction=system_instruction,
+                temperature=GEMINI_TEMPERATURE,
+                max_output_tokens=GEMINI_MAX_TOKENS,
+                response_mime_type='application/json',
+                top_p=GEMINI_TOP_P,
+                top_k=GEMINI_TOP_K
+            )
+        )
+        
+        _logger.info(f"Created chat session with model {GEMINI_MODEL}")
+        
+        return chat
+
+    def cleanup_temp_extraction_files(self):
+        """
+        Clean up all temporary extraction files with prefix 'hfc_ai_extraction'
+        
+        Removes stale temporary files from previous extraction attempts
+        to prevent disk space issues. Should be called at the start of extraction.
+        """
+        import tempfile
+        import glob
+        
+        temp_dir = tempfile.gettempdir()
+        pattern = os.path.join(temp_dir, 'hfc_ai_extraction*')
+        
+        cleaned_count = 0
+        for file_path in glob.glob(pattern):
+            try:
+                if os.path.isfile(file_path):
+                    os.unlink(file_path)
+                    cleaned_count += 1
+                    _logger.debug(f"Cleaned up temp file: {file_path}")
+            except Exception as e:
+                _logger.warning(f"Failed to cleanup temp file {file_path}: {e}")
+        
+        if cleaned_count > 0:
+            _logger.info(f"Cleaned up {cleaned_count} temporary extraction files")
+
+    def _build_pdf_from_pages(self, pdf_binary, page_indexes):
+        """
+        Build a new PDF from selected pages of original PDF
+        
+        Args:
+            pdf_binary (bytes): Original PDF binary
+            page_indexes (list): List of 1-based page indexes to extract (e.g., [1, 2, 3])
+            
+        Returns:
+            str: Path to temporary PDF file containing only selected pages
+            
+        Raises:
+            ImportError: If PyMuPDF is not installed
+        """
+        try:
+            import fitz  # PyMuPDF
+        except ImportError:
+            raise ImportError(
+                "PyMuPDF is not installed. Please install it with: pip install PyMuPDF"
+            )
+        
+        # Open original PDF
+        doc = fitz.open(stream=pdf_binary, filetype="pdf")
+        new_doc = fitz.open()  # Create new empty PDF
+        
+        # Insert selected pages (convert 1-indexed to 0-indexed)
+        for page_num in page_indexes:
+            page_idx = page_num - 1
+            if 0 <= page_idx < len(doc):
+                new_doc.insert_pdf(doc, from_page=page_idx, to_page=page_idx)
+            else:
+                _logger.warning(f"Page {page_num} out of range, skipping")
+        
+        # Save to temp file with hfc_ai_extraction prefix
+        tmp_file = tempfile.NamedTemporaryFile(
+            delete=False, 
+            suffix='.pdf', 
+            prefix='hfc_ai_extraction_category_'
+        )
+        new_doc.save(tmp_file.name)
+        
+        doc.close()
+        new_doc.close()
+        tmp_file.close()
+        
+        _logger.info(f"Created category PDF with {len(page_indexes)} pages: {tmp_file.name}")
+        
+        return tmp_file.name
+
+    def _build_markdown_from_ocr(self, ocr_data):
+        """
+        Build complete markdown from LlamaParse OCR result
+        
+        Args:
+            ocr_data: LlamaParse JSON result (list or dict)
+            
+        Returns:
+            str: Complete markdown text with page separators
+        """
+        # Handle different OCR data structures
+        pages = []
+        if isinstance(ocr_data, list) and len(ocr_data) > 0:
+            if isinstance(ocr_data[0], dict) and 'pages' in ocr_data[0]:
+                pages = ocr_data[0].get('pages', [])
+        
+        markdown_parts = []
+        for page in pages:
+            page_md = page.get('md', '')
+            if page_md:
+                markdown_parts.append(page_md)
+        
+        full_markdown = "\n\n---\n\n".join(markdown_parts)
+        
+        _logger.debug(f"Built markdown from {len(pages)} pages: {len(full_markdown)} chars")
+        
+        return full_markdown
+
+    def _build_category_extraction_prompt(self, category, markdown, document_type):
+        """
+        Build extraction prompt for specific category
+        
+        Args:
+            category (str): Category key (metadata, substance_usage, etc.)
+            markdown (str): Markdown content from LlamaParse
+            document_type (str): '01' or '02'
+            
+        Returns:
+            str: Extraction prompt for Gemini chat
+        """
+        # Get schema from schema_prompts
+        from odoo.addons.robotia_document_extractor.prompts import schema_prompts
+        
+        if document_type == '01':
+            schema = schema_prompts.get_form_01_schema()
+        else:
+            schema = schema_prompts.get_form_02_schema()
+        
+        if category == 'metadata':
+            return f"""
+NHIỆM VỤ: Trích xuất metadata từ tài liệu
+
+CATEGORY: metadata
+
+⚠️ **LƯU Ý QUAN TRỌNG**: Metadata được extract SAU CÙNG, do đó bạn có thể nhìn lại TOÀN BỘ LỊCH SỬ ĐỘI THOẠI để suy luận các cờ (flags).
+
+MARKDOWN CONTENT:
+{markdown}
+
+EXTRACTION RULES:
+{schema}
+
+HƯỚNG DẪN TRÍCH XUẤT:
+
+1. **THÔNG TIN CƠ BẢN** (organization_name, business_license, contact info):
+   - Trích xuất từ markdown
+   - Bảo toàn ký tự tiếng Việt
+
+2. **CỜ HAS_TABLE (Table Presence Flags)**:
+   - **XEM LẠI LỊCH SỬ CHAT**: Bạn đã được yêu cầu extract những category nào?
+
+   **MAPPING CATEGORY → FLAG (Form 01):**
+   - Nếu đã extract `substance_usage` → `has_table_1_1 = true`
+   - Nếu đã extract `equipment_product` → `has_table_1_2 = true`
+   - Nếu đã extract `equipment_ownership` → `has_table_1_3 = true`
+   - Nếu đã extract `collection_recycling` → `has_table_1_4 = true`
+
+   **MAPPING CATEGORY → FLAG (Form 02):**
+   - Nếu đã extract `quota_usage` → `has_table_2_1 = true`
+   - Nếu đã extract `equipment_product_report` → `has_table_2_2 = true`
+   - Nếu đã extract `equipment_ownership_report` → `has_table_2_3 = true`
+   - Nếu đã extract `collection_recycling_report` → `has_table_2_4 = true`
+
+3. **YEAR FIELDS**:
+   - `year`: Năm báo cáo (từ header như "Đăng ký năm 2024" hoặc "Báo cáo năm 2024")
+   - `year_1, year_2, year_3`: **QUAN TRỌNG** - Lấy từ column headers của Bảng 1.1 (substance_usage) hoặc Bảng 2.1 (quota_usage)
+     * Xem lại response của category `substance_usage` hoặc `quota_usage` trong lịch sử chat
+     * Tìm 3 cột năm trong bảng đó (thường là năm hiện tại và 2 năm trước)
+     * Ví dụ: năm 2024 → year_1=2022, year_2=2023, year_3=2024
+
+4. **IS_CAPACITY_MERGED FLAGS**:
+   - Xem lại dữ liệu bảng `equipment_product` hoặc `equipment_product_report` trong lịch sử:
+     * Nếu có trường `capacity` (1 cột gộp) → `is_capacity_merged_table_1_2 = true`
+     * Nếu có `cooling_capacity` và `power_capacity` riêng (2 cột) → `is_capacity_merged_table_1_2 = false`
+   - Tương tự cho `equipment_ownership` → `is_capacity_merged_table_1_3`
+
+5. **ACTIVITY_FIELD_CODES** (Suy luận thông minh):
+
+   **Ưu tiên 1**: Tìm trong markdown checkbox/tick đánh dấu lĩnh vực
+
+   **Ưu tiên 2**: Nếu không tìm thấy, SUY LUẬN từ has_table flags:
+
+   **Form 01 Mapping:**
+   - `has_table_1_1 = true` → Xem bảng substance_usage có dòng data (is_title=false) không?
+     * Nếu có dòng với usage_type="production" → thêm "production" vào activity_field_codes
+     * Nếu có dòng với usage_type="import" → thêm "import"
+     * Nếu có dòng với usage_type="export" → thêm "export"
+   - `has_table_1_2 = true` → Xem bảng equipment_product có dòng data thực không?
+     * Nếu có → thêm "equipment_production" hoặc "equipment_import" tùy product_type
+   - `has_table_1_3 = true` → Xem bảng equipment_ownership có dòng data thực không?
+     * Nếu có → thêm "ac_ownership" hoặc "refrigeration_ownership" tùy equipment_type
+   - `has_table_1_4 = true` → Xem bảng collection_recycling có dòng data thực không?
+     * Nếu có → thêm "collection_recycling"
+
+   **Nguyên tắc**: Chỉ coi là "có" nếu bảng có **ÍT NHẤT 1 DÒNG DATA** (is_title=false với giá trị thực tế)
+
+OUTPUT: JSON object với TẤT CẢ metadata fields kể cả flags
+"""
+        else:
+            return f"""
+NHIỆM VỤ: Trích xuất bảng dữ liệu từ tài liệu
+
+CATEGORY: {category}
+
+MARKDOWN CONTENT:
+{markdown}
+
+EXTRACTION RULES:
+{schema}
+
+HƯỚNG DẪN:
+- Trích xuất bảng {category} thành JSON array
+- Mỗi dòng trong bảng là 1 object trong array
+- Bảo toàn tất cả dữ liệu, không bỏ sót
+- Giữ nguyên số liệu (kg, CO2e), không làm tròn
+- Bảo toàn ký tự tiếng Việt
+
+QUY TẮC XỬ LÝ DÒNG:
+1. **DÒNG TIÊU ĐỀ/PHÂN LOẠI (GIỮ LẠI):**
+   - Dòng có tên phân loại rõ ràng (VD: "Sản xuất chất được kiểm soát", "Nhập khẩu chất được kiểm soát")
+   - Có các dòng dữ liệu con bên dưới
+   - Các trường số liệu có thể là null
+   - Set is_title=true
+
+2. **DÒNG TRỐNG/PLACEHOLDER (LOẠI BỎ):**
+   - Chứa "...", gạch ngang "-", ký tự placeholder
+   - Tên chất/mã HS không rõ ràng hoặc không có ý nghĩa
+   - Loại bỏ hoàn toàn khỏi kết quả
+
+3. **DÒNG DỮ LIỆU TRÙNG:**
+   - Có thể trùng mã chất nhưng khác lĩnh vực/năm/giao dịch
+   - Trả về đầy đủ TẤT CẢ các dòng, không gộp
+
+OUTPUT FORMAT: {{"{category}": [...]}}
+"""
+
+    def _merge_category_data(self, extracted_datas):
+        """
+        Merge all category extraction results into single object
+        
+        Args:
+            extracted_datas (list): List of dicts from category extractions
+            
+        Returns:
+            dict: Merged data
+        """
+        merged = {}
+        
+        for data in extracted_datas:
+            if not data:
+                continue
+            
+            for key, value in data.items():
+                if key not in merged:
+                    merged[key] = value
+                elif isinstance(value, list):
+                    # For arrays (tables), extend
+                    if isinstance(merged[key], list):
+                        merged[key].extend(value)
+                    else:
+                        merged[key] = value
+                else:
+                    # For scalars, keep first non-null value
+                    if not merged[key] and value:
+                        merged[key] = value
+        
+        _logger.info(f"Merged {len(extracted_datas)} category results into {len(merged)} fields")
+        
+        return merged
+
+    def _validate_and_fix_metadata_flags(self, extracted_data, document_type):
+        """
+        Validate and fix metadata flags based on actual extracted data
+        
+        This method uses regex and data analysis instead of relying on AI inference.
+        It analyzes the extracted tables to determine:
+        - has_table_x_y flags (based on category presence)
+        - year_1, year_2, year_3 (from table column headers)
+        - is_capacity_merged flags (from table structure)
+        - activity_field_codes (from title rows and data rows)
+        
+        Args:
+            extracted_data (dict): Merged extracted data
+            document_type (str): '01' or '02'
+            
+        Returns:
+            dict: Fixed extracted data with correct flags
+        """
+        _logger.info("Validating and fixing metadata flags...")
+        
+        # Step 1: Fix has_table flags based on key presence
+        if document_type == '01':
+            extracted_data['has_table_1_1'] = 'substance_usage' in extracted_data and len(extracted_data.get('substance_usage', [])) > 0
+            extracted_data['has_table_1_2'] = 'equipment_product' in extracted_data and len(extracted_data.get('equipment_product', [])) > 0
+            extracted_data['has_table_1_3'] = 'equipment_ownership' in extracted_data and len(extracted_data.get('equipment_ownership', [])) > 0
+            extracted_data['has_table_1_4'] = 'collection_recycling' in extracted_data and len(extracted_data.get('collection_recycling', [])) > 0
+        else:  # '02'
+            extracted_data['has_table_2_1'] = 'quota_usage' in extracted_data and len(extracted_data.get('quota_usage', [])) > 0
+            extracted_data['has_table_2_2'] = 'equipment_product_report' in extracted_data and len(extracted_data.get('equipment_product_report', [])) > 0
+            extracted_data['has_table_2_3'] = 'equipment_ownership_report' in extracted_data and len(extracted_data.get('equipment_ownership_report', [])) > 0
+            extracted_data['has_table_2_4'] = 'collection_recycling_report' in extracted_data and len(extracted_data.get('collection_recycling_report', [])) > 0
+        
+        try:
+            # Step 2: Extract year_1, year_2, year_3 from substance_usage or quota_usage
+            self._extract_years_from_tables(extracted_data, document_type)
+        except Exception as err:
+            _logger.error("INFER YEAR ERROR --- %s", err)
+        try:
+            # Step 3: Determine is_capacity_merged flags from table structure
+            self._determine_capacity_merged_flags(extracted_data, document_type)
+        except Exception as err:
+            _logger.error("INFER CAPACITY MERGE ERROR --- %s", err)
+        
+        try:
+            # Step 4: Infer activity_field_codes from table data
+            self._infer_activity_field_codes(extracted_data)
+        except Exception as err:
+            _logger.error("INFER ACTIVIY ERROR --- %s", err)
+        
+        _logger.info("Metadata flags validation completed")
+        
+        return extracted_data
+    
+    def _extract_years_from_tables(self, extracted_data, document_type):
+        """
+        Extract year_1, year_2, year_3 from table headers
+
+        Logic: AI should extract these years directly from table column headers.
+        If not extracted, fallback to current_year - 2, -1, 0
+        """
+        # Check if AI already extracted years from headers
+        if extracted_data.get('year_1') and extracted_data.get('year_2') and extracted_data.get('year_3'):
+            _logger.info(f"Years already extracted: {extracted_data['year_1']}, {extracted_data['year_2']}, {extracted_data['year_3']}")
+            return
+
+        # Fallback: infer from current year (year - 2, year - 1, year)
+        current_year = extracted_data.get('year')
+        if current_year:
+            extracted_data['year_1'] = current_year - 2
+            extracted_data['year_2'] = current_year - 1
+            extracted_data['year_3'] = current_year
+            _logger.info(f"Inferred years from current year: {extracted_data['year_1']}, {extracted_data['year_2']}, {extracted_data['year_3']}")
+        else:
+            _logger.warning("Cannot extract or infer year_1, year_2, year_3")
+    
+    def _determine_capacity_merged_flags(self, extracted_data, document_type):
+        """
+        Determine is_capacity_merged flags by checking table structure
+        
+        Logic:
+        - If table has 'capacity' field (1 merged column) → is_capacity_merged = True
+        - If table has 'cooling_capacity' and 'power_capacity' (2 separate) → is_capacity_merged = False
+        """
+        if document_type == '01':
+            # Check table 1.2 (equipment_product)
+            equipment_product = extracted_data.get('equipment_product', [])
+            if equipment_product:
+                first_row = equipment_product[0]
+                has_capacity = 'capacity' in first_row
+                has_separate = 'cooling_capacity' in first_row or 'power_capacity' in first_row
+                extracted_data['is_capacity_merged_table_1_2'] = has_capacity and not has_separate
+            
+            # Check table 1.3 (equipment_ownership)
+            equipment_ownership = extracted_data.get('equipment_ownership', [])
+            if equipment_ownership:
+                first_row = equipment_ownership[0]
+                has_capacity = 'capacity' in first_row
+                has_separate = 'cooling_capacity' in first_row or 'power_capacity' in first_row
+                extracted_data['is_capacity_merged_table_1_3'] = has_capacity and not has_separate
+        
+        else:  # '02'
+            # Check table 2.2 (equipment_product_report)
+            equipment_product_report = extracted_data.get('equipment_product_report', [])
+            if equipment_product_report:
+                first_row = equipment_product_report[0]
+                has_capacity = 'capacity' in first_row
+                has_separate = 'cooling_capacity' in first_row or 'power_capacity' in first_row
+                extracted_data['is_capacity_merged_table_2_2'] = has_capacity and not has_separate
+            
+            # Check table 2.3 (equipment_ownership_report)
+            equipment_ownership_report = extracted_data.get('equipment_ownership_report', [])
+            if equipment_ownership_report:
+                first_row = equipment_ownership_report[0]
+                has_capacity = 'capacity' in first_row
+                has_separate = 'cooling_capacity' in first_row or 'power_capacity' in first_row
+                extracted_data['is_capacity_merged_table_2_3'] = has_capacity and not has_separate
+    
+    def _infer_activity_field_codes(self, extracted_data):
+        """
+        Infer activity_field_codes by checking all tables in extracted_data
+
+        No need for document_type - just loop through all possible tables
+        and use TABLE_ACTIVITY_MAPPINGS to extract codes.
+        """
+        activity_codes = set()
+        
+        # Loop through all table mappings
+        for table_key, config in TABLE_ACTIVITY_MAPPINGS.items():
+            table_data = extracted_data.get(table_key)
+            if not table_data:
+                continue
+            
+            # Extract codes from title-data pairs
+            codes = self._extract_activity_codes_from_table(
+                table_data,
+                field_name=config['field_name'],
+                mappings=config['keywords']
+            )
+            activity_codes.update(codes)
+        
+        # Store result
+        extracted_data['activity_field_codes'] = sorted(list(activity_codes)) if activity_codes else extracted_data.get('activity_field_codes', [])
+        
+        if activity_codes:
+            _logger.info(f"Inferred activity_field_codes: {extracted_data['activity_field_codes']}")
+    
+    def _extract_activity_codes_from_table(self, table_data, field_name, mappings):
+        """
+        Extract activity codes from a table by tracking title-data relationships
+
+        Logic:
+        1. Create dict to track which titles have data after them: {title_index: {'title': text, 'has_data': False}}
+        2. Loop through rows:
+           - If is_title=True: Add to dict with index, set current_title_idx
+           - If is_title=False: Mark current_title_idx as has_data=True
+        3. After loop: Check all titles that have data, match keywords (case-insensitive + regex)
+
+        Args:
+            table_data (list): Table rows
+            field_name (str): Field name to check in title rows
+            mappings (dict): Keyword (regex pattern) → activity code mapping
+
+        Returns:
+            set: Activity codes found
+        """
+        import re
+
+        # Track which titles have data after them
+        title_data = {}  # {index: {'title': text, 'has_data': False}}
+        current_title_idx = None
+
+        for idx, row in enumerate(table_data):
+            if row.get('is_title'):
+                # Found a title row
+                title_text = row.get(field_name) or row.get('substance_name') or row.get('product_type') or row.get('equipment_type') or row.get('activity_type') or ''
+                title_data[idx] = {'title': title_text, 'has_data': False}
+                current_title_idx = idx
+            else:
+                # Data row - mark current title as having data
+                if current_title_idx is not None:
+                    title_data[current_title_idx]['has_data'] = True
+
+        # Extract codes from titles that have data
+        codes = set()
+        for info in title_data.values():
+            if info['has_data']:
+                title_lower = info['title'].lower()
+                for keyword, code in mappings.items():
+                    # Match using both methods for maximum flexibility:
+                    # 1. Case-insensitive substring match
+                    # 2. Regex match with IGNORECASE (escape keyword to handle special chars)
+                    if keyword.lower() in title_lower or re.search(keyword, info['title'], re.IGNORECASE):
+                        codes.add(code)
+
+        return codes
+    
+    def _has_valid_data_rows(self, table_data):
+        """
+        Check if table has at least one valid data row (not title, not empty)
+        
+        Args:
+            table_data (list): Table rows
+            
+        Returns:
+            bool: True if has valid data rows
+        """
+        for row in table_data:
+            if not row.get('is_title'):
+                # Check if row has any meaningful data (not all null)
+                has_data = any(
+                    v is not None and v != '' and v != 0
+                    for k, v in row.items()
+                    if k not in ['is_title', 'sequence']
+                )
+                if has_data:
+                    return True
+        return False
+
 
     @api.model
     def _get_vietnamese_provinces_list(self):
@@ -66,7 +718,7 @@ class DocumentExtractionService(models.AbstractModel):
                 self._get_default_prompt_form_02()
             )
 
-    def extract_pdf(self, pdf_binary, document_type, filename):
+    def extract_pdf(self, pdf_binary, document_type, log_id=None):
         """
         Extract structured data from PDF using configurable extraction strategy
 
@@ -77,7 +729,7 @@ class DocumentExtractionService(models.AbstractModel):
         Args:
             pdf_binary (bytes): Binary PDF data
             document_type (str): '01' for Registration, '02' for Report
-            filename (str): Original filename for logging
+            log_id (int, optional): Extraction log ID for saving OCR data
 
         Returns:
             dict: Structured data extracted from PDF
@@ -85,7 +737,10 @@ class DocumentExtractionService(models.AbstractModel):
         Raises:
             ValueError: If API key not configured or extraction fails
         """
-        _logger.info(f"Starting AI extraction for {filename} (Type: {document_type})")
+        _logger.info(f"Starting AI extracting document (Type: {document_type})")
+
+        # Clean up stale temp files first
+        self.cleanup_temp_extraction_files()
 
         # Get configuration
         ICP = self.env['ir.config_parameter'].sudo()
@@ -106,17 +761,17 @@ class DocumentExtractionService(models.AbstractModel):
         # Route to appropriate strategy
         if strategy == 'ai_native':
             # Strategy 1: 100% AI (Gemini processes PDF directly)
-            return self._extract_with_ai_native(client, pdf_binary, document_type, filename)
+            return self._extract_with_ai_native(client, pdf_binary, document_type)
 
         elif strategy == 'text_extract':
             # Strategy 2: Text Extract + AI (PyMuPDF → AI)
-            return self._extract_with_text_extract(client, pdf_binary, document_type, filename)
+            return self._extract_with_text_extract(client, pdf_binary, document_type)
 
         else:
             _logger.warning(f"Unknown strategy '{strategy}', falling back to ai_native")
-            return self._extract_with_ai_native(client, pdf_binary, document_type, filename)
+            return self._extract_with_ai_native(client, pdf_binary, document_type)
 
-    def _extract_with_ai_native(self, client, pdf_binary, document_type, filename):
+    def _extract_with_ai_native(self, client, pdf_binary, document_type):
         """
         Strategy: 100% AI (Gemini processes PDF directly)
 
@@ -127,7 +782,7 @@ class DocumentExtractionService(models.AbstractModel):
             _logger.info("=" * 70)
             _logger.info("AI NATIVE: Direct PDF → JSON extraction")
             _logger.info("=" * 70)
-            extracted_data = self._extract_direct_pdf_to_json(client, pdf_binary, document_type, filename)
+            extracted_data = self._extract_direct_pdf_to_json(client, pdf_binary, document_type)
             _logger.info("✓ AI Native succeeded")
             return extracted_data
 
@@ -152,7 +807,7 @@ class DocumentExtractionService(models.AbstractModel):
                 _logger.info("FALLBACK: 2-Step extraction (Gemini PDF → Text → JSON)")
                 _logger.info("=" * 70)
 
-                extracted_text = self._extract_pdf_to_text(client, pdf_binary, document_type, filename)
+                extracted_text = self._extract_pdf_to_text(client, pdf_binary, document_type)
                 _logger.info(f"✓ Step 1 complete - Extracted {len(extracted_text)} chars")
 
                 extracted_data = self._convert_text_to_json(client, extracted_text, document_type)
@@ -256,7 +911,7 @@ class DocumentExtractionService(models.AbstractModel):
             _logger.error(f"PyMuPDF extraction failed: {str(e)}")
             raise
 
-    def _extract_direct_pdf_to_json(self, client, pdf_binary, document_type, filename):
+    def _extract_direct_pdf_to_json(self, client, pdf_binary, document_type):
         """
         Strategy 1: Direct PDF → JSON extraction (original method)
 
@@ -279,13 +934,6 @@ class DocumentExtractionService(models.AbstractModel):
 
         # Upload PDF file to Gemini
         # Note: Gemini requires file upload for large documents
-        import tempfile
-        import os
-        import time
-
-        # Constants
-        GEMINI_POLL_INTERVAL_SECONDS = 2
-        GEMINI_MAX_POLL_RETRIES = 30  # 30 * 2s = 60s timeout
 
         # Get max retries from config (default: 3)
         GEMINI_MAX_RETRIES = int(
@@ -295,68 +943,16 @@ class DocumentExtractionService(models.AbstractModel):
             )
         )
 
-        # Get max output tokens from config (default: 65536 for Gemini 2.0 Flash)
-        # User can adjust this in Settings if needed
-        GEMINI_MAX_TOKENS = int(
-            self.env['ir.config_parameter'].sudo().get_param(
-                'robotia_document_extractor.gemini_max_output_tokens',
-                default='65536'
-            )
-        )
-
-        # Get Gemini model from config (default: gemini-2.0-flash-exp)
-        GEMINI_MODEL = self.env['ir.config_parameter'].sudo().get_param(
-            'robotia_document_extractor.gemini_model',
-            default='gemini-2.5-pro'
-        )
-
-        # Get Gemini generation parameters from config
-        ICP = self.env['ir.config_parameter'].sudo()
-        GEMINI_TEMPERATURE = float(ICP.get_param(
-            'robotia_document_extractor.gemini_temperature',
-            default='0.0'
-        ))
-        GEMINI_TOP_P = float(ICP.get_param(
-            'robotia_document_extractor.gemini_top_p',
-            default='0.95'
-        ))
-        GEMINI_TOP_K = int(ICP.get_param(
-            'robotia_document_extractor.gemini_top_k',
-            default='0'
-        ))
-        # Convert top_k=0 to None (no limit)
-        GEMINI_TOP_K = None if GEMINI_TOP_K == 0 else GEMINI_TOP_K
-
         tmp_file_path = None
         uploaded_file = None
 
         try:
-            # Create temporary file
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
-                tmp_file.write(pdf_binary)
-                tmp_file_path = tmp_file.name
+            tmp_file_path = self.make_temp_file(pdf_binary)
 
             _logger.info(f"Created temp file: {tmp_file_path}")
 
             # Upload file to Gemini
-            uploaded_file = client.files.upload(file=tmp_file_path)
-            _logger.info(f"File uploaded to Gemini: {uploaded_file.name}")
-
-            # Wait for file to be processed with timeout
-            poll_count = 0
-            while uploaded_file.state.name == "PROCESSING":
-                if poll_count >= GEMINI_MAX_POLL_RETRIES:
-                    raise TimeoutError(f"Gemini file processing timeout after {GEMINI_MAX_POLL_RETRIES * GEMINI_POLL_INTERVAL_SECONDS}s")
-
-                _logger.info(f"Waiting for file processing... (attempt {poll_count + 1}/{GEMINI_MAX_POLL_RETRIES})")
-                time.sleep(GEMINI_POLL_INTERVAL_SECONDS)
-                uploaded_file = client.files.get(name=uploaded_file.name)
-                poll_count += 1
-
-            if uploaded_file.state.name == "FAILED":
-                raise ValueError("File processing failed in Gemini")
-
-            _logger.info(f"File processing completed: {uploaded_file.state.name}")
+            uploaded_file = self.upload_file_to_gemini(client, tmp_file_path)
 
             # Build mega prompt context (substances list + mapping rules)
             mega_context = self._build_mega_prompt_context()
@@ -370,17 +966,7 @@ class DocumentExtractionService(models.AbstractModel):
                     _logger.info(f"Gemini API call attempt {retry_attempt + 1}/{GEMINI_MAX_RETRIES}")
 
                     # Generate content with mega context + uploaded file + prompt
-                    response = client.models.generate_content(
-                        model=GEMINI_MODEL,
-                        contents=mega_context + [uploaded_file, prompt],
-                        config=types.GenerateContentConfig(
-                            temperature=GEMINI_TEMPERATURE,
-                            max_output_tokens=GEMINI_MAX_TOKENS,
-                            response_mime_type='application/json',  # Force JSON output
-                            top_p=GEMINI_TOP_P,
-                            top_k=GEMINI_TOP_K
-                        )
-                    )
+                    response = self.generate_content(client, mega_context + [uploaded_file, prompt])
 
                     # Get response text
                     extracted_text = response.text
@@ -668,7 +1254,7 @@ class DocumentExtractionService(models.AbstractModel):
             0
         )
 
-    def _extract_pdf_to_text(self, client, pdf_binary, document_type, filename):
+    def _extract_pdf_to_text(self, client, pdf_binary, document_type):
         """
         Strategy 2 - Step 1: Extract PDF content to plain text
 
@@ -679,7 +1265,6 @@ class DocumentExtractionService(models.AbstractModel):
             client: Gemini client instance
             pdf_binary (bytes): Binary PDF data
             document_type (str): '01' or '02'
-            filename (str): Original filename for logging
 
         Returns:
             str: Plain text extracted from PDF
@@ -687,13 +1272,6 @@ class DocumentExtractionService(models.AbstractModel):
         Raises:
             ValueError: If extraction fails
         """
-        import tempfile
-        import os
-        import time
-
-        # Constants
-        GEMINI_POLL_INTERVAL_SECONDS = 2
-        GEMINI_MAX_POLL_RETRIES = 30
 
         # Build simple text extraction prompt
         prompt = self._build_text_extraction_prompt(document_type)
@@ -703,66 +1281,15 @@ class DocumentExtractionService(models.AbstractModel):
 
         try:
             # Create temporary file
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
-                tmp_file.write(pdf_binary)
-                tmp_file_path = tmp_file.name
-
+            tmp_file_path = self.make_temp_file(pdf_binary) 
             _logger.info(f"Created temp file for text extraction: {tmp_file_path}")
-
             # Upload file to Gemini
-            uploaded_file = client.files.upload(file=tmp_file_path)
-            _logger.info(f"File uploaded to Gemini: {uploaded_file.name}")
-
-            # Wait for file to be processed
-            poll_count = 0
-            while uploaded_file.state.name == "PROCESSING":
-                if poll_count >= GEMINI_MAX_POLL_RETRIES:
-                    raise TimeoutError(f"Gemini file processing timeout after {GEMINI_MAX_POLL_RETRIES * GEMINI_POLL_INTERVAL_SECONDS}s")
-
-                time.sleep(GEMINI_POLL_INTERVAL_SECONDS)
-                uploaded_file = client.files.get(name=uploaded_file.name)
-                poll_count += 1
-
-            if uploaded_file.state.name == "FAILED":
-                raise ValueError("File processing failed in Gemini")
-
-            _logger.info(f"File processing completed: {uploaded_file.state.name}")
-
+            uploaded_file = self.upload_file_to_gemini(client, tmp_file_path)
             # Build mega prompt context
             mega_context = self._build_mega_prompt_context()
 
-            # Get Gemini model and generation parameters from config
-            ICP = self.env['ir.config_parameter'].sudo()
-            GEMINI_MODEL = ICP.get_param(
-                'robotia_document_extractor.gemini_model',
-                default='gemini-2.5-pro'
-            )
-            GEMINI_TEMPERATURE = float(ICP.get_param(
-                'robotia_document_extractor.gemini_temperature',
-                default='0.0'
-            ))
-            GEMINI_TOP_P = float(ICP.get_param(
-                'robotia_document_extractor.gemini_top_p',
-                default='0.95'
-            ))
-            GEMINI_TOP_K = int(ICP.get_param(
-                'robotia_document_extractor.gemini_top_k',
-                default='0'
-            ))
-            GEMINI_TOP_K = None if GEMINI_TOP_K == 0 else GEMINI_TOP_K
-
             # Generate text content with mega context (using higher token limit for text)
-            response = client.models.generate_content(
-                model=GEMINI_MODEL,
-                contents=mega_context + [uploaded_file, prompt],
-                config=types.GenerateContentConfig(
-                    temperature=GEMINI_TEMPERATURE,
-                    max_output_tokens=65536,  # Max tokens for text extraction
-                    response_mime_type='text/plain',  # Plain text output
-                    top_p=GEMINI_TOP_P,
-                    top_k=GEMINI_TOP_K
-                )
-            )
+            response = self.generate_content(client, mega_context + [uploaded_file, prompt])
 
             extracted_text = response.text.strip()
             _logger.info(f"Text extraction successful (length: {len(extracted_text)} chars)")
@@ -811,33 +1338,8 @@ class DocumentExtractionService(models.AbstractModel):
         # Build JSON conversion prompt
         prompt = self._build_text_to_json_prompt(document_type, extracted_text)
 
-        # Get max output tokens from config
-        GEMINI_MAX_TOKENS = int(
-            self.env['ir.config_parameter'].sudo().get_param(
-                'robotia_document_extractor.gemini_max_output_tokens',
-                default='65536'
-            )
-        )
-
         # Get Gemini model and generation parameters from config
         ICP = self.env['ir.config_parameter'].sudo()
-        GEMINI_MODEL = ICP.get_param(
-            'robotia_document_extractor.gemini_model',
-            default='gemini-2.5-pro'
-        )
-        GEMINI_TEMPERATURE = float(ICP.get_param(
-            'robotia_document_extractor.gemini_temperature',
-            default='0.0'
-        ))
-        GEMINI_TOP_P = float(ICP.get_param(
-            'robotia_document_extractor.gemini_top_p',
-            default='0.95'
-        ))
-        GEMINI_TOP_K = int(ICP.get_param(
-            'robotia_document_extractor.gemini_top_k',
-            default='0'
-        ))
-        GEMINI_TOP_K = None if GEMINI_TOP_K == 0 else GEMINI_TOP_K
 
         # Get max retries from config (default: 3)
         GEMINI_MAX_RETRIES = int(
@@ -858,17 +1360,7 @@ class DocumentExtractionService(models.AbstractModel):
                 _logger.info(f"JSON conversion attempt {retry_attempt + 1}/{GEMINI_MAX_RETRIES}")
 
                 # Generate JSON from text with mega context (no file upload needed)
-                response = client.models.generate_content(
-                    model=GEMINI_MODEL,
-                    contents=mega_context + [prompt],
-                    config=types.GenerateContentConfig(
-                        temperature=GEMINI_TEMPERATURE,
-                        max_output_tokens=GEMINI_MAX_TOKENS,
-                        response_mime_type='application/json',
-                        top_p=GEMINI_TOP_P,
-                        top_k=GEMINI_TOP_K
-                    )
-                )
+                response = self.generate_content(client, mega_context + [prompt])
 
                 extracted_json = response.text
 

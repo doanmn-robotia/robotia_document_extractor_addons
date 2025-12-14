@@ -63,6 +63,9 @@ class CollectionRecycling(models.Model):
         string='Quantity (ton CO2)',
         digits=(16, 4)
     )
+    notes = fields.Text(
+        string='Other information'
+    )
 
     @api.depends('substance_id')
     def _compute_substance_name(self):

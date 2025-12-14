@@ -150,6 +150,46 @@ class ExtractionHelper(models.AbstractModel):
         )
         return default_value
 
+    def _normalize_date_field(self, value, field_name):
+        """
+        Normalize date to YYYY-MM-DD format using common patterns
+        
+        Args:
+            value: Date value to normalize
+            field_name (str): Field name for logging
+            
+        Returns:
+            str or None: Normalized date in YYYY-MM-DD format
+        """
+        if not value or value is None:
+            return None
+        
+        from datetime import datetime
+        value_str = str(value).strip()
+        
+        # Common date patterns (Vietnamese DD/MM/YYYY prioritized)
+        patterns = [
+            '%Y-%m-%d',   # Already correct: 2006-08-03
+            '%d/%m/%Y',   # Vietnamese: 03/08/2006
+            '%d-%m-%Y',   # Alternative: 03-08-2006
+            '%m/%d/%Y',   # US format: 08/03/2006
+            '%Y/%m/%d',   # ISO variant: 2006/08/03
+            '%d.%m.%Y',   # European: 03.08.2006
+        ]
+        
+        for pattern in patterns:
+            try:
+                parsed = datetime.strptime(value_str, pattern)
+                normalized = parsed.strftime('%Y-%m-%d')
+                if normalized != value_str:
+                    _logger.info(f"Normalized '{field_name}': '{value_str}' → '{normalized}'")
+                return normalized
+            except ValueError:
+                continue
+        
+        _logger.warning(f"Failed to parse date '{field_name}': '{value_str}'")
+        return None
+
     def _validate_field_value(self, field_name, field_obj, value):
         """
         Validate and convert field value based on field type
@@ -173,8 +213,11 @@ class ExtractionHelper(models.AbstractModel):
         elif field_type == 'selection':
             return self._validate_selection_field(value, field_obj, field_name)
         
+        elif field_type == 'date':
+            return self._normalize_date_field(value, field_name)
+        
         # Other types - return as-is
-        # TODO: Add validation for float, boolean, date, datetime if needed
+        # TODO: Add validation for float, boolean, datetime if needed
         return value
 
     def _validate_extracted_data_keys(self, extracted_data, document_type):
@@ -413,6 +456,28 @@ class ExtractionHelper(models.AbstractModel):
             # Build One2many commands from cleaned data
             return [(0, 0, row) for row in cleaned_data]
 
+        # Helper: Normalize sequence fields in One2many commands
+        def normalize_sequences(o2m_commands):
+            """
+            Normalize sequence field in One2many commands to step-10 increments
+
+            Args:
+                o2m_commands: [(0, 0, {...}), (0, 0, {...}), ...]
+
+            Returns:
+                Normalized commands with sequence = 10, 20, 30, ...
+            """
+            if not o2m_commands:
+                return []
+
+            normalized = []
+            for idx, (op, _, vals) in enumerate(o2m_commands):
+                # Set sequence = (index + 1) * 10
+                vals['sequence'] = (idx + 1) * 10
+                normalized.append((op, _, vals))
+
+            return normalized
+
         # Helper: Populate substance IDs
         def populate_substance_ids(table_data, substance_lookup):
             for row in table_data:
@@ -578,10 +643,18 @@ class ExtractionHelper(models.AbstractModel):
             vals['is_capacity_merged_table_1_2'] = extracted_data.get('is_capacity_merged_table_1_2', True)
             vals['is_capacity_merged_table_1_3'] = extracted_data.get('is_capacity_merged_table_1_3', True)
 
-            vals['substance_usage_ids'] = build_o2m_commands(extracted_data.get('substance_usage', []))
-            vals['equipment_product_ids'] = build_o2m_commands(extracted_data.get('equipment_product', []))
-            vals['equipment_ownership_ids'] = build_o2m_commands(extracted_data.get('equipment_ownership', []))
-            vals['collection_recycling_ids'] = build_o2m_commands(extracted_data.get('collection_recycling', []))
+            vals['substance_usage_ids'] = normalize_sequences(
+                build_o2m_commands(extracted_data.get('substance_usage', []))
+            )
+            vals['equipment_product_ids'] = normalize_sequences(
+                build_o2m_commands(extracted_data.get('equipment_product', []))
+            )
+            vals['equipment_ownership_ids'] = normalize_sequences(
+                build_o2m_commands(extracted_data.get('equipment_ownership', []))
+            )
+            vals['collection_recycling_ids'] = normalize_sequences(
+                build_o2m_commands(extracted_data.get('collection_recycling', []))
+            )
 
         # Form 02 specific
         elif document_type == '02':
@@ -592,9 +665,17 @@ class ExtractionHelper(models.AbstractModel):
             vals['is_capacity_merged_table_2_2'] = extracted_data.get('is_capacity_merged_table_2_2', True)
             vals['is_capacity_merged_table_2_3'] = extracted_data.get('is_capacity_merged_table_2_3', True)
 
-            vals['quota_usage_ids'] = build_o2m_commands(extracted_data.get('quota_usage', []))
-            vals['equipment_product_report_ids'] = build_o2m_commands(extracted_data.get('equipment_product_report', []))
-            vals['equipment_ownership_report_ids'] = build_o2m_commands(extracted_data.get('equipment_ownership_report', []))
-            vals['collection_recycling_report_ids'] = build_o2m_commands(extracted_data.get('collection_recycling_report', []))
+            vals['quota_usage_ids'] = normalize_sequences(
+                build_o2m_commands(extracted_data.get('quota_usage', []))
+            )
+            vals['equipment_product_report_ids'] = normalize_sequences(
+                build_o2m_commands(extracted_data.get('equipment_product_report', []))
+            )
+            vals['equipment_ownership_report_ids'] = normalize_sequences(
+                build_o2m_commands(extracted_data.get('equipment_ownership_report', []))
+            )
+            vals['collection_recycling_report_ids'] = normalize_sequences(
+                build_o2m_commands(extracted_data.get('collection_recycling_report', []))
+            )
 
         return vals

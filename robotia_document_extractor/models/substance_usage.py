@@ -52,6 +52,9 @@ class SubstanceUsage(models.Model):
         index=True,  # Add index for frequent filtering/searching
         help='Substance name (auto-filled from substance_id or manually entered)'
     )
+    notes = fields.Text(
+        string='Other information'
+    )
 
     # Year 1
     year_1_quantity_kg = fields.Float(

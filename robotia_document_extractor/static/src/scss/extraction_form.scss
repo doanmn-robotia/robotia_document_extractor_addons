@@ -110,6 +110,10 @@
                             background: white;
                         }
                     }
+
+                    .tab-pane:has(.o_pdf_preview_content) {
+                        padding: 0 !important;
+                    }
                 }
             }
         }
@@ -162,6 +166,10 @@
                             transparent 100%);
                 }
             }
+        }
+
+        .o_form_pdf_controls {
+            display: none !important;
         }
     }
 }

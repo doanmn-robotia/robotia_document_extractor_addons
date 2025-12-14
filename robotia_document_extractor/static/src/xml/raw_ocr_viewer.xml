@@ -12,89 +12,58 @@
 
             <!-- OCR data available -->
             <t t-else="">
-                <!-- Header -->
-                <div class="ocr-header mb-3 p-3 bg-light rounded">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h5 class="mb-1">
-                                <i class="fa fa-search me-2"/>
-                                <span>OCR Preview</span>
-                            </h5>
-                            <small class="text-muted">
-                                Click any text region to highlight it on the PDF
-                            </small>
-                        </div>
-                        <div class="text-end">
-                            <span class="badge bg-primary">
-                                <i class="fa fa-file me-1"/>
-                                <t t-esc="ocrData.pages.length"/> <span><t t-if="ocrData.pages.length === 1">page</t><t t-else="">pages</t></span>
-                            </span>
-                        </div>
+                <!-- Items List Panel -->
+                <div class="ocr-items-panel">
+                    <div class="panel-header">
+                        <h5 class="mb-0">OCR Items</h5>
+                        <span class="badge bg-secondary"><t t-esc="totalItems"/> items</span>
                     </div>
-                </div>
-
-                <!-- Pages Accordion -->
-                <div class="ocr-pages accordion" id="ocrPagesAccordion">
-                    <t t-foreach="ocrData.pages" t-as="page" t-key="page.page_num">
-                        <div class="accordion-item mb-2">
-                            <!-- Page Header -->
-                            <h2 class="accordion-header" t-att-id="'heading' + page.page_num">
-                                <button
-                                    class="accordion-button collapsed"
-                                    type="button"
-                                    data-bs-toggle="collapse"
-                                    t-att-data-bs-target="'#page' + page.page_num"
-                                    t-att-aria-expanded="false"
-                                    t-att-aria-controls="'page' + page.page_num"
-                                    t-on-click="() => this.togglePage(page.page_num)">
-                                    <i class="fa fa-file-text-o me-2"/>
-                                    <strong><span>Page</span> <t t-esc="page.page_num + 1"/></strong>
-                                    <span class="ms-2 text-muted">
-                                        (<t t-esc="page.text_regions.length"/> <span><t t-if="page.text_regions.length === 1">region</t><t t-else="">regions</t></span>)
-                                    </span>
-                                </button>
-                            </h2>
-
-                            <!-- Page Content -->
-                            <div
-                                t-att-id="'page' + page.page_num"
-                                class="accordion-collapse collapse"
-                                t-att-aria-labelledby="'heading' + page.page_num"
-                                data-bs-parent="#ocrPagesAccordion">
-                                <div class="accordion-body p-0">
-                                    <!-- Text Regions List -->
-                                    <div class="list-group list-group-flush">
-                                        <t t-foreach="page.text_regions" t-as="region" t-key="region_index">
-                                            <button
-                                                type="button"
-                                                class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-3"
-                                                t-att-class="state.selectedRegion?.region === region ? 'active' : ''"
-                                                t-on-click="() => this.onRegionClick(page.page_num, region)">
-                                                <!-- Text Content -->
-                                                <span class="flex-grow-1 text-truncate font-monospace me-3">
-                                                    <i class="fa fa-quote-left me-2 small text-muted"/>
-                                                    <t t-esc="region.text"/>
-                                                </span>
-
-                                                <!-- Confidence Badge -->
-                                                <span t-att-class="'badge ' + this.getConfidenceClass(region.confidence)">
-                                                    <t t-esc="Math.round(region.confidence * 100)"/>%
-                                                </span>
-                                            </button>
+                    
+                    <div class="items-list">
+                        <t t-foreach="pages" t-as="pageData" t-key="pageData.page">
+                            <div class="page-section">
+                                <!-- Page header (clickable to expand/collapse) -->
+                                <div class="page-header" 
+                                     t-on-click="() => this.togglePage(pageData.page)"
+                                     t-att-class="{ 'expanded': isPageExpanded(pageData.page) }">
+                                    <i t-att-class="isPageExpanded(pageData.page) ? 'fa fa-chevron-down' : 'fa fa-chevron-right'"/>
+                                    <i class="fa fa-file-o ms-1"/>
+                                    <span class="page-title">Page <t t-esc="pageData.page"/></span>
+                                    <span class="badge bg-light text-dark ms-auto"><t t-esc="pageData.items.length"/></span>
+                                </div>
+                                
+                                <!-- Page items (shown when expanded) -->
+                                <div class="page-items" t-if="isPageExpanded(pageData.page)">
+                                    <t t-if="pageData.items.length === 0">
+                                        <div class="text-muted text-center py-2" style="font-size: 12px;">
+                                            No items on this page
+                                        </div>
+                                    </t>
+                                    <t t-else="">
+                                        <t t-foreach="pageData.items" t-as="item" t-key="item_index">
+                                            <div class="item-card"
+                                                 t-att-class="{ 'selected': state.selectedItem === item }"
+                                                 t-on-click="() => this.selectItem(item, pageData.page)">
+                                                <div class="item-header">
+                                                    <i t-att-class="getItemIcon(item.type)" class="me-1"/>
+                                                    <span class="item-type-label" t-esc="item.type"/>
+                                                </div>
+                                                <div class="item-preview">
+                                                    <!-- Show markdown for tables, plain text for others -->
+                                                    <t t-if="item.type === 'table' and state.markedLoaded">
+                                                        <div class="markdown-preview" t-raw="renderMarkdown(item.md || item.value)"/>
+                                                    </t>
+                                                    <t t-else="">
+                                                        <span t-esc="getItemPreview(item)"/>
+                                                    </t>
+                                                </div>
+                                            </div>
                                         </t>
-                                    </div>
+                                    </t>
                                 </div>
                             </div>
-                        </div>
-                    </t>
-                </div>
-
-                <!-- Footer Info -->
-                <div class="ocr-footer mt-3 p-2 bg-light rounded small text-muted text-center">
-                    <i class="fa fa-lightbulb-o me-1"/>
-                    <span>Confidence:</span> <span class="text-success">90%+</span> = <span>High</span>,
-                    <span class="text-warning">70-90%</span> = <span>Medium</span>,
-                    <span class="text-danger">&lt;70%</span> = <span>Low</span>
+                        </t>
+                    </div>
                 </div>
             </t>
         </div>

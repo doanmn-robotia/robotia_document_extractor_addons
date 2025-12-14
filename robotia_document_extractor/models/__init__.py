@@ -28,10 +28,11 @@ from . import collection_recycling_report
 # Services
 from . import extraction_service
 from . import extraction_service_batching
+from . import extraction_service_llama
 from . import extraction_helper
 from . import document_reanalysis_service
 from . import fuzzy_matcher
-from . import ocr_raw_service
+from . import llama_ocr_service
 from . import res_config_settings
 from . import google_drive_service
 from . import google_drive_extraction_log

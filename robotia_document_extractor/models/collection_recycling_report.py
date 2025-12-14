@@ -48,6 +48,7 @@ class CollectionRecyclingReport(models.Model):
     disposal_technology = fields.Char(string='Disposal Technology Text', compute='_compute_disposal_technology', store=True, readonly=False)
     disposal_facility_id = fields.Many2one('recycling.facility', string='Disposal Facility', ondelete='restrict')
     disposal_facility = fields.Char(string='Disposal Facility Text', compute='_compute_disposal_facility', store=True, readonly=False)
+    notes = fields.Text(string='Other information')
 
     @api.depends('substance_id')
     def _compute_substance_name(self):

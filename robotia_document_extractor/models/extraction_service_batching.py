@@ -42,7 +42,7 @@ class ExtractionServiceBatching(models.AbstractModel):
             )
         return super()._initialize_default_prompts()
 
-    def extract_pdf(self, pdf_binary, document_type, filename):
+    def extract_pdf(self, pdf_binary, document_type, log_id=None):
         """
         Extract structured data from PDF using configurable extraction strategy
 
@@ -53,6 +53,7 @@ class ExtractionServiceBatching(models.AbstractModel):
             pdf_binary (bytes): Binary PDF data
             document_type (str): '01' for Registration, '02' for Report
             filename (str): Original filename for logging
+            log_id (int, optional): Extraction log ID for saving OCR data
 
         Returns:
             dict: Structured data extracted from PDF
@@ -72,7 +73,7 @@ class ExtractionServiceBatching(models.AbstractModel):
             # Strategy 3: Batch Extraction (PDF → Images → Batch AI with chat session)
             return self._extract_with_batch_extract(client, pdf_binary, document_type, filename)
 
-        return super().extract_pdf(pdf_binary, document_type, filename)
+        return super().extract_pdf(pdf_binary, document_type, log_id)
 
 
 
@@ -237,7 +238,7 @@ class ExtractionServiceBatching(models.AbstractModel):
 
             # Step 3: Phase 2 - Python aggregation
             _logger.info("Step 3/3: Phase 2 - Python aggregation...")
-            final_json = self._phase2_python_aggregation(page_results, document_type)
+            final_json = self._phase1_batch_extraction(page_results, document_type)
             _logger.info("✓ Aggregation complete")
 
             _logger.info("=" * 70)

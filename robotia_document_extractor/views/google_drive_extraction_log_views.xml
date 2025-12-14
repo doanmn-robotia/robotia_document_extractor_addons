@@ -57,6 +57,9 @@
                         <page string="OCR Response" invisible="not ocr_response_json">
                             <field name="ocr_response_json" widget="text"/>
                         </page>
+                        <page string="Validation Result" invisible="not validation_result_json">
+                            <field name="validation_result_json" widget="text"/>
+                        </page>
                         <page string="Error" invisible="status != 'error'">
                             <field name="error_message" widget="text"/>
                         </page>

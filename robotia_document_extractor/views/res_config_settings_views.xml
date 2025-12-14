@@ -108,6 +108,42 @@
                                 </div>
                             </div>
                         </setting>
+                        
+                        <!-- LlamaIndex OCR Configuration -->
+                        <setting id="llama_cloud_api_key_setting"
+                                 string="LlamaCloud API Key"
+                                 help="Configure your LlamaCloud API key for OCR extraction with bounding boxes">
+                            <field name="llama_cloud_api_key" password="True" placeholder="llx-..." class="oe_inline"/>
+                            <div class="content-group mt8">
+                                <div class="text-muted">
+                                    Get your API key from <a href="https://cloud.llamaindex.ai/" target="_blank">LlamaCloud Console</a>
+                                </div>
+                            </div>
+                        </setting>
+                        <setting id="llama_premium_mode_setting"
+                                 string="Premium OCR Mode"
+                                 help="Enable premium mode for more accurate OCR (higher cost)">
+                            <field name="llama_premium_mode"/>
+                            <div class="content-group mt8">
+                                <div class="text-muted">
+                                    <strong>Fast Mode (Default):</strong> Faster processing with good accuracy<br/>
+                                    <strong>Premium Mode:</strong> Multimodal/Agentic parsing for complex documents (higher cost)
+                                </div>
+                            </div>
+                        </setting>
+                        <setting id="use_ai_validation_setting"
+                                 string="Use AI Validation for OCR"
+                                 help="Use AI to validate and enhance OCR data. Disable to use OCR data directly."
+                                 invisible="not extract_pages_run_ocr">
+                            <field name="use_ai_validation"/>
+                            <div class="content-group mt8">
+                                <div class="text-muted">
+                                    <strong>Enabled (Default):</strong> OCR data is processed and validated by AI for better accuracy<br/>
+                                    <strong>Disabled:</strong> Use OCR data directly without AI processing (faster, lower cost, but may be less accurate)
+                                </div>
+                            </div>
+                        </setting>
+                        
                         <setting id="extraction_strategy_setting"
                                  string="Extraction Strategy"
                                  help="Choose how PDF documents are processed for extraction">

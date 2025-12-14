@@ -8,6 +8,24 @@ from odoo.exceptions import UserError
 class ResConfigSettings(models.TransientModel):
     _inherit = 'res.config.settings'
 
+    # LlamaIndex OCR Configuration
+    llama_cloud_api_key = fields.Char(
+        string='LlamaCloud API Key',
+        config_parameter='robotia_document_extractor.llama_cloud_api_key'
+    )
+    llama_premium_mode = fields.Boolean(
+        string='Premium Mode',
+        config_parameter='robotia_document_extractor.llama_premium_mode',
+        default=False,
+        help='Enable premium mode for more accurate OCR (higher cost)'
+    )
+    use_ai_validation = fields.Boolean(
+        string='Use AI Validation',
+        config_parameter='robotia_document_extractor.use_ai_validation',
+        default=True,
+        help='Use AI to validate and enhance OCR data. Disable to use OCR data directly.'
+    )
+
     gemini_api_key = fields.Char(
         string='Gemini API Key',
         config_parameter='robotia_document_extractor.gemini_api_key',
@@ -96,7 +114,8 @@ class ResConfigSettings(models.TransientModel):
         selection=[
             ('ai_native', _('100% AI (Gemini processes PDF directly)')),
             ('text_extract', _('Text Extraction + AI (Extract text first, then AI structures)')),
-            ('batch_extract', _('Batch Extraction (Process pages in batches with chat session)'))
+            ('batch_extract', _('Batch Extraction (Process pages in batches with chat session)')),
+            ('llama_split', _('LlamaSplit Extract (Split by category + Llama OCR + Gemini)'))
         ],
         string=_('Extraction Strategy'),
         config_parameter='robotia_document_extractor.extraction_strategy',
@@ -106,7 +125,9 @@ class ResConfigSettings(models.TransientModel):
                '• Text Extract + AI: Extract text first using PyMuPDF, then AI structures it\n'
                '  (useful for very large PDFs or cost optimization)\n'
                '• Batch Extraction: Convert PDF to images, process in batches with adaptive sizing\n'
-               '  (recommended for very large documents 20+ pages with many tables)')
+               '  (recommended for very large documents 20+ pages with many tables)\n'
+               '• LlamaSplit Extract: Split document by categories, OCR with LlamaParse, then extract with Gemini chat\n'
+               '  (highest accuracy, uses LlamaCloud Split API + LlamaParse + Gemini)')
     )
 
     # ===== Batch Extraction Configuration =====

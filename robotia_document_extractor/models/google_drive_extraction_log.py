@@ -60,6 +60,11 @@ class GoogleDriveExtractionLog(models.Model):
         help='Raw OCR data with bounding boxes (if OCR was performed)'
     )
 
+    validation_result_json = fields.Text(
+        string='Validation Result JSON',
+        help='AI validation report comparing OCR output with PDF source (if validation was performed)'
+    )
+
     # Error Handling
     error_message = fields.Text(
         string='Error Message',
