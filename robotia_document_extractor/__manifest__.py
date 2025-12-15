@@ -2,10 +2,10 @@
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 {
     'name': 'Robotia Document Extractor',
-    'version': '1.5.0',
+    'version': '18.0.1.0.1',
     'sequence': 10,
     'description': "",
-    'depends': ['web'],
+    'depends': ['web', 'queue_job'],
     'category': "Document Extractor",
     'data': [
         'data/security_groups.xml',
@@ -16,6 +16,8 @@
         'data/substance_groups_data.xml',
         'data/default_prompts.xml',
         'data/google_drive_cron.xml',
+        'data/extraction_job_sequence.xml',
+        'data/queue_job_channel.xml',
         'wizard/google_drive_config_wizard_views.xml',
         'views/document_extraction_views.xml',
         'views/master_data_views.xml',

@@ -1,6 +1,6 @@
 /** @odoo-module **/
 
-import { Component, useState } from "@odoo/owl";
+import { Component, useState, onWillUnmount } from "@odoo/owl";
 import { rpc } from "@web/core/network/rpc";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
@@ -20,6 +20,20 @@ export class ExtractionPageSelector extends Component {
             base64File: null, // Store base64 of the PDF
             previewUrl: null, // URL to show in preview modal
             documentType: null, // Document type from upload screen
+            // Job polling state
+            jobId: null,
+            jobState: null, // 'pending', 'processing', 'done', 'error'
+            progress: 0,
+            progressMessage: "",
+            errorMessage: "",
+        });
+
+        this.pollingInterval = null;
+
+        onWillUnmount(() => {
+            if (this.pollingInterval) {
+                clearInterval(this.pollingInterval);
+            }
         });
 
         // Get file URL and documentType from action params
@@ -150,25 +164,104 @@ export class ExtractionPageSelector extends Component {
             const selectedAttachmentIds = Array.from(this.state.selectedPages);
 
             const result = await this.rpc("/robotia/extract_pages", {
-                pdf_file: this.state.base64File,
-                attachment_ids: selectedAttachmentIds, // NEW: Send attachment IDs
+                attachment_ids: selectedAttachmentIds,
                 document_type: this.state.documentType,
-                filename: this.state.fileName, // Pass original filename
+                filename: this.state.fileName,
             });
 
-            if (result.type === 'ir.actions.act_window') {
-                await this.action.doAction(result);
-            } else if (result.type === 'ir.actions.client') {
-                this.notification.add(result.params.message, {
-                    type: result.params.type
-                });
+            if (result.type === 'success') {
+                // Job created successfully - start polling
+                this.state.jobId = result.job_id;
+                this.state.jobState = 'pending';
+                this.state.progress = 0;
+                this.state.progressMessage = _t("Job created, waiting to start...");
+
+                this.notification.add(
+                    _t("Extraction job created. Processing..."),
+                    { type: "success" }
+                );
+
+                // Start polling job status
+                this.startJobPolling();
+            } else if (result.type === 'error') {
+                // Error creating job
+                this.notification.add(
+                    result.message || _t("Error creating extraction job"),
+                    { type: "danger" }
+                );
+                this.state.isProcessing = false;
             }
 
         } catch (error) {
             console.error("Extraction error:", error);
             this.notification.add(_t("Error during extraction"), { type: "danger" });
-        } finally {
             this.state.isProcessing = false;
+        }
+    }
+
+    startJobPolling() {
+        // Poll every 2 seconds
+        this.pollingInterval = setInterval(() => this.pollJobStatus(), 2000);
+        // Also poll immediately
+        this.pollJobStatus();
+    }
+
+    async pollJobStatus() {
+        if (!this.state.jobId) return;
+
+        try {
+            const response = await this.rpc("/robotia/get_my_extraction_jobs", {
+                offset: 0,
+                limit: 20  // Get recent jobs
+            });
+            const job = response.jobs.find(j => j.id === this.state.jobId);
+
+            if (!job) {
+                console.error("Job not found:", this.state.jobId);
+                return;
+            }
+
+            // Update state using queue_state
+            this.state.jobState = job.queue_state;
+            this.state.progress = job.progress || 0;
+            this.state.progressMessage = job.progress_message || "";
+            this.state.errorMessage = job.error_message || "";
+
+            // Handle job completion based on queue_state
+            if (job.queue_state === 'done') {
+                clearInterval(this.pollingInterval);
+                this.pollingInterval = null;
+                this.state.isProcessing = false;
+
+                // Open the extraction form
+                if (job.result_action_json) {
+                    const action = JSON.parse(job.result_action_json);
+                    await this.action.doAction(action);
+                } else {
+                    this.notification.add(_t("Extraction completed!"), { type: "success" });
+                }
+            } else if (job.queue_state === 'failed') {
+                clearInterval(this.pollingInterval);
+                this.pollingInterval = null;
+                this.state.isProcessing = false;
+
+                this.notification.add(
+                    job.error_message || _t("Extraction failed"),
+                    { type: "danger" }
+                );
+            } else if (job.queue_state === 'cancelled') {
+                clearInterval(this.pollingInterval);
+                this.pollingInterval = null;
+                this.state.isProcessing = false;
+
+                this.notification.add(
+                    _t("Extraction job was cancelled"),
+                    { type: "warning" }
+                );
+            }
+            // For 'pending', 'enqueued', 'started' states, keep polling
+        } catch (error) {
+            console.error("Error polling job status:", error);
         }
     }
 }

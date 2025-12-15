@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
-
 from odoo import http, _
 from odoo.http import request
 import base64
-import logging
 import json
-import traceback
+import logging
+import time
 
 _logger = logging.getLogger(__name__)
 
@@ -55,349 +54,6 @@ class ExtractionController(http.Controller):
         avg_co2 = sum(v for v in co2_values if v is not None) / co2_count if co2_count > 0 else 0
 
         return (avg_kg, avg_co2)
-
-    def _process_pdf_extraction(self, pdf_binary, filename, document_type, run_ocr=False):
-        """
-        SHARED HELPER: Process PDF extraction with transaction-safe logging
-
-        This method ensures EVERY AI call is logged accurately with:
-        - Input file (attachment) ALWAYS created before AI call
-        - AI response JSON (if extraction succeeds)
-        - Exact status (success/error) reflecting actual result
-        - Detailed error messages for all failure scenarios
-
-        CRITICAL LOGGING GUARANTEE:
-        - Log created FIRST with 'processing' status
-        - Attachment created IMMEDIATELY (before AI call)
-        - Log updated to 'success' ONLY when entire pipeline succeeds
-        - Log updated to 'error' with details for ANY failure
-        - Exception handling catches ALL possible errors
-
-        Args:
-            pdf_binary (bytes): PDF binary data
-            filename (str): Original filename
-            document_type (str): '01' or '02'
-            run_ocr (bool): Whether to run OCR extraction (default: False)
-
-        Returns:
-            dict: {
-                'success': True/False,
-                'extracted_data': {...},  # AI extracted data (None if failed)
-                'attachment': ir.attachment record (always present if validation passed),
-                'log': google.drive.extraction.log record (always present),
-                'error': None or dict with error notification params
-            }
-        """
-        # Constants
-        MAX_PDF_SIZE_MB = 50
-        MAX_PDF_SIZE_BYTES = MAX_PDF_SIZE_MB * 1024 * 1024
-        EXTRACTION_RATE_LIMIT_SECONDS = 5
-
-        # Variables to track cleanup
-        log = None
-        attachment = None
-        extracted_data = None
-
-        try:
-            # ===== STEP 1: Create log FIRST (with 'processing' status) =====
-            log = request.env['google.drive.extraction.log'].sudo().create({
-                'drive_file_id': False,  # No Drive ID for manual uploads
-                'file_name': filename,
-                'document_type': document_type,
-                'status': 'processing',
-            })
-            _logger.info(f"[Log {log.id}] Created log for {filename} (Type: {document_type}, OCR: {run_ocr})")
-
-            # ===== STEP 2: Validation (before creating attachment) =====
-
-            # 2.1 Validate file extension
-            if not filename.lower().endswith('.pdf'):
-                error_msg = 'Invalid file type: Only PDF files are allowed'
-                log.write({'status': 'error', 'error_message': error_msg})
-                _logger.warning(f"[Log {log.id}] {error_msg}")
-                return {
-                    'success': False,
-                    'extracted_data': None,
-                    'attachment': None,
-                    'log': log,
-                    'error': {
-                        'title': _('Invalid File Type'),
-                        'message': _('Only PDF files are allowed'),
-                        'type': 'danger',
-                    }
-                }
-
-            # 2.2 Validate file size
-            pdf_size_bytes = len(pdf_binary)
-            if pdf_size_bytes > MAX_PDF_SIZE_BYTES:
-                pdf_size_mb = pdf_size_bytes / 1024 / 1024
-                error_msg = f'File too large: {pdf_size_mb:.1f}MB (max {MAX_PDF_SIZE_MB}MB)'
-                log.write({'status': 'error', 'error_message': error_msg})
-                _logger.warning(f"[Log {log.id}] {error_msg}")
-                return {
-                    'success': False,
-                    'extracted_data': None,
-                    'attachment': None,
-                    'log': log,
-                    'error': {
-                        'title': _('File Too Large'),
-                        'message': _('File size (%(size).1fMB) exceeds %(max)dMB') % {'size': pdf_size_mb, 'max': MAX_PDF_SIZE_MB},
-                        'type': 'danger',
-                    }
-                }
-
-            # 2.3 Validate PDF magic bytes
-            if not pdf_binary.startswith(b'%PDF'):
-                error_msg = 'Invalid PDF format: File does not start with PDF signature'
-                log.write({'status': 'error', 'error_message': error_msg})
-                _logger.warning(f"[Log {log.id}] {error_msg}")
-                return {
-                    'success': False,
-                    'extracted_data': None,
-                    'attachment': None,
-                    'log': log,
-                    'error': {
-                        'title': _('Invalid PDF'),
-                        'message': _('The uploaded file does not appear to be a valid PDF'),
-                        'type': 'danger',
-                    }
-                }
-
-            # 2.4 Rate limiting (session-based)
-            import time
-            last_extract_time = request.session.get('last_extract_time', 0)
-            current_time = time.time()
-            if current_time - last_extract_time < EXTRACTION_RATE_LIMIT_SECONDS:
-                wait_seconds = int(EXTRACTION_RATE_LIMIT_SECONDS - (current_time - last_extract_time))
-                error_msg = f'Rate limit exceeded: Please wait {wait_seconds}s'
-                log.write({'status': 'error', 'error_message': error_msg})
-                _logger.warning(f"[Log {log.id}] {error_msg}")
-                return {
-                    'success': False,
-                    'extracted_data': None,
-                    'attachment': None,
-                    'log': log,
-                    'error': {
-                        'title': _('Please Wait'),
-                        'message': _('Please wait %(seconds)d seconds before extracting another document') % {'seconds': wait_seconds},
-                        'type': 'warning',
-                    }
-                }
-            request.session['last_extract_time'] = current_time
-
-            # ===== STEP 3: Create attachment BEFORE AI call (CRITICAL for logging) =====
-            try:
-                attachment = request.env['ir.attachment'].sudo().create({
-                    'name': filename,
-                    'type': 'binary',
-                    'datas': base64.b64encode(pdf_binary).decode('utf-8'),
-                    'res_model': 'document.extraction',
-                    'res_id': 0,  # Public for preview
-                    'public': True,
-                    'mimetype': 'application/pdf',
-                })
-                # Link attachment to log IMMEDIATELY
-                log.write({'attachment_id': attachment.id})
-                _logger.info(f"[Log {log.id}] Created attachment {attachment.id}")
-            except Exception as e:
-                error_msg = f'Failed to create attachment: {str(e)}'
-                log.write({'status': 'error', 'error_message': error_msg})
-                _logger.error(f"[Log {log.id}] {error_msg}", exc_info=True)
-                return {
-                    'success': False,
-                    'extracted_data': None,
-                    'attachment': None,
-                    'log': log,
-                    'error': {
-                        'title': _('Upload Failed'),
-                        'message': _('Failed to upload PDF file to server'),
-                        'type': 'danger',
-                    }
-                }
-
-            try:
-                _logger.info(f"[Log {log.id}] Starting AI extraction...")
-                extraction_service = request.env['document.extraction.service']
-                extracted_data = extraction_service.extract_pdf(pdf_binary, document_type, log_id=log)
-                _logger.info(f"[Log {log.id}] AI extraction completed successfully")
-            except Exception as e:
-                error_msg = f'AI extraction failed: {str(e)}'
-                error_traceback = traceback.format_exc()
-
-                # Update log with detailed error
-                log.write({
-                    'status': 'error',
-                    'error_message': error_traceback,
-                    'ai_response_json': extracted_data,  # Store full traceback for debugging
-                })
-                _logger.error(f"[Log {log.id}] {error_msg}", exc_info=True)
-
-                return {
-                    'success': False,
-                    'extracted_data': None,
-                    'attachment': attachment,
-                    'log': log,
-                    'error': {
-                        'title': _('AI Extraction Failed'),
-                        'message': str(e),
-                        'type': 'danger',
-                    }
-                }
-
-            # ===== STEP 6: Post-processing (auto-calculate years) =====
-            try:
-                year = extracted_data.get('year')
-                if year:
-                    if not extracted_data.get('year_1'):
-                        extracted_data['year_1'] = year - 1
-                    if not extracted_data.get('year_2'):
-                        extracted_data['year_2'] = year
-                    if not extracted_data.get('year_3'):
-                        extracted_data['year_3'] = year + 1
-            except Exception as e:
-                # Non-critical error, just log warning
-                _logger.warning(f"[Log {log.id}] Failed to auto-calculate years: {e}")
-
-            # ===== STEP 7: Update log to SUCCESS (ONLY if everything succeeded) =====
-            try:
-                log_data = {
-                    'status': 'success',
-                    'ai_response_json': json.dumps(extracted_data, ensure_ascii=False, indent=2),
-                }
-                log.write(log_data)
-                _logger.info(f"[Log {log.id}] Extraction pipeline completed successfully")
-            except Exception as e:
-                # Critical: Failed to save log data
-                error_msg = f'Failed to save extraction results to log: {str(e)}'
-                _logger.error(f"[Log {log.id}] {error_msg}", exc_info=True)
-                # Try to update log status
-                try:
-                    log.write({'status': 'error', 'error_message': error_msg, 'ai_response_json': extracted_data})
-                except:
-                    pass
-
-                return {
-                    'success': False,
-                    'extracted_data': extracted_data,
-                    'attachment': attachment,
-                    'log': log,
-                    'error': {
-                        'title': _('Save Failed'),
-                        'message': _('Extraction succeeded but failed to save results'),
-                        'type': 'danger',
-                    }
-                }
-
-            # ===== SUCCESS: Return complete result =====
-            return {
-                'success': True,
-                'extracted_data': extracted_data,
-                'attachment': attachment,
-                'log': log,
-                'error': None,
-            }
-
-        except Exception as e:
-            # ===== CATCH-ALL: Handle ANY unexpected error =====
-            error_msg = f'Unexpected error in extraction pipeline: {str(e)}'
-            error_traceback = traceback.format_exc()
-            _logger.error(f"[Log {log.id if log else 'N/A'}] {error_msg}", exc_info=True)
-
-            # Try to update log if it exists
-            if log:
-                try:
-                    log.write({
-                        'status': 'error',
-                        'error_message': error_traceback,
-                        'ai_response_json': extracted_data,  # Store full traceback
-                    })
-                except Exception as log_error:
-                    _logger.error(f"Failed to update log: {log_error}")
-
-            return {
-                'success': False,
-                'extracted_data': None,
-                'attachment': attachment,  # May be None if error before attachment creation
-                'log': log,  # May be None if error before log creation
-                'error': {
-                    'title': _('Unexpected Error'),
-                    'message': str(e),
-                    'type': 'danger',
-                }
-            }
-
-    @http.route('/document_extractor/extract', type='json', auth='user', methods=['POST'])
-    def extract_document(self, pdf_data, filename, document_type):
-        """
-        Extract data from PDF using AI only (no OCR)
-
-        Args:
-            pdf_data (str): Base64 encoded PDF file
-            filename (str): Original filename
-            document_type (str): '01' for Registration, '02' for Report
-
-        Returns:
-            dict: Action to open form OR error notification
-        """
-        # Decode PDF
-        try:
-            pdf_binary = base64.b64decode(pdf_data)
-        except Exception as e:
-            _logger.error(f"Failed to decode PDF: {e}")
-            return {
-                'type': 'ir.actions.client',
-                'tag': 'display_notification',
-                'params': {
-                    'title': _('Error'),
-                    'message': _('Failed to decode PDF file'),
-                    'type': 'danger',
-                    'sticky': False,
-                }
-            }
-
-        # Call shared helper (NO OCR for direct upload route)
-        result = self._process_pdf_extraction(
-            pdf_binary=pdf_binary,
-            filename=filename,
-            document_type=document_type,
-            run_ocr=False  # AI-only extraction
-        )
-
-        # Handle error
-        if not result['success']:
-            return {
-                'type': 'ir.actions.client',
-                'tag': 'display_notification',
-                'params': {
-                    **result['error'],
-                    'sticky': result['error']['type'] == 'danger',
-                }
-            }
-
-        # Build form values using extraction helper
-        helper = request.env['extraction.helper']
-        vals = helper.build_extraction_values(
-            extracted_data=result['extracted_data'],
-            attachment=result['attachment'],
-            document_type=document_type
-        )
-
-        # Convert to context
-        context = {f'default_{key}': value for key, value in vals.items()}
-        context['default_extraction_log_id'] = result['log'].id
-        context['default_source'] = 'from_user_upload'
-
-        _logger.info(f"Returning form action for {filename}")
-
-        # Return form action
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'document.extraction',
-            'view_mode': 'form',
-            'views': [[False, 'form']],
-            'target': 'current',
-            'context': context,
-        }
 
     @http.route('/robotia/pdf_to_images', type='json', auth='user', methods=['POST'])
     def pdf_to_images(self, pdf_file):
@@ -480,150 +136,212 @@ class ExtractionController(http.Controller):
             return {'status': 'error', 'message': str(e)}
 
     @http.route('/robotia/extract_pages', type='json', auth='user', methods=['POST'])
-    def extract_pages(self, pdf_file, attachment_ids, document_type='01', filename=None):
+    def extract_pages(self, attachment_ids, document_type='01', filename=None):
         """
-        Extract specific pages from PDF with OCR + AI
-
+        Create async extraction job for selected pages
+        
+        Flow:
+        1. Merge selected page images into PDF
+        2. Create ir.attachment for merged PDF
+        3. Create extraction.job record
+        4. Enqueue job with queue_job
+        5. Cleanup temp page attachments
+        6. Return success message
+        
         Args:
-            pdf_file (str): Base64 encoded PDF (original full PDF)
-            attachment_ids (list): List of attachment IDs representing selected pages
+            attachment_ids (list): List of attachment IDs (page images)
             document_type (str): '01' or '02'
-            filename (str): Original filename from user upload
-
+            filename (str): Original filename
+            
         Returns:
-            dict: Action to open document.extraction form
+            dict: Success message for UI
         """
         try:
-            import fitz  # PyMuPDF
-            import io
-
-            # 1. Get page numbers from attachments
+            # 1. Merge pages into single PDF
+            service = request.env['document.extraction.service']
+            merged_pdf_binary = service.merge_page_attachments_to_pdf(attachment_ids)
+            
+            # 2. Create attachment for merged PDF
             Attachment = request.env['ir.attachment'].sudo()
-            attachments = Attachment.browse(attachment_ids)
+            merged_attachment = Attachment.create({
+                'name': filename or f'merged_{document_type}.pdf',
+                'type': 'binary',
+                'datas': base64.b64encode(merged_pdf_binary).decode('utf-8'),
+                'res_model': 'extraction.job',
+                'mimetype': 'application/pdf',
+                'description': f'Merged PDF for extraction job',
+            })
+            
+            # 3. Create extraction job record
+            ExtractionJob = request.env['extraction.job'].sudo()
+            job_record = ExtractionJob.create({
+                'attachment_id': merged_attachment.id,
+                'document_type': document_type,
+                'state': 'pending',
+            })
+            
+            # 4. Update attachment to link to job
+            merged_attachment.res_id = job_record.id
+            
+            # 5. Generate identity_key from attachment ID
+            identity_key = f"extraction_{merged_attachment.id}"
+            
+            # 6. Enqueue job with queue_job
+            # Note: UUID will be stored automatically in run_extraction_async via job context
+            job_record.with_delay(
+                channel='extraction',
+                max_retries=1,  # No retry - only run once
+                identity_key=identity_key,
+                description=f"Extract {filename or document_type}"
+            ).run_extraction_async()
+            
+            _logger.info(f"Created extraction job {job_record.name} (ID: {job_record.id})")
 
-            if not attachments:
-                return {
-                    'type': 'ir.actions.client',
-                    'tag': 'display_notification',
-                    'params': {
-                        'title': _('Invalid Selection'),
-                        'message': _('No valid pages selected'),
-                        'type': 'danger',
-                    }
-                }
-
-            # Extract page numbers from attachment names
-            # Assuming attachment.name = "page_0.png", "page_1.png", etc.
-            page_indices = []
-            for att in attachments:
-                try:
-                    # Extract number from "page_0.png" → 0
-                    page_num = int(att.name.replace('page_', '').replace('.png', ''))
-                    page_indices.append(page_num)
-                except ValueError:
-                    _logger.warning(f"Could not parse page number from {att.name}")
-
-            if not page_indices:
-                return {
-                    'type': 'ir.actions.client',
-                    'tag': 'display_notification',
-                    'params': {
-                        'title': _('Invalid Selection'),
-                        'message': _('Could not determine page numbers'),
-                        'type': 'danger',
-                    }
-                }
-
-            # Sort to maintain order
-            page_indices.sort()
-            _logger.info(f"Extracting pages: {page_indices}")
-
-            # 2. Create PDF with selected pages
-            pdf_binary = base64.b64decode(pdf_file)
-            doc = fitz.open(stream=pdf_binary, filetype="pdf")
-
-            new_doc = fitz.open()
-            for index in page_indices:
-                if 0 <= index < len(doc):
-                    new_doc.insert_pdf(doc, from_page=index, to_page=index)
-
-            output_stream = io.BytesIO()
-            new_doc.save(output_stream)
-            new_pdf_binary = output_stream.getvalue()
-            doc.close()
-            new_doc.close()
-
-            # Use original filename if provided, otherwise generate one
-            if not filename:
-                filename = f"extracted_pages_{document_type}.pdf"
-
-            # 3. Call shared helper (WITH OCR if configured)
-            run_ocr = request.env['ir.config_parameter'].sudo().get_param(
-                'robotia_document_extractor.extract_pages_run_ocr', 'False'
-            ).lower() == 'true'
-
-            result = self._process_pdf_extraction(
-                pdf_binary=new_pdf_binary,
-                filename=filename,
-                document_type=document_type,
-                run_ocr=run_ocr
-            )
-
-            # Handle error
-            if not result['success']:
-                return {
-                    'type': 'ir.actions.client',
-                    'tag': 'display_notification',
-                    'params': {
-                        'title': _('Extraction Failed'),
-                        'message': result['error']['message'],
-                        'type': 'danger',
-                    }
-                }
-
-            # Build form values using extraction helper
-            helper = request.env['extraction.helper']
-            vals = helper.build_extraction_values(
-                extracted_data=result['extracted_data'],
-                attachment=result['attachment'],
-                document_type=document_type
-            )
-
-            # Convert to context
-            context = {f'default_{key}': value for key, value in vals.items()}
-            context['default_extraction_log_id'] = result['log'].id
-            context['default_source'] = 'from_user_upload'  # Page selector is user upload with selected pages
-
-            # 4. Clean up temporary page attachments
+            # 7. Cleanup temporary page attachments
             try:
                 Attachment.browse(attachment_ids).unlink()
-                _logger.info(f"Cleaned up {len(attachment_ids)} temporary attachments")
+                _logger.info(f"Cleaned up {len(attachment_ids)} temporary page attachments")
             except Exception as e:
                 _logger.warning(f"Could not cleanup temp attachments: {e}")
+            
+            # 8. Return success message (UI will redirect to dashboard)
 
-            _logger.info(f"Returning form action for selected pages")
 
-            # Return form action
             return {
-                'type': 'ir.actions.act_window',
-                'res_model': 'document.extraction',
-                'view_mode': 'form',
-                'views': [[False, 'form']],
-                'target': 'current',
-                'context': context,
+                'type': 'success',
+                'message': _('Extraction job created successfully'),
+                'job_id': job_record.id,
+                'job_name': job_record.name,
             }
-
+            
         except Exception as e:
-            _logger.exception("Extract pages failed")
+            _logger.exception("Failed to create extraction job")
             return {
-                'type': 'ir.actions.client',
-                'tag': 'display_notification',
-                'params': {
-                    'title': _('Extraction Failed'),
-                    'message': str(e),
-                    'type': 'danger',
-                }
+                'type': 'error',
+                'message': str(e),
             }
+    
+    @http.route('/robotia/get_my_extraction_jobs', type='json', auth='user', methods=['POST'])
+    def get_my_extraction_jobs(self, offset=0, limit=10):
+        """
+        Get extraction jobs for current user with pagination
+        
+        Uses queue.job as the source of truth.
+        Gets extraction.job data via queue.job.records field (similar to related_action).
+        
+        Args:
+            offset (int): Starting position for pagination (default: 0)
+            limit (int): Number of records to fetch (default: 10)
+        
+        Returns:
+            dict: {
+                'jobs': [...],      # List of job dicts
+                'total': 123,       # Total count
+                'has_more': True    # Whether there are more records
+            }
+        """
+        try:
+            QueueJob = request.env['queue.job'].sudo()
+            
+            # Get queue.job records for extraction jobs created by current user
+            queue_domain = [
+                ('user_id', '=', request.env.uid),
+                ('model_name', '=', 'extraction.job'),
+                ('method_name', '=', 'run_extraction_async')
+            ]
+            
+            # Get total count
+            total_count = QueueJob.search_count(queue_domain)
+            
+            # Get queue jobs with pagination
+            queue_jobs = QueueJob.search(
+                queue_domain,
+                order='date_created desc',
+                limit=limit,
+                offset=offset
+            )
+            
+            if not queue_jobs:
+                return {
+                    'jobs': [],
+                    'total': total_count,
+                    'has_more': False
+                }
+            
+            # Build result list
+            jobs_list = []
+            for queue_job in queue_jobs:
+                # Get extraction.job via records field (like related_action_open_record)
+                extraction_job = queue_job.records
+                
+                # Skip if no extraction.job or wrong model
+                if not extraction_job or extraction_job._name != 'extraction.job':
+                    _logger.warning(f"Queue job {queue_job.uuid} has no valid extraction.job record")
+                    continue
+                
+                # If multiple records, take the first one (shouldn't happen)
+                if len(extraction_job) > 1:
+                    _logger.warning(f"Queue job {queue_job.uuid} has multiple extraction.job records, using first")
+                    extraction_job = extraction_job[0]
+                
+                # Build job dict using queue.job state as source of truth
+                job_dict = {
+                    'id': extraction_job.id,
+                    'name': extraction_job.name,
+                    'document_type': extraction_job.document_type,
+                    'queue_state': queue_job.state,
+                    'create_date': queue_job.date_created.strftime('%Y-%m-%d %H:%M') if queue_job.date_created else '',
+                }
+                
+                # Only include progress if queue job is actually running (started)
+                if queue_job.state == 'started':
+                    job_dict['progress'] = extraction_job.progress or 0
+                    job_dict['progress_message'] = extraction_job.progress_message or ''
+                else:
+                    job_dict['progress'] = 0
+                    job_dict['progress_message'] = ''
+                
+                # Include result action if done
+                if queue_job.state == 'done' and extraction_job.result_action_json:
+                    # Load the stored action
+                    action = json.loads(extraction_job.result_action_json)
+                    
+                    # If we have a linked extraction record, add res_id to open it
+                    if extraction_job.extraction_id:
+                        action['res_id'] = extraction_job.extraction_id.id
+                        # Remove context since we're opening a specific record
+                        action.pop('context', None)
+                    
+                    job_dict['result_action_json'] = json.dumps(action, ensure_ascii=False)
+                
+                # Include error message if failed
+
+                if queue_job.state == 'failed':
+                    # Prefer queue.job error message, fallback to extraction.job
+                    if queue_job.exc_message:
+                        job_dict['error_message'] = queue_job.exc_message
+                    elif extraction_job.error_message:
+                        job_dict['error_message'] = extraction_job.error_message
+                    else:
+                        job_dict['error_message'] = 'Unknown error'
+                
+                jobs_list.append(job_dict)
+            
+            return {
+                'jobs': jobs_list,
+                'total': total_count,
+                'has_more': (offset + limit) < total_count
+            }
+            
+        except Exception as e:
+            _logger.exception("Failed to get extraction jobs")
+            return {
+                'jobs': [],
+                'total': 0,
+                'has_more': False
+            }
+
+    
     @http.route('/document_extractor/substance_dashboard_data', type='json', auth='user', methods=['POST'])
     def get_substance_dashboard_data(self, substance_id=None, organization_id=None, year_from=None, year_to=None):
         """

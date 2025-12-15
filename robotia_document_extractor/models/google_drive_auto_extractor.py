@@ -158,7 +158,6 @@ class GoogleDriveAutoExtractor(models.AbstractModel):
             extracted_data = extraction_service.extract_pdf(
                 pdf_binary=pdf_binary,
                 document_type=document_type,
-                filename=file_name
             )
 
             # 3. Create ir.attachment

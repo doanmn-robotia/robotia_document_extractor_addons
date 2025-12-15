@@ -30,6 +30,7 @@ from . import extraction_service
 from . import extraction_service_batching
 from . import extraction_service_llama
 from . import extraction_helper
+from . import extraction_job
 from . import document_reanalysis_service
 from . import fuzzy_matcher
 from . import llama_ocr_service

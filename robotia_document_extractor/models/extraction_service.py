@@ -1,11 +1,15 @@
 # -*- coding: utf-8 -*-
 
 from odoo import models, api
+from odoo.tools.translate import _
 import json
 import logging
 import tempfile
 import os
 import time
+import base64
+import io
+import fitz  # PyMuPDF
 from google import genai
 from google.genai import types
 
@@ -224,6 +228,369 @@ class DocumentExtractionService(models.AbstractModel):
         if cleaned_count > 0:
             _logger.info(f"Cleaned up {cleaned_count} temporary extraction files")
 
+    def merge_page_attachments_to_pdf(self, attachment_ids):
+        """
+        Merge selected page attachments (PNG images) into a single PDF
+
+        This helper takes page attachments created by /robotia/pdf_to_images,
+        parses page numbers from filenames (page_0.png, page_1.png, ...),
+        sorts them in ascending order, and merges them into a single PDF document.
+
+        Args:
+            attachment_ids (list): List of ir.attachment IDs (page_X.png images)
+
+        Returns:
+            bytes: PDF binary data containing merged pages
+
+        Raises:
+            ValueError: If no valid page attachments found or parsing fails
+        """
+        # Get attachments
+        Attachment = self.env['ir.attachment'].sudo()
+        attachments = Attachment.browse(attachment_ids)
+
+        if not attachments:
+            raise ValueError(_('No valid page attachments found'))
+
+        # Parse page numbers and collect data
+        pages_data = []
+        for att in attachments:
+            try:
+                # Extract page number from "page_0.png" → 0
+                page_num = int(att.name.replace('page_', '').replace('.png', ''))
+                pages_data.append({
+                    'page_num': page_num,
+                    'attachment': att,
+                })
+            except (ValueError, AttributeError) as e:
+                _logger.warning(f"Could not parse page number from {att.name}: {e}")
+
+        if not pages_data:
+            raise ValueError(_('Could not parse page numbers from attachment names'))
+
+        # Sort by page number (ascending order)
+        pages_data.sort(key=lambda x: x['page_num'])
+        _logger.info(f"Merging {len(pages_data)} pages: {[p['page_num'] for p in pages_data]}")
+
+        # Create new PDF from images
+        new_doc = fitz.open()  # New empty PDF
+
+        for page_data in pages_data:
+            att = page_data['attachment']
+
+            try:
+                # Decode image binary
+                img_binary = base64.b64decode(att.datas)
+
+                # Open image as document
+                img_doc = fitz.open(stream=img_binary, filetype="png")
+
+                # Insert image page into new PDF
+                pdf_bytes = img_doc.convert_to_pdf()  # Convert image page to PDF
+                img_pdf = fitz.open("pdf", pdf_bytes)
+                new_doc.insert_pdf(img_pdf)
+
+                img_pdf.close()
+                img_doc.close()
+
+            except Exception as e:
+                _logger.error(f"Failed to merge page {page_data['page_num']}: {e}")
+                new_doc.close()
+                raise ValueError(f"Failed to merge page {page_data['page_num']}: {e}")
+
+        # Save to bytes
+        output_stream = io.BytesIO()
+        new_doc.save(output_stream)
+        pdf_binary = output_stream.getvalue()
+        new_doc.close()
+
+        _logger.info(f"Successfully merged {len(pages_data)} pages into PDF ({len(pdf_binary)} bytes)")
+        return pdf_binary
+
+    def process_pdf_extraction(self, pdf_binary, filename, document_type,
+                               check_rate_limit=True, last_extract_time=None):
+        """
+        MAIN ORCHESTRATOR: Process PDF extraction with transaction-safe logging
+
+        This method orchestrates the full extraction pipeline:
+        1. Type validation (pdf_binary must be bytes)
+        2. Rate limiting check (optional, BEFORE log creation)
+        3. Create extraction log (processing status)
+        4. Validate file (extension, size, PDF magic bytes)
+        5. Create ir.attachment (BEFORE AI call)
+        6. Call extract_pdf() for AI extraction
+        7. Update log (success/error status)
+
+        Args:
+            pdf_binary (bytes): PDF binary data (must be bytes, not string)
+            filename (str): Original filename
+            document_type (str): '01' or '02'
+            check_rate_limit (bool): Whether to check rate limiting (default: True)
+            last_extract_time (float): Unix timestamp of last extraction (for rate limit)
+
+        Returns:
+            dict: {
+                'success': True/False,
+                'extracted_data': {...} or None,
+                'attachment': ir.attachment record or None,
+                'log': google.drive.extraction.log record (None if rate limited),
+                'error': None or dict with notification params,
+                'rate_limit_exceeded': bool (True if rate limited)
+            }
+        """
+        import traceback
+
+        # Constants
+        MAX_PDF_SIZE_MB = 50
+        MAX_PDF_SIZE_BYTES = MAX_PDF_SIZE_MB * 1024 * 1024
+        EXTRACTION_RATE_LIMIT_SECONDS = 5
+
+        # Variables to track cleanup
+        log = None
+        attachment = None
+        extracted_data = None
+
+        try:
+            # ===== STEP 0: Type validation (FIRST - cheapest check) =====
+            if not isinstance(pdf_binary, bytes):
+                raise TypeError(
+                    f"pdf_binary must be bytes, got {type(pdf_binary).__name__}. "
+                    f"If you have base64 string, decode it first with base64.b64decode()"
+                )
+
+            if len(pdf_binary) == 0:
+                raise ValueError("pdf_binary is empty - cannot extract from empty file")
+
+            # ===== STEP 1: Rate limiting (BEFORE log creation to prevent DB pollution) =====
+            if check_rate_limit and last_extract_time is not None:
+                current_time = time.time()
+                if current_time - last_extract_time < EXTRACTION_RATE_LIMIT_SECONDS:
+                    wait_seconds = int(EXTRACTION_RATE_LIMIT_SECONDS - (current_time - last_extract_time)) + 1
+                    _logger.warning(f"Rate limit exceeded for {filename}: Please wait {wait_seconds}s")
+                    return {
+                        'success': False,
+                        'extracted_data': None,
+                        'attachment': None,
+                        'log': None,  # No log created when rate limited
+                        'error': {
+                            'title': _('Too Many Requests'),
+                            'message': _('Please wait %(seconds)d seconds before extracting again') % {'seconds': wait_seconds},
+                            'type': 'warning',
+                        },
+                        'rate_limit_exceeded': True
+                    }
+
+            # ===== STEP 2: Create log (AFTER rate limiting check) =====
+            log = self.env['google.drive.extraction.log'].sudo().create({
+                'drive_file_id': False,  # No Drive ID for manual uploads
+                'file_name': filename,
+                'document_type': document_type,
+                'status': 'processing',
+            })
+            _logger.info(f"[Log {log.id}] Created log for {filename} (Type: {document_type})")
+
+            # ===== STEP 3: File validations =====
+
+            # 3.1 Validate file extension
+            if not filename.lower().endswith('.pdf'):
+                error_msg = 'Invalid file type: Only PDF files are allowed'
+                log.write({'status': 'error', 'error_message': error_msg})
+                _logger.warning(f"[Log {log.id}] {error_msg}")
+                return {
+                    'success': False,
+                    'extracted_data': None,
+                    'attachment': None,
+                    'log': log,
+                    'error': {
+                        'title': _('Invalid File Type'),
+                        'message': _('Only PDF files are allowed'),
+                        'type': 'danger',
+                    },
+                    'rate_limit_exceeded': False
+                }
+
+            # 3.2 Validate file size
+            pdf_size_bytes = len(pdf_binary)
+            if pdf_size_bytes > MAX_PDF_SIZE_BYTES:
+                pdf_size_mb = pdf_size_bytes / 1024 / 1024
+                error_msg = f'File too large: {pdf_size_mb:.1f}MB (max {MAX_PDF_SIZE_MB}MB)'
+                log.write({'status': 'error', 'error_message': error_msg})
+                _logger.warning(f"[Log {log.id}] {error_msg}")
+                return {
+                    'success': False,
+                    'extracted_data': None,
+                    'attachment': None,
+                    'log': log,
+                    'error': {
+                        'title': _('File Too Large'),
+                        'message': _('File size (%(size).1fMB) exceeds %(max)dMB') % {'size': pdf_size_mb, 'max': MAX_PDF_SIZE_MB},
+                        'type': 'danger',
+                    },
+                    'rate_limit_exceeded': False
+                }
+
+            # 3.3 Validate PDF magic bytes
+            if not pdf_binary.startswith(b'%PDF'):
+                error_msg = 'Invalid PDF format: File does not start with PDF signature'
+                log.write({'status': 'error', 'error_message': error_msg})
+                _logger.warning(f"[Log {log.id}] {error_msg}")
+                return {
+                    'success': False,
+                    'extracted_data': None,
+                    'attachment': None,
+                    'log': log,
+                    'error': {
+                        'title': _('Invalid PDF'),
+                        'message': _('The uploaded file does not appear to be a valid PDF'),
+                        'type': 'danger',
+                    },
+                    'rate_limit_exceeded': False
+                }
+
+            # ===== STEP 3: Create attachment BEFORE AI call (CRITICAL for logging) =====
+            try:
+                attachment = self.env['ir.attachment'].sudo().create({
+                    'name': filename,
+                    'type': 'binary',
+                    'datas': base64.b64encode(pdf_binary).decode('utf-8'),
+                    'res_model': 'document.extraction',
+                    'res_id': 0,  # Public for preview
+                    'public': True,
+                    'mimetype': 'application/pdf',
+                })
+                # Link attachment to log IMMEDIATELY
+                log.write({'attachment_id': attachment.id})
+                _logger.info(f"[Log {log.id}] Created attachment {attachment.id}")
+            except Exception as e:
+                error_msg = f'Failed to create attachment: {str(e)}'
+                log.write({'status': 'error', 'error_message': error_msg})
+                _logger.error(f"[Log {log.id}] {error_msg}", exc_info=True)
+                return {
+                    'success': False,
+                    'extracted_data': None,
+                    'attachment': None,
+                    'log': log,
+                    'error': {
+                        'title': _('Upload Failed'),
+                        'message': _('Failed to upload PDF file to server'),
+                        'type': 'danger',
+                    },
+                    'rate_limit_exceeded': False
+                }
+
+            # ===== STEP 4: AI Extraction =====
+            try:
+                _logger.info(f"[Log {log.id}] Starting AI extraction...")
+                extracted_data = self.extract_pdf(pdf_binary, document_type, log_id=log)
+                _logger.info(f"[Log {log.id}] AI extraction completed successfully")
+            except Exception as e:
+                error_msg = f'AI extraction failed: {str(e)}'
+                error_traceback = traceback.format_exc()
+
+                # Update log with detailed error
+                log.write({
+                    'status': 'error',
+                    'error_message': error_traceback,
+                })
+                _logger.error(f"[Log {log.id}] {error_msg}", exc_info=True)
+
+                return {
+                    'success': False,
+                    'extracted_data': None,
+                    'attachment': attachment,
+                    'log': log,
+                    'error': {
+                        'title': _('AI Extraction Failed'),
+                        'message': str(e),
+                        'type': 'danger',
+                    },
+                    'rate_limit_exceeded': False
+                }
+
+            # ===== STEP 5: Post-processing (auto-calculate years) =====
+            try:
+                year = extracted_data.get('year')
+                if year:
+                    if not extracted_data.get('year_1'):
+                        extracted_data['year_1'] = year - 1
+                    if not extracted_data.get('year_2'):
+                        extracted_data['year_2'] = year
+                    if not extracted_data.get('year_3'):
+                        extracted_data['year_3'] = year + 1
+            except Exception as e:
+                # Non-critical error, just log warning
+                _logger.warning(f"[Log {log.id}] Failed to auto-calculate years: {e}")
+
+            # ===== STEP 6: Update log to SUCCESS (ONLY if everything succeeded) =====
+            try:
+                log_data = {
+                    'status': 'success',
+                    'ai_response_json': json.dumps(extracted_data, ensure_ascii=False, indent=2),
+                }
+                log.write(log_data)
+                _logger.info(f"[Log {log.id}] Extraction pipeline completed successfully")
+            except Exception as e:
+                # Critical: Failed to save log data
+                error_msg = f'Failed to save extraction results to log: {str(e)}'
+                _logger.error(f"[Log {log.id}] {error_msg}", exc_info=True)
+                # Try to update log status
+                try:
+                    log.write({'status': 'error', 'error_message': error_msg})
+                except:
+                    pass
+
+                return {
+                    'success': False,
+                    'extracted_data': extracted_data,
+                    'attachment': attachment,
+                    'log': log,
+                    'error': {
+                        'title': _('Save Failed'),
+                        'message': _('Extraction succeeded but failed to save results'),
+                        'type': 'danger',
+                    },
+                    'rate_limit_exceeded': False
+                }
+
+            # ===== SUCCESS: Return complete result =====
+            return {
+                'success': True,
+                'extracted_data': extracted_data,
+                'attachment': attachment,
+                'log': log,
+                'error': None,
+                'rate_limit_exceeded': False
+            }
+
+        except Exception as e:
+            # ===== CATCH-ALL: Handle ANY unexpected error =====
+            error_msg = f'Unexpected error in extraction pipeline: {str(e)}'
+            error_traceback = traceback.format_exc()
+            _logger.error(f"[Log {log.id if log else 'N/A'}] {error_msg}", exc_info=True)
+
+            # Try to update log if it exists
+            if log:
+                try:
+                    log.write({
+                        'status': 'error',
+                        'error_message': error_traceback,
+                    })
+                except Exception as log_error:
+                    _logger.error(f"Failed to update log: {log_error}")
+
+            return {
+                'success': False,
+                'extracted_data': None,
+                'attachment': attachment,  # May be None if error before attachment creation
+                'log': log,  # May be None if error before log creation
+                'error': {
+                    'title': _('Unexpected Error'),
+                    'message': str(e),
+                    'type': 'danger',
+                },
+                'rate_limit_exceeded': False
+            }
+
     def _build_pdf_from_pages(self, pdf_binary, page_indexes):
         """
         Build a new PDF from selected pages of original PDF
@@ -273,7 +640,7 @@ class DocumentExtractionService(models.AbstractModel):
         
         return tmp_file.name
 
-    def _build_markdown_from_ocr(self, ocr_data):
+    def _build_markdown_from_ocr(self, ocr_data, index_from):
         """
         Build complete markdown from LlamaParse OCR result
         
@@ -289,8 +656,15 @@ class DocumentExtractionService(models.AbstractModel):
             if isinstance(ocr_data[0], dict) and 'pages' in ocr_data[0]:
                 pages = ocr_data[0].get('pages', [])
         
+        total_page = len(pages)
+
+        if index_from >= total_page:
+            return None
+
+        index_end = index_from + 7 if index_from + 7 < total_page else total_page
+
         markdown_parts = []
-        for page in pages:
+        for page in pages[index_from:index_end]:
             page_md = page.get('md', '')
             if page_md:
                 markdown_parts.append(page_md)
@@ -500,11 +874,11 @@ OUTPUT FORMAT: {{"{category}": [...]}}
             self._extract_years_from_tables(extracted_data, document_type)
         except Exception as err:
             _logger.error("INFER YEAR ERROR --- %s", err)
-        try:
-            # Step 3: Determine is_capacity_merged flags from table structure
-            self._determine_capacity_merged_flags(extracted_data, document_type)
-        except Exception as err:
-            _logger.error("INFER CAPACITY MERGE ERROR --- %s", err)
+        # try:
+        #     # Step 3: Determine is_capacity_merged flags from table structure
+        #     self._determine_capacity_merged_flags(extracted_data, document_type)
+        # except Exception as err:
+        #     _logger.error("INFER CAPACITY MERGE ERROR --- %s", err)
         
         try:
             # Step 4: Infer activity_field_codes from table data
@@ -820,7 +1194,7 @@ OUTPUT FORMAT: {{"{category}": [...]}}
                 _logger.error("✗ All AI Native strategies failed")
                 raise ValueError(f"AI Native extraction failed. Error: {str(e2)}")
 
-    def _extract_with_text_extract(self, client, pdf_binary, document_type, filename):
+    def _extract_with_text_extract(self, client, pdf_binary, document_type):
         """
         Strategy: Text Extract + AI (PyMuPDF → Gemini)
 
@@ -834,13 +1208,13 @@ OUTPUT FORMAT: {{"{category}": [...]}}
 
             # Step 1: Extract text using PyMuPDF
             _logger.info("Step 1/2: Extracting text with PyMuPDF...")
-            extracted_text = self._extract_pdf_to_text_pymupdf(pdf_binary, filename)
+            extracted_text = self._extract_pdf_to_text_pymupdf(pdf_binary)
             _logger.info(f"✓ Step 1 complete - Extracted {len(extracted_text)} chars")
 
             # Check if extraction produced meaningful text
             if len(extracted_text.strip()) < 100:
                 _logger.warning("PyMuPDF produced too little text, falling back to AI Native")
-                return self._extract_with_ai_native(client, pdf_binary, document_type, filename)
+                return self._extract_with_ai_native(client, pdf_binary, document_type)
 
             # Step 2: Structure with AI
             _logger.info("Step 2/2: Structuring with AI...")
@@ -853,15 +1227,14 @@ OUTPUT FORMAT: {{"{category}": [...]}}
         except Exception as e:
             _logger.warning(f"✗ Text Extract strategy failed: {str(e)}")
             _logger.info("Falling back to AI Native...")
-            return self._extract_with_ai_native(client, pdf_binary, document_type, filename)
+            return self._extract_with_ai_native(client, pdf_binary, document_type)
 
-    def _extract_pdf_to_text_pymupdf(self, pdf_binary, filename):
+    def _extract_pdf_to_text_pymupdf(self, pdf_binary):
         """
         Extract text from PDF using PyMuPDF (fast, good for digital PDFs)
 
         Args:
             pdf_binary (bytes): Binary PDF data
-            filename (str): Original filename for logging
 
         Returns:
             str: Extracted text with page markers
@@ -919,7 +1292,6 @@ OUTPUT FORMAT: {{"{category}": [...]}}
             client: Gemini client instance
             pdf_binary (bytes): Binary PDF data
             document_type (str): '01' or '02'
-            filename (str): Original filename for logging
 
         Returns:
             dict: Extracted and cleaned data

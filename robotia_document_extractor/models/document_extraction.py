@@ -348,6 +348,8 @@ class DocumentExtraction(models.Model):
         string='Collection & Recycling Report'
     )
 
+    extraction_job_ids = fields.One2many('extraction.job', 'extraction_id', 'Source job')
+
     # ===== Computed Fields =====
     @api.depends('document_type', 'organization_id', 'organization_name', 'year')
     def _compute_name(self):

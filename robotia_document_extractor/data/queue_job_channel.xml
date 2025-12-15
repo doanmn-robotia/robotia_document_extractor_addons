@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+        <!-- Queue Job Channel for Extraction - capacity controlled via odoo.conf -->
+        <record id="channel_extraction" model="queue.job.channel">
+            <field name="name">extraction</field>
+            <field name="parent_id" ref="queue_job.channel_root"/>
+        </record>
+
+        <!-- Job Function Configuration -->
+        <record id="job_function_extraction_run" model="queue.job.function">
+            <field name="model_id" ref="model_extraction_job"/>
+            <field name="method">run_extraction_async</field>
+            <field name="channel_id" ref="channel_extraction"/>
+        </record>
+    </data>
+</odoo>

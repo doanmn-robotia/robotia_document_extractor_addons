@@ -1,9 +1,11 @@
+import re
 from odoo import models
 from google import genai
 import logging
 from odoo import models
 from google import genai
 from llama_cloud_services import LlamaParse
+import math
 import json
 
 _logger = logging.getLogger(__name__)
@@ -218,7 +220,8 @@ Giữ cấu trúc bảng với các phần con. Không bỏ sót dữ liệu.
             # STEP 4: Append to category_files
             category_files[category] = {
                 "file": file_path,
-                "prompt": prompt
+                "prompt": prompt,
+                "page_count": len(indexes)
             }
 
         parse_results = []
@@ -258,7 +261,8 @@ Giữ cấu trúc bảng với các phần con. Không bỏ sót dữ liệu.
             parse_results.append({
                 "file": category_data.get('file'),
                 "ocr_data": parse_result,
-                "category": category
+                "category": category,
+                "page_count": category_data.get('page_count', 0)
             })
 
         return parse_results
@@ -394,38 +398,124 @@ QUY TẮC:
             for category_result in llama_json_normalized:
                 ocr_data = category_result.get('ocr_data')
                 category = category_result.get('category')
+                page_count = category_result.get('page_count')
 
                 if not ocr_data:
                     _logger.warning(f"No OCR data for category {category}, skipping")
                     continue
 
-                _logger.info(f"Processing category: {category}")
+                _logger.info(f"Processing category: {category} ({page_count} pages)")
 
-                # Build markdown from OCR data using base class method
-                markdown = self._build_markdown_from_ocr(ocr_data)
+                # === BATCH PROCESSING SETUP ===
+                pages_processed = 0
+                batch_responses = []
+                batch_num = 0
+                
+                # Calculate total batches for logging
+                total_batches = math.ceil(page_count / 7) if page_count else 1
+                
+                _logger.info(f"Starting batch processing: {total_batches} batch(es) needed for {page_count} pages")
 
-                if not markdown or len(markdown.strip()) < 10:
-                    _logger.warning(f"Markdown too short for category {category}, skipping")
-                    continue
+                # === BATCH LOOP ===
+                while True:
+                    batch_num += 1
+                    
+                    # Calculate page range for this batch
+                    page_start = pages_processed + 1  # 1-indexed for display
+                    page_end = min(pages_processed + 7, page_count)
+                    
+                    _logger.info(f"Batch {batch_num}/{total_batches}: Processing pages {page_start}-{page_end}")
 
-                # Build category-specific extraction prompt using base class method
-                category_prompt = self._build_category_extraction_prompt(
-                    category,
-                    markdown,
-                    document_type
+                    # Build markdown from OCR data
+                    markdown = self._build_markdown_from_ocr(ocr_data, pages_processed)
+
+                    # Break if no more pages
+                    if not markdown:
+                        _logger.info(f"Batch {batch_num}: No markdown returned, ending batch loop")
+                        break
+
+                    # Skip if markdown too short (but still increment counter to avoid infinite loop)
+                    if len(markdown.strip()) < 10:
+                        _logger.warning(
+                            f"Batch {batch_num}: Markdown too short ({len(markdown)} chars), "
+                            f"skipping pages {page_start}-{page_end}"
+                        )
+                        pages_processed += 7  # ← FIX: Increment before continue to avoid infinite loop
+                        continue
+
+                    # Build category-specific extraction prompt
+                    category_prompt = self._build_category_extraction_prompt(
+                        category,
+                        markdown,
+                        document_type
+                    )
+                    
+                    # Add batch context to prompt (inform AI about multi-batch processing)
+                    if total_batches > 1:
+                        batch_context = f"""
+⚠️ **BATCH PROCESSING INFO**:
+- This is batch {batch_num} of {total_batches} batches for category "{category}"
+- You are extracting pages {page_start}-{page_end} of {page_count} total pages
+- Extract ONLY the data from these pages
+- Maintain consistent JSON structure across all batches
+- If this is not the first batch, continue numbering/sequence from previous batches
+
+---
+
+"""
+                        category_prompt = batch_context + category_prompt
+
+                    # Send to chat and get structured JSON
+                    _logger.info(
+                        f"Batch {batch_num}/{total_batches}: Extracting from {len(markdown)} chars markdown"
+                    )
+                    
+                    try:
+                        response = chat.send_message(category_prompt)
+                        response_json = self._parse_json_response(response.text)
+
+                        # Normalize and flatten response
+                        if isinstance(response_json, list):
+                            # AI returned direct list: [row1, row2, ...]
+                            batch_responses.extend(response_json)  # ← FIX: Use extend to flatten
+                            _logger.info(f"Batch {batch_num}: Extracted {len(response_json)} rows (direct list)")
+                        elif isinstance(response_json, dict) and (res := response_json.get(category)):
+                            # AI returned dict: {category: [row1, row2, ...]}
+                            batch_responses.extend(res)  # ← FIX: Use extend to flatten
+                            _logger.info(f"Batch {batch_num}: Extracted {len(res)} rows (dict format)")
+                        elif isinstance(response_json, dict) and category == "metadata":
+                            # change batch_response to dict
+                            batch_responses = response_json
+                        else:
+                            _logger.warning(
+                                f"Batch {batch_num}: Unexpected response format for {category}, "
+                                f"response={response_json}"
+                            )
+
+                    except Exception as e:
+                        _logger.error(
+                            f"Batch {batch_num} extraction failed: {str(e)}", 
+                            exc_info=True
+                        )
+                        # Continue to next batch instead of failing completely
+
+                    # Move to next batch
+                    pages_processed += 7
+
+                    if category == "metadata":
+                        # metadata cannot be more than 7 pages
+                        break
+
+                # === FINALIZE ===
+                _logger.info(
+                    f"✓ Batch processing complete for {category}: "
+                    f"{len(batch_responses)} total rows from {batch_num} batch(es)"
                 )
+                
+                extracted_datas.append({
+                    category: batch_responses
+                } if category != 'metadata' else batch_responses)
 
-                # Send to chat and get structured JSON
-                _logger.info(f"Extracting {category} from {len(markdown)} chars of markdown")
-                response = chat.send_message(category_prompt)
-                response_json = self._parse_json_response(response.text)
-
-                if isinstance(response_json, list):
-                    response_json = {
-                        category: response_json
-                    }
-
-                extracted_datas.append(response_json)
                 _logger.info(f"Successfully extracted {category}")
 
             # Step 5: Merge all extracted data using base class method
@@ -441,7 +531,7 @@ QUY TẮC:
 
             if log_id:
                 log_id.write({
-                    'state': 'failed',
+                    'status': 'error',
                     'ai_response_json': json.dumps(extracted_data, ensure_ascii=False, indent=2),
                     'error_message': f"Llama extraction failed: {str(error)}"
                 })

@@ -40,9 +40,75 @@
                 </div>
 
                 <!-- Recent Extractions -->
-                <div class="mt-4">
+                <div class="mt-4 d-flex gap-4">
                     <RecentExtractions disabled="state.uploading"/>
+                    <div class="recent-extractions-container" t-if="state.jobs.length > 0">
+                        <div class="section-header">
+                            <h2><i class="fa fa-tasks me-2"/>Extraction Jobs</h2>
+                        </div>
+    
+                        <div class="recent-list">
+                            <t t-foreach="state.jobs" t-as="job" t-key="job.id">
+                                <div class="recent-item"
+                                     t-on-click="() => this.onJobClick(job)">
+    
+                                    <!-- Icon based on queue_state -->
+                                    <div class="recent-item-icon">
+                                        <i t-if="job.queue_state === 'done'" class="fa fa-check-circle fa-2x text-success"/>
+                                        <i t-elif="job.queue_state === 'failed'" class="fa fa-times-circle fa-2x text-danger"/>
+                                        <i t-elif="job.queue_state === 'started'" class="fa fa-spinner fa-spin fa-2x text-info"/>
+                                        <i t-elif="job.queue_state === 'cancelled'" class="fa fa-ban fa-2x text-muted"/>
+                                        <i t-else="" class="fa fa-clock-o fa-2x text-muted"/>
+                                    </div>
+    
+                                    <!-- Content -->
+                                    <div class="recent-item-content">
+                                        <h4 class="recent-item-title">
+                                            <t t-esc="job.name"/>
+                                        </h4>
+                                        <div class="recent-item-meta">
+                                            <!-- Type Badge -->
+                                            <span class="me-3">
+                                                <span t-if="job.document_type === '01'" class="badge bg-primary">Form 01</span>
+                                                <span t-else="" class="badge bg-secondary">Form 02</span>
+                                            </span>
+    
+                                            <!-- Created Date -->
+                                            <span class="me-3">
+                                                <i class="fa fa-clock-o me-1"/>
+                                                <t t-esc="job.create_date"/>
+                                            </span>
+    
+                                            <!-- Progress (if started) -->
+                                            <span t-if="job.queue_state === 'started'" class="me-3">
+                                                <i class="fa fa-spinner fa-spin me-1"/>
+                                                <t t-esc="job.progress"/>% - <t t-esc="job.progress_message"/>
+                                            </span>
+                                        </div>
+                                    </div>
+    
+                                    <!-- Status Badge -->
+                                    <div class="recent-item-badge">
+                                        <span t-if="job.queue_state === 'done'" class="badge bg-success">Done</span>
+                                        <span t-elif="job.queue_state === 'failed'" class="badge bg-danger">Failed</span>
+                                        <span t-elif="job.queue_state === 'started'" class="badge bg-info">Processing</span>
+                                        <span t-elif="job.queue_state === 'cancelled'" class="badge bg-secondary">Cancelled</span>
+                                        <span t-else="" class="badge bg-warning">Queued</span>
+                                    </div>
+                                </div>
+                            </t>
+                        </div>
+                        
+                        <!-- Show More Button -->
+                        <div t-if="state.jobsHasMore" class="text-center mt-3">
+                            <button class="btn btn-outline-primary" t-on-click="loadMoreJobs">
+                                <i class="fa fa-chevron-down me-2"/>Show More
+                            </button>
+                        </div>
+                    </div>
                 </div>
+
+                <!-- Extraction Jobs List -->
             </div>
         </div>
     </t>

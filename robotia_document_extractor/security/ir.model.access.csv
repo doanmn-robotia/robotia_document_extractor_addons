@@ -99,4 +99,7 @@ access_google_drive_extraction_log_manager,google.drive.extraction.log.manager,m
 access_ir_ui_view_doc_admin,ir.ui.view document admin,base.model_ir_ui_view,group_document_extractor_admin,1,0,0,0
 access_res_config_settings_doc_admin,res.config.settings document admin,base.model_res_config_settings,group_document_extractor_admin,1,1,0,0
 access_ir_actions_act_window_doc_admin,ir.actions.act_window document admin,base.model_ir_actions_act_window,group_document_extractor_admin,1,1,0,0
-
+access_extraction_job_viewer,extraction.job viewer,model_extraction_job,group_document_extractor_viewer,1,1,0,0
+access_extraction_job_checker,extraction.job checker,model_extraction_job,group_document_extractor_checker,1,1,1,0
+access_extraction_job_maker,extraction.job maker,model_extraction_job,group_document_extractor_maker,1,1,1,0
+access_extraction_job_admin,extraction.job admin,model_extraction_job,group_document_extractor_admin,1,1,1,1

@@ -10,10 +10,10 @@
                     </div>
                     <div class="o_control_panel_actions d-flex gap-2">
                         <t t-if="state.pages.length > 0">
-                            <button class="btn btn-secondary" t-on-click="selectAll">
+                            <button class="btn btn-secondary" t-on-click="selectAll" t-att-disabled="state.isProcessing">
                                 Select All
                             </button>
-                            <button class="btn btn-secondary" t-on-click="deselectAll">
+                            <button class="btn btn-secondary" t-on-click="deselectAll" t-att-disabled="state.isProcessing">
                                 Deselect All
                             </button>
                             <button class="btn btn-primary" t-on-click="onExtract" t-att-disabled="state.isProcessing">
@@ -24,6 +24,29 @@
                         </t>
                     </div>
                 </div>
+                
+                <!-- Progress Bar (when job is running) -->
+                <t t-if="state.isProcessing and state.jobId">
+                    <div class="alert alert-info mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <strong><i class="fa fa-spinner fa-spin me-2"/>Extraction in Progress</strong>
+                            <span class="badge bg-primary"><t t-esc="state.progress"/>%</span>
+                        </div>
+                        <div class="progress mb-2" style="height: 25px;">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                 role="progressbar" 
+                                 t-att-style="'width: ' + state.progress + '%'"
+                                 t-att-aria-valuenow="state.progress" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100">
+                                <t t-esc="state.progress"/>%
+                            </div>
+                        </div>
+                        <div class="small text-muted">
+                            <t t-esc="state.progressMessage"/>
+                        </div>
+                    </div>
+                </t>
             </div>
 
             <!-- Content -->
@@ -41,9 +64,13 @@
                     <div class="row g-4">
                         <t t-foreach="state.pages" t-as="page" t-key="page.attachment_id">
                             <div class="col-6 col-md-4 col-lg-3 col-xl-2">
-                                <div class="card h-100 shadow-sm cursor-pointer position-relative"
-                                     t-att-class="state.selectedPages.has(page.attachment_id) ? 'border-info border-2' : ''"
-                                     t-on-click="() => this.togglePage(page.attachment_id)"
+                                <div class="card h-100 shadow-sm position-relative"
+                                     t-att-class="{
+                                         'border-info border-2': state.selectedPages.has(page.attachment_id),
+                                         'cursor-pointer': !state.isProcessing,
+                                         'opacity-75': state.isProcessing
+                                     }"
+                                     t-on-click="() => !state.isProcessing &amp;&amp; this.togglePage(page.attachment_id)"
                                      t-on-dblclick="() => this.onPageDoubleClick(page)">
 
                                     <!-- Page Number & Checkbox (Centered) -->
@@ -52,6 +79,7 @@
                                         <div class="form-check m-0">
                                             <input class="form-check-input" type="checkbox"
                                                    t-att-checked="state.selectedPages.has(page.attachment_id)"
+                                                   t-att-disabled="state.isProcessing"
                                                    style="pointer-events: none;"/>
                                         </div>
                                     </div>

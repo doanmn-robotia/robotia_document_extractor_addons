@@ -5838,3 +5838,203 @@ msgstr "Trích xuất thất bại"
 #: model:ir.model.fields,field_description:robotia_document_extractor.field_collection_recycling_report__notes
 msgid "Other information"
 msgstr "Thông tin khác"
+
+#. module: robotia_document_extractor
+#: model:ir.model,name:robotia_document_extractor.model_extraction_job
+msgid "Async Extraction Job"
+msgstr "Công việc trích xuất bất đồng bộ"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_extraction_job__name
+msgid "Job Reference"
+msgstr "Tham chiếu công việc"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_extraction_job__attachment_id
+msgid "Input PDF"
+msgstr "Tệp PDF đầu vào"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_extraction_job__state
+msgid "State"
+msgstr "Trạng thái"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__extraction_job__state__pending
+msgid "Pending"
+msgstr "Đang chờ"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__extraction_job__state__processing
+msgid "Processing"
+msgstr "Đang xử lý"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__extraction_job__state__done
+msgid "Done"
+msgstr "Hoàn thành"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__extraction_job__state__error
+msgid "Error"
+msgstr "Lỗi"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_extraction_job__progress
+msgid "Progress %"
+msgstr "Tiến độ %"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_extraction_job__progress_message
+msgid "Progress Message"
+msgstr "Thông báo tiến độ"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_extraction_job__extraction_log_id  
+msgid "Extraction Log"
+msgstr "Nhật ký trích xuất"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_extraction_job__result_action_json
+msgid "Result Action JSON"
+msgstr "JSON hành động kết quả"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_extraction_job__result_action_json
+msgid "Complete action dict for frontend doAction()"
+msgstr "Dictionary hành động hoàn chỉnh cho doAction() frontend"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_extraction_job__error_message
+msgid "Error Message"
+msgstr "Thông báo lỗi"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_extraction_job__queue_job_uuid
+msgid "Queue Job UUID"
+msgstr "UUID công việc hàng đợi"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_extraction_job__queue_job_uuid
+msgid "UUID of the queue.job record"
+msgstr "UUID của bản ghi queue.job"
+
+#. module: robotia_document_extractor
+#: code:addons/robotia_document_extractor/controllers/extraction_controller.py:0
+#, python-format
+msgid "Extraction job created successfully"
+msgstr "Tạo công việc trích xuất thành công"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/extraction_page_selector.js:0
+msgid "Extraction job created successfully. Check job list on dashboard."
+msgstr "Tạo công việc trích xuất thành công. Kiểm tra danh sách công việc trên dashboard."
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/extraction_page_selector.js:0
+msgid "Error creating extraction job"
+msgstr "Lỗi khi tạo công việc trích xuất"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/extraction_page_selector.js:0
+msgid "Please select at least one page"
+msgstr "Vui lòng chọn ít nhất một trang"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/extraction_page_selector.js:0
+msgid "File data is missing"
+msgstr "Dữ liệu tệp bị thiếu"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/extraction_page_selector.js:0
+msgid "Error during extraction"
+msgstr "Lỗi trong quá trình trích xuất"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/dashboard.xml:0
+msgid "Extraction Jobs"
+msgstr "Công việc trích xuất"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/dashboard.xml:0
+msgid "Job"
+msgstr "Công việc"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/dashboard.xml:0
+msgid "Type"
+msgstr "Loại"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/dashboard.xml:0
+msgid "Status"
+msgstr "Trạng thái"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/dashboard.xml:0
+msgid "Progress"
+msgstr "Tiến độ"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/dashboard.xml:0
+msgid "Created"
+msgstr "Ngày tạo"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/dashboard.xml:0
+msgid "Action"
+msgstr "Hành động"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/dashboard.xml:0
+msgid "Failed"
+msgstr "Thất bại"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/dashboard.xml:0
+msgid "Open"
+msgstr "Mở"
+
+#. module: robotia_document_extractor
+#: code:addons/robotia_document_extractor/models/extraction_job.py:0
+#, python-format
+msgid "New"
+msgstr "Mới"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/extraction_page_selector.js:0
+msgid "Job created, waiting to start..."
+msgstr "Đã tạo công việc, đang chờ bắt đầu..."
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/extraction_page_selector.js:0
+msgid "Extraction job created. Processing..."
+msgstr "Đã tạo công việc trích xuất. Đang xử lý..."
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/extraction_page_selector.js:0
+msgid "Extraction completed!"
+msgstr "Trích xuất hoàn tất!"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/extraction_page_selector.js:0
+msgid "Extraction failed"
+msgstr "Trích xuất thất bại"
