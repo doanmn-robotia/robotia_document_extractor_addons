@@ -594,7 +594,7 @@ class ExtractionHelper(models.AbstractModel):
 
             # Organization info
             'organization_name': extracted_data.get('organization_name'),
-            'business_license_number': extracted_data.get('business_license_number'),
+            'business_id': extracted_data.get('business_id'),
             'business_license_date': extracted_data.get('business_license_date'),
             'business_license_place': extracted_data.get('business_license_place'),
             'legal_representative_name': extracted_data.get('legal_representative_name'),
@@ -622,11 +622,11 @@ class ExtractionHelper(models.AbstractModel):
             activity_fields = self.env['activity.field'].search([('code', 'in', activity_codes)])
             vals['activity_field_ids'] = [(6, 0, activity_fields.ids)]
 
-        # Organization lookup by business_license_number
-        business_license_number = extracted_data.get('business_license_number')
-        if business_license_number:
+        # Organization lookup by business_id
+        business_id = extracted_data.get('business_id')
+        if business_id:
             partner = self.env['res.partner'].search([
-                ('business_license_number', '=', business_license_number)
+                ('business_id', '=', business_id)
             ], limit=1)
 
             if partner:

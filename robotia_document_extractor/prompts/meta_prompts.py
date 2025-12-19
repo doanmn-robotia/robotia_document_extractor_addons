@@ -314,7 +314,7 @@ Table column years (year_1, year_2, year_3):
 
 These 3 fields are OFTEN CONFUSED - map EXACTLY:
 
-1. business_license_number (Mã số doanh nghiệp):
+1. business_id (Mã số doanh nghiệp):
    - Look for: "Mã số doanh nghiệp:", "MST DN:", "MSDN:"
    - Format: Usually 10-13 digits (e.g., "0800666682", "0123456789-001")
    - Location: Business info section, near organization name
@@ -334,9 +334,9 @@ These 3 fields are OFTEN CONFUSED - map EXACTLY:
    → IGNORE the legacy "Số giấy phép..." completely
 
 2. business_license_date (Ngày đăng ký kinh doanh):
-   - Look for: "Ngày đăng ký:", "Ngày cấp:", "Cấp ngày:", "Date of registration:"
+   - Look for: "Ngày đăng ký:", "Ngày cấp:", "Cấp ngày:", "Date of registration:", "Đăng ký lần đầu ngày", "Ngày cấp lần đầu"
    - Format: Date (DD/MM/YYYY or DD-MM-YYYY)
-   - Location: Usually on same line or below business_license_number
+   - Location: Usually on same line or below business_id
    - Convert to: YYYY-MM-DD format in output
    - IMPORTANT: This is a DATE, not a number
    
@@ -359,22 +359,22 @@ Visual layout example (typical document structure):
 
 Example 1 (Modern format with "Mã số doanh nghiệp"):
 ┌──────────────────────────────────────────────────────┐
-│ Mã số doanh nghiệp: 0800666682                       │ → business_license_number (USE THIS)
+│ Mã số doanh nghiệp: 0800666682                       │ → business_id (USE THIS)
 │ Số, ký hiệu của giấy phép đăng ký kinh doanh...     │
 │ 04102300049; Ngày cấp: 27/05/2008; Nơi cấp: ...     │ → IGNORE (legacy license info)
 └──────────────────────────────────────────────────────┘
-Result: business_license_number = "0800666682"
+Result: business_id = "0800666682"
 
 Example 2 (Old format with "Số đăng ký doanh nghiệp"):
 ┌──────────────────────────────────────────────────────┐
-│ Số đăng ký doanh nghiệp: 0123456789-001              │ → business_license_number
+│ Số đăng ký doanh nghiệp: 0123456789-001              │ → business_id
 │ Ngày đăng ký: 15/03/2020                             │ → business_license_date (convert to 2020-03-15)
 │ Nơi đăng ký: Sở Kế hoạch và Đầu tư TP Hồ Chí Minh   │ → business_license_place
 └──────────────────────────────────────────────────────┘
 
 Example 3 (Multiple registrations - TAKE FIRST DATE):
 ┌──────────────────────────────────────────────────────┐
-│ Mã số doanh nghiệp: 0800666682                       │ → business_license_number
+│ Mã số doanh nghiệp: 0800666682                       │ → business_id
 │ Đăng ký lần đầu: 15/03/2020                          │ → business_license_date (USE THIS: 2020-03-15)
 │ Đăng ký thay đổi lần 3: 10/05/2023                   │ → IGNORE (amendment date)
 │ Nơi đăng ký: Sở Kế hoạch và Đầu tư TP Hồ Chí Minh   │ → business_license_place
@@ -383,14 +383,14 @@ Example 3 (Multiple registrations - TAKE FIRST DATE):
 Example 4 (Confusing format - both codes present):
 ┌──────────────────────────────────────────────────────┐
 │ Tên: CÔNG TY TNHH FORD VIỆT NAM                      │
-│ Mã số doanh nghiệp: 0800666682                       │ → business_license_number (USE THIS!)
+│ Mã số doanh nghiệp: 0800666682                       │ → business_id (USE THIS!)
 │ Mã số thuế: 0800666682                               │ → IGNORE (Tax ID)
 │ Số, ký hiệu GPĐKKD: 04102300049                      │ → IGNORE (legacy license)
 └──────────────────────────────────────────────────────┘
-Result: business_license_number = "0800666682" (from "Mã số doanh nghiệp")
+Result: business_id = "0800666682" (from "Mã số doanh nghiệp")
 
 Common mistakes to AVOID:
-✗ Putting date value in business_license_number field
+✗ Putting date value in business_id field
 ✗ Putting number value in business_license_date field
 ✗ Using "Số giấy phép..." instead of "Mã số doanh nghiệp" (CRITICAL!)
 ✗ Confusing "Mã số doanh nghiệp" with "Mã số thuế" (Tax ID)

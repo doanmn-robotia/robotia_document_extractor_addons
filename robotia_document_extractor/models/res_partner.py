@@ -8,7 +8,7 @@ class ResPartner(models.Model):
     _inherit = 'res.partner'
 
     # Business License Info
-    business_license_number = fields.Char(
+    business_id = fields.Char(
         string='Business License Number',
         help='Mã số doanh nghiệp',
         index=True
@@ -55,8 +55,8 @@ class ResPartner(models.Model):
     )
 
     _sql_constraints = [
-        ('business_license_number_unique',
-         'UNIQUE(business_license_number)',
+        ('business_id_unique',
+         'UNIQUE(business_id)',
          'The business license number must be unique!')
     ]
 

@@ -45,7 +45,7 @@ class EquipmentProductReport(models.Model):
     quantity = fields.Float(string='Quantity', digits=(16, 4))
     substance_id = fields.Many2one('controlled.substance', string='Controlled Substance', ondelete='restrict', index=True)
     substance_name = fields.Char(string='Substance Name', compute='_compute_substance_name', store=True, readonly=False)
-    substance_quantity_per_unit = fields.Float(string='Substance Quantity per Unit', digits=(16, 4))
+    substance_quantity_per_unit = fields.Char(string='Substance Quantity per Unit', help='Substance quantity per unit - supports both numeric and text values')
     notes = fields.Text(string='Notes')
 
     @api.depends('equipment_type_id')

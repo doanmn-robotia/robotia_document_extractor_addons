@@ -48,7 +48,7 @@
                         </div>
     
                         <div class="recent-list">
-                            <t t-foreach="state.jobs" t-as="job" t-key="job.id">
+                            <t t-foreach="state.jobs" t-as="job" t-key="job_index">
                                 <div class="recent-item"
                                      t-on-click="() => this.onJobClick(job)">
     
@@ -76,11 +76,11 @@
                                             <!-- Created Date -->
                                             <span class="me-3">
                                                 <i class="fa fa-clock-o me-1"/>
-                                                <t t-esc="job.create_date"/>
+                                                <t t-esc="formatDate(job.create_date)"/>
                                             </span>
     
-                                            <!-- Progress (if started) -->
-                                            <span t-if="job.queue_state === 'started'" class="me-3">
+                                            <!-- Progress (if processing) -->
+                                            <span t-if="job.extraction_state === 'processing' or job.queue_state === 'started'" class="me-3">
                                                 <i class="fa fa-spinner fa-spin me-1"/>
                                                 <t t-esc="job.progress"/>% - <t t-esc="job.progress_message"/>
                                             </span>
@@ -89,9 +89,9 @@
     
                                     <!-- Status Badge -->
                                     <div class="recent-item-badge">
-                                        <span t-if="job.queue_state === 'done'" class="badge bg-success">Done</span>
-                                        <span t-elif="job.queue_state === 'failed'" class="badge bg-danger">Failed</span>
-                                        <span t-elif="job.queue_state === 'started'" class="badge bg-info">Processing</span>
+                                        <span t-if="job.extraction_state === 'done'" class="badge bg-success">Done</span>
+                                        <span t-elif="job.extraction_state === 'error' or job.queue_state === 'failed'" class="badge bg-danger">Failed</span>
+                                        <span t-elif="job.extraction_state === 'processing' or job.queue_state === 'started'" class="badge bg-info">Processing</span>
                                         <span t-elif="job.queue_state === 'cancelled'" class="badge bg-secondary">Cancelled</span>
                                         <span t-else="" class="badge bg-warning">Queued</span>
                                     </div>
@@ -253,7 +253,7 @@
             </div>
 
             <div t-else="" class="recent-list">
-                <div t-foreach="state.recentDocuments" t-as="doc" t-key="doc.id"
+                <div t-foreach="state.recentDocuments" t-as="doc" t-key="doc_index"
                      class="recent-item"
                      t-att-class="{'disabled': props.disabled}"
                      t-on-click="() => this.openDocument(doc.id)">

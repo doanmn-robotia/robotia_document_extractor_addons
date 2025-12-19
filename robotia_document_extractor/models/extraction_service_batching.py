@@ -42,7 +42,8 @@ class ExtractionServiceBatching(models.AbstractModel):
             )
         return super()._initialize_default_prompts()
 
-    def extract_pdf(self, pdf_binary, document_type, log_id=None):
+    def extract_pdf(self, pdf_binary, document_type, log_id=None,
+                    job_id=None, resume_from_step=None):
         """
         Extract structured data from PDF using configurable extraction strategy
 
@@ -54,6 +55,8 @@ class ExtractionServiceBatching(models.AbstractModel):
             document_type (str): '01' for Registration, '02' for Report
             filename (str): Original filename for logging
             log_id (int, optional): Extraction log ID for saving OCR data
+            job_id (int, optional): extraction.job ID for step-based checkpointing (not used in batch strategy)
+            resume_from_step (str, optional): Step key to resume from (not used in batch strategy)
 
         Returns:
             dict: Structured data extracted from PDF
@@ -73,7 +76,8 @@ class ExtractionServiceBatching(models.AbstractModel):
             # Strategy 3: Batch Extraction (PDF → Images → Batch AI with chat session)
             return self._extract_with_batch_extract(client, pdf_binary, document_type, filename)
 
-        return super().extract_pdf(pdf_binary, document_type, log_id)
+        return super().extract_pdf(pdf_binary, document_type, log_id,
+                                   job_id=job_id, resume_from_step=resume_from_step)
 
 
 
@@ -549,7 +553,7 @@ class ExtractionServiceBatching(models.AbstractModel):
         # These match the PROMPT schema exactly
         metadata_fields = [
             'year', 'year_1', 'year_2', 'year_3',
-            'organization_name', 'business_license_number',
+            'organization_name', 'business_id',
             'business_license_date', 'business_license_place',
             'legal_representative_name', 'legal_representative_position',
             'contact_person_name', 'contact_address',

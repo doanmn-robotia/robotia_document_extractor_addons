@@ -22,6 +22,7 @@
         'views/document_extraction_views.xml',
         'views/master_data_views.xml',
         'views/google_drive_extraction_log_views.xml',
+        'views/extraction_job_views.xml',
         'views/res_config_settings_views.xml',
         'views/res_config_settings_document_only.xml',
         'views/menus.xml',
@@ -37,7 +38,8 @@
             # Page Selector (Client Action)
             'robotia_document_extractor/static/src/js/extraction_page_selector.js',
             'robotia_document_extractor/static/src/xml/extraction_page_selector.xml',
-            
+            'robotia_document_extractor/static/src/scss/extraction_page_selector_stepper.scss',
+
             # Widgets
             'robotia_document_extractor/static/src/js/validation_stats_widget.js',
             'robotia_document_extractor/static/src/xml/validation_stats_widget.xml',

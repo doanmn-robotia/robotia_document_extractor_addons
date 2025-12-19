@@ -91,12 +91,12 @@ msgid "Average Price"
 msgstr "Giá trung bình"
 
 #. module: robotia_document_extractor
-#: model:ir.model.fields,field_description:robotia_document_extractor.field_res_partner__business_license_number
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_res_partner__business_id
 msgid "Business License Number"
 msgstr "Mã số doanh nghiệp"
 
 #. module: robotia_document_extractor
-#: model:ir.model.fields,help:robotia_document_extractor.field_res_partner__business_license_number
+#: model:ir.model.fields,help:robotia_document_extractor.field_res_partner__business_id
 msgid "Mã số doanh nghiệp"
 msgstr "Mã số doanh nghiệp"
 
@@ -667,7 +667,7 @@ msgid "Tên đầy đủ của tổ chức"
 msgstr "Tên đầy đủ của tổ chức"
 
 #. module: robotia_document_extractor
-#: model:ir.model.fields,field_description:robotia_document_extractor.field_document_extraction__business_license_number
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_document_extraction__business_id
 msgid "Business License Number"
 msgstr "Mã số doanh nghiệp"
 
@@ -4591,7 +4591,7 @@ msgid "Organization Name (RAW)"
 msgstr "Tên tổ chức (Thô)"
 
 #. module: robotia_document_extractor
-#: model:ir.model.fields,field_description:robotia_document_extractor.field_extraction_review_wizard__business_license_number_raw
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_extraction_review_wizard__business_id_raw
 msgid "Business License Number (RAW)"
 msgstr "Mã số doanh nghiệp (Thô)"
 
@@ -5122,7 +5122,7 @@ msgid "Organization Name"
 msgstr "Tên tổ chức"
 
 #. module: robotia_document_extractor
-#: model:ir.model.fields,field_description:robotia_document_extractor.field_extraction_review_wizard__business_license_number
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_extraction_review_wizard__business_id
 msgid "Business License Number"
 msgstr "Mã số doanh nghiệp"
 

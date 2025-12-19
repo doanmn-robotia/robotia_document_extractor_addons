@@ -50,6 +50,12 @@ class GoogleDriveExtractionLog(models.Model):
         help='Original PDF file'
     )
 
+    merged_pdf_url = fields.Char(
+        string='Merged PDF URL',
+        compute='_compute_merged_pdf_url',
+        help='Public URL for merged PDF preview'
+    )
+
     ai_response_json = fields.Text(
         string='AI Response JSON',
         help='Raw JSON response from Gemini AI'
@@ -97,6 +103,15 @@ class GoogleDriveExtractionLog(models.Model):
                 record.source_type = 'google_drive'
             else:
                 record.source_type = 'manual'
+
+    @api.depends('attachment_id')
+    def _compute_merged_pdf_url(self):
+        """Generate public URL for merged PDF attachment"""
+        for record in self:
+            if record.attachment_id and record.attachment_id.public:
+                record.merged_pdf_url = f'/web/content/{record.attachment_id.id}'
+            else:
+                record.merged_pdf_url = False
 
     def _compute_display_name(self):
         for record in self:

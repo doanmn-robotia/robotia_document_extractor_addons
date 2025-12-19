@@ -185,20 +185,19 @@ class ExtractionController(http.Controller):
             
             # 5. Generate identity_key from attachment ID
             identity_key = f"extraction_{merged_attachment.id}"
-            
-            # 6. Enqueue job with queue_job
-            # Note: UUID will be stored automatically in run_extraction_async via job context
-            job_record.with_delay(
-                channel='extraction',
-                max_retries=1,  # No retry - only run once
-                identity_key=identity_key,
-                description=f"Extract {filename or document_type}"
-            ).run_extraction_async()
-            
-            _logger.info(f"Created extraction job {job_record.name} (ID: {job_record.id})")
 
-            # 7. Cleanup temporary page attachments
+
             try:
+                # 7. Cleanup temporary page attachments
+                # 6. Enqueue job with queue_job
+                job_record.with_delay(
+                    channel='extraction',
+                    max_retries=1,  # No retry - only run once
+                    identity_key=identity_key,
+                    description=f"Extract {filename or document_type}"
+                ).run_extraction_async()
+                
+                _logger.info(f"Created extraction job {job_record.name} (ID: {job_record.id})")
                 Attachment.browse(attachment_ids).unlink()
                 _logger.info(f"Cleaned up {len(attachment_ids)} temporary page attachments")
             except Exception as e:
@@ -212,6 +211,7 @@ class ExtractionController(http.Controller):
                 'message': _('Extraction job created successfully'),
                 'job_id': job_record.id,
                 'job_name': job_record.name,
+                'uuid': job_record.uuid
             }
             
         except Exception as e:
@@ -284,25 +284,33 @@ class ExtractionController(http.Controller):
                     _logger.warning(f"Queue job {queue_job.uuid} has multiple extraction.job records, using first")
                     extraction_job = extraction_job[0]
                 
-                # Build job dict using queue.job state as source of truth
+                # Build job dict with BOTH states
+                # extraction_state is primary for business logic
+                # queue_state reflects job runner status
                 job_dict = {
                     'id': extraction_job.id,
                     'name': extraction_job.name,
                     'document_type': extraction_job.document_type,
-                    'queue_state': queue_job.state,
-                    'create_date': queue_job.date_created.strftime('%Y-%m-%d %H:%M') if queue_job.date_created else '',
+                    'extraction_state': extraction_job.state,  # NEW: Business logic state (primary)
+                    'queue_state': queue_job.state,           # Job runner state (secondary)
+                    'current_step': extraction_job.current_step,  # NEW: Current step for progress stepper
+                    'create_date': queue_job.date_created.isoformat() if queue_job.date_created else '',  # ISO format for timezone handling
+                    'uuid': extraction_job.uuid,  # For bus subscription in progress-only mode
+                    'merged_pdf_url': extraction_job.extraction_log_id.merged_pdf_url if extraction_job.extraction_log_id else False,  # PDF preview URL
                 }
-                
-                # Only include progress if queue job is actually running (started)
-                if queue_job.state == 'started':
+
+                # Include progress based on extraction.job state (more accurate)
+                # Show progress if extraction is processing OR queue is started
+                if extraction_job.state == 'processing' or queue_job.state == 'started':
                     job_dict['progress'] = extraction_job.progress or 0
                     job_dict['progress_message'] = extraction_job.progress_message or ''
                 else:
                     job_dict['progress'] = 0
                     job_dict['progress_message'] = ''
-                
-                # Include result action if done
-                if queue_job.state == 'done' and extraction_job.result_action_json:
+
+                # Include result action if extraction succeeded
+                # Check extraction_state='done' (primary) AND has result
+                if extraction_job.state == 'done' and extraction_job.result_action_json:
                     # Load the stored action
                     action = json.loads(extraction_job.result_action_json)
                     
@@ -314,14 +322,14 @@ class ExtractionController(http.Controller):
                     
                     job_dict['result_action_json'] = json.dumps(action, ensure_ascii=False)
                 
-                # Include error message if failed
-
-                if queue_job.state == 'failed':
-                    # Prefer queue.job error message, fallback to extraction.job
-                    if queue_job.exc_message:
-                        job_dict['error_message'] = queue_job.exc_message
-                    elif extraction_job.error_message:
+                # Include error message if extraction failed
+                # Check extraction_state='error' (primary) OR queue_state='failed' (fallback)
+                if extraction_job.state == 'error' or queue_job.state == 'failed':
+                    # Prefer extraction.job error (more detailed), fallback to queue.job
+                    if extraction_job.error_message:
                         job_dict['error_message'] = extraction_job.error_message
+                    elif queue_job.exc_message:
+                        job_dict['error_message'] = queue_job.exc_message
                     else:
                         job_dict['error_message'] = 'Unknown error'
                 
@@ -510,7 +518,7 @@ class ExtractionController(http.Controller):
                 'error': False,
                 'company_info': {
                     'name': organization.name,
-                    'business_license_number': organization.business_license_number or '',
+                    'business_id': organization.business_id or '',
                     'street': organization.street or '',
                     'city': organization.city or '',
                     'country': organization.country_id.name if organization.country_id else '',
@@ -707,9 +715,9 @@ class ExtractionController(http.Controller):
             total_count = len(equipment_products) + len(equipment_ownerships)
 
             # Only count equipment.product
-            total_kg = 0
-            for eq in equipment_products:
-                total_kg += (eq.substance_quantity_per_unit or 0) * (eq.quantity or 0)
+            total_kg = 0  # substance_quantity_per_unit is now Char (2025-12-18)
+            # for eq in equipment_products:
+            #     total_kg += (eq.substance_quantity_per_unit or 0) * (eq.quantity or 0)
             # equipment.ownership calculation removed (refill fields are now Char)
 
             # Capacity is Char field, try to parse or skip
@@ -730,11 +738,11 @@ class ExtractionController(http.Controller):
             gwp_by_name = {s.name: s.gwp for s in substances}
 
             # GWP calculation
-            total_co2e = 0
-            for eq in equipment_products:
-                gwp = gwp_by_name.get(eq.substance_name, 0)
-                kg = (eq.substance_quantity_per_unit or 0) * (eq.quantity or 0)
-                total_co2e += kg * gwp / 1000  # Convert to tons
+            total_co2e = 0  # substance_quantity_per_unit is now Char (2025-12-18)
+            # for eq in equipment_products:
+            #     gwp = gwp_by_name.get(eq.substance_name, 0)
+            #     kg = (eq.substance_quantity_per_unit or 0) * (eq.quantity or 0)
+            #     total_co2e += kg * gwp / 1000  # Convert to tons
             # equipment.ownership CO2e calculation removed (refill fields are now Char)
 
             # Charts data
@@ -752,13 +760,13 @@ class ExtractionController(http.Controller):
                 trend_by_year[year] += 1
 
             # By substance
-            by_substance = {}
-            for eq in equipment_products:
-                substance = eq.substance_name
-                if substance not in by_substance:
-                    by_substance[substance] = 0
-                kg = (eq.substance_quantity_per_unit or 0) * (eq.quantity or 0)
-                by_substance[substance] += kg
+            by_substance = {}  # substance_quantity_per_unit is now Char (2025-12-18)
+            # for eq in equipment_products:
+            #     substance = eq.substance_name
+            #     if substance not in by_substance:
+            #         by_substance[substance] = 0
+            #     kg = (eq.substance_quantity_per_unit or 0) * (eq.quantity or 0)
+            #     by_substance[substance] += kg
             # equipment.ownership removed from by_substance (refill fields are now Char)
 
             # By company
@@ -883,7 +891,7 @@ class ExtractionController(http.Controller):
                 org_domain.append(('name', 'ilike', filters['organization_search']))
 
             if filters.get('organization_code'):
-                org_domain.append(('business_license_number', 'ilike', filters['organization_code']))
+                org_domain.append(('business_id', 'ilike', filters['organization_code']))
 
             if filters.get('province'):
                 State = request.env['res.country.state'].sudo()
@@ -1408,7 +1416,7 @@ class ExtractionController(http.Controller):
             org_domain.append(('name', 'ilike', filters['organization_search']))
 
         if filters.get('organization_code'):
-            org_domain.append(('business_license_number', 'ilike', filters['organization_code']))
+            org_domain.append(('business_id', 'ilike', filters['organization_code']))
 
         if filters.get('province'):
             State = request.env['res.country.state'].sudo()
@@ -1471,7 +1479,7 @@ class ExtractionController(http.Controller):
                 companies_data.append({
                     'org_id': org.id,
                     'name': org.name or '',
-                    'license_number': org.business_license_number or '',
+                    'license_number': org.business_id or '',
                     'legal_representative': org.legal_representative_name or '',
                     'legal_representative_position': org.legal_representative_position or '',
                     'contact_person': org.contact_person_name or '',
@@ -1490,7 +1498,7 @@ class ExtractionController(http.Controller):
                         continue
 
                     equipment_ownership_data.append({
-                        'license_number': org.business_license_number or '',
+                        'license_number': org.business_id or '',
                         'year': doc.year,
                         'data_source': 'Mẫu 01',
                         'equipment_category': '',  # Field doesn't exist in model
@@ -1511,7 +1519,7 @@ class ExtractionController(http.Controller):
                         continue
 
                     equipment_ownership_data.append({
-                        'license_number': org.business_license_number or '',
+                        'license_number': org.business_id or '',
                         'year': doc.year,
                         'data_source': 'Mẫu 02',
                         'equipment_category': '',  # Field doesn't exist in model
@@ -1532,7 +1540,7 @@ class ExtractionController(http.Controller):
                         continue
 
                     equipment_production_data.append({
-                        'license_number': org.business_license_number or '',
+                        'license_number': org.business_id or '',
                         'year': doc.year,
                         'data_source': 'Mẫu 01',
                         'activity': '',  # Field doesn't exist in equipment.product
@@ -1541,7 +1549,7 @@ class ExtractionController(http.Controller):
                         'capacity': eq.capacity or 0,
                         'quantity': eq.quantity or 0,
                         'substance_name': eq.substance_id.name if eq.substance_id else '',
-                        'substance_quantity_kg': eq.substance_quantity_per_unit or 0,
+                        'substance_quantity_kg': eq.substance_quantity_per_unit or '',  # Now Char (2025-12-18)
                     })
 
             # Sheet 3: Equipment production report (Form 02)
@@ -1551,7 +1559,7 @@ class ExtractionController(http.Controller):
                         continue
 
                     equipment_production_data.append({
-                        'license_number': org.business_license_number or '',
+                        'license_number': org.business_id or '',
                         'year': doc.year,
                         'data_source': 'Mẫu 02',
                         'activity': eq.production_type,
@@ -1560,7 +1568,7 @@ class ExtractionController(http.Controller):
                         'capacity': eq.capacity or 0,
                         'quantity': eq.quantity or 0,
                         'substance_name': eq.substance_id.name if eq.substance_id else '',
-                        'substance_quantity_kg': eq.substance_quantity_per_unit or 0,
+                        'substance_quantity_kg': eq.substance_quantity_per_unit or '',  # Now Char (2025-12-18)
                     })
 
             # Sheet 4: EoL substances (collection/recycling)
@@ -1570,7 +1578,7 @@ class ExtractionController(http.Controller):
                         continue
 
                     eol_substances_data.append({
-                        'license_number': org.business_license_number or '',
+                        'license_number': org.business_id or '',
                         'year': doc.year,
                         'substance_name': rec.substance_id.name if rec.substance_id else rec.substance_name or '',
                         'activity': rec.activity_type,
@@ -1589,7 +1597,7 @@ class ExtractionController(http.Controller):
 
                     if rep.collection_quantity_kg:
                         eol_substances_data.append({
-                            'license_number': org.business_license_number or '',
+                            'license_number': org.business_id or '',
                             'year': doc.year,
                             'substance_name': substance_name,
                             'activity': 'collection',
@@ -1600,7 +1608,7 @@ class ExtractionController(http.Controller):
 
                     if rep.reuse_quantity_kg:
                         eol_substances_data.append({
-                            'license_number': org.business_license_number or '',
+                            'license_number': org.business_id or '',
                             'year': doc.year,
                             'substance_name': substance_name,
                             'activity': 'reuse',
@@ -1611,7 +1619,7 @@ class ExtractionController(http.Controller):
 
                     if rep.recycle_quantity_kg:
                         eol_substances_data.append({
-                            'license_number': org.business_license_number or '',
+                            'license_number': org.business_id or '',
                             'year': doc.year,
                             'substance_name': substance_name,
                             'activity': 'recycling',
@@ -1622,7 +1630,7 @@ class ExtractionController(http.Controller):
 
                     if rep.disposal_quantity_kg:
                         eol_substances_data.append({
-                            'license_number': org.business_license_number or '',
+                            'license_number': org.business_id or '',
                             'year': doc.year,
                             'substance_name': substance_name,
                             'activity': 'disposal',
@@ -1641,7 +1649,7 @@ class ExtractionController(http.Controller):
                     activity = usage.usage_type
 
                     bulk_substances_data.append({
-                        'license_number': org.business_license_number or '',
+                        'license_number': org.business_id or '',
                         'data_source': 'Mẫu 01',
                         'activity': activity,
                         'substance_name': usage.substance_id.name if usage.substance_id else usage.substance_name or '',
@@ -1657,7 +1665,7 @@ class ExtractionController(http.Controller):
                         continue
 
                     bulk_substances_data.append({
-                        'license_number': org.business_license_number or '',
+                        'license_number': org.business_id or '',
                         'data_source': 'Mẫu 02',
                         'activity': quota.usage_type,
                         'substance_name': quota.substance_id.name if quota.substance_id else quota.substance_name or '',

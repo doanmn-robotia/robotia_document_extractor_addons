@@ -54,7 +54,7 @@
                             </tr>
                             <tr>
                                 <td class="info-label">Mã doanh nghiệp:</td>
-                                <td t-esc="state.companyInfo.business_license_number || 'N/A'"/>
+                                <td t-esc="state.companyInfo.business_id || 'N/A'"/>
                             </tr>
                             <tr>
                                 <td class="info-label">Địa chỉ:</td>

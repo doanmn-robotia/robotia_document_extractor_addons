@@ -234,7 +234,7 @@ class QueueJob(models.Model):
             record.graph_jobs_count = count_per_graph_uuid.get(record.graph_uuid) or 0
 
     @api.model_create_multi
-    @api.private
+    # @api.private
     def create(self, vals_list):
         return super(
             QueueJob,

@@ -3,7 +3,9 @@
 import json
 import logging
 import base64
+import uuid
 from odoo import models, fields, api, _
+from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
 
@@ -50,9 +52,79 @@ class ExtractionJob(models.Model):
         ('done', 'Done'),
         ('error', 'Error'),
     ], string='State', default='pending', required=True, index=True)
-    
+
     progress = fields.Integer(string='Progress %', default=0)
     progress_message = fields.Char(string='Progress Message')
+
+    # ========== STEP TRACKING ==========
+    current_step = fields.Selection([
+        ('upload_validate', 'Step 1: Upload & Validate'),
+        ('category_mapping', 'Step 2: Category Mapping'),
+        ('llama_ocr', 'Step 3: Llama OCR'),
+        ('ai_batch_processing', 'Step 4: AI Batch Processing'),
+        ('merge_validate', 'Step 5: Merge & Validate'),
+        ('completed', 'Completed'),
+    ], string='Current Step', default='upload_validate', index=True)
+
+    last_completed_step = fields.Selection([
+        ('upload_validate', 'Step 1: Upload & Validate'),
+        ('category_mapping', 'Step 2: Category Mapping'),
+        ('llama_ocr', 'Step 3: Llama OCR'),
+        ('ai_batch_processing', 'Step 4: AI Batch Processing'),
+        ('merge_validate', 'Step 5: Merge & Validate'),
+        ('completed', 'Completed'),
+    ], string='Last Completed Step', help='Last successfully completed step for retry logic')
+
+    # ========== INTERMEDIATE RESULTS (JSON Text Fields) ==========
+    category_mapping_json = fields.Text(
+        string='Category Mapping Result',
+        help='Step 2 output: {metadata: [1,2], substance_usage: [3,4], ...}'
+    )
+
+    llama_ocr_json = fields.Text(
+        string='Llama OCR Result',
+        help='Step 3 output: [{category, ocr_data, page_count}, ...]'
+    )
+
+    ai_extracted_json = fields.Text(
+        string='AI Extracted Data',
+        help='Step 4 output: {metadata: {...}, substance_usage: [...], ...}'
+    )
+
+    final_result_json = fields.Text(
+        string='Final Merged Result',
+        help='Step 5 output: Complete validated extraction result'
+    )
+
+    # ========== GEMINI UPLOADED FILE TRACKING ==========
+    gemini_file_name = fields.Char(
+        string='Gemini File Name',
+        help='Gemini uploaded file name for cleanup (stored after Step 1)'
+    )
+
+    # ========== RETRY METADATA ==========
+    retry_count = fields.Integer(string='Retry Count', default=0)
+    retry_from_step = fields.Selection([
+        ('upload_validate', 'Step 1: Upload & Validate'),
+        ('category_mapping', 'Step 2: Category Mapping'),
+        ('llama_ocr', 'Step 3: Llama OCR'),
+        ('ai_batch_processing', 'Step 4: AI Batch Processing'),
+        ('merge_validate', 'Step 5: Merge & Validate'),
+    ], string='Retry From Step', help='User-requested retry starting point')
+
+    # ========== SMART BUTTON VISIBILITY ==========
+    can_retry_from_llama = fields.Boolean(
+        compute='_compute_retry_buttons',
+        help='Show "Retry from Llama OCR" button'
+    )
+    can_retry_from_ai = fields.Boolean(
+        compute='_compute_retry_buttons',
+        help='Show "Retry from AI Processing" button'
+    )
+    can_retry_from_category = fields.Boolean(
+        compute='_compute_retry_buttons',
+        help='Show "Retry from Category Mapping" button'
+    )
     
     # ========== RESULT ==========
     extraction_log_id = fields.Many2one(
@@ -72,6 +144,8 @@ class ExtractionJob(models.Model):
     )
     error_message = fields.Text(string='Error Message')
 
+    uuid = fields.Char(default=uuid.uuid4())
+
     
     
     # ========== LIFECYCLE ==========
@@ -85,42 +159,46 @@ class ExtractionJob(models.Model):
 
     # ========== ASYNC EXTRACTION METHOD ==========
     # Channel và identity_key được cấu hình via XML (data/queue_job_channel.xml)
-    def run_extraction_async(self):
+    def run_extraction_async(self, retry_from_step=None):
         """
-        Method to be delayed via queue_job
+        Method to be delayed via queue_job with retry support
 
         This runs in a background worker and:
         1. Calls service orchestrator (process_pdf_extraction) for full pipeline
         2. Service handles: validation, log creation, attachment, AI extraction
-        3. Builds form action values
-        4. Stores complete action dict for frontend
+        3. Supports step-based retry (resume from checkpoint)
+        4. Builds form action values
+        5. Stores complete action dict for frontend
+
+        Args:
+            retry_from_step (str, optional): Step to resume from (e.g., 'llama_ocr', 'ai_batch_processing')
         """
         self.ensure_one()
 
-        if self.state == 'processing':
-            _logger.warning("===========================================")
-            _logger.warning('JOB %d is requested during processing', self.id)
+        # Prevent concurrent execution (unless retrying)
+        if self.state == 'processing' and not retry_from_step:
+            _logger.warning(f'JOB {self.id} is already processing')
             return
 
         try:
-            # Update state
-            self._update_progress(10, 'Đang chuẩn bị file PDF...')
-
             # Get service
             service = self.env['document.extraction.service']
+
+            # Update state to processing
+            self.write({'state': 'processing'})
 
             # Decode PDF binary (attachment.datas is base64 encoded)
             pdf_binary = base64.b64decode(self.attachment_id.datas)
 
-            self._update_progress(20, 'Đang trích xuất dữ liệu với AI...')
-
-            # Call service orchestrator (all-in-one: validation + log + attachment + AI)
-            result = service.process_pdf_extraction(
+            # Call service orchestrator with job_id and resume support
+            result = service.with_context(notify_channel=self.uuid).process_pdf_extraction(
                 pdf_binary=pdf_binary,
                 filename=self.attachment_id.name,
                 document_type=self.document_type,
                 check_rate_limit=False,  # No rate limit for async jobs
-                last_extract_time=None   # Not applicable for async
+                last_extract_time=None,  # Not applicable for async
+                job_id=self.id,  # Pass job ID for step tracking
+                resume_from_step=retry_from_step  # Resume support
             )
 
             # Check result
@@ -138,7 +216,10 @@ class ExtractionJob(models.Model):
                     'progress_message': 'Lỗi trích xuất',
                     'error_message': error_msg,
                 })
-                return  # Exit early
+
+                # CRITICAL FIX: Raise exception so queue.job sets state='failed'
+                # This ensures queue.job.state reflects the actual failure
+                raise Exception(error_msg)
 
 
             # Success - get data from result
@@ -180,6 +261,7 @@ class ExtractionJob(models.Model):
             # Mark job as done with result
             self.write({
                 'state': 'done',
+                'current_step': 'completed',
                 'progress': 100,
                 'progress_message': 'Hoàn thành!',
                 'result_action_json': json.dumps(action, ensure_ascii=False),
@@ -205,10 +287,14 @@ class ExtractionJob(models.Model):
                 'error_message': error_msg,
             })
 
+            # CRITICAL FIX: Re-raise exception so queue.job sets state='failed'
+            # This ensures queue.job.state reflects the actual failure
+            raise
+
     def _update_progress(self, progress, message):
         """
         Helper to update progress atomically
-        
+
         Note: We do NOT commit here because:
         1. Committing releases the job lock
         2. Job runner will think the job is dead and re-queue it
@@ -219,6 +305,146 @@ class ExtractionJob(models.Model):
             'progress': progress,
             'progress_message': message,
         })
+
+    # ========== COMPUTED METHODS ==========
+
+    @api.depends('state', 'last_completed_step', 'category_mapping_json', 'llama_ocr_json', 'ai_extracted_json')
+    def _compute_retry_buttons(self):
+        """
+        Compute which retry buttons should be visible
+
+        Rules:
+        - can_retry_from_category: state=error AND category_mapping_json exists
+        - can_retry_from_llama: state=error AND llama_ocr_json exists
+        - can_retry_from_ai: state=error AND llama_ocr_json exists (need OCR data for AI)
+        """
+        for record in self:
+            # Show retry buttons when step data is available (regardless of state)
+            record.can_retry_from_category = bool(record.category_mapping_json)
+
+            record.can_retry_from_llama = bool(record.llama_ocr_json)
+
+            record.can_retry_from_ai = (
+                bool(record.llama_ocr_json) and
+                record.last_completed_step in ['llama_ocr', 'ai_batch_processing']
+            )
+
+    # ========== RETRY ACTION METHODS ==========
+
+    def action_retry_from_category_mapping(self):
+        """Retry from Step 2: Category Mapping"""
+        self.ensure_one()
+
+        if not self.category_mapping_json:
+            raise UserError(_('Cannot retry: No category mapping data found'))
+
+        # Reset state and set current_step for UI display
+        self.write({
+            'state': 'pending',
+            'current_step': 'category_mapping',  # Set step so progress view shows correct position
+            'error_message': False,
+            'retry_count': self.retry_count + 1,
+            'retry_from_step': 'category_mapping'
+        })
+
+        # Re-enqueue job
+        self.with_delay(
+            identity_key=f'extraction_retry_{self.id}_{self.retry_count}'
+        ).run_extraction_async(retry_from_step='category_mapping')
+
+        # Get merged PDF URL from log
+        merged_pdf_url = False
+        if self.extraction_log_id and self.extraction_log_id.merged_pdf_url:
+            merged_pdf_url = self.extraction_log_id.merged_pdf_url
+
+        # Open progress view with PDF preview
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'robotia_document_extractor.page_selector',
+            'params': {
+                'mode': 'progress_only',
+                'job_id': self.id,
+                'job_uuid': self.uuid,
+                'merged_pdf_url': merged_pdf_url,  # Pass PDF URL for preview
+                'retry_from_step': 'category_mapping',  # Pass retry step
+            }
+        }
+
+    def action_retry_from_llama_ocr(self):
+        """Retry from Step 3: Llama OCR (skipping OCR, only AI processing)"""
+        self.ensure_one()
+
+        if not self.llama_ocr_json:
+            raise UserError(_('Cannot retry: No Llama OCR data found'))
+
+        # Reset state and set current_step for UI display
+        self.write({
+            'state': 'pending',
+            'current_step': 'llama_ocr',  # Set step so progress view shows correct position
+            'error_message': False,
+            'retry_count': self.retry_count + 1,
+            'retry_from_step': 'llama_ocr'
+        })
+
+        self.with_delay(
+            identity_key=f'extraction_retry_{self.id}_{self.retry_count}'
+        ).run_extraction_async(retry_from_step='llama_ocr')
+
+        # Get merged PDF URL from log
+        merged_pdf_url = False
+        if self.extraction_log_id and self.extraction_log_id.merged_pdf_url:
+            merged_pdf_url = self.extraction_log_id.merged_pdf_url
+
+        # Open progress view with PDF preview
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'robotia_document_extractor.page_selector',
+            'params': {
+                'mode': 'progress_only',
+                'job_id': self.id,
+                'job_uuid': self.uuid,
+                'merged_pdf_url': merged_pdf_url,  # Pass PDF URL for preview
+                'retry_from_step': 'llama_ocr',  # Pass retry step
+            }
+        }
+
+    def action_retry_from_ai_processing(self):
+        """Retry from Step 4: AI Batch Processing"""
+        self.ensure_one()
+
+        if not self.llama_ocr_json:
+            raise UserError(_('Cannot retry: No Llama OCR data found'))
+
+        # Reset state and set current_step for UI display
+        self.write({
+            'state': 'pending',
+            'current_step': 'ai_batch_processing',  # Set step so progress view shows correct position
+            'error_message': False,
+            'retry_count': self.retry_count + 1,
+            'retry_from_step': 'ai_batch_processing'
+        })
+
+        self.with_delay(
+            identity_key=f'extraction_retry_{self.id}_{self.retry_count}'
+        ).run_extraction_async(retry_from_step='ai_batch_processing')
+
+        # Get merged PDF URL from log
+        merged_pdf_url = False
+        if self.extraction_log_id and self.extraction_log_id.merged_pdf_url:
+            merged_pdf_url = self.extraction_log_id.merged_pdf_url
+
+        # Open progress view with PDF preview
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'robotia_document_extractor.page_selector',
+            'params': {
+                'mode': 'progress_only',
+                'job_id': self.id,
+                'job_uuid': self.uuid,
+                'merged_pdf_url': merged_pdf_url,  # Pass PDF URL for preview
+                'retry_from_step': 'ai_batch_processing',  # Pass retry step
+            }
+        }
 
     # ========== STATUS API FOR POLLING ==========
     

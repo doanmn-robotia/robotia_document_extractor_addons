@@ -259,7 +259,7 @@
         <field name="arch" type="xml">
             <list string="Organizations">
                 <field name="name"/>
-                <field name="business_license_number"/>
+                <field name="business_id"/>
                 <field name="city"/>
                 <field name="country_id" optional="hide"/>
                 <field name="phone"/>
@@ -296,7 +296,7 @@
 
                     <group>
                         <group string="Business License">
-                            <field name="business_license_number"/>
+                            <field name="business_id"/>
                             <field name="business_license_date"/>
                             <field name="business_license_place"/>
                         </group>
@@ -342,12 +342,12 @@
         <field name="arch" type="xml">
             <search string="Search Organizations">
                 <field name="name"/>
-                <field name="business_license_number"/>
+                <field name="business_id"/>
                 <field name="legal_representative_name"/>
                 <field name="city"/>
                 <field name="country_id"/>
                 <filter string="Has Business License" name="has_license"
-                        domain="[('business_license_number', '!=', False)]"/>
+                        domain="[('business_id', '!=', False)]"/>
                 <separator/>
                 <filter string="Companies" name="is_company"
                         domain="[('is_company', '=', True)]"/>

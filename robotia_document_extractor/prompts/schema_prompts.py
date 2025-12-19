@@ -23,8 +23,8 @@ def get_form_01_schema():
 | year_2 | int | Table 1.1 column header (2nd year) | From merged cell |
 | year_3 | int | Table 1.1 column header (3rd year) | From merged cell |
 | organization_name | str | "Tên tổ chức:" section | Must be specific |
-| business_license_number | str | "Số đăng ký doanh nghiệp:" | NOT Mã số thuế! |
-| business_license_date | str/null | "Ngày đăng ký:" or "Đăng ký lần đầu:" | FIRST date if multiple |
+| business_id | str | "Mã số doanh nghiệp:" | Không phải "Số ký hiệu của giấy phép đăng ký kinh doanh |
+| business_license_date | str/null | "Ngày đăng ký giấy phép kinh doanh lần đầu" or "Đăng ký lần đầu:" | FIRST date if multiple, FORMAT (MUST HAVE): YYYY-MM-DD |
 | business_license_place | str | "Nơi đăng ký:" | Full place name |
 | legal_representative_name | str | Representative section | - |
 | legal_representative_position | str | Representative section | - |
@@ -81,8 +81,8 @@ def get_form_01_schema():
 | power_capacity | str/null | ONLY if merged=FALSE. "3.5 kW" only |
 | quantity | float/null | Equipment quantity |
 | substance_name | str | Standardized name (null if is_title=true) |
-| substance_quantity_per_unit | float/null | Substance per unit (kg) |
-| substance_quantity_per_unit | float/null | Substance per unit (kg) |
+| substance_quantity_per_unit | str/null | Substance per unit (kg) - supports text values |
+| substance_quantity_per_unit | str/null | Substance per unit (kg) - supports text values |
 | notes | str/null | From column "Notes" |
 
 ### Table 1.3: equipment_ownership (array)
@@ -123,7 +123,7 @@ def get_form_01_schema():
   "year_2": 2023,
   "year_3": 2024,
   "organization_name": "...",
-  "business_license_number": "...",
+  "business_id": "...",
   "activity_field_codes": ["production", "import"],
   "has_table_1_1": true,
   "is_capacity_merged_table_1_2": false,
@@ -162,8 +162,8 @@ def get_form_02_schema():
 | year_2 | int | Table 2.1 column header (2nd year) | From merged cell |
 | year_3 | int | Table 2.1 column header (3rd year) | From merged cell |
 | organization_name | str | "Tên tổ chức:" section | Must be specific |
-| business_license_number | str | "Số đăng ký doanh nghiệp:" | NOT Mã số thuế! |
-| business_license_date | str/null | "Ngày đăng ký:" or "Đăng ký lần đầu:" | FIRST date if multiple |
+| business_id | str | "Mã số doanh nghiệp:" | Không phải "Số ký hiệu của giấy phép đăng ký kinh doanh |
+| business_license_date | str/null | "Ngày đăng ký giấy phép kinh doanh lần đầu" or "Đăng ký lần đầu:" | FIRST date if multiple, FORMAT (MUST HAVE): YYYY-MM-DD |
 | business_license_place | str | "Nơi đăng ký:" | Full place name |
 | legal_representative_name | str | Representative section | - |
 | legal_representative_position | str | Representative section | - |
@@ -229,7 +229,7 @@ Table 2.1 has THREE separate quota column groups (6 columns total for quotas):
 | adjusted_quota_co2 | float/null | **Column 7** - Adjusted CO2 (can be negative). null if empty! |
 | total_quota_kg | float/null | **Column 8** - Total quota (kg). null if empty! |
 | total_quota_co2 | float/null | **Column 9** - Total CO2. null if empty! |
-| average_price | float/null | Average price (USD) |
+| average_price | str/null | Average price (USD) - supports text values |
 | country_text | str | Country name from document |
 | customs_declaration_number | str/null | Customs declaration number (preserve exact format) |
 | next_year_quota_kg | float/null | Next year quota (kg) |
@@ -252,8 +252,8 @@ Table 2.1 has THREE separate quota column groups (6 columns total for quotas):
 | power_capacity | str/null | ONLY if merged=FALSE |
 | quantity | float/null | Equipment quantity |
 | substance_name | str | Standardized name |
-| substance_quantity_per_unit | float/null | Substance per unit (kg) |
-| substance_quantity_per_unit | float/null | Substance per unit (kg) |
+| substance_quantity_per_unit | str/null | Substance per unit (kg) - supports text values |
+| substance_quantity_per_unit | str/null | Substance per unit (kg) - supports text values |
 | notes | str/null | From column "Notes" |
 
 ### Table 2.3: equipment_ownership_report (array)

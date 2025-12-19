@@ -307,8 +307,59 @@ class DocumentExtractionService(models.AbstractModel):
         _logger.info(f"Successfully merged {len(pages_data)} pages into PDF ({len(pdf_binary)} bytes)")
         return pdf_binary
 
+    def update_progress(self, new_env, progress, message, job_id=None):
+        """
+        Update progress notification for frontend (via bus.bus only)
+
+        IMPORTANT: This method ONLY sends bus notifications.
+        Job record updates (current_step, progress, checkpoints) must be done
+        in the main transaction by the caller.
+
+        Args:
+            new_env: Separate environment with own cursor (for bus.bus commit only)
+            progress: Can be int (0-100) for legacy, or str (step_key) for step-based
+            message: Human-readable Vietnamese message
+            job_id: Not used (kept for backward compatibility)
+        """
+        # Convert step_key to progress percentage if needed
+        if isinstance(progress, str):
+            step_key = progress
+            progress_percent = self._calculate_progress_from_step(step_key)
+        else:
+            step_key = None
+            progress_percent = progress
+
+        # Send real-time notification via bus.bus (ONLY purpose of new_env)
+        if self.env.context.get('notify_channel'):
+            notification_data = {
+                "progress": progress_percent,
+                "message": message
+            }
+            if step_key:
+                notification_data["step"] = step_key
+
+            new_env['bus.bus']._sendone(
+                self.env.context.get('notify_channel'),
+                'update_progress',
+                notification_data
+            )
+            new_env.cr.commit()
+
+    def _calculate_progress_from_step(self, step_key):
+        """Map step to percentage for backward compatibility"""
+        step_progress = {
+            'upload_validate': 10,
+            'category_mapping': 20,
+            'llama_ocr': 40,
+            'ai_batch_processing': 80,
+            'merge_validate': 95,
+            'completed': 100,
+        }
+        return step_progress.get(step_key, 0)
+
     def process_pdf_extraction(self, pdf_binary, filename, document_type,
-                               check_rate_limit=True, last_extract_time=None):
+                               check_rate_limit=True, last_extract_time=None,
+                               job_id=None, resume_from_step=None):
         """
         MAIN ORCHESTRATOR: Process PDF extraction with transaction-safe logging
 
@@ -327,6 +378,8 @@ class DocumentExtractionService(models.AbstractModel):
             document_type (str): '01' or '02'
             check_rate_limit (bool): Whether to check rate limiting (default: True)
             last_extract_time (float): Unix timestamp of last extraction (for rate limit)
+            job_id (int): Optional extraction.job ID for step checkpointing (llama_split only)
+            resume_from_step (str): Optional step to resume from (llama_split only)
 
         Returns:
             dict: {
@@ -350,7 +403,7 @@ class DocumentExtractionService(models.AbstractModel):
         attachment = None
         extracted_data = None
 
-        try:
+        try:    
             # ===== STEP 0: Type validation (FIRST - cheapest check) =====
             if not isinstance(pdf_binary, bytes):
                 raise TypeError(
@@ -481,7 +534,13 @@ class DocumentExtractionService(models.AbstractModel):
             # ===== STEP 4: AI Extraction =====
             try:
                 _logger.info(f"[Log {log.id}] Starting AI extraction...")
-                extracted_data = self.extract_pdf(pdf_binary, document_type, log_id=log)
+                extracted_data = self.extract_pdf(
+                    pdf_binary,
+                    document_type,
+                    log_id=log,
+                    job_id=job_id,
+                    resume_from_step=resume_from_step
+                )
                 _logger.info(f"[Log {log.id}] AI extraction completed successfully")
             except Exception as e:
                 error_msg = f'AI extraction failed: {str(e)}'
@@ -1092,18 +1151,22 @@ OUTPUT FORMAT: {{"{category}": [...]}}
                 self._get_default_prompt_form_02()
             )
 
-    def extract_pdf(self, pdf_binary, document_type, log_id=None):
+    def extract_pdf(self, pdf_binary, document_type, log_id=None,
+                    job_id=None, resume_from_step=None):
         """
         Extract structured data from PDF using configurable extraction strategy
 
         Available Strategies (configured in Settings):
         - ai_native: 100% AI (Gemini processes PDF directly)
-        - text_extract: Text Extraction + AI (PyMuPDF extracts text, then AI structures)
+        - llama_split: LlamaParse OCR + Gemini Chat (with step-based checkpointing)
+        - text_extract: Text Extraction + AI (PyMuPDF extracts text, then AI structures) [DEPRECATED]
 
         Args:
             pdf_binary (bytes): Binary PDF data
             document_type (str): '01' for Registration, '02' for Report
             log_id (int, optional): Extraction log ID for saving OCR data
+            job_id (int, optional): Extraction job ID for step checkpointing (llama_split only)
+            resume_from_step (str, optional): Step to resume from (llama_split only)
 
         Returns:
             dict: Structured data extracted from PDF
@@ -1137,9 +1200,16 @@ OUTPUT FORMAT: {{"{category}": [...]}}
             # Strategy 1: 100% AI (Gemini processes PDF directly)
             return self._extract_with_ai_native(client, pdf_binary, document_type)
 
-        elif strategy == 'text_extract':
-            # Strategy 2: Text Extract + AI (PyMuPDF → AI)
-            return self._extract_with_text_extract(client, pdf_binary, document_type)
+        elif strategy == 'llama_split':
+            # Strategy 2: LlamaParse OCR + Gemini Chat (with step checkpointing)
+            return self._extract_with_llama_extract(
+                client,
+                pdf_binary,
+                document_type,
+                log_id,
+                job_id=job_id,
+                resume_from_step=resume_from_step
+            )
 
         else:
             _logger.warning(f"Unknown strategy '{strategy}', falling back to ai_native")
@@ -1193,96 +1263,6 @@ OUTPUT FORMAT: {{"{category}": [...]}}
             except Exception as e2:
                 _logger.error("✗ All AI Native strategies failed")
                 raise ValueError(f"AI Native extraction failed. Error: {str(e2)}")
-
-    def _extract_with_text_extract(self, client, pdf_binary, document_type):
-        """
-        Strategy: Text Extract + AI (PyMuPDF → Gemini)
-
-        Extracts text using PyMuPDF, then structures with AI.
-        Falls back to AI Native if PyMuPDF fails.
-        """
-        try:
-            _logger.info("=" * 70)
-            _logger.info("TEXT EXTRACT: PyMuPDF → AI structuring")
-            _logger.info("=" * 70)
-
-            # Step 1: Extract text using PyMuPDF
-            _logger.info("Step 1/2: Extracting text with PyMuPDF...")
-            extracted_text = self._extract_pdf_to_text_pymupdf(pdf_binary)
-            _logger.info(f"✓ Step 1 complete - Extracted {len(extracted_text)} chars")
-
-            # Check if extraction produced meaningful text
-            if len(extracted_text.strip()) < 100:
-                _logger.warning("PyMuPDF produced too little text, falling back to AI Native")
-                return self._extract_with_ai_native(client, pdf_binary, document_type)
-
-            # Step 2: Structure with AI
-            _logger.info("Step 2/2: Structuring with AI...")
-            extracted_data = self._convert_text_to_json(client, extracted_text, document_type)
-            _logger.info("✓ Step 2 complete - JSON conversion successful")
-
-            _logger.info("✓ Text Extract strategy succeeded")
-            return extracted_data
-
-        except Exception as e:
-            _logger.warning(f"✗ Text Extract strategy failed: {str(e)}")
-            _logger.info("Falling back to AI Native...")
-            return self._extract_with_ai_native(client, pdf_binary, document_type)
-
-    def _extract_pdf_to_text_pymupdf(self, pdf_binary):
-        """
-        Extract text from PDF using PyMuPDF (fast, good for digital PDFs)
-
-        Args:
-            pdf_binary (bytes): Binary PDF data
-
-        Returns:
-            str: Extracted text with page markers
-
-        Raises:
-            ImportError: If PyMuPDF is not installed
-            Exception: If PDF extraction fails
-        """
-        try:
-            import fitz  # PyMuPDF
-        except ImportError:
-            raise ImportError(
-                "PyMuPDF is not installed. Please install it with: pip install PyMuPDF"
-            )
-
-        try:
-            # Open PDF from binary data
-            doc = fitz.open(stream=pdf_binary, filetype="pdf")
-            total_pages = len(doc)
-
-            _logger.info(f"PyMuPDF: Processing {total_pages} pages...")
-
-            full_text = ""
-
-            # Extract text from each page
-            for page_num in range(total_pages):
-                page = doc[page_num]
-
-                # Add page marker
-                full_text += f"\n{'='*70}\n"
-                full_text += f"PAGE {page_num + 1}\n"
-                full_text += f"{'='*70}\n"
-
-                # Extract text with layout preservation
-                page_text = page.get_text("text")
-                full_text += page_text
-
-                _logger.debug(f"Page {page_num + 1}: Extracted {len(page_text)} characters")
-
-            doc.close()
-
-            _logger.info(f"PyMuPDF: Successfully extracted {len(full_text)} total characters")
-
-            return full_text
-
-        except Exception as e:
-            _logger.error(f"PyMuPDF extraction failed: {str(e)}")
-            raise
 
     def _extract_direct_pdf_to_json(self, client, pdf_binary, document_type):
         """
@@ -1496,36 +1476,6 @@ OUTPUT FORMAT: {{"{category}": [...]}}
         else:
             return self._get_default_prompt_form_02()
 
-    def _build_text_extraction_prompt(self, document_type):
-        """
-        Build simple text extraction prompt (Strategy 2 - Step 1)
-
-        This prompt asks AI to extract PDF content as plain text,
-        without JSON structure. Simpler = less likely to be truncated.
-
-        Args:
-            document_type (str): '01' or '02'
-
-        Returns:
-            str: Text extraction prompt
-        """
-        return strategy_prompts.get_text_extract_prompt(document_type)
-
-    def _build_text_to_json_prompt(self, document_type, extracted_text):
-        """
-        Build prompt to convert text to JSON (Strategy 2 - Step 2)
-
-        This prompt takes the plain text and asks AI to structure it as JSON.
-
-        Args:
-            document_type (str): '01' or '02'
-            extracted_text (str): Plain text from Step 1
-
-        Returns:
-            str: JSON conversion prompt
-        """
-        return strategy_prompts.get_text_to_json_prompt(document_type, extracted_text)
-
     def _get_default_prompt_form_01(self):
         """
         Get default extraction prompt for Form 01 (Registration)
@@ -1626,147 +1576,6 @@ OUTPUT FORMAT: {{"{category}": [...]}}
             0
         )
 
-    def _extract_pdf_to_text(self, client, pdf_binary, document_type):
-        """
-        Strategy 2 - Step 1: Extract PDF content to plain text
-
-        This is a simpler extraction that focuses on getting raw text data
-        without worrying about JSON structure. Less likely to be truncated.
-
-        Args:
-            client: Gemini client instance
-            pdf_binary (bytes): Binary PDF data
-            document_type (str): '01' or '02'
-
-        Returns:
-            str: Plain text extracted from PDF
-
-        Raises:
-            ValueError: If extraction fails
-        """
-
-        # Build simple text extraction prompt
-        prompt = self._build_text_extraction_prompt(document_type)
-
-        tmp_file_path = None
-        uploaded_file = None
-
-        try:
-            # Create temporary file
-            tmp_file_path = self.make_temp_file(pdf_binary) 
-            _logger.info(f"Created temp file for text extraction: {tmp_file_path}")
-            # Upload file to Gemini
-            uploaded_file = self.upload_file_to_gemini(client, tmp_file_path)
-            # Build mega prompt context
-            mega_context = self._build_mega_prompt_context()
-
-            # Generate text content with mega context (using higher token limit for text)
-            response = self.generate_content(client, mega_context + [uploaded_file, prompt])
-
-            extracted_text = response.text.strip()
-            _logger.info(f"Text extraction successful (length: {len(extracted_text)} chars)")
-
-            return extracted_text
-
-        except Exception as e:
-            _logger.exception(f"Text extraction failed")
-            raise ValueError(f"Text extraction failed: {type(e).__name__}: {str(e)}")
-
-        finally:
-            # Cleanup temporary file
-            if tmp_file_path and os.path.exists(tmp_file_path):
-                try:
-                    os.unlink(tmp_file_path)
-                    _logger.info(f"Cleaned up temp file: {tmp_file_path}")
-                except Exception as e:
-                    _logger.warning(f"Failed to cleanup temp file: {e}")
-
-            # Cleanup Gemini uploaded file
-            if uploaded_file:
-                try:
-                    client.files.delete(name=uploaded_file.name)
-                    _logger.info(f"Deleted Gemini file: {uploaded_file.name}")
-                except Exception as e:
-                    _logger.warning(f"Failed to delete Gemini file: {e}")
-
-    def _convert_text_to_json(self, client, extracted_text, document_type):
-        """
-        Strategy 2 - Step 2: Convert plain text to structured JSON
-
-        Takes the plain text from Step 1 and converts it to structured JSON.
-        This is lighter weight than direct PDF→JSON extraction.
-
-        Args:
-            client: Gemini client instance
-            extracted_text (str): Plain text from Step 1
-            document_type (str): '01' or '02'
-
-        Returns:
-            dict: Structured data
-
-        Raises:
-            ValueError: If conversion fails
-        """
-        # Build JSON conversion prompt
-        prompt = self._build_text_to_json_prompt(document_type, extracted_text)
-
-        # Get Gemini model and generation parameters from config
-        ICP = self.env['ir.config_parameter'].sudo()
-
-        # Get max retries from config (default: 3)
-        GEMINI_MAX_RETRIES = int(
-            ICP.get_param(
-                'robotia_document_extractor.gemini_max_retries',
-                default='3'
-            )
-        )
-
-        extracted_json = None
-        last_error = None
-
-        # Build mega prompt context
-        mega_context = self._build_mega_prompt_context()
-
-        for retry_attempt in range(GEMINI_MAX_RETRIES):
-            try:
-                _logger.info(f"JSON conversion attempt {retry_attempt + 1}/{GEMINI_MAX_RETRIES}")
-
-                # Generate JSON from text with mega context (no file upload needed)
-                response = self.generate_content(client, mega_context + [prompt])
-
-                extracted_json = response.text
-
-                # Validate JSON
-                try:
-                    parsed_data = self._parse_json_response(extracted_json)
-                    _logger.info(f"JSON conversion successful on attempt {retry_attempt + 1}")
-
-                    # Clean and return
-                    cleaned_data = self._clean_extracted_data(parsed_data, document_type)
-                    return cleaned_data
-
-                except json.JSONDecodeError:
-                    raise
-
-            except json.JSONDecodeError as e:
-                last_error = e
-                _logger.warning(f"Attempt {retry_attempt + 1} returned incomplete JSON: {str(e)}")
-                if retry_attempt < GEMINI_MAX_RETRIES - 1:
-                    _logger.info(f"Retrying immediately...")
-                else:
-                    _logger.error("All JSON conversion attempts failed")
-
-            except Exception as e:
-                last_error = e
-                _logger.warning(f"Attempt {retry_attempt + 1} failed: {type(e).__name__}: {str(e)}")
-                if retry_attempt < GEMINI_MAX_RETRIES - 1:
-                    _logger.info(f"Retrying immediately...")
-                else:
-                    raise
-
-        # All retries failed
-        raise ValueError(f"JSON conversion failed after {GEMINI_MAX_RETRIES} attempts: {last_error}")
-
     def _clean_extracted_data(self, data, document_type):
         """
         Clean and validate extracted data
@@ -1785,7 +1594,7 @@ OUTPUT FORMAT: {{"{category}": [...]}}
             'year_2': data.get('year_2'),
             'year_3': data.get('year_3'),
             'organization_name': data.get('organization_name', ''),
-            'business_license_number': data.get('business_license_number', ''),
+            'business_id': data.get('business_id', ''),
             'business_license_date': data.get('business_license_date'),
             'business_license_place': data.get('business_license_place', ''),
             'legal_representative_name': data.get('legal_representative_name', ''),
