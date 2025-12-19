@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_extraction_job_form" model="ir.ui.view">
+        <field name="name">extraction.job.form</field>
+        <field name="model">extraction.job</field>
+        <field name="arch" type="xml">
+            <form string="Extraction Job">
+                <header>
+                    <!-- Retry Smart Buttons (conditional visibility) -->
+                    <button name="action_retry_from_category_mapping"
+                            type="object"
+                            string="Retry from Category Mapping"
+                            class="oe_highlight"
+                            invisible="not can_retry_from_category"/>
+
+                    <button name="action_retry_from_llama_ocr"
+                            type="object"
+                            string="Retry from Llama OCR"
+                            class="oe_highlight"
+                            invisible="not can_retry_from_llama"/>
+
+                    <button name="action_retry_from_ai_processing"
+                            type="object"
+                            string="Retry from AI Processing"
+                            class="oe_highlight"
+                            invisible="not can_retry_from_ai"/>
+
+                    <field name="state" widget="statusbar" options="{'clickable': 1}"/>
+                </header>
+
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name"/></h1>
+                    </div>
+
+                    <group>
+                        <group>
+                            <field name="attachment_id"/>
+                            <field name="document_type"/>
+                            <field name="current_step"/>
+                            <field name="last_completed_step"/>
+                        </group>
+                        <group>
+                            <field name="progress" widget="progressbar"/>
+                            <field name="progress_message"/>
+                            <field name="retry_count"/>
+                            <field name="uuid"/>
+                        </group>
+                    </group>
+
+                    <group string="Results" invisible="state not in ['done', 'error']">
+                        <field name="extraction_log_id"/>
+                        <field name="extraction_id"/>
+                    </group>
+
+                    <group string="Error Details" invisible="state != 'error'">
+                        <field name="error_message" widget="text"/>
+                    </group>
+
+                    <notebook>
+                        <page string="Step 2: Category Mapping"
+                              invisible="not category_mapping_json">
+                            <field name="category_mapping_json" widget="ace"
+                                   options="{'mode': 'python'}"/>
+                        </page>
+
+                        <page string="Step 3: Llama OCR"
+                              invisible="not llama_ocr_json">
+                            <field name="llama_ocr_json" widget="ace"
+                                   options="{'mode': 'python'}"/>
+                        </page>
+
+                        <page string="Step 4: AI Extracted Data"
+                              invisible="not ai_extracted_json">
+                            <field name="ai_extracted_json" widget="ace"
+                                   options="{'mode': 'python'}"/>
+                        </page>
+
+                        <page string="Step 5: Final Result"
+                              invisible="not final_result_json">
+                            <field name="final_result_json" widget="ace"
+                                   options="{'mode': 'python'}"/>
+                        </page>
+
+                        <page string="Complete Action"
+                              invisible="not result_action_json">
+                            <field name="result_action_json" widget="ace"
+                                   options="{'mode': 'python'}"/>
+                        </page>
+                    </notebook>
+
+                    <!-- Hidden fields for computed visibility -->
+                    <field name="can_retry_from_category" invisible="1"/>
+                    <field name="can_retry_from_llama" invisible="1"/>
+                    <field name="can_retry_from_ai" invisible="1"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_extraction_job_tree" model="ir.ui.view">
+        <field name="name">extraction.job.tree</field>
+        <field name="model">extraction.job</field>
+        <field name="arch" type="xml">
+            <list string="Extraction Jobs">
+                <field name="name"/>
+                <field name="document_type"/>
+                <field name="state"/>
+                <field name="current_step"/>
+                <field name="progress" widget="progressbar"/>
+                <field name="progress_message"/>
+                <field name="create_date"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_extraction_job" model="ir.actions.act_window">
+        <field name="name">Extraction Jobs</field>
+        <field name="res_model">extraction.job</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No extraction jobs yet
+            </p>
+            <p>
+                Extraction jobs track async PDF extraction progress.
+            </p>
+        </field>
+    </record>
+
+    <menuitem id="menu_extraction_job"
+              name="Extraction Jobs"
+              parent="robotia_document_extractor.menu_document_extractor_root"
+              action="action_extraction_job"
+              sequence="10"/>
+</odoo>

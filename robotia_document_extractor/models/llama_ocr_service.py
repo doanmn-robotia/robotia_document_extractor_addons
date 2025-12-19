@@ -216,7 +216,7 @@ class LlamaOCRService(models.AbstractModel):
                 "year_2": {"type": "integer"},
                 "year_3": {"type": "integer"},
                 "organization_name": {"type": "string"},
-                "business_license_number": {"type": "string"},
+                "business_id": {"type": "string"},
                 "business_license_date": {"type": ["string", "null"]},
                 "business_license_place": {"type": "string"},
                 "legal_representative_name": {"type": "string"},
@@ -278,12 +278,12 @@ class LlamaOCRService(models.AbstractModel):
                             "power_capacity": {"type": ["string", "null"]},
                             "quantity": {"type": ["number", "null"]},
                             "substance_name": {"type": "string"},
-                            "substance_quantity_per_unit": {"type": ["number", "null"]},
+                            "substance_quantity_per_unit": {"type": ["string", "null"]},
                             "notes": {"type": ["string", "null"]}
                         }
                     }
                 },
-                
+
                 # Table 1.3: equipment_ownership
                 "equipment_ownership": {
                     "type": "array",
@@ -340,7 +340,7 @@ class LlamaOCRService(models.AbstractModel):
                 "year_2": {"type": "integer"},
                 "year_3": {"type": "integer"},
                 "organization_name": {"type": "string"},
-                "business_license_number": {"type": "string"},
+                "business_id": {"type": "string"},
                 "business_license_date": {"type": ["string", "null"]},
                 "business_license_place": {"type": "string"},
                 "legal_representative_name": {"type": "string"},
@@ -382,7 +382,7 @@ class LlamaOCRService(models.AbstractModel):
                             "adjusted_quota_co2": {"type": ["number", "null"]},
                             "total_quota_kg": {"type": ["number", "null"]},
                             "total_quota_co2": {"type": ["number", "null"]},
-                            "average_price": {"type": ["number", "null"]},
+                            "average_price": {"type": ["string", "null"]},
                             "country_text": {"type": "string"},
                             "customs_declaration_number": {"type": ["string", "null"]},
                             "next_year_quota_kg": {"type": ["number", "null"]},
@@ -407,12 +407,12 @@ class LlamaOCRService(models.AbstractModel):
                             "power_capacity": {"type": ["string", "null"]},
                             "quantity": {"type": ["number", "null"]},
                             "substance_name": {"type": "string"},
-                            "substance_quantity_per_unit": {"type": ["number", "null"]},
+                            "substance_quantity_per_unit": {"type": ["string", "null"]},
                             "notes": {"type": ["string", "null"]}
                         }
                     }
                 },
-                
+
                 # Table 2.3: equipment_ownership_report
                 "equipment_ownership_report": {
                     "type": "array",

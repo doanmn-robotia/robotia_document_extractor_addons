@@ -72,9 +72,9 @@ class QuotaUsage(models.Model):
         string='Total Quota (ton CO2)',
         digits=(16, 4)
     )
-    average_price = fields.Float(
+    average_price = fields.Char(
         string='Average Price',
-        digits=(16, 4)
+        help='Average price (USD) - supports both numeric and text values'
     )
     country_text = fields.Char(
         string='Export/Import Country',
@@ -114,9 +114,7 @@ class QuotaUsage(models.Model):
         ('total_quota_co2_positive',
          'CHECK(total_quota_co2 IS NULL OR total_quota_co2 >= 0)',
          'Total quota (CO2) must be positive or null'),
-        ('average_price_positive',
-         'CHECK(average_price IS NULL OR average_price >= 0)',
-         'Average price must be positive or null'),
+        # Note: average_price constraint removed - field is now Char type (2025-12-18)
     ]
 
     @api.depends('substance_id')

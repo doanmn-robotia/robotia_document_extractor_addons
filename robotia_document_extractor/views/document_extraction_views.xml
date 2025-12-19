@@ -5,7 +5,7 @@
         <field name="name">document.extraction.form</field>
         <field name="model">document.extraction</field>
         <field name="arch" type="xml">
-            <form string="Document Extraction"
+            <form create="0" string="Document Extraction"
                   js_class="document_extraction_form"
                   class="o_form_extraction_split">
                 <header>
@@ -77,7 +77,7 @@
                                            domain="[('x_partner_type', '=', 'organization')]"
                                            context="{'form_view_ref': 'robotia_document_extractor.view_partner_organization_form', 'tree_view_ref': 'robotia_document_extractor.view_partner_organization_list', 'default_x_partner_type': 'organization'}"/>
                                     <field name="organization_name" required="1"/>
-                                    <field name="business_license_number"/>
+                                    <field name="business_id"/>
                                     <field name="business_license_date"/>
                                     <field name="business_license_place"/>
                                 </group>
@@ -186,7 +186,7 @@
                                     <field name="power_capacity" column_invisible="parent.is_capacity_merged_table_1_2"/>
                                     <field name="quantity" options="{'enable_formatting': false}"/>
                                     <field name="substance_id" options="{'no_create': True, 'no_quick_create': True}"/>
-                                    <field name="substance_quantity_per_unit" options="{'enable_formatting': false}"/>
+                                    <field name="substance_quantity_per_unit"/>
                                     <field name="notes"/>
                                     <field name="is_title" column_invisible="1"/>
                                     <control>
@@ -260,7 +260,7 @@
                                     <field name="adjusted_quota_co2" options="{'enable_formatting': false}"/>
                                     <field name="total_quota_kg" options="{'enable_formatting': false}"/>
                                     <field name="total_quota_co2" options="{'enable_formatting': false}"/>
-                                    <field name="average_price" options="{'enable_formatting': false}"/>
+                                    <field name="average_price"/>
                                     <field name="country_text"/>
                                     <field name="customs_declaration_number"/>
                                     <field name="next_year_quota_kg" options="{'enable_formatting': false}"/>
@@ -290,7 +290,7 @@
                                     <field name="power_capacity" column_invisible="parent.is_capacity_merged_table_2_2"/>
                                     <field name="quantity" options="{'enable_formatting': false}"/>
                                     <field name="substance_id" options="{'no_create': True, 'no_quick_create': True}"/>
-                                    <field name="substance_quantity_per_unit" options="{'enable_formatting': false}"/>
+                                    <field name="substance_quantity_per_unit"/>
                                     <field name="notes"/>
                                     <field name="is_title" column_invisible="1"/>
                                     <field name="production_type" column_invisible="1"/>
@@ -389,7 +389,7 @@
         <field name="name">document.extraction.list</field>
         <field name="model">document.extraction</field>
         <field name="arch" type="xml">
-            <list string="Document Extractions">
+            <list create="0" string="Document Extractions">
                 <field name="name"/>
                 <field name="document_type"/>
                 <field name="organization_id"/>
@@ -431,7 +431,7 @@
                 <!-- Search Fields - Organization -->
                 <field name="organization_id"/>
                 <field name="organization_name"/>
-                <field name="business_license_number"/>
+                <field name="business_id"/>
                 <field name="business_license_place"/>
                 <field name="legal_representative_name"/>
                 <field name="legal_representative_position"/>

@@ -176,7 +176,7 @@ class DocumentExtraction(models.Model):
         string='Organization Name',
         help='Tên đầy đủ của tổ chức'
     )
-    business_license_number = fields.Char(
+    business_id = fields.Char(
         string='Business License Number'
     )
     business_license_date = fields.Date(
@@ -406,7 +406,7 @@ class DocumentExtraction(models.Model):
         if self.organization_id:
             partner = self.organization_id
             self.organization_name = partner.name
-            self.business_license_number = partner.business_license_number
+            self.business_id = partner.business_id
             self.business_license_date = partner.business_license_date
             self.business_license_place = partner.business_license_place
             self.legal_representative_name = partner.legal_representative_name
@@ -465,8 +465,8 @@ class DocumentExtraction(models.Model):
         3. Set OCR status based on source
 
         Logic:
-        - If organization_id empty but business_license_number exists:
-          - Search partner by business_license_number
+        - If organization_id empty but business_id exists:
+          - Search partner by business_id
           - If found → set organization_id
           - If not found → create new partner → set organization_id
         - If pdf_attachment_id exists, update it with the new res_id
@@ -483,10 +483,10 @@ class DocumentExtraction(models.Model):
             if vals.get('source') == 'from_user_upload' and 'ocr_status' not in vals:
                 vals['ocr_status'] = 'completed'
 
-            if not vals.get('organization_id') and vals.get('business_license_number'):
+            if not vals.get('organization_id') and vals.get('business_id'):
                 # Search existing partner by business license number
                 partner = self.env['res.partner'].search([
-                    ('business_license_number', '=', vals.get('business_license_number'))
+                    ('business_id', '=', vals.get('business_id'))
                 ], limit=1)
 
                 if partner:
@@ -496,7 +496,7 @@ class DocumentExtraction(models.Model):
                     # Partner not found → create new
                     partner_vals = {
                         'name': vals.get('organization_name') or 'Unknown Organization',
-                        'business_license_number': vals.get('business_license_number'),
+                        'business_id': vals.get('business_id'),
                         'business_license_date': vals.get('business_license_date'),
                         'business_license_place': vals.get('business_license_place'),
                         'legal_representative_name': vals.get('legal_representative_name'),
@@ -520,7 +520,7 @@ class DocumentExtraction(models.Model):
                         # Rollback and retry search
                         self.env.cr.rollback()
                         partner = self.env['res.partner'].search([
-                            ('business_license_number', '=', vals.get('business_license_number'))
+                            ('business_id', '=', vals.get('business_id'))
                         ], limit=1)
                         if partner:
                             vals['organization_id'] = partner.id
@@ -699,7 +699,7 @@ class DocumentExtraction(models.Model):
             'year_2': self.year_2,
             'year_3': self.year_3,
             'organization_name': self.organization_name,
-            'business_license_number': self.business_license_number,
+            'business_id': self.business_id,
             'business_license_date': str(self.business_license_date) if self.business_license_date else None,
             'business_license_place': self.business_license_place,
             'legal_representative_name': self.legal_representative_name,

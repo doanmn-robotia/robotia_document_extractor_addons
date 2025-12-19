@@ -5,12 +5,20 @@ import { rpc } from "@web/core/network/rpc";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
 import { _t } from "@web/core/l10n/translation";
+import { standardActionServiceProps } from "@web/webclient/actions/action_service";
 
 export class ExtractionPageSelector extends Component {
+
+    static props = {
+        ...standardActionServiceProps
+    }
+
     setup() {
         this.rpc = rpc;
         this.action = useService("action");
         this.notification = useService("notification");
+
+        this.bus = useService("bus_service")
 
         this.state = useState({
             fileName: "",
@@ -20,12 +28,16 @@ export class ExtractionPageSelector extends Component {
             base64File: null, // Store base64 of the PDF
             previewUrl: null, // URL to show in preview modal
             documentType: null, // Document type from upload screen
+            // PDF preview for progress_only mode
+            mergedPdfUrl: null, // URL for merged PDF preview during retry
             // Job polling state
             jobId: null,
+            jobUUID: null,
             jobState: null, // 'pending', 'processing', 'done', 'error'
             progress: 0,
             progressMessage: "",
             errorMessage: "",
+            currentStep: 'upload_validate', // Current step key for stepper UI
         });
 
         this.pollingInterval = null;
@@ -36,17 +48,52 @@ export class ExtractionPageSelector extends Component {
             }
         });
 
-        // Get file URL and documentType from action params
+        // Get params from action
         const params = this.props.action.params;
-        if (params && params.fileUrl) {
-            this.state.documentType = params.documentType || '01'; // Default to '01' if not provided
+        const mode = params?.mode;  // 'progress_only' or undefined
+
+        if (mode === 'progress_only') {
+            // Progress-only mode: No file processing, just show progress
+            this.state.documentType = params.document_type;
+            this.state.jobId = params.job_id;
+            this.state.jobUUID = params.job_uuid;
+            this.state.mergedPdfUrl = params.merged_pdf_url || null;  // PDF URL for preview
+            this.state.isProcessing = true;
+
+            // Initialize currentStep from retry_from_step (if provided)
+            // This makes progress stepper immediately highlight the retry step
+            if (params.retry_from_step) {
+                this.state.currentStep = params.retry_from_step;
+            }
+
+            // Subscribe to bus updates for real-time progress
+            this.bus.addEventListener('notification', ({ detail }) => {
+                if (detail[0][1] === this.state.jobUUID && detail[1] === 'update_progress') {
+                    this.update_progress(detail[2]);
+                }
+            });
+
+            // Start polling job status
+            this.startJobPolling();
+        } else if (params && params.fileUrl) {
+            // Normal mode: Process file and show page selector
+            this.state.documentType = params.documentType || '01';
             this.processInitialFile(params.fileUrl, params.fileName);
         } else {
-            // No file provided (e.g., page reload) - redirect to dashboard
+            // No params → redirect to dashboard
             this.action.doAction({
                 type: 'ir.actions.client',
                 tag: 'document_extractor.dashboard',
             });
+        }
+    }
+
+    update_progress(progress) {
+        this.state.progress = progress.progress
+        this.state.progressMessage = progress.message
+        // Update current step if provided
+        if (progress.step) {
+            this.state.currentStep = progress.step
         }
     }
 
@@ -136,6 +183,19 @@ export class ExtractionPageSelector extends Component {
         this.state.previewUrl = null;
     }
 
+    /**
+     * Get step configuration for progress stepper
+     */
+    getStepConfig() {
+        return [
+            { key: 'upload_validate', label: _t('Upload & Validate'), number: 1 },
+            { key: 'category_mapping', label: _t('Category Mapping'), number: 2 },
+            { key: 'llama_ocr', label: _t('Llama OCR'), number: 3 },
+            { key: 'ai_batch_processing', label: _t('AI Processing'), number: 4 },
+            { key: 'merge_validate', label: _t('Merge & Validate'), number: 5 },
+        ];
+    }
+
     selectAll() {
         this.state.selectedPages = new Set(
             this.state.pages.map(page => page.attachment_id)
@@ -172,6 +232,7 @@ export class ExtractionPageSelector extends Component {
             if (result.type === 'success') {
                 // Job created successfully - start polling
                 this.state.jobId = result.job_id;
+                this.state.jobUUID = result.uuid;
                 this.state.jobState = 'pending';
                 this.state.progress = 0;
                 this.state.progressMessage = _t("Job created, waiting to start...");
@@ -180,6 +241,13 @@ export class ExtractionPageSelector extends Component {
                     _t("Extraction job created. Processing..."),
                     { type: "success" }
                 );
+
+                this.props.updateActionState({
+                    job_id: result.uuid
+                })
+                
+                this.bus.addChannel(this.state.jobUUID)
+                this.bus.subscribe('update_progress', this.update_progress.bind(this))
 
                 // Start polling job status
                 this.startJobPolling();
@@ -223,8 +291,6 @@ export class ExtractionPageSelector extends Component {
 
             // Update state using queue_state
             this.state.jobState = job.queue_state;
-            this.state.progress = job.progress || 0;
-            this.state.progressMessage = job.progress_message || "";
             this.state.errorMessage = job.error_message || "";
 
             // Handle job completion based on queue_state
@@ -262,6 +328,7 @@ export class ExtractionPageSelector extends Component {
             // For 'pending', 'enqueued', 'started' states, keep polling
         } catch (error) {
             console.error("Error polling job status:", error);
+            this.bus.unsubscribe('update_progres', this.update_progress.bind(this))
         }
     }
 }

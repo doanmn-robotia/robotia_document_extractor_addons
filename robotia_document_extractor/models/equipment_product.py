@@ -84,9 +84,9 @@ class EquipmentProduct(models.Model):
         readonly=False,
         help='Substance name (auto-filled from substance_id)'
     )
-    substance_quantity_per_unit = fields.Float(
+    substance_quantity_per_unit = fields.Char(
         string='Substance Quantity per Unit',
-        digits=(16, 4)
+        help='Substance quantity per unit - supports both numeric and text values (e.g., "100", "10-15", "N/A")'
     )
     notes = fields.Text(
         string='Notes'
