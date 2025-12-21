@@ -83,7 +83,7 @@ class ExtractionController(http.Controller):
 
             # Convert to images
             ExtractionService = request.env['document.extraction.service'].sudo()
-            image_paths = ExtractionService._pdf_to_images(pdf_binary, "temp_upload.pdf")
+            image_paths = ExtractionService._pdf_to_images(pdf_binary)
 
             # Create attachments for each image
             Attachment = request.env['ir.attachment'].sudo()
