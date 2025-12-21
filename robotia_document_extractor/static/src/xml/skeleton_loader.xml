@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="robotia_document_extractor.ExtractionSkeleton">
+        <div class="o_extraction_skeleton h-100 d-flex flex-column">
+            <!-- Header Skeleton -->
+            <div class="o_control_panel d-flex justify-content-between align-items-center px-3 py-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="skeleton skeleton-title"></div>
+                </div>
+                <div class="d-flex gap-2">
+                    <div class="skeleton skeleton-button"></div>
+                    <div class="skeleton skeleton-button"></div>
+                </div>
+            </div>
+
+            <!-- Progress Stepper Skeleton (if enabled) -->
+            <t t-if="props.showStepper">
+                <div class="px-3 pb-3">
+                    <div class="skeleton-stepper-container">
+                        <div class="d-flex justify-content-center gap-4 mb-3">
+                            <t t-foreach="[1, 2, 3, 4, 5]" t-as="step" t-key="step_index">
+                                <div class="d-flex flex-column align-items-center gap-2">
+                                    <div class="skeleton skeleton-circle"></div>
+                                    <div class="skeleton skeleton-badge"></div>
+                                </div>
+                            </t>
+                        </div>
+                        <div class="d-flex justify-content-center">
+                            <div class="skeleton skeleton-text-lg"></div>
+                        </div>
+                    </div>
+                </div>
+            </t>
+
+            <!-- Content Skeleton - Match page-stack layout -->
+            <div class="flex-grow-1 px-3 pb-3">
+                <!-- Skeleton Pages (3 fake pages) -->
+                <div class="skeleton-pages-stack">
+                    <t t-foreach="[1, 2, 3]" t-as="page" t-key="page_index">
+                        <div class="skeleton-page-item">
+                            <!-- Skeleton Header -->
+                            <div class="skeleton-page-header">
+                                <div class="skeleton skeleton-page-number"></div>
+                                <div class="skeleton skeleton-checkbox"></div>
+                            </div>
+                            <!-- Skeleton Preview Area -->
+                            <div class="skeleton-page-preview">
+                                <div class="skeleton-page-image"></div>
+                            </div>
+                        </div>
+                    </t>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

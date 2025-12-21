@@ -15,11 +15,23 @@
                             class="btn-primary"
                             invisible="not id"
                             help="Re-analyze document with AI"/>
+                    <button name="action_toggle_ocr_panel"
+                            type="object"
+                            string="Toggle OCR"
+                            class="btn-secondary"
+                            icon="fa-eye"
+                            invisible="not raw_ocr_data"
+                            help="Show/Hide OCR panel"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,validated,completed" options="{'clickable': '1'}"/>
                 </header>
 
                 <field name="raw_ocr_data" invisible="1"/>
                 <field name="validation_result" invisible="1"/>
+
+                <!-- OCR Panel Container (will be extracted by FormCompiler) -->
+                <div class="o_ocr_panel" invisible="not raw_ocr_data">
+                    <widget name="raw_ocr_viewer"/>
+                </div>
 
                 <sheet>
                     <!-- Smart Buttons -->
@@ -372,9 +384,6 @@
                         <page name="json" string="Json" invisible="not extraction_log_json">
                             <field name="extraction_log_json" options="{'mode': 'python'}" widget="ace_copy"/>
                         </page>
-                        <page name="ocr_data" string="OCR Data" invisible="not raw_ocr_data">
-                            <widget name="raw_ocr_viewer"/>
-                        </page>
                         <page name="validation" string="Validation Result" invisible="not validation_result">
                             <field name="validation_result" options="{'mode': 'python'}" widget="ace_copy"/>
                         </page>
@@ -504,6 +513,13 @@
                 </group>
             </search>
         </field>
+    </record>
+
+    <record id="action_document_extraction_form" model="ir.actions.act_window">
+        <field name="name">Document</field>
+        <field name="res_model">document.extraction</field>
+        <field name="view_mode">form</field>
+        <field name="context">{'no_breadcrumbs': 1}</field>
     </record>
 
     <!-- Window Actions -->

@@ -780,10 +780,6 @@ class LlamaOCRService(models.AbstractModel):
         _logger.info(f"Starting LlamaSplit for {filename} (Type: {document_type})")
 
         try:
-            import requests
-            import tempfile
-            import os
-            import time
 
             # Get API key
             api_key = self._get_llama_api_key()

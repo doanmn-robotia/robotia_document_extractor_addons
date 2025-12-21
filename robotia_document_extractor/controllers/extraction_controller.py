@@ -198,8 +198,6 @@ class ExtractionController(http.Controller):
                 ).run_extraction_async()
                 
                 _logger.info(f"Created extraction job {job_record.name} (ID: {job_record.id})")
-                Attachment.browse(attachment_ids).unlink()
-                _logger.info(f"Cleaned up {len(attachment_ids)} temporary page attachments")
             except Exception as e:
                 _logger.warning(f"Could not cleanup temp attachments: {e}")
             
@@ -289,6 +287,7 @@ class ExtractionController(http.Controller):
                 # queue_state reflects job runner status
                 job_dict = {
                     'id': extraction_job.id,
+                    'queue_job_id': queue_job.id,  # Queue job ID for opening queue.job form
                     'name': extraction_job.name,
                     'document_type': extraction_job.document_type,
                     'extraction_state': extraction_job.state,  # NEW: Business logic state (primary)
@@ -296,7 +295,7 @@ class ExtractionController(http.Controller):
                     'current_step': extraction_job.current_step,  # NEW: Current step for progress stepper
                     'create_date': queue_job.date_created.isoformat() if queue_job.date_created else '',  # ISO format for timezone handling
                     'uuid': extraction_job.uuid,  # For bus subscription in progress-only mode
-                    'merged_pdf_url': extraction_job.extraction_log_id.merged_pdf_url if extraction_job.extraction_log_id else False,  # PDF preview URL
+                    'merged_pdf_url': f'/web/content/{extraction_job.attachment_id.id}',  # PDF preview URL
                 }
 
                 # Include progress based on extraction.job state (more accurate)

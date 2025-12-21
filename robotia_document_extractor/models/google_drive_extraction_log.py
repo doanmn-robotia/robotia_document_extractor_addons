@@ -108,10 +108,7 @@ class GoogleDriveExtractionLog(models.Model):
     def _compute_merged_pdf_url(self):
         """Generate public URL for merged PDF attachment"""
         for record in self:
-            if record.attachment_id and record.attachment_id.public:
-                record.merged_pdf_url = f'/web/content/{record.attachment_id.id}'
-            else:
-                record.merged_pdf_url = False
+            record.merged_pdf_url = f'/web/content/{record.attachment_id.id}'
 
     def _compute_display_name(self):
         for record in self:

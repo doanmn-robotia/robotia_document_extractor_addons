@@ -24,117 +24,138 @@
                         </t>
                     </div>
                 </div>
-                
-                <!-- Progress Stepper (when job is running) -->
-                <t t-if="state.isProcessing and state.jobId">
-                    <div class="alert alert-info mb-0 pb-2">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <strong><i class="fa fa-spinner fa-spin me-2"/>Extraction in Progress</strong>
-                            <span class="badge bg-primary"><t t-esc="state.progress"/>%</span>
-                        </div>
-
-                        <!-- Stepper -->
-                        <div class="extraction-stepper">
-                            <t t-set="steps" t-value="getStepConfig()"/>
-                            <t t-set="currentStepIndex" t-value="steps.findIndex(s => s.key === state.currentStep)"/>
-
-                            <t t-foreach="steps" t-as="step" t-key="step.key">
-                                <t t-set="stepIndex" t-value="step_index"/>
-                                <t t-set="isCompleted" t-value="stepIndex &lt; currentStepIndex"/>
-                                <t t-set="isActive" t-value="stepIndex === currentStepIndex"/>
-                                <t t-set="isPending" t-value="stepIndex &gt; currentStepIndex"/>
-
-                                <div class="stepper-item"
-                                     t-att-class="{
-                                         'completed': isCompleted,
-                                         'active': isActive,
-                                         'pending': isPending
-                                     }">
-                                    <div class="stepper-circle">
-                                        <t t-if="isCompleted">✓</t>
-                                        <t t-else=""><t t-esc="step.number"/></t>
-                                    </div>
-                                    <div class="stepper-label"><t t-esc="step.label"/></div>
-                                    <t t-if="stepIndex &lt; steps.length - 1">
-                                        <div class="stepper-line"></div>
-                                    </t>
-                                </div>
-                            </t>
-                        </div>
-
-                        <!-- Progress Message -->
-                        <div class="small text-muted mt-3 text-center">
-                            <t t-esc="state.progressMessage"/>
-                        </div>
-                    </div>
-                </t>
             </div>
 
             <!-- Content -->
             <div class="o_content flex-grow-1 overflow-auto p-4">
-                <!-- PDF Preview (progress_only mode with merged PDF) -->
-                <t t-if="state.isProcessing &amp;&amp; state.mergedPdfUrl &amp;&amp; state.pages.length === 0">
-                    <div class="border-top pt-3">
-                        <div class="card">
-                            <div class="card-header bg-light">
-                                <strong>File đang xử lý (Merged PDF)</strong>
+                <!-- 2/3-Column Layout: Thumbnails + Pages + Progress -->
+                <div class="extraction-layout-grid">
+
+                    <!-- Thumbnail Sidebar (Desktop only, mobile horizontal scroll) -->
+                    <t t-if="state.pages.length > 0">
+                        <div class="thumbnail-sidebar">
+                            <div class="thumbnail-list">
+                                <t t-foreach="state.pages" t-as="page" t-key="page.attachment_id">
+                                    <div class="thumbnail-item"
+                                         t-att-class="{
+                                             'thumbnail-active': state.activePageId === page.attachment_id,
+                                             'thumbnail-selected': state.selectedPages.has(page.attachment_id)
+                                         }"
+                                         t-att-data-thumbnail-id="page.attachment_id"
+                                         t-on-click="(ev) => this.onThumbnailClick(page, ev)">
+                                        <div class="thumbnail-preview">
+                                            <img t-att-src="page.url"
+                                                 t-att-alt="'Page ' + (page.page_num + 1)"
+                                                 loading="lazy"/>
+                                        </div>
+                                        <div class="thumbnail-label">
+                                            <t t-esc="page.page_num + 1"/>
+                                        </div>
+                                    </div>
+                                </t>
                             </div>
-                            <div class="card-body p-0">
+                        </div>
+                    </t>
+
+                    <!-- BLOCK 1: Page Selection (Center) -->
+                    <div class="page-selection-block">
+                        <!-- PDF Preview (progress_only mode with merged PDF) -->
+                        <t t-if="state.isProcessing &amp;&amp; state.mergedPdfUrl &amp;&amp; state.pages.length === 0">
+                            <div class="merged-pdf-container">
+                                <div class="pdf-header">
+                                    <strong>File đang xử lý</strong>
+                                </div>
                                 <iframe t-att-src="state.mergedPdfUrl"
-                                        style="width: 100%; height: 70vh; border: none;"
+                                        class="merged-pdf-iframe"
                                         title="Merged PDF Preview">
                                 </iframe>
                             </div>
-                        </div>
-                    </div>
-                </t>
+                        </t>
 
-                <!-- Processing Indicator (fallback when no PDF URL) -->
-                <t t-if="state.isProcessing &amp;&amp; !state.mergedPdfUrl &amp;&amp; state.pages.length === 0">
-                    <div class="d-flex flex-column align-items-center justify-content-center h-100 text-center">
-                        <div class="spinner-border text-primary mb-3" role="status"/>
-                        <p class="text-muted">Processing PDF...</p>
-                    </div>
-                </t>
+                        <!-- Processing Indicator (fallback when no PDF URL) -->
+                        <t t-if="state.isProcessing &amp;&amp; !state.mergedPdfUrl &amp;&amp; state.pages.length === 0">
+                            <ExtractionSkeleton showStepper="false"/>
+                        </t>
 
-                <!-- Page Selection Grid -->
-                <t t-if="state.pages.length > 0">
-                    <div class="row g-4">
-                        <t t-foreach="state.pages" t-as="page" t-key="page.attachment_id">
-                            <div class="col-6 col-md-4 col-lg-3 col-xl-2">
-                                <div class="card h-100 shadow-sm position-relative"
-                                     t-att-class="{
-                                         'border-info border-2': state.selectedPages.has(page.attachment_id),
-                                         'cursor-pointer': !state.isProcessing,
-                                         'opacity-75': state.isProcessing
-                                     }"
-                                     t-on-click="() => !state.isProcessing &amp;&amp; this.togglePage(page.attachment_id)"
-                                     t-on-dblclick="() => this.onPageDoubleClick(page)">
+                        <!-- Page Selection - Vertical Stack (like PDF viewer) -->
+                        <t t-if="state.pages.length > 0">
+                            <div class="pages-vertical-stack">
+                                <t t-foreach="state.pages" t-as="page" t-key="page.attachment_id">
+                                    <div class="page-stack-item"
+                                         t-att-class="{
+                                             'page-selected': state.selectedPages.has(page.attachment_id),
+                                             'page-disabled': state.isProcessing
+                                         }"
+                                         t-att-data-page-id="page.attachment_id"
+                                         t-on-click="() => !state.isProcessing &amp;&amp; this.togglePage(page.attachment_id)"
+                                         t-on-dblclick="() => this.onPageDoubleClick(page)">
 
-                                    <!-- Page Number & Checkbox (Centered) -->
-                                    <div class="card-header py-2 d-flex justify-content-between align-items-center">
-                                        <span class="small text-muted fw-bold">Page <t t-esc="page.page_num + 1"/></span>
-                                        <div class="form-check m-0">
-                                            <input class="form-check-input" type="checkbox"
-                                                   t-att-checked="state.selectedPages.has(page.attachment_id)"
-                                                   t-att-disabled="state.isProcessing"
-                                                   style="pointer-events: none;"/>
+                                        <!-- Page Header -->
+                                        <div class="page-stack-header">
+                                            <span class="page-number">Page <t t-esc="page.page_num + 1"/></span>
+                                            <div class="form-check m-0">
+                                                <input class="form-check-input" type="checkbox"
+                                                       t-att-checked="state.selectedPages.has(page.attachment_id)"
+                                                       t-att-disabled="state.isProcessing"
+                                                       style="pointer-events: none;"/>
+                                            </div>
+                                        </div>
+
+                                        <!-- Page Preview Image (Full Width) -->
+                                        <div class="page-stack-preview">
+                                            <img t-att-src="page.url"
+                                                 t-att-alt="'Page ' + (page.page_num + 1)"
+                                                 loading="lazy"/>
                                         </div>
                                     </div>
-
-                                    <!-- Image -->
-                                    <div class="card-body p-0 d-flex align-items-center justify-content-center bg-light" style="height: 250px; overflow: hidden;">
-                                        <img t-att-src="page.url"
-                                             t-att-alt="'Page ' + (page.page_num + 1)"
-                                             class="img-fluid"
-                                             style="max-height: 100%; object-fit: contain;"
-                                             loading="lazy"/>
-                                    </div>
-                                </div>
+                                </t>
                             </div>
                         </t>
                     </div>
-                </t>
+
+                    <!-- BLOCK 2: Progress Sidebar (Right / Top on mobile) -->
+                    <t t-if="state.isProcessing and state.jobUUID">
+                        <div class="progress-sidebar">
+                            <div class="progress-sidebar-content">
+                                <!-- Progress Header -->
+                                <div class="progress-header">
+                                    <h5 class="mb-0">Extraction Progress</h5>
+                                    <span class="badge bg-primary"><t t-esc="state.progress"/>%</span>
+                                </div>
+
+                                <!-- Vertical Stepper -->
+                                <div class="extraction-stepper-vertical">
+                                    <t t-set="steps" t-value="getStepConfig()"/>
+                                    <t t-set="currentStepIndex" t-value="steps.findIndex(s => s.key === state.currentStep)"/>
+
+                                    <t t-foreach="steps" t-as="step" t-key="step.key">
+                                        <t t-set="stepIndex" t-value="step_index"/>
+                                        <t t-set="isCompleted" t-value="stepIndex &lt; currentStepIndex"/>
+                                        <t t-set="isActive" t-value="stepIndex === currentStepIndex"/>
+                                        <t t-set="isPending" t-value="stepIndex &gt; currentStepIndex"/>
+
+                                        <div class="stepper-vertical-item"
+                                             t-att-class="{
+                                                 'completed': isCompleted,
+                                                 'active': isActive,
+                                                 'pending': isPending
+                                             }">
+                                            <div class="stepper-vertical-dot"></div>
+                                            <div class="stepper-vertical-content">
+                                                <div class="stepper-vertical-label"><t t-esc="step.label"/></div>
+                                            </div>
+                                        </div>
+                                    </t>
+                                </div>
+
+                                <!-- Progress Message -->
+                                <div class="progress-message">
+                                    <t t-esc="state.progressMessage"/>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </div>
             </div>
 
             <!-- Image Preview Modal -->

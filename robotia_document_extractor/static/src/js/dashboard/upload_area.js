@@ -122,12 +122,16 @@ export class UploadArea extends Component {
             await this.action.doAction({
                 type: 'ir.actions.client',
                 tag: 'robotia_document_extractor.page_selector',
-                target: 'inline',
+                target: 'main',
                 name: _t('Select pages'),
                 params: {
                     fileUrl: fileUrl,
                     fileName: file.name,
                     documentType: this.state.documentType
+                }
+            }, {
+                additionalContext: {
+                    'no_breadcrumbs': true
                 }
             });
 

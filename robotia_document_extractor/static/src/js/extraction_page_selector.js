@@ -1,16 +1,21 @@
 /** @odoo-module **/
 
-import { Component, useState, onWillUnmount } from "@odoo/owl";
+import { Component, useState, onWillUnmount, onMounted } from "@odoo/owl";
 import { rpc } from "@web/core/network/rpc";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
 import { _t } from "@web/core/l10n/translation";
 import { standardActionServiceProps } from "@web/webclient/actions/action_service";
+import { ExtractionSkeleton } from "./components/skeleton_loader";
 
 export class ExtractionPageSelector extends Component {
 
     static props = {
         ...standardActionServiceProps
+    }
+
+    static components = {
+        ExtractionSkeleton
     }
 
     setup() {
@@ -24,6 +29,7 @@ export class ExtractionPageSelector extends Component {
             fileName: "",
             pages: [], // Array of {attachment_id, url, page_num}
             selectedPages: new Set(), // Set of attachment IDs
+            activePageId: null, // Currently visible page (>50% in viewport)
             isProcessing: false,
             base64File: null, // Store base64 of the PDF
             previewUrl: null, // URL to show in preview modal
@@ -31,7 +37,6 @@ export class ExtractionPageSelector extends Component {
             // PDF preview for progress_only mode
             mergedPdfUrl: null, // URL for merged PDF preview during retry
             // Job polling state
-            jobId: null,
             jobUUID: null,
             jobState: null, // 'pending', 'processing', 'done', 'error'
             progress: 0,
@@ -41,40 +46,41 @@ export class ExtractionPageSelector extends Component {
         });
 
         this.pollingInterval = null;
+        this.intersectionObserver = null;
+        this.isProgrammaticScroll = false; // Flag to prevent scroll conflicts
+
+        onMounted(() => {
+            this.setupIntersectionObserver();
+        });
 
         onWillUnmount(() => {
             if (this.pollingInterval) {
                 clearInterval(this.pollingInterval);
             }
+            if (this.intersectionObserver) {
+                this.intersectionObserver.disconnect();
+            }
+            this.unsubscribe(this.state.jobUUID)
         });
 
         // Get params from action
         const params = this.props.action.params;
-        const mode = params?.mode;  // 'progress_only' or undefined
+        const job_id = params?.job_id; 
 
-        if (mode === 'progress_only') {
-            // Progress-only mode: No file processing, just show progress
-            this.state.documentType = params.document_type;
-            this.state.jobId = params.job_id;
-            this.state.jobUUID = params.job_uuid;
-            this.state.mergedPdfUrl = params.merged_pdf_url || null;  // PDF URL for preview
-            this.state.isProcessing = true;
+        if (job_id) {
+            this.state.isProcessing = true
+            this.state.jobUUID = job_id
 
-            // Initialize currentStep from retry_from_step (if provided)
-            // This makes progress stepper immediately highlight the retry step
             if (params.retry_from_step) {
-                this.state.currentStep = params.retry_from_step;
+                this.state.currentStep = params.retry_from_step
             }
 
-            // Subscribe to bus updates for real-time progress
-            this.bus.addEventListener('notification', ({ detail }) => {
-                if (detail[0][1] === this.state.jobUUID && detail[1] === 'update_progress') {
-                    this.update_progress(detail[2]);
-                }
-            });
+            if (params.progress) {
+                this.state.progress = params.progress
+            }
 
-            // Start polling job status
-            this.startJobPolling();
+            this.subscribe(job_id)
+            this.pollJobStatus()
         } else if (params && params.fileUrl) {
             // Normal mode: Process file and show page selector
             this.state.documentType = params.documentType || '01';
@@ -94,6 +100,13 @@ export class ExtractionPageSelector extends Component {
         // Update current step if provided
         if (progress.step) {
             this.state.currentStep = progress.step
+            this.props.updateActionState({
+                retry_from_step: progress.step
+            })
+        }
+
+        if (['merge_validate', 'completed'].includes(progress.step) && !this.pollingInterval) {
+            this.startJobPolling()
         }
     }
 
@@ -156,6 +169,9 @@ export class ExtractionPageSelector extends Component {
                 );
                 // Store original PDF base64 for extraction
                 this.state.base64File = base64File;
+
+                // Re-setup intersection observer for new pages
+                setTimeout(() => this.setupIntersectionObserver(), 200);
             } else {
                 this.notification.add(result.message || _t("Error converting PDF"), { type: "danger" });
             }
@@ -184,6 +200,121 @@ export class ExtractionPageSelector extends Component {
     }
 
     /**
+     * Thumbnail click handler
+     * - Normal click: Scroll to page only (no toggle)
+     * - Ctrl/Cmd+Click: Toggle selection only (multi-select)
+     */
+    onThumbnailClick(page, event) {
+        // Prevent default and stop propagation
+        event.preventDefault();
+        event.stopPropagation();
+
+        // Ctrl/Cmd+Click: Toggle selection (multi-select mode)
+        if (event.ctrlKey || event.metaKey) {
+            this.togglePage(page.attachment_id);
+            return;
+        }
+
+        // Normal click: Scroll to page + update active immediately
+        this.state.activePageId = page.attachment_id; // Update immediately for visual feedback
+        this.scrollToPage(page.attachment_id);
+    }
+
+    /**
+     * Scroll to page in main view
+     */
+    scrollToPage(attachmentId) {
+        const element = document.querySelector(`[data-page-id="${attachmentId}"]`);
+        if (element) {
+            // Set flag to prevent Intersection Observer from interfering
+            this.isProgrammaticScroll = true;
+
+            // Scroll to center of viewport
+            element.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+                inline: 'nearest'
+            });
+
+            // Clear flag after scroll completes (smooth scroll ~500ms)
+            setTimeout(() => {
+                this.isProgrammaticScroll = false;
+                // Manually update active page after scroll
+                this.state.activePageId = attachmentId;
+            }, 600);
+        }
+    }
+
+    /**
+     * Scroll thumbnail into view in sidebar
+     */
+    scrollThumbnailIntoView(attachmentId) {
+        const thumbnail = document.querySelector(`[data-thumbnail-id="${attachmentId}"]`);
+        if (thumbnail) {
+            thumbnail.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+                inline: 'center'
+            });
+        }
+    }
+
+    /**
+     * Setup Intersection Observer to auto-activate thumbnails
+     * Activates thumbnail for page closest to viewport center
+     */
+    setupIntersectionObserver() {
+        // Disconnect existing observer if any
+        if (this.intersectionObserver) {
+            this.intersectionObserver.disconnect();
+        }
+
+        // Create new observer
+        this.intersectionObserver = new IntersectionObserver((entries) => {
+            // Skip during programmatic scroll
+            if (this.isProgrammaticScroll) {
+                return;
+            }
+
+            // Find page closest to viewport center
+            const viewportCenterY = window.innerHeight / 2;
+            let closestDistance = Infinity;
+            let closestPageId = null;
+
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const rect = entry.target.getBoundingClientRect();
+                    const pageCenterY = rect.top + rect.height / 2;
+                    const distance = Math.abs(pageCenterY - viewportCenterY);
+
+                    if (distance < closestDistance) {
+                        closestDistance = distance;
+                        closestPageId = parseInt(entry.target.dataset.pageId);
+                    }
+                }
+            });
+
+            // Update active page to the one closest to center
+            if (closestPageId !== null && this.state.activePageId !== closestPageId) {
+                this.state.activePageId = closestPageId;
+                // Auto-scroll thumbnail into view
+                this.scrollThumbnailIntoView(closestPageId);
+            }
+        }, {
+            root: null, // Use viewport as root
+            rootMargin: '50px'
+        });
+
+        // Observe all page items
+        setTimeout(() => {
+            const pageElements = document.querySelectorAll('.page-stack-item[data-page-id]');
+            pageElements.forEach(el => {
+                this.intersectionObserver.observe(el);
+            });
+        }, 100); // Small delay to ensure DOM is ready
+    }
+
+    /**
      * Get step configuration for progress stepper
      */
     getStepConfig() {
@@ -204,6 +335,19 @@ export class ExtractionPageSelector extends Component {
 
     deselectAll() {
         this.state.selectedPages.clear();
+    }
+
+    subscribe(job_id) {
+        this.props.updateActionState({
+            job_id: job_id
+        })
+        this.bus.addChannel(job_id)
+        this.bus.subscribe('update_progress', this.update_progress.bind(this))
+    }
+
+    unsubscribe(job_id) {
+        this.bus.deleteChannel(job_id)
+        this.bus.unsubscribe('update_progress', this.update_progress.bind(this))
     }
 
     async onExtract() {
@@ -231,7 +375,6 @@ export class ExtractionPageSelector extends Component {
 
             if (result.type === 'success') {
                 // Job created successfully - start polling
-                this.state.jobId = result.job_id;
                 this.state.jobUUID = result.uuid;
                 this.state.jobState = 'pending';
                 this.state.progress = 0;
@@ -242,15 +385,7 @@ export class ExtractionPageSelector extends Component {
                     { type: "success" }
                 );
 
-                this.props.updateActionState({
-                    job_id: result.uuid
-                })
-                
-                this.bus.addChannel(this.state.jobUUID)
-                this.bus.subscribe('update_progress', this.update_progress.bind(this))
-
-                // Start polling job status
-                this.startJobPolling();
+                this.subscribe(result.uuid)
             } else if (result.type === 'error') {
                 // Error creating job
                 this.notification.add(
@@ -275,23 +410,24 @@ export class ExtractionPageSelector extends Component {
     }
 
     async pollJobStatus() {
-        if (!this.state.jobId) return;
+        if (!this.state.jobUUID) return;
 
         try {
             const response = await this.rpc("/robotia/get_my_extraction_jobs", {
                 offset: 0,
                 limit: 20  // Get recent jobs
             });
-            const job = response.jobs.find(j => j.id === this.state.jobId);
+            const job = response.jobs.find(j => j.uuid === this.state.jobUUID);
 
             if (!job) {
-                console.error("Job not found:", this.state.jobId);
+                console.error("Job not found:", this.state.jobUUID);
                 return;
             }
 
             // Update state using queue_state
             this.state.jobState = job.queue_state;
             this.state.errorMessage = job.error_message || "";
+            this.state.mergedPdfUrl = job.merged_pdf_url
 
             // Handle job completion based on queue_state
             if (job.queue_state === 'done') {
@@ -302,7 +438,18 @@ export class ExtractionPageSelector extends Component {
                 // Open the extraction form
                 if (job.result_action_json) {
                     const action = JSON.parse(job.result_action_json);
-                    await this.action.doAction(action);
+
+                    this.props.updateActionState({
+                        retry_from_step: null,
+                        job_id: null,
+                        progress: null
+                    })
+                    
+                    await this.action.doAction(action, {
+                        additionalContext: {
+                            'no_breadcrumbs': true
+                        }
+                    });
                 } else {
                     this.notification.add(_t("Extraction completed!"), { type: "success" });
                 }
