@@ -1,0 +1,299 @@
+// Skeleton loader styles for extraction page
+
+.o_extraction_skeleton {
+  background-color: #f8f9fa;
+
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      #e9ecef 0%,
+      #f8f9fa 50%,
+      #e9ecef 100%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.8s ease-in-out infinite;
+    border-radius: 8px;
+  }
+
+  .skeleton-title {
+    width: 250px;
+    height: 32px;
+    border-radius: 8px;
+  }
+
+  .skeleton-button {
+    width: 100px;
+    height: 36px;
+    border-radius: 8px;
+  }
+
+  .skeleton-text {
+    width: 200px;
+    height: 16px;
+    border-radius: 6px;
+  }
+
+  .skeleton-text-sm {
+    width: 150px;
+    height: 14px;
+    border-radius: 6px;
+  }
+
+  .skeleton-text-lg {
+    width: 300px;
+    height: 18px;
+    border-radius: 6px;
+  }
+
+  .skeleton-badge {
+    width: 80px;
+    height: 12px;
+    border-radius: 6px;
+  }
+
+  .skeleton-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+  }
+
+  .skeleton-checkbox {
+    width: 18px;
+    height: 18px;
+    border-radius: 3px;
+  }
+
+  .skeleton-page-number {
+    width: 80px;
+    height: 16px;
+    border-radius: 4px;
+  }
+
+  .skeleton-stepper-container {
+    background: linear-gradient(
+      90deg,
+      #e9ecef 0%,
+      #f8f9fa 50%,
+      #e9ecef 100%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.8s ease-in-out infinite;
+    padding: 1.5rem;
+    border-radius: 12px;
+  }
+}
+
+// ============================================
+// SKELETON PAGES STACK (Match page-stack-item)
+// ============================================
+
+.skeleton-pages-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.skeleton-page-item {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+  width: 100%;
+}
+
+.skeleton-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.skeleton-page-preview {
+  width: 100%;
+  background: #f1f3f5;
+  padding: 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.skeleton-page-image {
+  width: 100%;
+  aspect-ratio: 210 / 297; // A4 ratio
+  background: linear-gradient(
+    90deg,
+    #e9ecef 0%,
+    #f8f9fa 50%,
+    #e9ecef 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.8s ease-in-out infinite;
+  border-radius: 4px;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.6) 50%,
+      transparent 100%
+    );
+    animation: skeleton-wave 2s ease-in-out infinite;
+  }
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes skeleton-wave {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+@keyframes skeleton-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+// Extraction stepper styles (shared with main component)
+.extraction-stepper {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  position: relative;
+  margin: 0 auto;
+  max-width: 800px;
+
+  .stepper-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    position: relative;
+
+    .stepper-circle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: #e9ecef;
+      color: #6c757d;
+      font-weight: bold;
+      font-size: 14px;
+      z-index: 1;
+    }
+
+    .stepper-label {
+      margin-top: 8px;
+      font-size: 12px;
+      text-align: center;
+      color: #6c757d;
+      max-width: 100px;
+      line-height: 1.3;
+    }
+
+    .stepper-line {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      width: 100%;
+      height: 2px;
+      background-color: #e9ecef;
+      z-index: 0;
+    }
+
+    &.completed {
+      .stepper-circle {
+        background-color: #28a745;
+        color: white;
+      }
+      .stepper-label {
+        color: #28a745;
+        font-weight: 600;
+      }
+      .stepper-line {
+        background-color: #28a745;
+      }
+    }
+
+    &.active {
+      .stepper-circle {
+        background-color: #007bff;
+        color: white;
+        animation: pulse 1.5s ease-in-out infinite;
+      }
+      .stepper-label {
+        color: #007bff;
+        font-weight: 600;
+      }
+    }
+
+    &.pending {
+      .stepper-circle {
+        background-color: #e9ecef;
+        color: #adb5bd;
+      }
+      .stepper-label {
+        color: #adb5bd;
+      }
+    }
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(0, 123, 255, 0);
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .extraction-stepper {
+    .stepper-item {
+      .stepper-circle {
+        width: 32px;
+        height: 32px;
+        font-size: 12px;
+      }
+
+      .stepper-label {
+        font-size: 10px;
+        max-width: 80px;
+      }
+
+      .stepper-line {
+        top: 16px;
+      }
+    }
+  }
+}

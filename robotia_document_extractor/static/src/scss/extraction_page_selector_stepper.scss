@@ -1,3 +1,452 @@
+// ============================================
+// 2/3-COLUMN LAYOUT: Thumbnails + Pages + Progress
+// ============================================
+
+.extraction-layout-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+
+    // Mobile: Stack vertically (Progress → Thumbnails → Pages)
+    @media (max-width: 991px) {
+        grid-template-areas:
+            "progress"
+            "thumbnails"
+            "pages";
+    }
+
+    // Desktop: 3 columns when extracting (Thumbnails + Pages + Progress)
+    @media (min-width: 992px) {
+        &:has(.progress-sidebar) {
+            grid-template-columns: 120px 1fr 30%;
+            grid-template-areas: "thumbnails pages progress";
+        }
+
+        // 2 columns when NOT extracting (Thumbnails + Pages)
+        &:not(:has(.progress-sidebar)) {
+            grid-template-columns: 120px 1fr;
+            grid-template-areas: "thumbnails pages";
+
+            .page-selection-block {
+                max-width: 900px;
+                margin: 0 auto;
+                width: 100%;
+            }
+        }
+    }
+}
+
+.thumbnail-sidebar {
+    grid-area: thumbnails;
+}
+
+.page-selection-block {
+    grid-area: pages;
+    min-width: 0; // Prevents grid blowout
+}
+
+.progress-sidebar {
+    grid-area: progress;
+
+    @media (min-width: 992px) {
+        position: sticky;
+        top: 0; // Stick at top of viewport
+        align-self: start;
+        max-height: calc(100vh - 40px);
+        overflow-y: auto;
+    }
+}
+
+// ============================================
+// THUMBNAIL SIDEBAR
+// ============================================
+
+.thumbnail-sidebar {
+    @media (min-width: 992px) {
+        position: sticky;
+        top: 20px;
+        align-self: start;
+        max-height: calc(100vh - 100px);
+        overflow-y: auto;
+    }
+
+    // Mobile: Horizontal scroll
+    @media (max-width: 991px) {
+        overflow-x: auto;
+        overflow-y: hidden;
+    }
+}
+
+.thumbnail-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+
+    @media (max-width: 991px) {
+        flex-direction: row;
+        padding-bottom: 0.5rem;
+    }
+}
+
+.thumbnail-item {
+    width: 100px;
+    flex-shrink: 0;
+    cursor: pointer;
+    border: 2px solid transparent;
+    border-radius: 6px;
+    overflow: hidden;
+    transition: all 0.2s ease;
+    background: white;
+    position: relative;
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    // Active state (>50% visible in viewport)
+    &.thumbnail-active {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+    }
+
+    // Not selected → grayscale + X mark
+    &:not(.thumbnail-selected) {
+        filter: grayscale(100%);
+        opacity: 0.5;
+
+        &:hover {
+            opacity: 0.7;
+        }
+
+        // X mark overlay
+        &::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(45deg);
+            width: 2px;
+            height: 80%;
+            background: #dc2626;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        &::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            width: 2px;
+            height: 80%;
+            background: #dc2626;
+            z-index: 10;
+            pointer-events: none;
+        }
+    }
+}
+
+.thumbnail-preview {
+    width: 100%;
+    aspect-ratio: 1 / 1.4;
+    background: #f1f3f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+}
+
+.thumbnail-label {
+    padding: 0.25rem;
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #64748b;
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+}
+
+// ============================================
+// PAGE VERTICAL STACK (Like PDF Viewer)
+// ============================================
+
+.pages-vertical-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.page-stack-item {
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    scroll-margin: 20px; // Offset for scrollIntoView center
+    position: relative;
+
+    &.page-selected {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    // Not selected → grayscale + X mark
+    &:not(.page-selected) {
+        filter: grayscale(100%);
+        opacity: 0.6;
+
+        &:hover:not(.page-disabled) {
+            opacity: 0.8;
+        }
+
+        // X mark overlay on preview
+        .page-stack-preview::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(45deg);
+            width: 4px;
+            height: 60%;
+            background: #dc2626;
+            z-index: 10;
+            pointer-events: none;
+            box-shadow: 0 0 8px rgba(220, 38, 38, 0.5);
+        }
+
+        .page-stack-preview::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            width: 4px;
+            height: 60%;
+            background: #dc2626;
+            z-index: 10;
+            pointer-events: none;
+            box-shadow: 0 0 8px rgba(220, 38, 38, 0.5);
+        }
+    }
+
+    &.page-disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+
+    &:hover:not(.page-disabled) {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+}
+
+.page-stack-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+
+    .page-number {
+        font-weight: 600;
+        color: #475569;
+        font-size: 0.875rem;
+    }
+}
+
+.page-stack-preview {
+    width: 100%;
+    background: #f1f3f5;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+    position: relative; // For X mark overlay
+
+    img {
+        width: 100%;
+        height: auto;
+        max-width: 100%;
+        display: block;
+        border-radius: 4px;
+    }
+}
+
+// ============================================
+// MERGED PDF VIEWER
+// ============================================
+
+.merged-pdf-container {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.pdf-header {
+    padding: 1rem;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.merged-pdf-iframe {
+    width: 100%;
+    height: 70vh;
+    border: none;
+    display: block;
+}
+
+// ============================================
+// PROGRESS SIDEBAR
+// ============================================
+
+.progress-sidebar-content {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 1.5rem;
+}
+
+.progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #f1f5f9;
+
+    h5 {
+        color: #1e293b;
+        font-size: 1.125rem;
+        font-weight: 600;
+    }
+}
+
+// ============================================
+// VERTICAL STEPPER (Sidebar)
+// ============================================
+
+.extraction-stepper-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-bottom: 1.5rem;
+}
+
+.stepper-vertical-item {
+    display: flex;
+    gap: 1rem;
+    position: relative;
+    padding-bottom: 1.5rem;
+
+    &:last-child {
+        padding-bottom: 0;
+
+        &::before {
+            display: none;
+        }
+    }
+
+    // Vertical line connecting dots
+    &::before {
+        content: '';
+        position: absolute;
+        left: 8px;
+        top: 18px;
+        width: 2px;
+        height: calc(100% - 18px);
+        background: #e2e8f0;
+    }
+
+    // Completed state - green line
+    &.completed::before {
+        background: #28a745;
+    }
+}
+
+.stepper-vertical-dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    flex-shrink: 0;
+    margin-top: 2px;
+    z-index: 1;
+    transition: all 0.3s ease;
+}
+
+.stepper-vertical-content {
+    flex: 1;
+}
+
+.stepper-vertical-label {
+    font-size: 0.875rem;
+    color: #64748b;
+    line-height: 1.4;
+}
+
+// State variants
+.stepper-vertical-item.completed {
+    .stepper-vertical-dot {
+        background: #28a745;
+        box-shadow: 0 0 0 4px rgba(40, 167, 69, 0.1);
+    }
+
+    .stepper-vertical-label {
+        color: #28a745;
+        font-weight: 500;
+    }
+}
+
+.stepper-vertical-item.active {
+    .stepper-vertical-dot {
+        background: #2563eb;
+        animation: pulse-dot 1.5s ease-in-out infinite;
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2);
+    }
+
+    .stepper-vertical-label {
+        color: #2563eb;
+        font-weight: 600;
+    }
+}
+
+.stepper-vertical-item.pending {
+    .stepper-vertical-dot {
+        background: #f1f5f9;
+        border: 2px solid #e2e8f0;
+    }
+
+    .stepper-vertical-label {
+        color: #94a3b8;
+    }
+}
+
+.progress-message {
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    color: #64748b;
+    text-align: center;
+    line-height: 1.5;
+}
+
+// ============================================
+// HORIZONTAL STEPPER (Header - Keep for compatibility)
+// ============================================
+
 .extraction-stepper {
     display: flex;
     align-items: center;
@@ -79,7 +528,22 @@
     }
 }
 
+// ============================================
+// ANIMATIONS
+// ============================================
+
 @keyframes pulse {
     0%, 100% { transform: scale(1); }
     50% { transform: scale(1.1); }
+}
+
+@keyframes pulse-dot {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2);
+    }
+    50% {
+        transform: scale(1.15);
+        box-shadow: 0 0 0 8px rgba(37, 99, 235, 0.1);
+    }
 }

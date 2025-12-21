@@ -3,7 +3,6 @@
 import { Component, useState, onWillStart, onMounted, onWillUnmount } from "@odoo/owl";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
-import { ConfirmationDialog } from "@web/core/confirmation_dialog/confirmation_dialog";
 import { _t } from "@web/core/l10n/translation";
 import { UploadArea } from "./upload_area";
 import { StatisticsCard } from "./statistics_card";
@@ -33,11 +32,8 @@ export class Dashboard extends Component {
             jobs: [],  // Extraction jobs list
             jobsOffset: 0,  // Pagination offset
             jobsHasMore: false,  // Whether there are more jobs
+            subscribeCallbacks: {}
         });
-
-        // Track subscribed channels for cleanup
-        this.subscribedChannels = new Set();
-        this.busListener = null;
 
         onWillStart(async () => {
             await this.loadStatistics();
@@ -46,18 +42,62 @@ export class Dashboard extends Component {
         });
 
         onWillUnmount(() => {
-            // Cleanup bus subscriptions
-            if (this.busListener) {
-                this.bus.removeEventListener('notification', this.busListener);
-                this.busListener = null;
+            for(let job of this.state.jobs) {
+                this.ubsubscribe(job)
             }
-
-            // Remove all subscribed channels
-            for (const channel of this.subscribedChannels) {
-                this.bus.deleteChannel(channel);
-            }
-            this.subscribedChannels.clear();
         });
+    }
+
+    subscribe(job) {
+
+        if (!this.state.subscribeCallbacks[job.uuid]) {
+            this.bus.addChannel(job.uuid)
+            const updateProgress = (progress) => {
+                job.progress = progress.progress
+                job.progress_message = progress.message
+                job.current_step = progress.step
+            }
+            this.state.subscribeCallbacks[job.uuid] = updateProgress
+            this.bus.subscribe('update_progress', updateProgress)
+        }
+
+    }
+
+    getStepString(step) {
+        return {
+            upload_validate: {
+                message: _t('Uploaded'),
+                class: "badge bg-primary text-white"
+            },
+            category_mapping: {
+                message: _t('Categorizing'),
+                class: "badge bg-info text-white"
+            },
+            llama_ocr: {
+                message: _t('OCR'),
+                class: "badge bg-info text-white opacity-75"
+            },
+            ai_batch_processing: {
+                message: _t('AI processing'),
+                class: "badge bg-success text-white opacity-75"
+            },
+            merge_validate: {
+                message: _t('Validating'),
+                class: "badge bg-success text-white"
+            },
+            completed: {
+                message: _t('Complete'),
+                class: "badge bg-success text-white fw-bold"
+            },
+        }[step]
+    }
+
+    ubsubscribe(job) {
+        const cb = this.state.subscribeCallbacks[job.uuid]
+        if (cb) {
+            this.bus.deleteChannel(job.uuid)
+            this.bus.unsubscribe('update_progress', cb)
+        }
     }
 
     async loadStatistics() {
@@ -117,57 +157,9 @@ export class Dashboard extends Component {
             job.extraction_state === 'pending' ||
             job.queue_state === 'started'
         );
-
-        console.log(processingJobs);
-        
-
-        // Setup bus listener if not already done
-        if (!this.busListener) {
-            this.busListener = ({ detail }) => {
-                const [channels, messageType, payload] = detail;
-
-                if (messageType === 'update_progress') {
-                    // Find job by UUID in channels
-                    const jobIndex = this.state.jobs.findIndex(job => channels.includes(job.uuid));
-
-                    if (jobIndex !== -1) {
-                        // Update job progress in state
-                        // Backend sends: {progress: percent, message: str, step: str (optional)}
-                        const updatedJobs = [...this.state.jobs];
-                        updatedJobs[jobIndex] = {
-                            ...updatedJobs[jobIndex],
-                            progress: payload.progress || 0,
-                            progress_message: payload.message || '',
-                            current_step: payload.step || updatedJobs[jobIndex].current_step,
-                        };
-                        this.state.jobs = updatedJobs;
-
-                        // If progress reaches 100%, job likely completed
-                        // Reload jobs to get final state (done/error) and result_action_json
-                        if (payload.progress >= 100) {
-                            const jobUuid = updatedJobs[jobIndex].uuid;  // Save UUID before reload
-                            setTimeout(() => {
-                                this.loadJobs();
-                                // Unsubscribe after reload
-                                if (jobUuid && this.subscribedChannels.has(jobUuid)) {
-                                    this.bus.deleteChannel(jobUuid);
-                                    this.subscribedChannels.delete(jobUuid);
-                                }
-                            }, 1500);
-                        }
-                    }
-                }
-            };
-
-            this.bus.addEventListener('notification', this.busListener);
-        }
-
         // Subscribe to each processing job's UUID
         for (const job of processingJobs) {
-            if (job.uuid && !this.subscribedChannels.has(job.uuid)) {
-                this.bus.addChannel(job.uuid);
-                this.subscribedChannels.add(job.uuid);
-            }
+            this.subscribe(job)
         }
     }
 
@@ -208,7 +200,7 @@ export class Dashboard extends Component {
         // Case 3: Extraction processing → Open progress view
         // Check extraction_state='processing' (primary) OR queue_state='started' (fallback)
         if (job.extraction_state === 'processing' || job.queue_state === 'started') {
-            await this.openProgressView(job);
+            this.openProgressView(job)
             return;
         }
 
@@ -226,35 +218,17 @@ export class Dashboard extends Component {
         );
     }
 
-    showErrorDialog(job) {
-        // Format error message with job details
-        const errorBody = `
-            <div>
-                <p><strong>Job:</strong> ${job.name}</p>
-                <div class="alert alert-danger">
-                    <strong>Error Details:</strong>
-                    <pre style="white-space: pre-wrap; font-size: 0.9em; margin-top: 10px;">${job.error_message || 'Unknown extraction error'}</pre>
-                </div>
-            </div>
-        `;
-
-        this.dialog.add(ConfirmationDialog, {
-            title: _t('Extraction Failed'),
-            body: errorBody,
-            confirmLabel: _t('View Job Details'),
-            cancelLabel: _t('Close'),
-            confirm: async () => {
-                // Open extraction.job form view
-                await this.action.doAction({
-                    type: 'ir.actions.act_window',
-                    res_model: 'extraction.job',
-                    res_id: job.id,
-                    views: [[false, 'form']],
-                    target: 'current',
-                });
-            },
-            cancel: () => {
-                // Just close dialog (no action needed)
+    async showErrorDialog(job) {
+        // Open queue.job form in dialog/popup mode using custom extraction dialog form
+        // This form shows: Last Step + Error + Action Buttons (Requeue, Set to Done, Cancel)
+        await this.action.doAction({
+            type: 'ir.actions.act_window',
+            res_model: 'queue.job',
+            res_id: job.queue_job_id,
+            views: [[false, 'form']],
+            target: 'new',  // Open in dialog/popup
+            context: {
+                'form_view_ref': 'robotia_document_extractor.view_queue_job_extraction_dialog_form'
             }
         });
     }
@@ -265,12 +239,11 @@ export class Dashboard extends Component {
             type: 'ir.actions.client',
             tag: 'robotia_document_extractor.page_selector',
             params: {
-                mode: 'progress_only',
-                job_id: job.id,
-                job_uuid: job.uuid,
+                job_id: job.uuid,
                 document_type: job.document_type,
                 merged_pdf_url: job.merged_pdf_url || null,  // PDF preview URL
                 retry_from_step: job.current_step || null,  // Initialize progress stepper at current step
+                progress: job.progress
             },
             target: 'current',
         });

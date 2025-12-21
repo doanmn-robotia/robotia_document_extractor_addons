@@ -14,6 +14,9 @@ from . import collection_location
 from . import res_partner
 from . import res_users
 
+# Queue Job Extensions
+from . import queue_job_inherit
+
 # Document Extraction
 from . import document_extraction
 from . import substance_usage

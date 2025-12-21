@@ -344,6 +344,7 @@ Giữ cấu trúc bảng với các phần con. Không bỏ sót dữ liệu.
 
         new_env = None
         uploaded_file = None
+        llama_json = None
 
         try:
             # Create separate cursor for bus.bus notifications only
@@ -404,8 +405,7 @@ Giữ cấu trúc bảng với các phần con. Không bỏ sót dữ liệu.
             if log_id:
                 try:
                     # Check if llama_json exists (from Step 3)
-                    if job and job.llama_ocr_json:
-                        llama_json = json.loads(job.llama_ocr_json)
+                    if llama_json:
                         ocr_log_result = self.indexing_pages_in_ocr_response(llama_json)
                         log_id.write({
                             "ocr_response_json": json.dumps(ocr_log_result, ensure_ascii=False, indent=2)

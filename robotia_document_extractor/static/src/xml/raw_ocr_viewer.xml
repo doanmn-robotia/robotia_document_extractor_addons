@@ -51,7 +51,7 @@
                                                 <div class="item-preview">
                                                     <!-- Show markdown for tables, plain text for others -->
                                                     <t t-if="item.type === 'table' and state.markedLoaded">
-                                                        <div class="markdown-preview" t-raw="renderMarkdown(item.md || item.value)"/>
+                                                        <div class="markdown-preview" t-out="renderMarkdown(item.md || item.value)"/>
                                                     </t>
                                                     <t t-else="">
                                                         <span t-esc="getItemPreview(item)"/>

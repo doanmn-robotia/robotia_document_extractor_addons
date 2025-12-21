@@ -15,7 +15,6 @@ class GoogleDriveConfigWizard(models.TransientModel):
 
     service_account_file = fields.Binary(
         string='Service Account JSON File',
-        required=True,
         help='Upload the JSON key file downloaded from Google Cloud Console'
     )
 

@@ -272,12 +272,29 @@
         }
     }
 
+    // ====== Recent Blocks Grid ======
+    .recent-blocks-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+
+        @media (min-width: 992px) {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .recent-block {
+            min-width: 0; // Prevents grid blowout
+            width: 100%;
+        }
+    }
+
     // ====== Recent Extractions ======
     .recent-extractions-container {
         background: white;
         border-radius: 0.75rem;
         padding: 1.5rem;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        height: 100%; // Match sibling height
 
         .section-header {
             margin-bottom: 1.5rem;

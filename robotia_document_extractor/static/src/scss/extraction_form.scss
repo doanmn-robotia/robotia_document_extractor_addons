@@ -21,7 +21,37 @@
             flex-direction: row;
         }
 
-        // Form sheet container (left side on desktop, top on mobile)
+        // OCR panel (1st column - left side on desktop)
+        > .o_ocr_panel,
+        > .o-ocr-container {
+            min-width: 0;
+            overflow-y: auto;
+            overflow-x: hidden;
+            background-color: #f8fafc;
+            padding: 0;
+
+            @media (max-width: 991px) {
+                width: 100%;
+                height: auto;
+                min-height: 300px;
+                max-height: 500px;
+                border-bottom: 1px solid #e2e8f0;
+            }
+
+            @media (min-width: 992px) {
+                height: 100%;
+                border-right: 1px solid #e2e8f0;
+            }
+
+            // OCR viewer should fill panel
+            .o_raw_ocr_viewer {
+                height: 100%;
+                border: none;
+                border-radius: 0;
+            }
+        }
+
+        // Form sheet container (2nd column - middle on desktop, top on mobile)
         >.o_form_sheet_bg {
             min-width: 0; // Allow shrinking below content size
             overflow-y: auto;
@@ -177,6 +207,7 @@
 // PDF Viewer Widget Enhancements
 .o_pdf_preview_content {
     height: 100%;
+    position: relative; // Required for OCR highlight overlay positioning
 }
 
 .o_field_pdf_viewer {

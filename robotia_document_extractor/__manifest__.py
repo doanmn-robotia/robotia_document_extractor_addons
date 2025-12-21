@@ -23,6 +23,7 @@
         'views/master_data_views.xml',
         'views/google_drive_extraction_log_views.xml',
         'views/extraction_job_views.xml',
+        'views/queue_job_extraction_views.xml',
         'views/res_config_settings_views.xml',
         'views/res_config_settings_document_only.xml',
         'views/menus.xml',

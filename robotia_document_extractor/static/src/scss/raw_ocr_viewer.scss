@@ -2,7 +2,7 @@
 
 .o_raw_ocr_viewer {
     display: block;
-    height: 700px;
+    height: 100%; // Changed from 700px to 100% to fill parent container
     border: 1px solid #dee2e6;
     border-radius: 4px;
     overflow: hidden;

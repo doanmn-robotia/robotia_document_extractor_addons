@@ -1,6 +1,6 @@
 /** @odoo-module **/
 
-import { Component, useState, useRef, onMounted } from "@odoo/owl";
+import { Component, useState, useRef, onMounted, markup } from "@odoo/owl";
 import { registry } from "@web/core/registry";
 import { standardWidgetProps } from "@web/views/widgets/standard_widget_props";
 import { useService } from "@web/core/utils/hooks";
@@ -102,9 +102,50 @@ export class RawOCRViewer extends Component {
 
     /**
      * Get PDF container from external viewer
+     * IMPORTANT: Must find container in PDF panel (right side), NOT in OCR panel (left side)
      */
     getPDFContainer() {
-        return document.querySelector('.o_pdf_preview_content');
+        // Find PDF panel specifically (using multiple selectors for safety)
+        // The PDF panel should be the 3rd child in the form renderer (OCR | Form | PDF)
+        const formRenderer = document.querySelector('.o_form_renderer');
+        if (!formRenderer) {
+            console.error('❌ Form renderer not found');
+            return null;
+        }
+
+        // Find all direct children
+        const children = formRenderer.children;
+        console.log('🔍 Form renderer children:', children.length);
+
+        // Look for PDF panel (should be last child, or one with .o_pdf_preview class)
+        let pdfPanel = null;
+        for (let i = 0; i < children.length; i++) {
+            const child = children[i];
+            console.log(`🔍 Child ${i}:`, child.className);
+
+            if (child.classList.contains('o_pdf_preview') ||
+                child.classList.contains('o-pdf-container')) {
+                pdfPanel = child;
+                console.log('✅ Found PDF panel:', child.className);
+                break;
+            }
+        }
+
+        if (!pdfPanel) {
+            console.error('❌ PDF panel not found in form renderer children');
+            return null;
+        }
+
+        // Find content container within PDF panel
+        const container = pdfPanel.querySelector('.o_pdf_preview_content');
+        if (!container) {
+            console.error('❌ .o_pdf_preview_content not found in PDF panel');
+            console.log('🔍 PDF panel innerHTML:', pdfPanel.innerHTML.substring(0, 300));
+            return null;
+        }
+
+        console.log('✅ PDF container found:', container);
+        return container;
     }
 
     /**
@@ -112,8 +153,18 @@ export class RawOCRViewer extends Component {
      */
     getPDFIframe() {
         const container = this.getPDFContainer();
-        if (!container) return null;
-        return container.querySelector('iframe');
+        if (!container) {
+            console.warn('Cannot get iframe: container not found');
+            return null;
+        }
+
+        const iframe = container.querySelector('iframe');
+        if (!iframe) {
+            console.warn('iframe not found in container');
+            console.log('Container innerHTML:', container.innerHTML.substring(0, 200));
+        }
+
+        return iframe;
     }
 
     /**
@@ -124,29 +175,50 @@ export class RawOCRViewer extends Component {
             return null;
         }
 
+        // Get current page data (contains actual PDF dimensions)
         const page = this.currentPage;
-        if (!page) return null;
+        if (!page || !page.width || !page.height) {
+            console.warn('Page dimensions not found in OCR data');
+            return null;
+        }
 
         const bbox = this.state.selectedItem.bBox;
-        const pdfWidth = page.width;
-        const pdfHeight = page.height;
+
+        // OCR data dimensions (actual PDF page size in pixels)
+        const pdfPageWidth = page.width;
+        const pdfPageHeight = page.height;
 
         // Find external PDF container
         const container = this.getPDFContainer();
         if (!container) return null;
 
-        const iframeWidth = container.offsetWidth;
-        const iframeHeight = container.offsetHeight;
+        // Get iframe element and its rendered dimensions
+        const iframe = this.getPDFIframe();
+        if (!iframe) return null;
 
-        // Calculate scale
-        const scaleX = iframeWidth / pdfWidth;
-        const scaleY = iframeHeight / pdfHeight;
+        const iframeRect = iframe.getBoundingClientRect();
+        const iframeWidth = iframeRect.width;
+        const iframeHeight = iframeRect.height;
+
+        // Calculate scale ratios for both dimensions
+        const scaleX = iframeWidth / pdfPageWidth;
+        const scaleY = iframeHeight / pdfPageHeight;
+
+        // Use uniform scale (smaller value) to maintain aspect ratio
+        // PDF viewers use "fit to page" which preserves aspect ratio
+        const scale = Math.min(scaleX, scaleY);
+
+        // Calculate centering offsets (when aspect ratios don't match)
+        const scaledPageWidth = pdfPageWidth * scale;
+        const scaledPageHeight = pdfPageHeight * scale;
+        const offsetX = (iframeWidth - scaledPageWidth) / 2;
+        const offsetY = (iframeHeight - scaledPageHeight) / 2;
 
         return {
-            x: bbox.x * scaleX,
-            y: bbox.y * scaleY,
-            w: bbox.w * scaleX,
-            h: bbox.h * scaleY
+            x: (bbox.x * scale) + offsetX,
+            y: (bbox.y * scale) + offsetY,
+            w: bbox.w * scale,
+            h: bbox.h * scale
         };
     }
 
@@ -157,8 +229,62 @@ export class RawOCRViewer extends Component {
         this.state.selectedPage = pageIndex;
         this.state.selectedItem = item;
 
-        // Create or update overlay on external PDF
-        this.updateExternalOverlay();
+        // Ensure PDF tab is active before highlighting
+        this.activatePDFTab();
+
+        // Wait a bit for tab switch, then highlight
+        setTimeout(() => {
+            this.updateExternalOverlay();
+        }, 100);
+    }
+
+    /**
+     * Activate PDF tab in notebook (if not already active)
+     */
+    activatePDFTab() {
+        // Find PDF preview panel
+        const pdfPanel = document.querySelector('.o_pdf_preview, .o-pdf-container');
+        if (!pdfPanel) {
+            console.warn('⚠️ PDF panel not found');
+            return;
+        }
+
+        // Find all nav links in the notebook
+        const navLinks = pdfPanel.querySelectorAll('.nav-link');
+        console.log('🔍 Found nav links:', navLinks.length);
+
+        // Find the PDF tab (first tab, or one containing "PDF")
+        let pdfTab = null;
+        for (const link of navLinks) {
+            const text = link.textContent.trim();
+            console.log('🔍 Tab text:', text);
+
+            // Match "PDF Document Preview" or similar
+            if (text.includes('PDF') || text.includes('Document')) {
+                pdfTab = link;
+                break;
+            }
+        }
+
+        // Fallback: use first tab
+        if (!pdfTab && navLinks.length > 0) {
+            pdfTab = navLinks[0];
+        }
+
+        if (!pdfTab) {
+            console.warn('⚠️ PDF tab not found in notebook');
+            return;
+        }
+
+        console.log('✅ PDF tab found:', pdfTab.textContent.trim());
+
+        // Click tab if not active
+        if (!pdfTab.classList.contains('active')) {
+            console.log('🔄 Switching to PDF tab...');
+            pdfTab.click();
+        } else {
+            console.log('ℹ️ PDF tab already active');
+        }
     }
 
     /**
@@ -167,20 +293,100 @@ export class RawOCRViewer extends Component {
     updateExternalOverlay() {
         const container = this.getPDFContainer();
         if (!container) {
-            console.warn('PDF preview container (.o_pdf_preview_content) not found');
+            console.error('❌ PDF preview container (.o_pdf_preview_content) not found!');
+            console.log('🔍 Available containers:', document.querySelectorAll('.o_pdf_preview'));
             return;
         }
 
-        // Remove existing overlay
-        const existingOverlay = container.querySelector('.ocr-bbox-overlay');
-        if (existingOverlay) {
-            existingOverlay.remove();
+        console.log('✅ PDF container found:', container);
+
+        // Try to find iframe and textLayer (PDF.js viewer)
+        const iframe = this.getPDFIframe();
+        let overlayTarget = container;
+        let useTextLayer = false;
+
+        if (iframe) {
+            try {
+                // Access iframe content document
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                const textLayer = iframeDoc.querySelector('.textLayer');
+
+                if (textLayer) {
+                    console.log('✅ Found .textLayer in iframe, will use it for overlay');
+                    overlayTarget = textLayer;
+                    useTextLayer = true;
+                } else {
+                    console.log('⚠️ .textLayer not found in iframe, using container instead');
+                }
+            } catch (e) {
+                console.warn('⚠️ Cannot access iframe content (CORS?):', e.message);
+            }
+        }
+
+        // Remove existing overlay from both possible locations
+        const existingInContainer = container.querySelector('.ocr-bbox-overlay');
+        if (existingInContainer) {
+            existingInContainer.remove();
+        }
+
+        if (useTextLayer) {
+            const existingInTextLayer = overlayTarget.querySelector('.ocr-bbox-overlay');
+            if (existingInTextLayer) {
+                existingInTextLayer.remove();
+            }
         }
 
         // If no item selected, just remove overlay
-        if (!this.state.selectedItem || !this.scaledBox) {
+        if (!this.state.selectedItem) {
+            console.log('ℹ️ No item selected, overlay cleared');
             return;
         }
+
+        const scaledBox = this.scaledBox;
+        if (!scaledBox) {
+            console.error('❌ Failed to calculate scaled bounding box');
+            console.log('🔍 Current page:', this.currentPage);
+            console.log('🔍 Selected item bbox:', this.state.selectedItem.bBox);
+            return;
+        }
+
+        console.log('✅ Scaled box calculated:', scaledBox);
+
+        // Calculate padding/border offset if using container (not textLayer)
+        let offsetX = 0;
+        let offsetY = 0;
+
+        if (!useTextLayer) {
+            // IMPORTANT: Ensure container has position: relative for absolute positioning
+            const computedStyle = window.getComputedStyle(container);
+            const currentPosition = computedStyle.position;
+            console.log('🔍 Container current position:', currentPosition);
+
+            if (currentPosition === 'static') {
+                console.log('⚠️ Container has position: static, setting to relative');
+                container.style.position = 'relative';
+            }
+
+            // Calculate padding offset
+            const paddingLeft = parseFloat(computedStyle.paddingLeft) || 0;
+            const paddingTop = parseFloat(computedStyle.paddingTop) || 0;
+            const borderLeft = parseFloat(computedStyle.borderLeftWidth) || 0;
+            const borderTop = parseFloat(computedStyle.borderTopWidth) || 0;
+
+            offsetX = paddingLeft + borderLeft;
+            offsetY = paddingTop + borderTop;
+
+            console.log('🔍 Container offsets:', { paddingLeft, paddingTop, borderLeft, borderTop, offsetX, offsetY });
+        }
+
+        // Log container dimensions and position
+        const containerRect = overlayTarget.getBoundingClientRect();
+        console.log('🔍 Overlay target rect:', {
+            top: containerRect.top,
+            left: containerRect.left,
+            width: containerRect.width,
+            height: containerRect.height
+        });
 
         // Create SVG overlay
         const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -193,11 +399,11 @@ export class RawOCRViewer extends Component {
         svg.style.pointerEvents = 'none';
         svg.style.zIndex = '1000';
 
-        // Create rectangle
+        // Create rectangle with offset adjustments
         const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
         const box = this.scaledBox;
-        rect.setAttribute('x', box.x);
-        rect.setAttribute('y', box.y);
+        rect.setAttribute('x', box.x + offsetX);
+        rect.setAttribute('y', box.y + offsetY);
         rect.setAttribute('width', box.w);
         rect.setAttribute('height', box.h);
         rect.setAttribute('fill', 'rgba(255, 193, 7, 0.25)');
@@ -206,7 +412,9 @@ export class RawOCRViewer extends Component {
         rect.style.animation = 'pulse-highlight 1.5s ease-in-out infinite';
 
         svg.appendChild(rect);
-        container.appendChild(svg);
+        overlayTarget.appendChild(svg);
+
+        console.log(`✅ SVG overlay appended to ${useTextLayer ? 'textLayer' : 'container'}`);
     }
 
     /**
@@ -250,23 +458,33 @@ export class RawOCRViewer extends Component {
     }
 
     /**
-     * Render markdown content to HTML
+     * Render markdown content to HTML using markup() for safe rendering
+     * Returns markup object (not string) for use with t-out directive
      */
     renderMarkdown(mdContent) {
         if (!mdContent) {
-            return '';
+            return markup('');
         }
 
         if (!this.state.markedLoaded || !window.marked) {
-            // Return plain text in pre tag if marked not loaded yet
-            return `<pre>${mdContent}</pre>`;
+            // Fallback: return escaped plain text in pre tag
+            const escaped = mdContent
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+            return markup(`<pre>${escaped}</pre>`);
         }
 
         try {
-            return window.marked.parse(mdContent);
+            const html = window.marked.parse(mdContent);
+            return markup(html); // Wrap HTML in markup() for safe rendering
         } catch (e) {
             console.error("Failed to render markdown:", e);
-            return `<pre>${mdContent}</pre>`;
+            const escaped = mdContent
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+            return markup(`<pre>${escaped}</pre>`);
         }
     }
 }

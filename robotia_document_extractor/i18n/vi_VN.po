@@ -3840,6 +3840,11 @@ msgstr "Kiểm tra lại với AI"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_form
+msgid "Toggle OCR"
+msgstr "Đóng/mở tab OCR"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_form
 msgid "Re-analyze document with AI"
 msgstr "Kiểm tra dữ liệu hiện tại với PDF bằng AI"
 
@@ -6038,3 +6043,1641 @@ msgstr "Trích xuất hoàn tất!"
 #: code:addons/robotia_document_extractor/static/src/js/extraction_page_selector.js:0
 msgid "Extraction failed"
 msgstr "Trích xuất thất bại"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_queue_job__extraction_last_step
+msgid "Last Step"
+msgstr "Bước cuối cùng"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_queue_job__extraction_last_step
+msgid "Last step reached in extraction process"
+msgstr "Bước cuối cùng đạt được trong quá trình trích xuất"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_extraction_job__last_completed_step
+msgid "Last successfully completed step for retry logic"
+msgstr "Bước hoàn thành cuối cùng để thực hiện thử lại"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_res_config_settings__gemini_top_k
+msgid ""
+"Limits vocabulary to top K tokens. 0 = No limit (recommended for precision)."
+" 40 = Only consider 40 most likely tokens. Set to 0 for maximum accuracy "
+"with rare/specialized terms. Default: 0 (no limit)"
+msgstr ""
+"Giới hạn từ vựng cho K tokens hàng đầu. 0 = Không giới hạn (khuyến nghị để "
+"có độ chính xác cao). 40 = Chỉ xem xét 40 tokens có khả năng cao nhất. Đặt "
+"thành 0 để đạt độ chính xác tối đa với các thuật ngữ hiếm/chuyên môn. Mặc "
+"định: 0 (không giới hạn)"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
+msgid ""
+"Limits vocabulary to top K tokens. 0 = no limit (recommended for precision)."
+msgstr ""
+"Giới hạn từ vựng cho K tokens hàng đầu. 0 = không giới hạn (khuyến nghị để "
+"có độ chính xác cao)."
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_equipment_product__hs_code_id
+msgid "Link to HS code master data"
+msgstr "Liên kết đến dữ liệu chính mã HS"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_collection_recycling__substance_id
+#: model:ir.model.fields,help:robotia_document_extractor.field_equipment_ownership__substance_id
+#: model:ir.model.fields,help:robotia_document_extractor.field_equipment_product__substance_id
+#: model:ir.model.fields,help:robotia_document_extractor.field_substance_usage__substance_id
+msgid "Link to controlled substance master data"
+msgstr "Liên kết đến dữ liệu chính chất kiểm soát"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_equipment_ownership__equipment_type_id
+#: model:ir.model.fields,help:robotia_document_extractor.field_equipment_product__equipment_type_id
+msgid "Link to equipment type master data"
+msgstr "Liên kết đến dữ liệu chính loại thiết bị"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_extraction_job__extraction_id
+msgid "Link to the created document.extraction record"
+msgstr "Liên kết đến bản ghi trích xuất tài liệu đã tạo"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/extraction_page_selector.js:0
+msgid "Llama OCR"
+msgstr "Llama OCR"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_extraction_job__llama_ocr_json
+msgid "Llama OCR Result"
+msgstr "Kết quả Llama OCR"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_res_config_settings__llama_cloud_api_key
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "LlamaCloud API Key"
+msgstr "Khóa API LlamaCloud"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "LlamaCloud Console"
+msgstr "Bảng điều khiển LlamaCloud"
+
+#. module: robotia_document_extractor
+#: model:ir.model,name:robotia_document_extractor.model_document_llama_ocr_service
+msgid "LlamaIndex OCR Service"
+msgstr "Dịch vụ LlamaIndex OCR"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__res_config_settings__extraction_strategy__llama_split
+msgid "LlamaSplit Extract (Split by category + Llama OCR + Gemini)"
+msgstr "Trích xuất LlamaSplit (Tách theo danh mục + Llama OCR + Gemini)"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/ai_tab.xml:0
+#: code:addons/robotia_document_extractor/static/src/xml/settings_dashboard.xml:0
+msgid "Loading..."
+msgstr "Đang tải..."
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/extraction_page_selector.js:0
+msgid "Merge & Validate"
+msgstr "Hợp nhất & Xác thực"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/extraction_page_selector.xml:0
+msgid "Merged PDF Preview"
+msgstr "Xem trước PDF đã hợp nhất"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_google_drive_extraction_log__merged_pdf_url
+msgid "Merged PDF URL"
+msgstr "URL PDF đã hợp nhất"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/models/extraction_service_llama.py:0
+msgid "Merging and validating..."
+msgstr "Đang hợp nhất và xác thực..."
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_chatbot_conversation__message_count
+msgid "Message Count"
+msgstr "Số tin nhắn"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_chatbot_conversation__message_ids
+msgid "Messages"
+msgstr "Tin nhắn"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/hfc_dashboard.xml:0
+msgid "Min"
+msgstr "Tối thiểu"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_equipment_type__min_capacity
+msgid "Minimum cooling/heating capacity in kW"
+msgstr "Công suất làm lạnh/sưởi tối thiểu tính bằng kW"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_collection_location__name
+msgid "Name of collection or storage location"
+msgstr "Tên địa điểm thu gom hoặc lưu trữ"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_recycling_facility__name
+msgid "Name of recycling/disposal facility"
+msgstr "Tên cơ sở tái chế/xử lý"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_substance_group__name
+msgid "Name of substance group (e.g., HFC, HCFC, CFC)"
+msgstr "Tên nhóm chất (ví dụ: HFC, HCFC, CFC)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_document_extraction__needs_review
+msgid "Needs Manual Review"
+msgstr "Cần kiểm tra thủ công"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/models/extraction_job.py:0
+msgid "New"
+msgstr "Mới"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.actions.act_window,help:robotia_document_extractor.action_extraction_job
+msgid "No extraction jobs yet"
+msgstr "Chưa có công việc trích xuất nào"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/raw_ocr_viewer.xml:0
+msgid "No items on this page"
+msgstr "Không có mục nào trên trang này"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/models/extraction_service.py:0
+msgid "No valid page attachments found"
+msgstr "Không tìm thấy tệp đính kèm trang hợp lệ"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_document_extraction__review_notes
+msgid "Notes about extraction issues that need manual review"
+msgstr "Ghi chú về các vấn đề trích xuất cần kiểm tra thủ công"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_substance_group__substance_count
+msgid "Number of substances in this group"
+msgstr "Số lượng chất trong nhóm này"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_form
+msgid "OCR Data"
+msgstr "Dữ liệu OCR"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/raw_ocr_viewer.xml:0
+msgid "OCR Items"
+msgstr "Mục OCR"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_google_drive_extraction_log_form
+msgid "OCR Response"
+msgstr "Phản hồi OCR"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_google_drive_extraction_log__ocr_response_json
+msgid "OCR Response JSON"
+msgstr "JSON phản hồi OCR"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/models/extraction_service.py:0
+msgid "Only PDF files are allowed"
+msgstr "Chỉ chấp nhận tệp PDF"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/grouped_one2many/extraction_grouped_list_renderer.xml:0
+msgid "Open Form View"
+msgstr "Mở biểu mẫu"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_substance_aggregate__organization_count
+msgid "Organization Count"
+msgstr "Số tổ chức"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_ownership_report__ownership_type
+msgid "Ownership Type"
+msgstr "Loại quyền sở hữu"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_document_extraction__pdf_attachment_id
+msgid "PDF Attachment"
+msgstr "Tệp đính kèm PDF"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_document_extraction__pdf_url
+msgid "PDF URL"
+msgstr "URL PDF"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/models/extraction_service.py:0
+msgid "Please wait %(seconds)d seconds before extracting again"
+msgstr "Vui lòng chờ %(seconds)d giây trước khi trích xuất lại"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_res_config_settings__llama_premium_mode
+msgid "Premium Mode"
+msgstr "Chế độ cao cấp"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "Premium OCR Mode"
+msgstr "Chế độ OCR cao cấp"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.google_drive_config_wizard_form
+msgid "Processed folder ID"
+msgstr "ID thư mục đã xử lý"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/models/extraction_service_llama.py:0
+msgid "Processing with AI..."
+msgstr "Đang xử lý với AI..."
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_hs_code__name
+msgid "Product description"
+msgstr "Mô tả sản phẩm"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_product_report__production_type
+msgid "Production Type"
+msgstr "Loại sản xuất"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_google_drive_extraction_log__merged_pdf_url
+msgid "Public URL for merged PDF preview"
+msgstr "URL công khai để xem trước PDF đã hợp nhất"
+
+#. module: robotia_document_extractor
+#: model:ir.model,name:robotia_document_extractor.model_queue_job
+msgid "Queue Job"
+msgstr "Công việc hàng đợi"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/dashboard.xml:0
+msgid "Queued"
+msgstr "Đang chờ"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_google_drive_extraction_log__ocr_response_json
+msgid "Raw OCR data with bounding boxes (if OCR was performed)"
+msgstr "Dữ liệu OCR thô với hộp giới hạn (nếu đã thực hiện OCR)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_recycling_technology__efficiency_rate
+msgid "Recovery/recycling efficiency percentage"
+msgstr "Tỷ lệ phần trăm hiệu suất thu hồi/tái chế"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_collection_recycling_report__recycle_facility_id
+msgid "Recycle Facility"
+msgstr "Cơ sở tái chế"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_collection_recycling_report__recycle_technology_id
+msgid "Recycle Technology"
+msgstr "Công nghệ tái chế"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__extraction_job__document_type__01
+msgid "Registration Form"
+msgstr "Biểu mẫu đăng ký"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/dashboard.xml:0
+msgid "Remove file"
+msgstr "Xóa tệp"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__extraction_job__document_type__02
+msgid "Report Form"
+msgstr "Biểu mẫu báo cáo"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_form
+msgid "Report Tables (Form 02 only)"
+msgstr "Bảng báo cáo (chỉ Biểu mẫu 02)"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_queue_job_extraction_dialog_form
+msgid "Requeue Job"
+msgstr "Xếp lại hàng đợi"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_res_config_settings__batch_image_dpi
+msgid ""
+"Resolution when converting PDF to images for batch extraction. Higher DPI = "
+"better quality but larger file sizes. Recommended: 150-300 DPI. Default: 200"
+msgstr ""
+"Độ phân giải khi chuyển PDF sang hình ảnh để trích xuất hàng loạt. DPI cao "
+"hơn = chất lượng tốt hơn nhưng kích thước tệp lớn hơn. Khuyến nghị: 150-300 "
+"DPI. Mặc định: 200"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_extraction_job_form
+msgid "Results"
+msgstr "Kết quả"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_extraction_job__retry_count
+msgid "Retry Count"
+msgstr "Số lần thử lại"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_extraction_job__retry_from_step
+msgid "Retry From Step"
+msgstr "Thử lại từ bước"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_extraction_job_form
+msgid "Retry from AI Processing"
+msgstr "Thử lại từ xử lý AI"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_extraction_job_form
+msgid "Retry from Category Mapping"
+msgstr "Thử lại từ ánh xạ danh mục"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_extraction_job_form
+msgid "Retry from Llama OCR"
+msgstr "Thử lại từ Llama OCR"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_collection_recycling_report__reuse_technology_id
+msgid "Reuse Technology"
+msgstr "Công nghệ tái sử dụng"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_document_extraction__review_notes
+msgid "Review Notes"
+msgstr "Ghi chú kiểm tra"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_chatbot_message__role
+msgid "Role"
+msgstr "Vai trò"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/models/extraction_service.py:0
+msgid "Save Failed"
+msgstr "Lưu thất bại"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/hfc_dashboard.xml:0
+msgid "Search Panel"
+msgstr "Bảng tìm kiếm"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_queue_job_extraction_dialog_form
+msgid "Set to Done"
+msgstr "Đặt thành hoàn thành"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings_dashboard.xml:0
+msgid "Settings"
+msgstr "Cài đặt"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/ai_tab.xml:0
+msgid "Settings form not found. Please check view configuration."
+msgstr "Không tìm thấy biểu mẫu cài đặt. Vui lòng kiểm tra cấu hình view."
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_equipment_type__code
+msgid "Short code for equipment type"
+msgstr "Mã ngắn cho loại thiết bị"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_recycling_facility__code
+msgid "Short code for facility"
+msgstr "Mã ngắn cho cơ sở"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_substance_group__code
+msgid "Short code for group (uppercase, no spaces)"
+msgstr "Mã ngắn cho nhóm (chữ hoa, không dấu cách)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_collection_location__code
+msgid "Short code for location"
+msgstr "Mã ngắn cho địa điểm"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_recycling_technology__code
+msgid "Short code for technology"
+msgstr "Mã ngắn cho công nghệ"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_extraction_job__can_retry_from_ai
+msgid "Show \"Retry from AI Processing\" button"
+msgstr "Hiển thị nút \"Thử lại từ xử lý AI\""
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_extraction_job__can_retry_from_category
+msgid "Show \"Retry from Category Mapping\" button"
+msgstr "Hiển thị nút \"Thử lại từ ánh xạ danh mục\""
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_extraction_job__can_retry_from_llama
+msgid "Show \"Retry from Llama OCR\" button"
+msgstr "Hiển thị nút \"Thử lại từ Llama OCR\""
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/dashboard.xml:0
+msgid "Show More"
+msgstr "Hiển thị thêm"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__extraction_job__current_step__upload_validate
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__extraction_job__last_completed_step__upload_validate
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__extraction_job__retry_from_step__upload_validate
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__queue_job__extraction_last_step__upload_validate
+msgid "Step 1: Upload & Validate"
+msgstr "Bước 1: Tải lên & Xác thực"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_extraction_job__category_mapping_json
+msgid "Step 2 output: {metadata: [1,2], substance_usage: [3,4], ...}"
+msgstr "Kết quả bước 2: {metadata: [1,2], substance_usage: [3,4], ...}"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__extraction_job__current_step__category_mapping
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__extraction_job__last_completed_step__category_mapping
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__extraction_job__retry_from_step__category_mapping
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__queue_job__extraction_last_step__category_mapping
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_extraction_job_form
+msgid "Step 2: Category Mapping"
+msgstr "Bước 2: Ánh xạ danh mục"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_extraction_job__llama_ocr_json
+msgid "Step 3 output: [{category, ocr_data, page_count}, ...]"
+msgstr "Kết quả bước 3: [{category, ocr_data, page_count}, ...]"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__extraction_job__current_step__llama_ocr
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__extraction_job__last_completed_step__llama_ocr
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__extraction_job__retry_from_step__llama_ocr
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__queue_job__extraction_last_step__llama_ocr
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_extraction_job_form
+msgid "Step 3: Llama OCR"
+msgstr "Bước 3: Llama OCR"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_extraction_job__ai_extracted_json
+msgid "Step 4 output: {metadata: {...}, substance_usage: [...], ...}"
+msgstr "Kết quả bước 4: {metadata: {...}, substance_usage: [...], ...}"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__extraction_job__current_step__ai_batch_processing
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__extraction_job__last_completed_step__ai_batch_processing
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__extraction_job__retry_from_step__ai_batch_processing
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__queue_job__extraction_last_step__ai_batch_processing
+msgid "Step 4: AI Batch Processing"
+msgstr "Bước 4: Xử lý hàng loạt bằng AI"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_extraction_job_form
+msgid "Step 4: AI Extracted Data"
+msgstr "Bước 4: Dữ liệu trích xuất bằng AI"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_extraction_job__final_result_json
+msgid "Step 5 output: Complete validated extraction result"
+msgstr "Kết quả bước 5: Kết quả trích xuất đã xác thực đầy đủ"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_extraction_job_form
+msgid "Step 5: Final Result"
+msgstr "Bước 5: Kết quả cuối cùng"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__extraction_job__current_step__merge_validate
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__extraction_job__last_completed_step__merge_validate
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__extraction_job__retry_from_step__merge_validate
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__queue_job__extraction_last_step__merge_validate
+msgid "Step 5: Merge & Validate"
+msgstr "Bước 5: Hợp nhất & Xác thực"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_substance_group__substance_count
+msgid "Substance Count"
+msgstr "Số lượng chất"
+
+#. module: robotia_document_extractor
+#: model:ir.model,name:robotia_document_extractor.model_substance_group
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_controlled_substance__substance_group_id
+msgid "Substance Group"
+msgstr "Nhóm chất"
+
+#. module: robotia_document_extractor
+#: model:ir.model,name:robotia_document_extractor.model_substance_aggregate
+msgid "Substance Usage Aggregation"
+msgstr "Tổng hợp sử dụng chất"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_substance_usage__substance_name
+msgid "Substance name (auto-filled from substance_id or manually entered)"
+msgstr "Tên chất (tự động điền từ substance_id hoặc nhập thủ công)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_collection_recycling__substance_name
+#: model:ir.model.fields,help:robotia_document_extractor.field_equipment_ownership__substance_name
+#: model:ir.model.fields,help:robotia_document_extractor.field_equipment_product__substance_name
+msgid "Substance name (auto-filled from substance_id)"
+msgstr "Tên chất (tự động điền từ substance_id)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_equipment_product_report__substance_quantity_per_unit
+msgid "Substance quantity per unit - supports both numeric and text values"
+msgstr "Lượng chất trên mỗi đơn vị - hỗ trợ cả giá trị số và văn bản"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_substance_group__substance_ids
+msgid "Substances in Group"
+msgstr "Các chất trong nhóm"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_hs_code__controlled_substance_ids
+msgid "Substances using this HS code as main or sub HS code"
+msgstr "Các chất sử dụng mã HS này làm mã HS chính hoặc phụ"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_recycling_technology_form
+msgid "Technology description..."
+msgstr "Mô tả công nghệ..."
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/overview_dashboard.xml:0
+msgid "Thao tác nhanh"
+msgstr "Thao tác nhanh"
+
+#. module: robotia_document_extractor
+#: model:ir.model.constraint,message:robotia_document_extractor.constraint_activity_field_code_unique
+msgid "The activity field code must be unique!"
+msgstr "Mã lĩnh vực hoạt động phải là duy nhất!"
+
+#. module: robotia_document_extractor
+#: model:ir.model.constraint,message:robotia_document_extractor.constraint_res_partner_business_id_unique
+msgid "The business license number must be unique!"
+msgstr "Số giấy phép kinh doanh phải là duy nhất!"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/models/extraction_service.py:0
+msgid "The uploaded file does not appear to be a valid PDF"
+msgstr "Tệp tải lên không phải là PDF hợp lệ"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_substance_aggregate__total_co2e
+msgid "Total CO2 Equivalent (ton)"
+msgstr "Tổng CO2 tương đương (tấn)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_substance_aggregate__total_export_kg
+msgid "Total Export (kg)"
+msgstr "Tổng xuất khẩu (kg)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_substance_aggregate__total_import_kg
+msgid "Total Import (kg)"
+msgstr "Tổng nhập khẩu (kg)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_substance_aggregate__total_production_kg
+msgid "Total Production (kg)"
+msgstr "Tổng sản xuất (kg)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_substance_aggregate__total_usage_kg
+msgid "Total Usage (kg)"
+msgstr "Tổng sử dụng (kg)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.constraint,message:robotia_document_extractor.constraint_quota_usage_total_quota_co2_positive
+msgid "Total quota (CO2) must be positive or null"
+msgstr "Tổng hạn mức (CO2) phải dương hoặc rỗng"
+
+#. module: robotia_document_extractor
+#: model:ir.model.constraint,message:robotia_document_extractor.constraint_quota_usage_total_quota_kg_positive
+msgid "Total quota (kg) must be positive or null"
+msgstr "Tổng hạn mức (kg) phải dương hoặc rỗng"
+
+#. module: robotia_document_extractor
+#: model:hs.code,name:robotia_document_extractor.hs_code_29034100
+msgid "Trifluoromethane (HFC-23)"
+msgstr "Trifluoromethane (HFC-23)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_collection_location__location_type
+msgid "Type of location"
+msgstr "Loại địa điểm"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_recycling_technology__technology_type
+msgid "Type of recovery/recycling process"
+msgstr "Loại quy trình thu hồi/tái chế"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_recycling_facility__facility_type
+msgid "Type of services provided"
+msgstr "Loại dịch vụ cung cấp"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/overview_dashboard.xml:0
+msgid "Upload"
+msgstr "Tải lên"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/extraction_page_selector.js:0
+msgid "Upload & Validate"
+msgstr "Tải lên & Xác thực"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/models/extraction_service.py:0
+msgid "Upload Failed"
+msgstr "Tải lên thất bại"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.actions.act_window,help:robotia_document_extractor.action_document_extraction_all
+msgid "Upload PDF documents to extract data automatically using AI."
+msgstr "Tải lên tài liệu PDF để trích xuất dữ liệu tự động bằng AI."
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/dashboard/dashboard.js:0
+msgid "Uploaded"
+msgstr "Đã tải lên"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/models/extraction_service_llama.py:0
+msgid "Uploading PDF to Gemini..."
+msgstr "Đang tải PDF lên Gemini..."
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_collection_recycling_report__recycle_usage_location_id
+msgid "Usage Location After Recycling"
+msgstr "Địa điểm sử dụng sau tái chế"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_res_config_settings__use_ai_validation
+msgid "Use AI Validation"
+msgstr "Sử dụng xác thực AI"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "Use AI Validation for OCR"
+msgstr "Sử dụng xác thực AI cho OCR"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_res_config_settings__use_ai_validation
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid ""
+"Use AI to validate and enhance OCR data. Disable to use OCR data directly."
+msgstr ""
+"Sử dụng AI để xác thực và cải thiện dữ liệu OCR. Tắt để sử dụng dữ liệu OCR "
+"trực tiếp."
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_equipment_ownership__sequence
+#: model:ir.model.fields,help:robotia_document_extractor.field_equipment_product__sequence
+msgid "Used to order rows"
+msgstr "Dùng để sắp xếp các dòng"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_collection_recycling__sequence
+#: model:ir.model.fields,help:robotia_document_extractor.field_equipment_ownership_report__sequence
+#: model:ir.model.fields,help:robotia_document_extractor.field_equipment_product_report__sequence
+#: model:ir.model.fields,help:robotia_document_extractor.field_quota_usage__sequence
+#: model:ir.model.fields,help:robotia_document_extractor.field_substance_usage__sequence
+msgid "Used to order rows (title rows first in each section)"
+msgstr "Dùng để sắp xếp các dòng (dòng tiêu đề đầu tiên trong mỗi phần)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_extraction_job__retry_from_step
+msgid "User-requested retry starting point"
+msgstr "Điểm bắt đầu thử lại do người dùng yêu cầu"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/dashboard/dashboard.js:0
+msgid "Validating"
+msgstr "Đang xác thực"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_google_drive_extraction_log_form
+msgid "Validation Result"
+msgstr "Kết quả xác thực"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_google_drive_extraction_log__validation_result_json
+msgid "Validation Result JSON"
+msgstr "JSON kết quả xác thực"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/group_list_view/group_list_renderer.xml:0
+msgid "View Button"
+msgstr "Nút xem"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_equipment_type_form
+msgid "View analytics dashboard for this equipment type"
+msgstr "Xem bảng phân tích cho loại thiết bị này"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_ir_attachment__google_drive_url
+msgid "Web view link for the file in Google Drive"
+msgstr "Liên kết xem web cho tệp trong Google Drive"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/raw_ocr_viewer.xml:0
+msgid "items"
+msgstr "mục"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/permissions_tab.xml:0
+msgid "more..."
+msgstr "thêm..."
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_extraction_job__ai_extracted_json
+msgid "AI Extracted Data"
+msgstr "Dữ liệu trích xuất bằng AI"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/models/extraction_service.py:0
+msgid "AI Extraction Failed"
+msgstr "Trích xuất AI thất bại"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/overview_dashboard.xml:0
+msgid "AI Trợ lý"
+msgstr "AI Trợ lý"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_document_extraction__validation_result
+msgid "AI Validation Result"
+msgstr "Kết quả xác thực AI"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/dashboard/dashboard.js:0
+msgid "AI processing"
+msgstr "Xử lý AI"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_document_extraction__validation_result
+msgid ""
+"AI validation report comparing OCR output with PDF source (JSON format). "
+"Contains accuracy metrics, error list, and correction suggestions."
+msgstr ""
+"Báo cáo xác thực AI so sánh kết quả OCR với nguồn PDF (định dạng JSON). Bao "
+"gồm số liệu độ chính xác, danh sách lỗi và đề xuất sửa lỗi."
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_google_drive_extraction_log__validation_result_json
+msgid ""
+"AI validation report comparing OCR output with PDF source (if validation was"
+" performed)"
+msgstr ""
+"Báo cáo xác thực AI so sánh kết quả OCR với nguồn PDF (nếu đã thực hiện xác "
+"thực)"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
+msgid "AIza..."
+msgstr "AIza..."
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.google_drive_config_wizard_form
+msgid "APIs &amp; Services → Library"
+msgstr "APIs &amp; Services → Library"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_chatbot_message__action_data
+msgid "Action Data"
+msgstr "Dữ liệu hành động"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_chatbot_message__action_type
+msgid "Action Type"
+msgstr "Loại hành động"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_substance_group__substance_ids
+msgid "All substances belonging to this group"
+msgstr "Tất cả các chất thuộc nhóm này"
+
+#. module: robotia_document_extractor
+#: model:ir.model.constraint,message:robotia_document_extractor.constraint_quota_usage_allocated_quota_co2_positive
+msgid "Allocated quota (CO2) must be positive or null"
+msgstr "Hạn mức đã phân bổ (CO2) phải dương hoặc rỗng"
+
+#. module: robotia_document_extractor
+#: model:ir.model.constraint,message:robotia_document_extractor.constraint_quota_usage_allocated_quota_kg_positive
+msgid "Allocated quota (kg) must be positive or null"
+msgstr "Hạn mức đã phân bổ (kg) phải dương hoặc rỗng"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/users_tab.xml:0
+msgid "Archive User"
+msgstr "Lưu trữ người dùng"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__chatbot_message__role__assistant
+msgid "Assistant"
+msgstr "Trợ lý"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/models/google_drive_service.py:0
+msgid "Authentication failed. Please check your service account credentials."
+msgstr ""
+"Xác thực thất bại. Vui lòng kiểm tra thông tin đăng nhập tài khoản dịch vụ."
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_google_drive_extraction_log_search
+msgid "Automated (Drive)"
+msgstr "Tự động (Drive)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_extraction_job__can_retry_from_ai
+msgid "Can Retry From Ai"
+msgstr "Có thể thử lại từ AI"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_extraction_job__can_retry_from_category
+msgid "Can Retry From Category"
+msgstr "Có thể thử lại từ danh mục"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_extraction_job__can_retry_from_llama
+msgid "Can Retry From Llama"
+msgstr "Có thể thử lại từ Llama"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_queue_job_extraction_dialog_form
+msgid "Cancel Job"
+msgstr "Hủy công việc"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/dashboard.xml:0
+msgid "Cancelled"
+msgstr "Đã hủy"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/models/extraction_job.py:0
+msgid "Cannot retry: No Llama OCR data found"
+msgstr "Không thể thử lại: Không tìm thấy dữ liệu Llama OCR"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/models/extraction_job.py:0
+msgid "Cannot retry: No category mapping data found"
+msgstr "Không thể thử lại: Không tìm thấy dữ liệu ánh xạ danh mục"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/dashboard/dashboard.js:0
+msgid "Categorizing"
+msgstr "Đang phân loại"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/models/extraction_service_llama.py:0
+msgid "Categorizing pages..."
+msgstr "Đang phân loại trang..."
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/extraction_page_selector.js:0
+msgid "Category Mapping"
+msgstr "Ánh xạ danh mục"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_extraction_job__category_mapping_json
+msgid "Category Mapping Result"
+msgstr "Kết quả ánh xạ danh mục"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_hs_code_search
+msgid "Chapter"
+msgstr "Chương"
+
+#. module: robotia_document_extractor
+#: model:ir.model,name:robotia_document_extractor.model_chatbot_service
+msgid "Chatbot AI Service"
+msgstr "Dịch vụ Chatbot AI"
+
+#. module: robotia_document_extractor
+#: model:ir.model,name:robotia_document_extractor.model_chatbot_conversation
+msgid "Chatbot Conversation"
+msgstr "Cuộc hội thoại Chatbot"
+
+#. module: robotia_document_extractor
+#: model:ir.model,name:robotia_document_extractor.model_chatbot_message
+msgid "Chatbot Message"
+msgstr "Tin nhắn Chatbot"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/dashboard/dashboard.js:0
+msgid "Complete"
+msgstr "Hoàn thành"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_extraction_job_form
+msgid "Complete Action"
+msgstr "Hoàn thành hành động"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid ""
+"Configure your LlamaCloud API key for OCR extraction with bounding boxes"
+msgstr ""
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/models/google_drive_service.py:0
+msgid "Connection successful! Google Drive API is accessible."
+msgstr "Kết nối thành công! API Google Drive có thể truy cập được."
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_chatbot_message__content
+msgid "Content"
+msgstr "Nội dung"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_chatbot_message__conversation_id
+msgid "Conversation"
+msgstr "Cuộc hội thoại"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/fields/ace_copy_field.js:0
+msgid "Copy failed: ${error.message}"
+msgstr ""
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/ace_copy_field.xml:0
+msgid "Copy to clipboard"
+msgstr "Sao chép vào bảng nhớ tạm"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_document_extraction__contact_country_id
+msgid "Country extracted from contact address"
+msgstr "Quốc gia được trích xuất từ địa chỉ liên hệ"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_quota_usage__country_text
+msgid "Country for import/export trade (ISO code)"
+msgstr "Quốc gia cho thương mại nhập/xuất khẩu (mã ISO)"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_google_drive_extraction_log_form
+msgid "Create Extraction"
+msgstr "Tạo trích xuất"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_activity_field__create_uid
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_chatbot_conversation__create_uid
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_chatbot_message__create_uid
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_collection_location__create_uid
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_collection_recycling__create_uid
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_collection_recycling_report__create_uid
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_controlled_substance__create_uid
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_document_extraction__create_uid
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_ownership__create_uid
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_ownership_report__create_uid
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_product__create_uid
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_product_report__create_uid
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_type__create_uid
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_extraction_job__create_uid
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_google_drive_config_wizard__create_uid
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_google_drive_extraction_log__create_uid
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_hs_code__create_uid
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_quota_usage__create_uid
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_recycling_facility__create_uid
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_recycling_technology__create_uid
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_substance_group__create_uid
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_substance_usage__create_uid
+msgid "Created by"
+msgstr "Tạo bởi"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_activity_field__create_date
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_chatbot_conversation__create_date
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_chatbot_message__create_date
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_collection_location__create_date
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_collection_recycling__create_date
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_collection_recycling_report__create_date
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_controlled_substance__create_date
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_document_extraction__create_date
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_ownership__create_date
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_ownership_report__create_date
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_product__create_date
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_product_report__create_date
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_type__create_date
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_extraction_job__create_date
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_google_drive_config_wizard__create_date
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_google_drive_extraction_log__create_date
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_hs_code__create_date
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_quota_usage__create_date
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_recycling_facility__create_date
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_recycling_technology__create_date
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_substance_group__create_date
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_substance_usage__create_date
+msgid "Created on"
+msgstr "Tạo lúc"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_extraction_job__current_step
+msgid "Current Step"
+msgstr "Bước hiện tại"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_equipment_type_form
+msgid "Description..."
+msgstr "Mô tả..."
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_recycling_technology__description
+msgid "Detailed description of technology"
+msgstr "Mô tả chi tiết về công nghệ"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_equipment_type__description
+msgid "Detailed description of this equipment type"
+msgstr "Mô tả chi tiết về loại thiết bị này"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_substance_group__description
+msgid "Detailed description of this substance group"
+msgstr "Mô tả chi tiết về nhóm chất này"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings_dashboard.xml:0
+msgid "Device Logs"
+msgstr "Nhật ký thiết bị"
+
+#. module: robotia_document_extractor
+#: model:hs.code,name:robotia_document_extractor.hs_code_29037300
+msgid "Dichlorofluoroethanes (HCFC-141 / R-141)"
+msgstr "Dichlorofluoroethanes (HCFC-141 / R-141)"
+
+#. module: robotia_document_extractor
+#: model:hs.code,name:robotia_document_extractor.hs_code_29037500
+msgid ""
+"Dichloropentafluoropropanes (HCFC-225, HCFC-225ca, HCFC-225cb / R-225 "
+"series)"
+msgstr ""
+
+#. module: robotia_document_extractor
+#: model:hs.code,name:robotia_document_extractor.hs_code_29037200
+msgid "Dichlorotrifluoroethanes (HCFC-123 / R-123)"
+msgstr "Dichlorotrifluoroethanes (HCFC-123 / R-123)"
+
+#. module: robotia_document_extractor
+#: model:hs.code,name:robotia_document_extractor.hs_code_29034200
+msgid "Difluoromethane (HFC-32)"
+msgstr "Difluoromethane (HFC-32)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_activity_field__display_name
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_chatbot_conversation__display_name
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_chatbot_message__display_name
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_collection_location__display_name
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_collection_recycling__display_name
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_collection_recycling_report__display_name
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_controlled_substance__display_name
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_document_extraction__display_name
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_ownership__display_name
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_ownership_report__display_name
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_product__display_name
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_product_report__display_name
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_type__display_name
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_extraction_job__display_name
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_google_drive_config_wizard__display_name
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_google_drive_extraction_log__display_name
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_hs_code__display_name
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_quota_usage__display_name
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_recycling_facility__display_name
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_recycling_technology__display_name
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_substance_aggregate__display_name
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_substance_group__display_name
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_substance_usage__display_name
+msgid "Display Name"
+msgstr "Tên hiển thị"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_equipment_type__sequence
+#: model:ir.model.fields,help:robotia_document_extractor.field_recycling_technology__sequence
+msgid "Display order"
+msgstr "Thứ tự hiển thị"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_substance_group__sequence
+msgid "Display order in lists and dropdowns"
+msgstr "Thứ tự hiển thị trong danh sách và menu thả xuống"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_collection_recycling_report__disposal_facility_id
+msgid "Disposal Facility"
+msgstr "Cơ sở xử lý"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_collection_recycling_report__disposal_technology_id
+msgid "Disposal Technology"
+msgstr "Công nghệ xử lý"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_collection_location__district
+msgid "District or county"
+msgstr "Quận hoặc huyện"
+
+#. module: robotia_document_extractor
+#: model:ir.actions.act_window,name:robotia_document_extractor.action_document_extraction_form
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_collection_recycling__document_id
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_collection_recycling_report__document_id
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_ownership__document_id
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_ownership_report__document_id
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_product__document_id
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_product_report__document_id
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_quota_usage__document_id
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_substance_usage__document_id
+msgid "Document"
+msgstr "Tài liệu"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_res_users__is_doc_checker
+msgid "Document Checker"
+msgstr "Người kiểm tra tài liệu"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_substance_aggregate__document_count
+msgid "Document Count"
+msgstr "Số lượng tài liệu"
+
+#. module: robotia_document_extractor
+#: model:ir.model,name:robotia_document_extractor.model_document_extraction_service
+msgid "Document Extraction Service"
+msgstr "Dịch vụ trích xuất tài liệu"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_list
+msgid "Document Extractions"
+msgstr "Trích xuất tài liệu"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_res_users__is_doc_maker
+msgid "Document Maker"
+msgstr "Người tạo tài liệu"
+
+#. module: robotia_document_extractor
+#: model:ir.model,name:robotia_document_extractor.model_document_reanalysis_service
+msgid "Document Re-analysis Service"
+msgstr "Dịch vụ phân tích lại tài liệu"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/ace_copy_field.xml:0
+msgid "Download JSON"
+msgstr "Tải xuống JSON"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/fields/ace_copy_field.js:0
+msgid "Download failed: ${error.message}"
+msgstr "Tải xuống thất bại: ${error.message}"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/settings/users_tab.xml:0
+msgid "Edit User"
+msgstr "Chỉnh sửa người dùng"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_res_config_settings__google_drive_enabled
+msgid "Enable or disable Google Drive integration for document extraction"
+msgstr "Bật hoặc tắt tích hợp Google Drive để trích xuất tài liệu"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_res_config_settings__llama_premium_mode
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+msgid "Enable premium mode for more accurate OCR (higher cost)"
+msgstr "Bật chế độ cao cấp để OCR chính xác hơn (chi phí cao hơn)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__substance_aggregate__usage_type__equipment_manufacturing
+msgid "Equipment Manufacturing"
+msgstr "Sản xuất thiết bị"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__substance_aggregate__usage_type__equipment_operation
+msgid "Equipment Operation"
+msgstr "Vận hành thiết bị"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_ownership__equipment_type_id
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_ownership_report__equipment_type_id
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_product__equipment_type_id
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_product_report__equipment_type_id
+msgid "Equipment Type"
+msgstr "Loại thiết bị"
+
+#. module: robotia_document_extractor
+#: model:ir.model,name:robotia_document_extractor.model_equipment_type
+msgid "Equipment Type Master"
+msgstr "Danh mục loại thiết bị"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_ownership__equipment_type_id
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_ownership_report__equipment_type_id
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_product__equipment_type_id
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_product_report__equipment_type_id
+msgid "Equipment Type"
+msgstr "Loại thiết bị"
+
+#. module: robotia_document_extractor
+#: model:ir.model,name:robotia_document_extractor.model_equipment_type
+msgid "Equipment Type Master"
+msgstr "Danh mục loại thiết bị"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_equipment_type__category
+msgid "Equipment category"
+msgstr "Danh mục thiết bị"
+
+#. module: robotia_document_extractor
+#: model:ir.model.constraint,message:robotia_document_extractor.constraint_equipment_type_code_unique
+msgid "Equipment type code must be unique!"
+msgstr "Mã loại thiết bị phải là duy nhất!"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_extraction_job_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_queue_job_extraction_dialog_form
+msgid "Error Details"
+msgstr "Chi tiết lỗi"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_queue_job__extraction_error
+msgid "Error message from extraction.job or queue.job (fallback)"
+msgstr "Thông báo lỗi từ extraction.job hoặc queue.job (dự phòng)"
+
+#. module: robotia_document_extractor
+#: model:ir.actions.client,name:robotia_document_extractor.action_extraction_page_selector
+msgid "Extract Document"
+msgstr "Trích xuất tài liệu"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/models/extraction_service_llama.py:0
+msgid "Extracting markdown with Llama..."
+msgstr "Đang trích xuất markdown bằng Llama..."
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_queue_job__extraction_error
+msgid "Extraction Error"
+msgstr "Lỗi trích xuất"
+
+#. module: robotia_document_extractor
+#: model:ir.model,name:robotia_document_extractor.model_extraction_helper
+msgid "Extraction Helper Service"
+msgstr "Dịch vụ hỗ trợ trích xuất"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_extraction_job_form
+msgid "Extraction Job"
+msgstr "Công việc trích xuất"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_queue_job_extraction_dialog_form
+msgid "Extraction Job Status"
+msgstr "Trạng thái công việc trích xuất"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/extraction_page_selector.xml:0
+msgid "Extraction Progress"
+msgstr "Tiến trình trích xuất"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_extraction_job__extraction_id
+msgid "Extraction Result"
+msgstr "Kết quả trích xuất"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/controllers/extraction_controller.py:0
+msgid "Extraction job created successfully"
+msgstr "Tạo công việc trích xuất thành công"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/extraction_page_selector.js:0
+msgid "Extraction job was cancelled"
+msgstr "Công việc trích xuất đã bị hủy"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.actions.act_window,help:robotia_document_extractor.action_extraction_job
+msgid "Extraction jobs track async PDF extraction progress."
+msgstr "Công việc trích xuất theo dõi tiến trình trích xuất PDF không đồng bộ."
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/models/extraction_service.py:0
+msgid "Extraction succeeded but failed to save results"
+msgstr "Trích xuất thành công nhưng không lưu được kết quả"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/models/google_drive_service.py:0
+msgid "Failed to copy file: %s"
+msgstr "Sao chép tệp thất bại: %s"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/models/google_drive_service.py:0
+msgid "Failed to create folder: %s"
+msgstr "Tạo thư mục thất bại: %s"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/models/google_drive_service.py:0
+msgid "Failed to delete file: %s"
+msgstr "Xóa tệp thất bại: %s"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/models/google_drive_service.py:0
+msgid "Failed to download file: %s"
+msgstr "Tải xuống tệp thất bại: %s"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/models/google_drive_service.py:0
+msgid "Failed to get file metadata: %s"
+msgstr "Lấy metadata tệp thất bại: %s"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/models/google_drive_service.py:0
+msgid "Failed to list files: %s"
+msgstr "Liệt kê tệp thất bại: %s"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/models/google_drive_service.py:0
+msgid "Failed to list folders: %s"
+msgstr "Liệt kê thư mục thất bại: %s"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/models/google_drive_service.py:0
+msgid "Failed to move file: %s"
+msgstr "Di chuyển tệp thất bại: %s"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/dashboard/upload_area.js:0
+msgid "Failed to open page selector: %s"
+msgstr "Mở bộ chọn trang thất bại: %s"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/models/google_drive_service.py:0
+msgid "Failed to rename file: %s"
+msgstr "Đổi tên tệp thất bại: %s"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/models/google_drive_service.py:0
+msgid "Failed to search files: %s"
+msgstr "Tìm kiếm tệp thất bại: %s"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/models/extraction_service.py:0
+msgid "Failed to upload PDF file to server"
+msgstr "Tải lên tệp PDF lên máy chủ thất bại"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/models/google_drive_service.py:0
+msgid "Failed to upload file: %s"
+msgstr "Tải lên tệp thất bại: %s"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_substance_group__needs_review
+msgid "Flag for auto-created records that need admin review"
+msgstr "Cờ đánh dấu cho các bản ghi tự động tạo cần quản trị viên xem xét"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_extraction_job__final_result_json
+msgid "Final Merged Result"
+msgstr "Kết quả hợp nhất cuối cùng"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/dashboard.xml:0
+#: model:ir.actions.act_window,name:robotia_document_extractor.action_extraction_job
+#: model:ir.ui.menu,name:robotia_document_extractor.menu_extraction_job
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_extraction_job_tree
+msgid "Extraction Jobs"
+msgstr "Công việc trích xuất"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_document_extraction__needs_review
+msgid "Flag this record if extraction has issues and needs human review"
+msgstr "Đánh dấu bản ghi này nếu trích xuất có vấn đề và cần con người xem xét"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_collection_location__address
+msgid "Full address"
+msgstr "Địa chỉ đầy đủ"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_collection_location_form
+msgid "Full address..."
+msgstr "Địa chỉ đầy đủ..."
+
+#. module: robotia_document_extractor
+#: model:ir.model,name:robotia_document_extractor.model_fuzzy_matcher
+msgid "Fuzzy Matching Utilities"
+msgstr "Tiện ích khớp mờ"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_extraction_job__gemini_file_name
+msgid "Gemini File Name"
+msgstr "Tên tệp Gemini"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
+msgid "Gemini Models documentation"
+msgstr "Tài liệu mô hình Gemini"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_extraction_job__gemini_file_name
+msgid "Gemini uploaded file name for cleanup (stored after Step 1)"
+msgstr "Tên tệp đã tải lên Gemini để dọn dẹp (lưu sau Bước 1)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_hs_code__product_category
+msgid "General product category"
+msgstr "Danh mục sản phẩm chung"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.google_drive_config_wizard_form
+msgid "Google Cloud Console → IAM &amp; Admin → Service Accounts"
+msgstr "Google Cloud Console → IAM &amp; Admin → Service Accounts"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__google_drive_extraction_log__source_type__google_drive
+msgid "Google Drive"
+msgstr "Google Drive"
+
+#. module: robotia_document_extractor
+#: model:ir.model,name:robotia_document_extractor.model_google_drive_auto_extractor
+msgid "Google Drive Auto Extractor Service"
+msgstr "Dịch vụ trích xuất tự động Google Drive"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_substance_group__name
+msgid "Group Name"
+msgstr "Tên nhóm"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_controlled_substance__substance_group_id
+msgid "Group classification (HFC, HCFC, CFC, PFC, HFO, etc.)"
+msgstr "Phân loại nhóm (HFC, HCFC, CFC, PFC, HFO, v.v.)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_hs_code__chapter
+msgid "HS Chapter (first 2 digits)"
+msgstr "Chương HS (2 chữ số đầu)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_equipment_ownership__is_title
+#: model:ir.model.fields,help:robotia_document_extractor.field_equipment_product__is_title
+msgid "If True, this row is a section title"
+msgstr "Nếu True, dòng này là tiêu đề phần"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_equipment_ownership_report__is_title
+msgid "If True, this row is a section title (Air Conditioner/Refrigeration)"
+msgstr "Nếu True, dòng này là tiêu đề phần (Điều hòa không khí/Làm lạnh)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_collection_recycling__is_title
+msgid ""
+"If True, this row is a section title (Collection/Reuse/Recycle/Disposal)"
+msgstr ""
+"Nếu True, dòng này là tiêu đề phần (Thu gom/Tái sử dụng/Tái chế/Xử lý)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_equipment_product_report__is_title
+msgid "If True, this row is a section title (Production/Import)"
+msgstr "Nếu True, dòng này là tiêu đề phần (Sản xuất/Nhập khẩu)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_quota_usage__is_title
+#: model:ir.model.fields,help:robotia_document_extractor.field_substance_usage__is_title
+msgid "If True, this row is a section title (Production/Import/Export)"
+msgstr "Nếu True, dòng này là tiêu đề phần (Sản xuất/Nhập khẩu/Xuất khẩu)"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/models/extraction_service.py:0
+msgid "Invalid PDF"
+msgstr "PDF không hợp lệ"
+
+#. module: robotia_document_extractor
+#. odoo-python
+#: code:addons/robotia_document_extractor/models/google_drive_service.py:0
+msgid "Invalid service account JSON format: %s"
+msgstr "Định dạng JSON tài khoản dịch vụ không hợp lệ: %s"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_collection_recycling__is_title
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_ownership__is_title
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_ownership_report__is_title
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_product__is_title
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_product_report__is_title
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_quota_usage__is_title
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_substance_usage__is_title
+msgid "Is Title Row"
+msgstr "Là dòng tiêu đề"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_extraction_job__last_completed_step
+msgid "Last Completed Step"
+msgstr "Bước hoàn thành cuối cùng"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_chatbot_conversation__last_message_date
+msgid "Last Message"
+msgstr "Tin nhắn cuối"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_google_drive_extraction_log_search
+msgid "Manual Uploads"
+msgstr "Tải lên thủ công"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_equipment_type__max_capacity
+msgid "Maximum cooling/heating capacity in kW"
+msgstr "Công suất làm lạnh/sưởi tối đa tính bằng kW"
+

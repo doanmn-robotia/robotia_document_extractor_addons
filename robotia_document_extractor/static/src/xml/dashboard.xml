@@ -40,9 +40,12 @@
                 </div>
 
                 <!-- Recent Extractions -->
-                <div class="mt-4 d-flex gap-4">
-                    <RecentExtractions disabled="state.uploading"/>
-                    <div class="recent-extractions-container" t-if="state.jobs.length > 0">
+                <div class="mt-4 recent-blocks-grid">
+                    <div class="recent-block">
+                        <RecentExtractions disabled="state.uploading"/>
+                    </div>
+                    <div class="recent-block" t-if="state.jobs.length > 0">
+                        <div class="recent-extractions-container">
                         <div class="section-header">
                             <h2><i class="fa fa-tasks me-2"/>Extraction Jobs</h2>
                         </div>
@@ -81,8 +84,9 @@
     
                                             <!-- Progress (if processing) -->
                                             <span t-if="job.extraction_state === 'processing' or job.queue_state === 'started'" class="me-3">
-                                                <i class="fa fa-spinner fa-spin me-1"/>
-                                                <t t-esc="job.progress"/>% - <t t-esc="job.progress_message"/>
+                                                <span t-att-class="getStepString(job.current_step).class">
+                                                    <t t-esc="getStepString(job.current_step).message"/>
+                                                </span>
                                             </span>
                                         </div>
                                     </div>
@@ -104,6 +108,7 @@
                             <button class="btn btn-outline-primary" t-on-click="loadMoreJobs">
                                 <i class="fa fa-chevron-down me-2"/>Show More
                             </button>
+                        </div>
                         </div>
                     </div>
                 </div>

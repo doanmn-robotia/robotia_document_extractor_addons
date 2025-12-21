@@ -53,7 +53,6 @@ class ExtractionServiceBatching(models.AbstractModel):
         Args:
             pdf_binary (bytes): Binary PDF data
             document_type (str): '01' for Registration, '02' for Report
-            filename (str): Original filename for logging
             log_id (int, optional): Extraction log ID for saving OCR data
             job_id (int, optional): extraction.job ID for step-based checkpointing (not used in batch strategy)
             resume_from_step (str, optional): Step key to resume from (not used in batch strategy)
@@ -71,10 +70,9 @@ class ExtractionServiceBatching(models.AbstractModel):
         if strategy == 'batch_extract':
             # Configure Gemini
             client = genai.Client(api_key=api_key)
-            _logger.info(f"Starting AI extraction for {filename} (Type: {document_type})")
             _logger.info(f"Using extraction strategy: {strategy}")
             # Strategy 3: Batch Extraction (PDF → Images → Batch AI with chat session)
-            return self._extract_with_batch_extract(client, pdf_binary, document_type, filename)
+            return self._extract_with_batch_extract(client, pdf_binary, document_type)
 
         return super().extract_pdf(pdf_binary, document_type, log_id,
                                    job_id=job_id, resume_from_step=resume_from_step)
@@ -85,13 +83,12 @@ class ExtractionServiceBatching(models.AbstractModel):
     # BATCH EXTRACTION STRATEGY (Strategy 3)
     # =========================================================================
 
-    def _pdf_to_images(self, pdf_binary, filename):
+    def _pdf_to_images(self, pdf_binary):
         """
         Convert PDF to JPEG images using PyMuPDF
 
         Args:
             pdf_binary (bytes): Binary PDF data
-            filename (str): Original filename for logging
 
         Returns:
             list: List of image file paths (temporary files)
@@ -203,7 +200,7 @@ class ExtractionServiceBatching(models.AbstractModel):
     # BATCH EXTRACTION - CORE METHODS
     # =========================================================================
 
-    def _extract_with_batch_extract(self, client, pdf_binary, document_type, filename):
+    def _extract_with_batch_extract(self, client, pdf_binary, document_type):
         """
         Strategy 3: Batch Extraction (PDF → Images → Batch AI with chat session)
 
@@ -213,7 +210,6 @@ class ExtractionServiceBatching(models.AbstractModel):
             client: Gemini client instance
             pdf_binary (bytes): Binary PDF data
             document_type (str): '01' or '02'
-            filename (str): Original filename for logging
 
         Returns:
             dict: Extracted and cleaned data
@@ -232,7 +228,7 @@ class ExtractionServiceBatching(models.AbstractModel):
         try:
             # Step 1: Convert PDF to images
             _logger.info("Step 1/3: Converting PDF to images...")
-            image_paths = self._pdf_to_images(pdf_binary, filename)
+            image_paths = self._pdf_to_images(pdf_binary)
             _logger.info(f"✓ Converted {len(image_paths)} pages to images")
 
             # Step 2: Phase 1 - Batch AI extraction
