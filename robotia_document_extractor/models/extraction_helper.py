@@ -116,34 +116,48 @@ class ExtractionHelper(models.AbstractModel):
     def _validate_selection_field(self, value, field_obj, field_name):
         """
         Validate Selection field value against allowed values
-        
+
         Args:
             value: Value to validate
             field_obj: Odoo field object
             field_name (str): Field name for logging
-            
+
         Returns:
             str or None: Valid selection value, field default, or None
         """
+        # Helper to get actual default value (handle callable defaults)
+        def get_default_value():
+            if not hasattr(field_obj, 'default'):
+                return None
+            default = field_obj.default
+            # If default is a callable (lambda/function), call it to get actual value
+            if callable(default):
+                try:
+                    return default(self.env[field_obj.model_name])
+                except Exception as e:
+                    _logger.warning(f"Failed to call default function for '{field_name}': {e}")
+                    return None
+            return default
+
         if value is None:
             # Use field default if available
-            return field_obj.default if hasattr(field_obj, 'default') else None
-        
+            return get_default_value()
+
         # Get allowed selection values
         selection = field_obj.selection
         if callable(selection):
             # Dynamic selection - cannot validate, return as-is
             _logger.info(f"Selection field '{field_name}' has dynamic values, skipping validation")
             return value
-        
+
         # Static selection - validate
         allowed_values = [sel[0] for sel in selection] if selection else []
-        
+
         if value in allowed_values:
             return value
-        
+
         # Invalid value - use default
-        default_value = field_obj.default if hasattr(field_obj, 'default') else None
+        default_value = get_default_value()
         _logger.warning(
             f"Invalid selection value '{value}' for '{field_name}'. "
             f"Allowed: {allowed_values}. Using default: {default_value}"

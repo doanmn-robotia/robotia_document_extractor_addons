@@ -3834,6 +3834,24 @@ msgid "Reset prompts for batch extraction strategy. These prompts are optimized 
 msgstr "Đặt lại prompts cho chiến lược trích xuất hàng loạt. Các prompt này được tối ưu hóa cho trích xuất từng trang với bộ nhớ ngữ cảnh."
 
 #. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extractor_config_form_standalone
+msgid ""
+"<span class=\"col-lg-9 offset-lg-3 text-muted\">\n"
+"                                        Files larger than this size will be automatically skipped during scanning\n"
+"                                    </span>"
+msgstr ""
+"<span class=\"col-lg-9 offset-lg-3 text-muted\">\n"
+"                                        File có dung lượng lớn hơn số này sẽ bị bỏ qua trong quá trình quét file\n"
+"                                    </span>"
+
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_res_config_settings__google_drive_max_file_size_mb
+msgid "Max File Size (MB)"
+msgstr "Dung lượng file tối đa (MB)"
+
+#. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_form
 msgid "AI Re-analyze"
 msgstr "Kiểm tra lại với AI"

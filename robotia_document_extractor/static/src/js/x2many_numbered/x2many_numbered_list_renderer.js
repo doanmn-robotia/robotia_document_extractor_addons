@@ -16,7 +16,6 @@ import { ListRenderer } from "@web/views/list/list_renderer";
  */
 export class X2ManyNumberedListRenderer extends ListRenderer {
     static template = "robotia_document_extractor.X2ManyNumberedListRenderer";
-    static useMagicColumnWidths = false
     static recordRowTemplate = "robotia_document_extractor.X2ManyNumberedListRendererRecordRow"
     /**
      * Override getColumns to inject the "#" column at the beginning

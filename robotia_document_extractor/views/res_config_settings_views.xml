@@ -9,6 +9,7 @@
             <xpath expr="//form" position="inside">
                 <app string="Document Extractor" name="robotia_document_extractor" groups="base.group_system">
                     <block title="AI Configuration">
+                        <!-- Core API Keys -->
                         <setting id="gemini_api_key_setting"
                                  help="Configure your Google Gemini API key for AI-powered document extraction">
                             <field name="gemini_api_key" password="True" placeholder="AIza..." class="oe_inline"/>
@@ -18,37 +19,33 @@
                                 </div>
                             </div>
                         </setting>
-                        <setting id="gemini_max_output_tokens_setting"
-                                 string="Max Output Tokens"
-                                 help="Maximum number of tokens for Gemini API response. Increase if extraction fails for very long documents.">
-                            <field name="gemini_max_output_tokens" class="oe_inline"/>
+
+                        <setting id="llama_cloud_api_key_setting"
+                                 string="LlamaCloud API Key"
+                                 help="Configure your LlamaCloud API key for OCR extraction with bounding boxes">
+                            <field name="llama_cloud_api_key" password="True" placeholder="llx-..." class="oe_inline"/>
                             <div class="content-group mt8">
                                 <div class="text-muted">
-                                    Recommended: 65536 (maximum for Gemini 2.0 Flash). Reduce if you want to limit API costs.
+                                    Get your API key from <a href="https://cloud.llamaindex.ai/" target="_blank">LlamaCloud Console</a>
                                 </div>
                             </div>
                         </setting>
-                        <setting id="gemini_max_retries_setting"
-                                 string="Max Retries"
-                                 help="Maximum retry attempts when Gemini API extraction fails. Retries are executed immediately without delay.">
-                            <field name="gemini_max_retries" class="oe_inline"/>
+
+                        <!-- Extraction Strategy -->
+                        <setting id="extraction_strategy_setting"
+                                 string="Extraction Strategy"
+                                 help="Choose how PDF documents are processed for extraction">
+                            <field name="extraction_strategy" widget="radio" class="o_light_label"/>
                             <div class="content-group mt8">
                                 <div class="text-muted">
-                                    Default: 3 retries executed immediately. Increase for unreliable API responses.
+                                    <strong>100% AI (Recommended):</strong> Gemini processes PDF directly, understanding layout and structure.<br/>
+                                    <strong>Text Extract + AI:</strong> Extract text first with PyMuPDF, then structure with AI. May be faster for very large PDFs.<br/>
+                                    <strong>Batch Extraction:</strong> Convert PDF to images, process in batches with adaptive sizing. Best for very large documents (20+ pages).
                                 </div>
                             </div>
                         </setting>
-                        <setting id="gemini_allow_fallback_setting"
-                                 string="Allow Fallback Strategy"
-                                 help="Enable fallback to 2-step extraction when direct extraction fails.">
-                            <field name="gemini_allow_fallback"/>
-                            <div class="content-group mt8">
-                                <div class="text-muted">
-                                    When enabled, if direct PDF extraction fails, the system will automatically try 2-step extraction (PDF → Text → JSON).
-                                    Disable this to fail immediately without fallback.
-                                </div>
-                            </div>
-                        </setting>
+
+                        <!-- Gemini Core Configuration -->
                         <setting id="gemini_model_setting"
                                  string="Gemini Model"
                                  help="Select the Gemini model to use for extraction. Different models have different capabilities and costs.">
@@ -61,6 +58,30 @@
                                 </div>
                             </div>
                         </setting>
+
+                        <setting id="gemini_max_output_tokens_setting"
+                                 string="Max Output Tokens"
+                                 help="Maximum number of tokens for Gemini API response. Increase if extraction fails for very long documents.">
+                            <field name="gemini_max_output_tokens" class="oe_inline"/>
+                            <div class="content-group mt8">
+                                <div class="text-muted">
+                                    Recommended: 65536 (maximum for Gemini 2.0 Flash). Reduce if you want to limit API costs.
+                                </div>
+                            </div>
+                        </setting>
+
+                        <setting id="gemini_max_retries_setting"
+                                 string="Max Retries"
+                                 help="Maximum retry attempts when Gemini API extraction fails. Retries are executed immediately without delay.">
+                            <field name="gemini_max_retries" class="oe_inline"/>
+                            <div class="content-group mt8">
+                                <div class="text-muted">
+                                    Default: 3 retries executed immediately. Increase for unreliable API responses.
+                                </div>
+                            </div>
+                        </setting>
+
+                        <!-- Gemini Advanced Parameters -->
                         <setting id="gemini_temperature_setting"
                                  string="Temperature"
                                  help="Controls randomness in Gemini output. 0.0 = fully deterministic (recommended for accuracy).">
@@ -73,6 +94,7 @@
                                 </div>
                             </div>
                         </setting>
+
                         <setting id="gemini_top_p_setting"
                                  string="Top P (Nucleus Sampling)"
                                  help="Controls diversity by limiting token selection. 0.95 = consider top 95% probability mass (recommended).">
@@ -85,6 +107,7 @@
                                 </div>
                             </div>
                         </setting>
+
                         <setting id="gemini_top_k_setting"
                                  string="Top K"
                                  help="Limits vocabulary to top K tokens. 0 = no limit (recommended for precision).">
@@ -94,65 +117,6 @@
                                     <strong>0:</strong> No limit (recommended for maximum accuracy with specialized terms)<br/>
                                     <strong>40:</strong> Only consider 40 most likely tokens<br/>
                                     Set to 0 for precision with rare/specialized terms
-                                </div>
-                            </div>
-                        </setting>
-                        <setting id="extract_pages_run_ocr_setting"
-                                 string="Run OCR for Page Extraction"
-                                 help="If enabled, OCR will be run on the extracted pages before AI processing.">
-                            <field name="extract_pages_run_ocr"/>
-                            <div class="content-group mt8">
-                                <div class="text-muted">
-                                    Enable this if the source PDF is an image scan without text layer.
-                                    Disable to speed up processing for digital PDFs.
-                                </div>
-                            </div>
-                        </setting>
-                        
-                        <!-- LlamaIndex OCR Configuration -->
-                        <setting id="llama_cloud_api_key_setting"
-                                 string="LlamaCloud API Key"
-                                 help="Configure your LlamaCloud API key for OCR extraction with bounding boxes">
-                            <field name="llama_cloud_api_key" password="True" placeholder="llx-..." class="oe_inline"/>
-                            <div class="content-group mt8">
-                                <div class="text-muted">
-                                    Get your API key from <a href="https://cloud.llamaindex.ai/" target="_blank">LlamaCloud Console</a>
-                                </div>
-                            </div>
-                        </setting>
-                        <setting id="llama_premium_mode_setting"
-                                 string="Premium OCR Mode"
-                                 help="Enable premium mode for more accurate OCR (higher cost)">
-                            <field name="llama_premium_mode"/>
-                            <div class="content-group mt8">
-                                <div class="text-muted">
-                                    <strong>Fast Mode (Default):</strong> Faster processing with good accuracy<br/>
-                                    <strong>Premium Mode:</strong> Multimodal/Agentic parsing for complex documents (higher cost)
-                                </div>
-                            </div>
-                        </setting>
-                        <setting id="use_ai_validation_setting"
-                                 string="Use AI Validation for OCR"
-                                 help="Use AI to validate and enhance OCR data. Disable to use OCR data directly."
-                                 invisible="not extract_pages_run_ocr">
-                            <field name="use_ai_validation"/>
-                            <div class="content-group mt8">
-                                <div class="text-muted">
-                                    <strong>Enabled (Default):</strong> OCR data is processed and validated by AI for better accuracy<br/>
-                                    <strong>Disabled:</strong> Use OCR data directly without AI processing (faster, lower cost, but may be less accurate)
-                                </div>
-                            </div>
-                        </setting>
-                        
-                        <setting id="extraction_strategy_setting"
-                                 string="Extraction Strategy"
-                                 help="Choose how PDF documents are processed for extraction">
-                            <field name="extraction_strategy" widget="radio" class="o_light_label"/>
-                            <div class="content-group mt8">
-                                <div class="text-muted">
-                                    <strong>100% AI (Recommended):</strong> Gemini processes PDF directly, understanding layout and structure.<br/>
-                                    <strong>Text Extract + AI:</strong> Extract text first with PyMuPDF, then structure with AI. May be faster for very large PDFs.<br/>
-                                    <strong>Batch Extraction:</strong> Convert PDF to images, process in batches with adaptive sizing. Best for very large documents (20+ pages).
                                 </div>
                             </div>
                         </setting>
@@ -238,6 +202,16 @@
                             <div class="content-group" invisible="not google_drive_enabled">
                                 <!-- Hidden field that triggers recompute when JSON changes -->
                                 <field name="google_drive_service_account_json" invisible="1"/>
+
+                                <div class="row mt16">
+                                    <label class="col-lg-3 o_light_label" for="google_drive_max_file_size_mb"/>
+                                    <div  class="col-lg-9">
+                                        <field name="google_drive_max_file_size_mb" class="col-lg-9 oe_inline"/>
+                                    </div>
+                                    <span class="col-lg-9 offset-lg-3 text-muted">
+                                        Files larger than this size will be automatically skipped during scanning
+                                    </span>
+                                </div>
 
                                 <div class="row mt16">
                                     <label class="col-lg-3 o_light_label" for="google_drive_configured" string="Service Account"/>

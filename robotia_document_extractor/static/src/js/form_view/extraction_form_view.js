@@ -5,7 +5,7 @@ import { FormController } from "@web/views/form/form_controller";
 import { formView } from "@web/views/form/form_view";
 import { FormCompiler } from "@web/views/form/form_compiler";
 import { FormRenderer } from "@web/views/form/form_renderer";
-import { onWillStart, useEffect, useState, xml } from "@odoo/owl";
+import { onWillStart, useEffect, xml } from "@odoo/owl";
 import { loadJS } from "@web/core/assets";
 
 
@@ -21,19 +21,10 @@ export class DocumentExtractionFormCompiler extends FormCompiler {
         const formSheetBg = res.querySelector(".o_form_sheet_bg");
         const parentXml = formSheetBg && formSheetBg.parentNode;
 
-        // Find OCR panel container (NEW)
-        const ocrPanel = res.querySelector('.o_ocr_panel');
-
         // Find the PDF preview container
         const pdfContainer = res.querySelector('.o_pdf_preview');
 
         if (formSheetBg && parentXml) {
-            // Move OCR panel to be FIRST child (before form sheet)
-            if (ocrPanel) {
-                ocrPanel.classList.add('o-ocr-container');
-                parentXml.insertBefore(ocrPanel, formSheetBg);
-            }
-
             // Move PDF container to be LAST child (after form sheet)
             if (pdfContainer) {
                 pdfContainer.classList.add('o-pdf-container');
@@ -73,11 +64,6 @@ export class DocumentExtractionFormController extends FormController {
     setup() {
         super.setup();
 
-        // Toggle state for OCR panel
-        this.ocrState = useState({
-            isVisible: true  // Default: show OCR if data exists
-        });
-
         // Load Split.js library
         onWillStart(async () => {
             await loadJS('/robotia_document_extractor/static/lib/split.js');
@@ -85,7 +71,6 @@ export class DocumentExtractionFormController extends FormController {
 
         // Initialize Split.js after component is mounted
         useEffect(() => {
-            const ocrPanel = document.querySelector(".o_form_renderer > .o_ocr_panel");
             const formSheet = document.querySelector(".o_form_renderer > .o_form_sheet_bg");
             const pdfPreview = document.querySelector(".o_form_renderer > .o_pdf_preview");
 
@@ -93,122 +78,54 @@ export class DocumentExtractionFormController extends FormController {
                 return;
             }
 
-            // Check if OCR data exists
-            const hasOcrData = ocrPanel && this.model.root.data.raw_ocr_data;
-
             let splitInstance = null;
-            let currentMode = null; // Tracks: '3-panel-horizontal', '2-panel-horizontal', 'stacked', etc.
+            let currentMode = null;
 
             const handleResize = () => {
                 const windowWidth = window.innerWidth;
+                const newMode = windowWidth > 992 ? '2-panel' : 'stacked';
 
-                // Determine layout mode
-                let newMode;
-                if (windowWidth <= 991) {
-                    // Mobile: stack vertically (no split)
-                    newMode = 'stacked';
-                } else if (hasOcrData && this.ocrState.isVisible) {
-                    // Desktop with OCR visible: 3-panel split
-                    newMode = windowWidth > 1400 ? '3-panel-horizontal' : '3-panel-vertical';
-                } else {
-                    // Desktop without OCR: 2-panel split
-                    newMode = windowWidth > 1400 ? '2-panel-horizontal' : '2-panel-vertical';
+                if (currentMode === newMode) return;
+                currentMode = newMode;
+
+                // Destroy existing split
+                if (splitInstance) {
+                    splitInstance.destroy();
+                    splitInstance = null;
                 }
 
-                // Recreate split if mode changed
-                if (currentMode !== newMode) {
-                    // Destroy existing split
-                    if (splitInstance) {
-                        splitInstance.destroy();
-                        splitInstance = null;
-                    }
+                // Reset inline styles
+                [formSheet, pdfPreview].forEach(el => {
+                    el.style.width = '';
+                    el.style.height = '';
+                });
 
-                    // Reset inline styles
-                    formSheet.style.width = '';
-                    formSheet.style.height = '';
-                    pdfPreview.style.width = '';
-                    pdfPreview.style.height = '';
-                    if (ocrPanel) {
-                        ocrPanel.style.width = '';
-                        ocrPanel.style.height = '';
-                        ocrPanel.style.display = '';
-                    }
-
-                    // Create appropriate split configuration
-                    if (newMode === 'stacked') {
-                        // Mobile: CSS-only stacking, hide OCR if not visible
-                        if (ocrPanel) {
-                            ocrPanel.style.display = this.ocrState.isVisible ? 'block' : 'none';
-                        }
-                    } else if (newMode === '3-panel-horizontal') {
-                        // Desktop horizontal: OCR | Form | PDF
-                        ocrPanel.style.display = 'block';
-                        splitInstance = Split([ocrPanel, formSheet, pdfPreview], {
-                            direction: 'horizontal',
-                            sizes: [25, 40, 35],
-                            minSize: [200, 300, 250],
-                            gutterSize: 10,
-                            cursor: 'col-resize',
-                        });
-                    } else if (newMode === '3-panel-vertical') {
-                        // Tablet vertical: OCR / Form / PDF
-                        ocrPanel.style.display = 'block';
-                        splitInstance = Split([ocrPanel, formSheet, pdfPreview], {
-                            direction: 'vertical',
-                            sizes: [25, 40, 35],
-                            minSize: [150, 200, 150],
-                            gutterSize: 10,
-                            cursor: 'row-resize',
-                        });
-                    } else if (newMode === '2-panel-horizontal') {
-                        // Desktop horizontal without OCR: Form | PDF
-                        if (ocrPanel) ocrPanel.style.display = 'none';
-                        splitInstance = Split([formSheet, pdfPreview], {
-                            direction: 'horizontal',
-                            sizes: [50, 50],
-                            minSize: [300, 250],
-                            gutterSize: 10,
-                            cursor: 'col-resize',
-                        });
-                    } else if (newMode === '2-panel-vertical') {
-                        // Tablet vertical without OCR: Form / PDF
-                        if (ocrPanel) ocrPanel.style.display = 'none';
-                        splitInstance = Split([formSheet, pdfPreview], {
-                            direction: 'vertical',
-                            sizes: [60, 40],
-                            minSize: [200, 150],
-                            gutterSize: 10,
-                            cursor: 'row-resize',
-                        });
-                    }
-
-                    currentMode = newMode;
+                if (newMode === '2-panel') {
+                    // Desktop & Tablet: 2-panel horizontal layout
+                    splitInstance = Split([formSheet, pdfPreview], {
+                        direction: 'horizontal',
+                        sizes: [60, 40],           // Form 60%, PDF 40% (form dominant)
+                        minSize: [300, 250],       // Min widths
+                        gutterSize: 10,
+                        cursor: 'col-resize',
+                    });
                 }
+                // For 'stacked' mode: CSS handles layout automatically
             };
 
-            // Initial setup
             handleResize();
-
-            // Listen to window resize
             window.addEventListener('resize', handleResize);
 
-            // Cleanup
             return () => {
                 window.removeEventListener('resize', handleResize);
                 if (splitInstance) {
                     splitInstance.destroy();
                 }
             };
-        }, () => [this.ocrState.isVisible]); // Re-run when OCR visibility changes
+        }, () => []); // No dependencies - runs once on mount
     }
 
     async beforeExecuteActionButton(clickParams) {
-        // Handle OCR panel toggle
-        if (clickParams.name === 'action_toggle_ocr_panel') {
-            this.ocrState.isVisible = !this.ocrState.isVisible;
-            return false; // Prevent server call
-        }
-
         // Handle reanalyze button
         if (clickParams.name == 'action_reanalyze_with_ai') {
             try {

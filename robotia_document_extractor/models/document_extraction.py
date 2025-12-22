@@ -639,13 +639,6 @@ class DocumentExtraction(models.Model):
             'target': 'current',
         }
 
-    def action_toggle_ocr_panel(self):
-        """
-        Toggle OCR panel visibility (handled by frontend)
-        This is a dummy action - actual toggle happens in JS beforeExecuteActionButton
-        """
-        return {'type': 'ir.actions.act_window_close'}
-
     def action_reanalyze_with_ai(self):
         """
         Verify current form data against PDF and suggest corrections

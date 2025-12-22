@@ -36,7 +36,6 @@ from . import extraction_helper
 from . import extraction_job
 from . import document_reanalysis_service
 from . import fuzzy_matcher
-from . import llama_ocr_service
 from . import res_config_settings
 from . import google_drive_service
 from . import google_drive_extraction_log

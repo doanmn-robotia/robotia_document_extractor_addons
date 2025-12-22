@@ -1231,38 +1231,9 @@ OUTPUT FORMAT: {{"{category}": [...]}}
             return extracted_data
 
         except Exception as e:
-            _logger.warning("✗ Direct extraction failed")
-            _logger.warning(f"Error: {type(e).__name__}: {str(e)}")
-
-            # Check if fallback is allowed
-            ICP = self.env['ir.config_parameter'].sudo()
-            allow_fallback = ICP.get_param('robotia_document_extractor.gemini_allow_fallback', default='True')
-            allow_fallback = allow_fallback.lower() in ('true', '1', 'yes')
-
-            if not allow_fallback:
-                _logger.error("✗ Fallback disabled - failing immediately")
-                raise ValueError(f"Direct extraction failed and fallback is disabled. Error: {str(e)}")
-
-            _logger.info("→ Fallback enabled, trying 2-step extraction...")
-
-            # Fallback: 2-step extraction (PDF → Text → JSON) using Gemini
-            try:
-                _logger.info("=" * 70)
-                _logger.info("FALLBACK: 2-Step extraction (Gemini PDF → Text → JSON)")
-                _logger.info("=" * 70)
-
-                extracted_text = self._extract_pdf_to_text(client, pdf_binary, document_type)
-                _logger.info(f"✓ Step 1 complete - Extracted {len(extracted_text)} chars")
-
-                extracted_data = self._convert_text_to_json(client, extracted_text, document_type)
-                _logger.info("✓ Step 2 complete - JSON conversion successful")
-
-                _logger.info("✓ Fallback succeeded")
-                return extracted_data
-
-            except Exception as e2:
-                _logger.error("✗ All AI Native strategies failed")
-                raise ValueError(f"AI Native extraction failed. Error: {str(e2)}")
+            _logger.error("✗ AI Native extraction failed")
+            _logger.error(f"Error: {type(e).__name__}: {str(e)}")
+            raise ValueError(f"AI Native extraction failed. Error: {str(e)}")
 
     def _extract_direct_pdf_to_json(self, client, pdf_binary, document_type):
         """
