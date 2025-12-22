@@ -21,7 +21,7 @@ import { ExtractionSectionListRenderer } from "../section_one2many/extraction_se
  */
 export class ExtractionGroupedListRenderer extends ExtractionSectionListRenderer {
     static template = "robotia_document_extractor.ExtractionGroupedListRenderer";
-
+    static useMagicColumnWidths = false
     /**
      * Check if we have any grouped columns
      */

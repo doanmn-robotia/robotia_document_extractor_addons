@@ -4,7 +4,6 @@ import { ListRenderer } from "@web/views/list/list_renderer";
 import { listView } from "@web/views/list/list_view";
 
 export class NoMagicColumnListRenderer extends ListRenderer {
-    static useMagicColumnWidths = false
 
     setup() {
         super.setup()

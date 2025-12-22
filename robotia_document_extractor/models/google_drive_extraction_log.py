@@ -32,7 +32,8 @@ class GoogleDriveExtractionLog(models.Model):
     status = fields.Selection([
         ('processing', 'Processing'),
         ('success', 'Success'),
-        ('error', 'Error')
+        ('error', 'Error'),
+        ('skipped_too_large', 'Skipped - File Too Large')
     ], string='Status', required=True, default='processing', index=True)
 
     # Results

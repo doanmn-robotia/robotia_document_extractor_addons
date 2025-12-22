@@ -3,7 +3,6 @@
 import { ListRenderer } from "@web/views/list/list_renderer";
 
 export class GroupedListRenderer extends ListRenderer {
-    static useMagicColumnWidths = false
     static template = "company_management.GroupedListRenderer";
 
     get hasGroupedHeaders() {

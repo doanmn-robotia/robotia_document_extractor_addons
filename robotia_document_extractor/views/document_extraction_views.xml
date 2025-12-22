@@ -13,25 +13,13 @@
                             type="object"
                             string="AI Re-analyze"
                             class="btn-primary"
-                            invisible="not id"
+                            invisible="1"
                             help="Re-analyze document with AI"/>
-                    <button name="action_toggle_ocr_panel"
-                            type="object"
-                            string="Toggle OCR"
-                            class="btn-secondary"
-                            icon="fa-eye"
-                            invisible="not raw_ocr_data"
-                            help="Show/Hide OCR panel"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,validated,completed" options="{'clickable': '1'}"/>
                 </header>
 
                 <field name="raw_ocr_data" invisible="1"/>
                 <field name="validation_result" invisible="1"/>
-
-                <!-- OCR Panel Container (will be extracted by FormCompiler) -->
-                <div class="o_ocr_panel" invisible="not raw_ocr_data">
-                    <widget name="raw_ocr_viewer"/>
-                </div>
 
                 <sheet>
                     <!-- Smart Buttons -->
@@ -215,7 +203,7 @@
                               invisible="document_type != '01' or not has_table_1_3">
                             <field name="equipment_ownership_ids" widget="extraction_section_one2many" options="{'titleField': 'equipment_type'}" nolabel="1">
                                 <list editable="bottom">
-                                    <field name="sequence" widget="handle" options="{'enable_formatting': false}"/>
+                                    <field name="sequence" width="30px" widget="handle"/>
                                     <field name="equipment_type" widget="extraction_title_field"/>
                                     <field name="start_year" options="{'enable_formatting': false}"/>
                                     <field name="capacity" column_invisible="not parent.is_capacity_merged_table_1_3"/>
@@ -345,7 +333,7 @@
                         <!-- Page 9: Table 2.4 - Collection & Recycling Report (Complex structure) -->
                         <page string="Table 2.4: Collection &amp; Recycling Report" name="table_2_4"
                               invisible="document_type != '02' or not has_table_2_4">
-                            <field widget="x2many_no_magic_width_list" name="collection_recycling_report_ids">
+                            <field name="collection_recycling_report_ids">
                                 <list editable="bottom">
                                     <field name="substance_id" options="{'no_create': True, 'no_quick_create': True}"/>
                                     <!-- Collection -->
@@ -380,6 +368,9 @@
                                 <field name="pdf_file" widget="pdf_viewer" invisible="not id" options="{'height': '100%'}"/>
                                 <field name="pdf_url" widget="pdf_url_viewer" invisible="id"/>
                             </div>
+                        </page>
+                        <page name="ocr" string="OCR Output" invisible="not raw_ocr_data">
+                            <widget name="raw_ocr_viewer" invisible="not raw_ocr_data"/>
                         </page>
                         <page name="json" string="Json" invisible="not extraction_log_json">
                             <field name="extraction_log_json" options="{'mode': 'python'}" widget="ace_copy"/>

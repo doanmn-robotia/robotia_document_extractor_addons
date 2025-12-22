@@ -8,28 +8,47 @@ from odoo.exceptions import UserError
 class ResConfigSettings(models.TransientModel):
     _inherit = 'res.config.settings'
 
-    # LlamaIndex OCR Configuration
-    llama_cloud_api_key = fields.Char(
-        string='LlamaCloud API Key',
-        config_parameter='robotia_document_extractor.llama_cloud_api_key'
-    )
-    llama_premium_mode = fields.Boolean(
-        string='Premium Mode',
-        config_parameter='robotia_document_extractor.llama_premium_mode',
-        default=False,
-        help='Enable premium mode for more accurate OCR (higher cost)'
-    )
-    use_ai_validation = fields.Boolean(
-        string='Use AI Validation',
-        config_parameter='robotia_document_extractor.use_ai_validation',
-        default=True,
-        help='Use AI to validate and enhance OCR data. Disable to use OCR data directly.'
-    )
-
+    # ===== Core API Configuration =====
     gemini_api_key = fields.Char(
         string='Gemini API Key',
         config_parameter='robotia_document_extractor.gemini_api_key',
         help='Enter your Google Gemini API key for document extraction'
+    )
+
+    llama_cloud_api_key = fields.Char(
+        string='LlamaCloud API Key',
+        config_parameter='robotia_document_extractor.llama_cloud_api_key'
+    )
+
+    # ===== Extraction Strategy =====
+    extraction_strategy = fields.Selection(
+        selection=[
+            ('ai_native', '100% AI (Gemini processes PDF directly)'),
+            ('text_extract', 'Text Extraction + AI (Extract text first, then AI structures)'),
+            ('batch_extract', 'Batch Extraction (Process pages in batches with chat session)'),
+            ('llama_split', 'LlamaSplit Extract (Split by category + Llama OCR + Gemini)')
+        ],
+        string='Extraction Strategy',
+        config_parameter='robotia_document_extractor.extraction_strategy',
+        default='ai_native',
+        help='Choose extraction method:\n'
+               '• 100% AI: Gemini natively reads and understands PDF layout (recommended)\n'
+               '• Text Extract + AI: Extract text first using PyMuPDF, then AI structures it\n'
+               '  (useful for very large PDFs or cost optimization)\n'
+               '• Batch Extraction: Convert PDF to images, process in batches with adaptive sizing\n'
+               '  (recommended for very large documents 20+ pages with many tables)\n'
+               '• LlamaSplit Extract: Split document by categories, OCR with LlamaParse, then extract with Gemini chat\n'
+               '  (highest accuracy, uses LlamaCloud Split API + LlamaParse + Gemini)'
+    )
+
+    # ===== Gemini Core Configuration =====
+    gemini_model = fields.Char(
+        string='Gemini Model',
+        config_parameter='robotia_document_extractor.gemini_model',
+        default='gemini-2.5-pro',
+        help='Gemini model to use for extraction. '
+             'Options: gemini-3-pro-preview, gemini-2.5-pro, gemini-1.5-pro, gemini-1.5-flash, etc. '
+             'See Google AI documentation for available models.'
     )
 
     gemini_max_output_tokens = fields.Integer(
@@ -50,24 +69,7 @@ class ResConfigSettings(models.TransientModel):
              'Default: 3'
     )
 
-    gemini_allow_fallback = fields.Boolean(
-        string='Allow Fallback Strategy',
-        config_parameter='robotia_document_extractor.gemini_allow_fallback',
-        default=False,
-        help='Enable fallback to 2-step extraction (PDF → Text → JSON) when direct extraction fails. '
-             'If disabled, extraction will fail immediately without trying the fallback method. '
-             'Default: Enabled'
-    )
-
-    gemini_model = fields.Char(
-        string='Gemini Model',
-        config_parameter='robotia_document_extractor.gemini_model',
-        default='gemini-2.5-pro',
-        help='Gemini model to use for extraction. '
-             'Options: gemini-3-pro-preview, gemini-2.5-pro, gemini-1.5-pro, gemini-1.5-flash, etc. '
-             'See Google AI documentation for available models.'
-    )
-
+    # ===== Gemini Advanced Parameters =====
     gemini_temperature = fields.Float(
         string='Temperature',
         config_parameter='robotia_document_extractor.gemini_temperature',
@@ -99,35 +101,6 @@ class ResConfigSettings(models.TransientModel):
              '40 = Only consider 40 most likely tokens. '
              'Set to 0 for maximum accuracy with rare/specialized terms. '
              'Default: 0 (no limit)'
-    )
-
-    extract_pages_run_ocr = fields.Boolean(
-        string='Run OCR for Page Extraction',
-        config_parameter='robotia_document_extractor.extract_pages_run_ocr',
-        default=False,
-        help='If enabled, OCR will be run on the extracted pages before AI processing. '
-             'Enable this if the source PDF is an image scan without text layer. '
-             'Default: Disabled'
-    )
-
-    extraction_strategy = fields.Selection(
-        selection=[
-            ('ai_native', '100% AI (Gemini processes PDF directly)'),
-            ('text_extract', 'Text Extraction + AI (Extract text first, then AI structures)'),
-            ('batch_extract', 'Batch Extraction (Process pages in batches with chat session)'),
-            ('llama_split', 'LlamaSplit Extract (Split by category + Llama OCR + Gemini)')
-        ],
-        string='Extraction Strategy',
-        config_parameter='robotia_document_extractor.extraction_strategy',
-        default='ai_native',
-        help='Choose extraction method:\n'
-               '• 100% AI: Gemini natively reads and understands PDF layout (recommended)\n'
-               '• Text Extract + AI: Extract text first using PyMuPDF, then AI structures it\n'
-               '  (useful for very large PDFs or cost optimization)\n'
-               '• Batch Extraction: Convert PDF to images, process in batches with adaptive sizing\n'
-               '  (recommended for very large documents 20+ pages with many tables)\n'
-               '• LlamaSplit Extract: Split document by categories, OCR with LlamaParse, then extract with Gemini chat\n'
-               '  (highest accuracy, uses LlamaCloud Split API + LlamaParse + Gemini)'
     )
 
     # ===== Batch Extraction Configuration =====
@@ -164,6 +137,16 @@ class ResConfigSettings(models.TransientModel):
         config_parameter='google_drive_enabled',
         default=False,
         help='Enable or disable Google Drive integration for document extraction'
+    )
+
+    google_drive_max_file_size_mb = fields.Integer(
+        string='Max File Size (MB)',
+        config_parameter='google_drive_max_file_size_mb',
+        default=30,
+        help='Maximum PDF file size to process from Google Drive (in megabytes). '
+             'Files larger than this limit will be skipped automatically. '
+             'Recommended: 30MB (approximately 30-40 pages of scanned documents). '
+             'Default: 30'
     )
 
     google_drive_service_account_json = fields.Char(

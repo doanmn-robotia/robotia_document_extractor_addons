@@ -51,6 +51,189 @@ class GoogleDriveAutoExtractor(models.AbstractModel):
         except Exception as e:
             _logger.exception("Google Drive cron job failed: %s", e)
 
+    def _scan_single_folder(self, folder_id, limit, additional_vals=None):
+        """
+        Scan a single Google Drive folder for PDF files
+        
+        Args:
+            folder_id (str): Google Drive folder ID
+            limit (int): Maximum number of files to fetch
+            additional_vals (dict): Additional metadata to add to each file (e.g., {'document_type': '01'})
+            
+        Returns:
+            list: List of file metadata dicts
+        """
+        drive_service = self.env['google.drive.service']
+        files = []
+        
+        try:
+            result = drive_service.list_files(
+                folder_id=folder_id,
+                query="mimeType='application/pdf'",
+                page_size=limit
+            )
+            
+            for f in result.get('files', []):
+                # Update file metadata with additional values
+                if additional_vals:
+                    f.update(additional_vals)
+                
+                files.append(f)
+                
+        except Exception as e:
+            doc_type = additional_vals.get('document_type', 'Unknown') if additional_vals else 'Unknown'
+            _logger.error(f"Error scanning Form {doc_type} folder: {e}")
+        
+        return files
+
+    def _ensure_too_large_folder(self, processed_folder_id):
+        """
+        Ensure 'TooLarge' subfolder exists in processed folder
+        Creates it if it doesn't exist
+
+        Args:
+            processed_folder_id (str): Parent processed folder ID
+
+        Returns:
+            str: Too large folder ID
+        """
+        drive_service = self.env['google.drive.service']
+
+        # Search for existing 'TooLarge' subfolder
+        existing_folders = drive_service.search_files(
+            search_term='TooLarge',
+            folder_id=processed_folder_id,
+            mime_type='application/vnd.google-apps.folder',
+            page_size=1
+        )
+
+        if existing_folders and len(existing_folders) > 0:
+            folder_id = existing_folders[0]['id']
+            _logger.info(f"Found existing TooLarge folder: {folder_id}")
+            return folder_id
+
+        # Create new folder
+        result = drive_service.create_folder(
+            folder_name='TooLarge',
+            parent_folder_id=processed_folder_id
+        )
+
+        folder_id = result['id']
+        _logger.info(f"Created TooLarge folder: {folder_id}")
+        return folder_id
+
+    def _handle_oversized_file(self, file_data, log, processed_folder):
+        """
+        Check if file exceeds size limit and handle it if so
+
+        Args:
+            file_data (dict): File metadata from Drive API (must contain 'size' field)
+            log (recordset): google.drive.extraction.log record (status='processing')
+            processed_folder (str): Processed folder ID (parent for TooLarge subfolder)
+
+        Returns:
+            bool: True if file was oversized and handled successfully, False if file size is OK
+        """
+        try:
+            # Read max file size config
+            ICP = self.env['ir.config_parameter'].sudo()
+            max_size_mb = int(ICP.get_param('google_drive_max_file_size_mb', 30))
+            max_size_bytes = max_size_mb * 1024 * 1024
+
+            # Get file size from metadata
+            file_size = int(file_data.get('size', 0))
+
+            # Check if file exceeds limit
+            if file_size <= max_size_bytes:
+                return False  # File size is OK, continue normal processing
+
+            # File is oversized - handle it
+            file_name = file_data.get('name', 'Unknown')
+            file_id = file_data['id']
+            size_mb = round(file_size / (1024 * 1024), 2)
+
+            _logger.info(
+                f"File '{file_name}' ({size_mb}MB) exceeds limit ({max_size_mb}MB) - handling as oversized"
+            )
+
+            # Ensure TooLarge folder exists
+            drive_service = self.env['google.drive.service']
+            too_large_folder_id = self._ensure_too_large_folder(processed_folder)
+
+            # Move file to TooLarge folder
+            drive_service.move_file(file_id, too_large_folder_id)
+
+            # Update log record
+            log.write({
+                'status': 'skipped_too_large',
+                'error_message': f'File size ({size_mb}MB) exceeds configured limit ({max_size_mb}MB)'
+            })
+
+            self.env.cr.commit()
+            _logger.info(f"Moved oversized file '{file_name}' to TooLarge folder")
+
+            return True  # File was oversized and handled
+
+        except Exception as e:
+            file_name = file_data.get('name', 'Unknown')
+            _logger.error(f"Error checking/handling file size for '{file_name}': {e}")
+            return False  # On error, allow normal processing to continue
+
+    def _handle_already_processed_file(self, file_data, processed_folder):
+        """
+        Check if file was already processed and move it to processed folder if needed
+
+        Args:
+            file_data (dict): File metadata from Drive API
+            processed_folder (str): Processed folder ID
+
+        Returns:
+            bool: True if file was already processed, False if this is a new file
+        """
+        try:
+            file_id = file_data['id']
+            file_name = file_data.get('name', 'Unknown')
+
+            # Check if file already has a log record
+            log_model = self.env['google.drive.extraction.log']
+            existing_log = log_model.search([
+                ('drive_file_id', '=', file_id),
+                ('status', 'in', ['success', 'processing', 'skipped_too_large'])
+            ], limit=1)
+
+            if not existing_log:
+                return False  # File not processed yet, continue normal flow
+
+            # File was already processed - move to processed folder if needed
+            _logger.info(
+                f"File '{file_name}' already processed (status: {existing_log.status}) - "
+                f"ensuring it's in correct folder"
+            )
+
+            drive_service = self.env['google.drive.service']
+
+            # Determine destination folder based on log status
+            if existing_log.status == 'skipped_too_large':
+                # Move to TooLarge subfolder
+                destination_folder = self._ensure_too_large_folder(processed_folder)
+                destination_name = 'TooLarge'
+            else:
+                # Move to Processed folder
+                destination_folder = processed_folder
+                destination_name = 'Processed'
+
+            # Move file to destination folder
+            drive_service.move_file(file_id, destination_folder)
+
+            _logger.info(f"Moved already-processed file '{file_name}' to {destination_name} folder")
+
+            return True  # File was already processed
+
+        except Exception as e:
+            file_name = file_data.get('name', 'Unknown')
+            _logger.error(f"Error checking/handling already-processed file '{file_name}': {e}")
+            return False  # On error, allow normal processing to continue
+
     def _scan_folders(self, form01_folder, form02_folder, limit=4):
         """
         Scan both folders with balanced strategy
@@ -58,45 +241,18 @@ class GoogleDriveAutoExtractor(models.AbstractModel):
         - If one folder has fewer files, take more from the other
         - Maximum 4 files per run
         """
-        drive_service = self.env['google.drive.service']
-        log_model = self.env['google.drive.extraction.log']
+        # Scan both folders using helper method
+        form01_files = self._scan_single_folder(
+            folder_id=form01_folder,
+            limit=limit * 2,
+            additional_vals={'document_type': '01'}
+        )
 
-        # Get already processed file IDs
-        processed_ids = log_model.search([
-            ('drive_file_id', '!=', False),
-            ('status', 'in', ['success', 'processing'])
-        ]).mapped('drive_file_id')
-
-        form01_files = []
-        form02_files = []
-
-        # Scan Form 01 folder - try to get up to 4 (may need all if Form 02 is empty)
-        try:
-            result = drive_service.list_files(
-                folder_id=form01_folder,
-                query="mimeType='application/pdf'",
-                page_size=limit  # Get up to 4 in case Form 02 has none
-            )
-            for f in result.get('files', []):
-                if f['id'] not in processed_ids:
-                    f['document_type'] = '01'
-                    form01_files.append(f)
-        except Exception as e:
-            _logger.error("Error scanning Form 01 folder: %s", e)
-
-        # Scan Form 02 folder - try to get up to 4
-        try:
-            result = drive_service.list_files(
-                folder_id=form02_folder,
-                query="mimeType='application/pdf'",
-                page_size=limit
-            )
-            for f in result.get('files', []):
-                if f['id'] not in processed_ids:
-                    f['document_type'] = '02'
-                    form02_files.append(f)
-        except Exception as e:
-            _logger.error("Error scanning Form 02 folder: %s", e)
+        form02_files = self._scan_single_folder(
+            folder_id=form02_folder,
+            limit=limit * 2,
+            additional_vals={'document_type': '02'}
+        )
 
         # Balanced selection strategy
         files_to_process = []
@@ -130,13 +286,17 @@ class GoogleDriveAutoExtractor(models.AbstractModel):
             len(form01_files), len(form02_files), len(files_to_process)
         )
 
-        return files_to_process[:limit]  # Safety cap at 4
+        return files_to_process[:limit]  # Safety cap at 4  # Safety cap at 4  # Safety cap at 4  # Safety cap at 4  # Safety cap at 4  # Safety cap at 4
 
     def _process_single_file(self, file_data, processed_folder):
         """Process a single file: download, extract, create record, move"""
         file_id = file_data['id']
         file_name = file_data['name']
         document_type = file_data['document_type']
+
+        # Check if file was already processed
+        if self._handle_already_processed_file(file_data, processed_folder):
+            return  # File was already processed and moved, skip
 
         # Create log record
         log = self.env['google.drive.extraction.log'].create({
@@ -145,6 +305,10 @@ class GoogleDriveAutoExtractor(models.AbstractModel):
             'document_type': document_type,
             'status': 'processing',
         })
+
+        # Check and handle oversized files
+        if self._handle_oversized_file(file_data, log, processed_folder):
+            return  # File was oversized and handled, skip normal processing
 
         try:
             _logger.info(f"Processing {file_name} (type: {document_type})")
