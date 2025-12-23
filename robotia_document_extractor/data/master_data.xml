@@ -696,5 +696,15 @@
             <field name="gwp">0</field>
             <field name="form_type">both</field>
         </record>
+
+        <record id="substance_other" model="controlled.substance">
+            <field name="name">Other Substance</field>
+            <field name="code">OTHER-SUBSTANCE</field>
+            <field name="formula">N/A</field>
+            <field name="cas_number">N/A</field>
+            <field name="gwp">0</field>
+            <field name="form_type">both</field>
+        </record>
+
     </data>
 </odoo>

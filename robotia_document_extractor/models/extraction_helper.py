@@ -426,9 +426,18 @@ class ExtractionHelper(models.AbstractModel):
 
             Also cleans empty title sections:
             - Title row (is_title=True) without data children (is_title=False) → removed
+            - Data rows without substance_id get default substance (other_hcfc)
             """
             if not data_list:
                 return []
+
+            # Get default substance ID (other_hcfc) for rows without substance_id
+            try:
+                default_substance = self.env.ref('robotia_document_extractor.substance_other')
+                default_substance_id = default_substance.id if default_substance else False
+            except Exception as e:
+                _logger.warning(f"Could not resolve default substance 'other_hcfc': {e}")
+                default_substance_id = False
 
             # Clean empty sections first
             cleaned_data = []
@@ -439,6 +448,11 @@ class ExtractionHelper(models.AbstractModel):
 
                 # If not a title row, always keep
                 if not row.get('is_title'):
+                    # Set default substance_id if not present
+                    if not row.get('substance_id') and default_substance_id:
+                        row['substance_id'] = default_substance_id
+                        _logger.debug(f"Set default substance_id={default_substance_id} for data row without substance")
+                    
                     cleaned_data.append(row)
                     i += 1
                     continue
