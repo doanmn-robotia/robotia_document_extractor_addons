@@ -104,10 +104,6 @@ export class ExtractionPageSelector extends Component {
                 retry_from_step: progress.step
             })
         }
-
-        if (['merge_validate', 'completed'].includes(progress.step) && !this.pollingInterval) {
-            this.startJobPolling()
-        }
     }
 
     async processInitialFile(fileUrl, fileName) {
@@ -386,6 +382,7 @@ export class ExtractionPageSelector extends Component {
                 );
 
                 this.subscribe(result.uuid)
+                this.startJobPolling()
             } else if (result.type === 'error') {
                 // Error creating job
                 this.notification.add(

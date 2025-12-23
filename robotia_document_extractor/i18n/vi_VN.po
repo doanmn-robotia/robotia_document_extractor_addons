@@ -1009,6 +1009,16 @@ msgid "Year 3 Quantity (ton CO2)"
 msgstr "Năm 3 (tấn CO2tđ)"
 
 #. module: robotia_document_extractor
+#: model:controlled.substance,name:robotia_document_extractor.substance_other
+msgid "Other Substance"
+msgstr "Chất khác"
+
+#. module: robotia_document_extractor
+#: model:controlled.substance,name:robotia_document_extractor.substance_other_hcfc
+msgid "Other HCFC"
+msgstr "Chất HCFC khác"
+
+#. module: robotia_document_extractor
 #: model:activity.field,name:robotia_document_extractor.activity_field_production
 msgid "Production of controlled substances"
 msgstr "Sản xuất chất được kiểm soát"

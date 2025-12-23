@@ -87,38 +87,18 @@ const themeColorsService = {
     /**
      * Load theme colors from backend and apply them to CSS variables
      *
-     * Fetches the color configuration from ir.config_parameter and updates
-     * the CSS custom properties on the document root element.
+     * Fetches the color configuration via the theme controller endpoint
+     * and updates the CSS custom properties on the document root element.
      */
     async loadAndApplyThemeColors() {
         try {
-            const result = await rpc('/web/dataset/call_kw', {
-                model: 'ir.config_parameter',
-                method: 'search_read',
-                args: [
-                    [
-                        ['key', 'in', [
-                            'backend_theme.primary_color',
-                            'backend_theme.secondary_color'
-                        ]]
-                    ],
-                    ['key', 'value']
-                ],
-                kwargs: {}
-            });
-
-            // Create a map of colors from the result
-            const colors = {};
-            result.forEach(param => {
-                if (param.key === 'backend_theme.primary_color') {
-                    colors.primary = param.value || '#6366f1'; // Default: Indigo-500
-                } else if (param.key === 'backend_theme.secondary_color') {
-                    colors.secondary = param.value || '#f8fafc'; // Default: Slate-50
-                }
-            });
+            const result = await rpc('/backend_theme/get_colors');
 
             // Apply colors to CSS variables
-            this.applyColors(colors);
+            this.applyColors({
+                primary: result.primary_color || '#6366f1',
+                secondary: result.secondary_color || '#f8fafc'
+            });
 
         } catch (error) {
             console.error('Failed to load theme colors:', error);

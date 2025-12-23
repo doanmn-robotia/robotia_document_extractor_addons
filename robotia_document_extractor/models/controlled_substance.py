@@ -12,6 +12,7 @@ class ControlledSubstance(models.Model):
     name = fields.Char(
         string='Substance Name',
         required=True,
+        translate=True,
         index=True
     )
     code = fields.Char(
