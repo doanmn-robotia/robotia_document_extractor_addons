@@ -1,0 +1,507 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="view_backup_conf_form" model="ir.ui.view">
+        <field name="model">db.backup</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button
+                        name="action_backup"
+                        type="object"
+                        string="Execute backup"
+                        class="oe_highlight"
+                    />
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" />
+                        </h1>
+                    </div>
+                    
+                    <notebook>
+                        <page string="Basic Configuration">
+                            <group string="Basic backup configuration">
+                                <field name="folder" />
+                                <field name="days_to_keep" />
+                                <field name="method" />
+                                <field name="backup_format" />
+                            </group>
+                            <div invisible="method != 'sftp'">
+                                <div class="bg-warning">
+                                    <h3>Warning:</h3>
+                                    Use SFTP with caution! This writes files to external servers under the path you specify.
+                                </div>
+                                <group string="SFTP Settings">
+                                    <field name="sftp_host" placeholder="sftp.example.com" />
+                                    <field name="sftp_port" />
+                                    <field name="sftp_user" placeholder="john" />
+                                    <field name="sftp_password" />
+                                    <field
+                                        name="sftp_private_key"
+                                        placeholder="/home/odoo/.ssh/id_rsa"
+                                    />
+                                    <button
+                                        name="action_sftp_test_connection"
+                                        type="object"
+                                        string="Test SFTP Connection"
+                                        icon="fa-television"
+                                    />
+                                </group>
+                            </div>
+                        </page>
+                        
+                        <page string="System Paths">
+                            <group string="Component Paths">
+                                <field name="custom_addons_path"/>
+                                <field name="odoo_config_path"/>
+                                <field name="nginx_config_path"/>
+                                <field name="systemd_service_path"/>
+                                <field name="odoo_data_path"/>
+                                <field name="python_venv_path"/>
+                                <field name="odoo_user"/>
+                            </group>
+                            <group string="Path Validation">
+                                <button 
+                                    name="action_validate_paths" 
+                                    type="object" 
+                                    string="Validate All Paths"
+                                    class="btn-primary"
+                                />
+                            </group>
+                        </page>
+                        
+                        <page string="Backup Components">
+                            <group string="Backup Mode">
+                                <field name="backup_mode" widget="radio"/>
+                            </group>
+                            <group string="Full System Components" invisible="backup_mode != 'full_system'">
+                                <field name="include_custom_addons"/>
+                                <field name="include_system_configs"/>
+                                <field name="include_odoo_data"/>
+                            </group>
+                            <div class="alert alert-info" invisible="backup_mode != 'full_system'">
+                                <strong>Full System Backup includes:</strong>
+                                <ul>
+                                    <li>Database dump</li>
+                                    <li>Filestore directory</li>
+                                    <li>Custom addons (if enabled and path configured)</li>
+                                    <li>System configuration files (if enabled)</li>
+                                    <li>Odoo data directory (if enabled and path configured)</li>
+                                    <li>System information and metadata</li>
+                                </ul>
+                            </div>
+                        </page>
+
+                        <page string="Cloud Sync">
+                            <group string="Cloud Configuration">
+                                <field name="enable_cloud_sync"/>
+                                <field name="cloud_provider" invisible="not enable_cloud_sync"/>
+                                <field name="rclone_config_name" invisible="not enable_cloud_sync"/>
+                                <field name="cloud_backup_path" invisible="not enable_cloud_sync"/>
+                            </group>
+                            
+                            <group string="Cloud Options" invisible="not enable_cloud_sync">
+                                <field name="cloud_retention_days"/>
+                                <field name="verify_cloud_upload"/>
+                                <field name="cloud_bandwidth_limit" placeholder="e.g., 10M, 1G"/>
+                                <field name="encrypt_cloud_backup"/>
+                            </group>
+                            
+                            <group string="Cloud Connection Test" invisible="not enable_cloud_sync">
+                                <button 
+                                    name="action_test_cloud_connection" 
+                                    type="object" 
+                                    string="Test Cloud Connection"
+                                    class="btn-primary"
+                                    icon="fa-cloud"
+                                />
+                            </group>
+                            
+                            <div class="alert alert-info" invisible="not enable_cloud_sync">
+                                <h4>📋 Cloud Sync Setup Instructions:</h4>
+                                <ol>
+                                    <li><strong>Install rclone:</strong> <code>curl https://rclone.org/install.sh | sudo bash</code></li>
+                                    <li><strong>Configure cloud provider:</strong> <code>rclone config</code></li>
+                                    <li><strong>Test configuration:</strong> <code>rclone lsd remote_name:</code></li>
+                                    <li><strong>Enter remote name</strong> in the field above</li>
+                                    <li><strong>Test connection</strong> using the button above</li>
+                                </ol>
+                                
+                                <h4>☁️ Supported Providers:</h4>
+                                <ul>
+                                    <li>🔹 Google Drive (gdrive)</li>
+                                    <li>🔹 Amazon S3 (s3)</li>
+                                    <li>🔹 Microsoft OneDrive (onedrive)</li>
+                                    <li>🔹 Dropbox (dropbox)</li>
+                                    <li>🔹 Custom rclone remote</li>
+                                </ul>
+                            </div>
+                        </page>
+                    </notebook>
+                    
+                    <separator string="Help" colspan="2" />
+                    <div>
+                        Automatic backups of the database can be scheduled as follows:
+                        <ol>
+                        <li
+                        >Go to Settings / Technical / Automation / Scheduled Actions.</li>
+                        <li>Search the action named 'Backup scheduler'.</li>
+                        <li
+                        >Set the scheduler to active and fill in how often you want backups generated.</li>
+                    </ol>
+                    </div>
+                </sheet>
+
+                <chatter reload_on_post="True"/>
+            </form>
+        </field>
+    </record>
+    
+    <record id="view_backup_conf_list" model="ir.ui.view">
+        <field name="model">db.backup</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name" />
+                <field name="folder" />
+                <field name="days_to_keep" />
+            </list>
+        </field>
+    </record>
+    <record id="view_backup_conf_search" model="ir.ui.view">
+        <field name="model">db.backup</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" />
+                <field name="folder" />
+                <field name="sftp_host" />
+            </search>
+        </field>
+    </record>
+    <record id="action_backup_conf_form" model="ir.actions.act_window">
+        <field name="name">Automated Backups</field>
+        <field name="res_model">db.backup</field>
+    </record>
+    <menuitem
+        parent="base.next_id_9"
+        action="action_backup_conf_form"
+        id="backup_conf_menu"
+    />
+    <!-- Execute backup from "More" menu -->
+    <record id="action_server_backup" model="ir.actions.server">
+        <field name="name">Execute backup(s)</field>
+        <field name="type">ir.actions.server</field>
+        <field name="model_id" ref="model_db_backup" />
+        <field name="binding_model_id" ref="model_db_backup" />
+        <field name="state">code</field>
+        <field name="code">records.action_backup()</field>
+    </record>
+
+
+
+
+
+
+
+
+    <!-- Backup History Views -->
+    <record id="view_backup_history_form" model="ir.ui.view">
+        <field name="model">backup.history</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button
+                        name="action_test_restore"
+                        type="object"
+                        string="Test Restore"
+                        class="btn-primary"
+                    />
+                    <button
+                        name="action_view_scripts"
+                        type="object"
+                        string="View Scripts"
+                        class="btn-secondary"
+                    />
+
+                    <button
+                        name="action_sync_to_cloud"
+                        type="object"
+                        string="Sync to Cloud"
+                        class="btn-secondary"
+                        icon="fa-cloud-upload"
+                        invisible="cloud_sync_status == 'success'"
+                    />
+                    <button
+                        name="action_download_from_cloud"
+                        type="object"
+                        string="Download from Cloud"
+                        class="btn-secondary"
+                        icon="fa-cloud-download"
+                        invisible="cloud_sync_status != 'success'"
+                    />
+                    <button
+                        name="action_list_cloud_backups"
+                        type="object"
+                        string="List Cloud Backups"
+                        class="btn-info"
+                        icon="fa-list"
+                    />
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="display_name" />
+                        </h1>
+                    </div>
+                    
+                    <group>
+                        <group string="Backup Information">
+                            <field name="backup_config_id"/>
+                            <field name="backup_mode"/>
+                            <field name="backup_status"/>
+                            <field name="backup_size" widget="float"/>
+                            <field name="create_date" string="Backup Date"/>
+                        </group>
+                        <group string="Restore Information">
+                            <field name="restore_tested"/>
+                            <field name="restore_scripts_path"/>
+                        </group>
+                        <group string="Cloud Sync Information">
+                            <field name="cloud_sync_enabled"/>
+                            <field name="cloud_sync_status" invisible="not cloud_sync_enabled"/>
+                            <field name="cloud_provider" invisible="not cloud_sync_enabled"/>
+                            <field name="cloud_path" invisible="not cloud_sync_enabled"/>
+                            <field name="cloud_size" invisible="not cloud_sync_enabled"/>
+                            <field name="cloud_upload_date" invisible="not cloud_sync_enabled"/>
+                            <field name="cloud_verified" invisible="not cloud_sync_enabled"/>
+                        </group>
+                    </group>
+                    
+                    <group string="Paths and Components">
+                        <field name="backup_path"/>
+                        <field name="components_backed_up" widget="text"/>
+                    </group>
+                    
+                    <group string="Error Details" invisible="backup_status == 'success'">
+                        <field name="error_message" widget="text"/>
+                    </group>
+                    
+                    <group string="Notes">
+                        <field name="notes" widget="text"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_backup_history_list" model="ir.ui.view">
+        <field name="model">backup.history</field>
+        <field name="arch" type="xml">
+            <list decoration-success="backup_status == 'success'" 
+                  decoration-danger="backup_status == 'failed'"
+                  decoration-warning="backup_status == 'partial'">
+                <field name="display_name"/>
+                <field name="backup_config_id"/>
+                <field name="backup_mode"/>
+                <field name="backup_status"/>
+                <field name="backup_size" string="Size (MB)"/>
+                <field name="restore_tested"/>
+                <field name="create_date" string="Backup Date"/>
+                
+                <field name="cloud_sync_status" 
+                       decoration-success="cloud_sync_status == 'success'"
+                       decoration-danger="cloud_sync_status == 'failed'"
+                       decoration-warning="cloud_sync_status == 'uploading'"
+                       widget="badge"/>
+                <field name="cloud_provider" optional="hide"/>
+                <field name="cloud_size" string="Cloud Size (MB)" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_backup_history_search" model="ir.ui.view">
+        <field name="model">backup.history</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="display_name"/>
+                <field name="backup_config_id"/>
+                <field name="backup_mode"/>
+                <field name="backup_status"/>
+                <filter string="Successful Backups" 
+                        name="success" 
+                        domain="[('backup_status', '=', 'success')]"/>
+                <filter string="Failed Backups" 
+                        name="failed" 
+                        domain="[('backup_status', '=', 'failed')]"/>
+                <filter string="Restore Tested" 
+                        name="tested" 
+                        domain="[('restore_tested', '=', True)]"/>
+                <filter string="Full System Backups" 
+                        name="full_system" 
+                        domain="[('backup_mode', '=', 'full_system')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Backup Configuration" 
+                            name="group_config" 
+                            context="{'group_by': 'backup_config_id'}"/>
+                    <filter string="Backup Mode" 
+                            name="group_mode" 
+                            context="{'group_by': 'backup_mode'}"/>
+                    <filter string="Status" 
+                            name="group_status" 
+                            context="{'group_by': 'backup_status'}"/>
+                    <filter string="Backup Date" 
+                            name="group_date" 
+                            context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_backup_history" model="ir.actions.act_window">
+        <field name="name">Backup History</field>
+        <field name="res_model">backup.history</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_success': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No backup history found!
+            </p>
+            <p>
+                Backup history will appear here after you execute backups.
+                Each backup record includes restore scripts and detailed information.
+            </p>
+        </field>
+    </record>
+
+    <!-- Add menu item for Backup History -->
+    <menuitem
+        parent="base.next_id_9"
+        action="action_backup_history"
+        id="backup_history_menu"
+        sequence="20"
+    />
+
+    <!-- Add smart button to backup configuration -->
+    <record id="view_backup_conf_form_with_history" model="ir.ui.view">
+        <field name="model">db.backup</field>
+        <field name="inherit_id" ref="view_backup_conf_form"/>
+        <field name="arch" type="xml">
+            <div class="oe_title" position="before">
+                <div class="oe_button_box" name="button_box">
+                    <button type="object" 
+                            name="action_view_backup_history" 
+                            class="oe_stat_button" 
+                            icon="fa-history">
+                        <field name="backup_history_count" widget="statinfo" string="Backups"/>
+                    </button>
+                </div>
+            </div>
+        </field>
+    </record>
+
+
+
+
+
+
+
+
+
+
+    <!-- Migration Wizard Views -->
+    <!-- Simplified Migration Wizard -->
+    <record id="view_backup_migration_wizard_form" model="ir.ui.view">
+        <field name="model">backup.migration.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_check_compatibility" 
+                            type="object" 
+                            string="Check Compatibility"
+                            class="btn-primary"/>
+                    <button name="action_generate_migration_package" 
+                            type="object" 
+                            string="Generate Package"
+                            class="btn-primary"
+                            invisible="compatibility_status == 'incompatible'"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>New Server Migration</h1>
+                    </div>
+                    
+                    <group string="Source Backup">
+                        <field name="backup_history_id" options="{'no_create': True}"/>
+                    </group>
+                    
+                    <group string="Target Server" col="4">
+                        <field name="target_server_name"/>
+                        <field name="target_os"/>
+                        <field name="target_odoo_user"/>
+                        <field name="target_database_name"/>
+                    </group>
+                    
+                    <group string="Target Paths" col="2">
+                        <field name="target_custom_addons"/>
+                        <field name="target_odoo_config"/>
+                        <field name="target_backup_folder"/>
+                        <field name="target_odoo_data"/>
+                    </group>
+                    
+                    <group string="Options">
+                        <field name="migration_mode"/>
+                        <field name="include_ssl_setup"/>
+                        <field name="domain_name" invisible="not include_ssl_setup"/>
+                    </group>
+                    
+                    <group string="Status" invisible="not compatibility_check_done">
+                        <field name="compatibility_status" readonly="1"/>
+                        <field name="compatibility_report" widget="text" readonly="1"/>
+                    </group>
+                    
+                    <group string="Result" invisible="not migration_package_path">
+                        <field name="migration_package_path" readonly="1"/>
+                        <div class="alert alert-success">
+                            <p><strong>Migration package created!</strong></p>
+                            <p>Extract and run: <code>./scripts/migrate.sh</code></p>
+                        </div>
+                    </group>
+                    
+                    <field name="compatibility_check_done" invisible="1"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Migration Action -->
+    <record id="action_backup_migration_wizard" model="ir.actions.act_window">
+        <field name="name">New Server Migration</field>
+        <field name="res_model">backup.migration.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="view_id" ref="view_backup_migration_wizard_form"/>
+    </record>
+
+    <!-- Add migration button to backup history -->
+    <record id="view_backup_history_form_with_migration" model="ir.ui.view">
+        <field name="model">backup.history</field>
+        <field name="inherit_id" ref="view_backup_history_form"/>
+        <field name="arch" type="xml">
+            <header position="inside">
+                <button name="action_create_migration" 
+                        type="object" 
+                        string="Create Migration Package"
+                        class="btn-secondary"
+                        invisible="backup_status != 'success'"/>
+            </header>
+        </field>
+    </record>
+
+    <!-- Add menu for migration wizard -->
+    <menuitem
+        parent="base.next_id_9"
+        action="action_backup_migration_wizard"
+        id="migration_wizard_menu"
+        sequence="30"
+    />
+</odoo>

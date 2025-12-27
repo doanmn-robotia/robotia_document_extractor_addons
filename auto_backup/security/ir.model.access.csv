@@ -1,0 +1,10 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_db_backup_read,Read db.backup,model_db_backup,base.group_erp_manager,1,0,0,0
+access_db_backup_write,Write db.backup,model_db_backup,base.group_system,1,1,1,1
+
+access_backup_history_read,Read backup.history,model_backup_history,base.group_erp_manager,1,0,0,0
+access_backup_history_write,Write backup.history,model_backup_history,base.group_system,1,1,1,1
+
+access_backup_migration_wizard_read,Read backup.migration.wizard,model_backup_migration_wizard,base.group_erp_manager,1,0,0,0
+access_backup_migration_wizard_write,Write backup.migration.wizard,model_backup_migration_wizard,base.group_system,1,1,1,1
+
