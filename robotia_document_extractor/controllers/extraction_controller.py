@@ -1989,7 +1989,7 @@ class ExtractionController(http.Controller):
             else:
                 # This is a data row - map to current title
                 if current_title_value is not None:
-                    mapping[record.id] = current_title_value
+                    mapping[record.id] = current_title_value or ''
 
         _logger.debug(f"HFC Export: Resolved {len(mapping)} is_title mappings")
 
@@ -2052,7 +2052,7 @@ class ExtractionController(http.Controller):
         base_row = {
             'TenDoanhNghiep': doc.organization_id.name or '',
             'MaSoDN': doc.organization_id.business_id or '',
-            'NamBaoCao': doc.year,
+            'NamBaoCao': doc.year or '',
             'HoatDong': usage_type_map.get(usage_type, ''),
             'TenChat': usage_record.substance_name or '',
             'GhiChu': usage_record.notes or '',
