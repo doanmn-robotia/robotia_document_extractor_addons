@@ -202,6 +202,11 @@ export class OverviewDashboard extends Component {
         const labels = substances.map(s => s.name);
         const values = substances.map(s => s.value || 0);
 
+        console.log(labels);
+        console.log(values);
+        
+        
+
         // Create chart
         this.substanceChart = new Chart(ctx, {
             type: 'bar',

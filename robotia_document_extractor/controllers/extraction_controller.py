@@ -837,284 +837,62 @@ class ExtractionController(http.Controller):
             return {'error': True, 'message': str(e)}
 
     @http.route('/document_extractor/hfc_dashboard_data', type='json', auth='user', methods=['POST'])
-    def get_hfc_dashboard_data(self, filters=None):
+    def get_hfc_dashboard_data(self, filters=None, **kwargs):
         """
-        Get aggregated data for HFC dashboard (all substances overview)
+        HFC Dashboard data endpoint (REBUILT to reuse export logic)
+
+        Uses _collect_export_data() for data collection, then aggregates
+        in Python for KPIs and charts.
 
         Args:
-            filters (dict): Filter criteria with keys:
-                - organization_search (str): Search by organization name
-                - organization_code (str): Search by business license number
-                - province (str): Filter by province/state
-                - substance_name (str): Filter by substance name
-                - hs_code (str): Filter by HS code
-                - substance_group_id (int): Filter by substance group ID
-                - activity_field_ids (list): Filter by activity field IDs
-                - year_from (int): Start year
-                - year_to (int): End year
-                - quantity_min (float): Minimum quantity
-                - quantity_max (float): Maximum quantity
-                - status (list): Document states ['draft', 'validated', 'completed']
+            filters (dict): Filter criteria from frontend (13 filters)
 
         Returns:
-            dict: Dashboard data with KPIs, charts, and tables
+            dict: {
+                error, kpis, charts: {trend_by_year_substance, by_activity_type, top_10_records, pivot_data},
+                filter_metadata: {available_years}
+            }
         """
         try:
             filters = filters or {}
-            _logger.info(f"HFC Dashboard request with filters: {filters}")
+            _logger.info(f"HFC Dashboard: Received filters: {filters}")
 
-            # ===== PHASE 1: Pre-filter documents by state & activity_fields =====
-            Document = request.env['document.extraction'].sudo()
-            doc_domain = []
+            # Step 1: Collect filtered data (REUSE FROM EXPORT)
+            data = self._collect_export_data(filters)
+            _logger.info(f"HFC Dashboard: {len(data['documents'])} documents collected")
 
-            # Filter by status
-            if filters.get('status'):
-                doc_domain.append(('state', 'in', filters['status']))
+            # Step 2: Aggregate KPIs
+            kpis = self._aggregate_dashboard_kpis(data)
 
-            # Filter by activity fields (already IDs from frontend)
-            if filters.get('activity_field_ids'):
-                activity_field_ids = filters['activity_field_ids']
-                if activity_field_ids:
-                    doc_domain.append(('activity_field_ids', 'in', activity_field_ids))
+            # Step 3: Aggregate charts
+            trend_data = self._aggregate_trend_by_year_substance(data)
+            activity_data = self._aggregate_by_activity_type(data)
+            top_10 = self._aggregate_top_10_records(data)
+            pivot = self._aggregate_pivot_data(data)
 
-            filtered_docs = Document.search(doc_domain)
-            filtered_org_ids = filtered_docs.mapped('organization_id').ids if filtered_docs else []
+            # Step 4: Extract available years for filter metadata
+            available_years = sorted(set(data['documents'].mapped('year'))) if data['documents'] else []
 
-            _logger.info(f"Phase 1: Filtered {len(filtered_docs)} documents, {len(filtered_org_ids)} organizations")
-
-            # ===== PHASE 2: Filter organizations by province, license, name =====
-            Partner = request.env['res.partner'].sudo()
-            org_domain = [('id', 'in', filtered_org_ids)] if filtered_org_ids else []
-
-            if filters.get('organization_search'):
-                org_domain.append(('name', 'ilike', filters['organization_search']))
-
-            if filters.get('organization_code'):
-                org_domain.append(('business_id', 'ilike', filters['organization_code']))
-
-            if filters.get('province'):
-                State = request.env['res.country.state'].sudo()
-                state_ids = State.search([('name', 'ilike', filters['province'])]).ids
-                if state_ids:
-                    org_domain.append(('state_id', 'in', state_ids))
-
-            if org_domain:
-                final_org_ids = Partner.search(org_domain).ids
-            else:
-                # No org filters applied, use all
-                final_org_ids = None
-
-            _logger.info(f"Phase 2: Final organization count: {len(final_org_ids) if final_org_ids else 'all'}")
-
-            # ===== PHASE 3: Filter substances by name, group, HS code =====
-            Substance = request.env['controlled.substance'].sudo()
-            substance_domain = []
-
-            if filters.get('substance_name'):
-                substance_domain.append(('name', 'ilike', filters['substance_name']))
-
-            if filters.get('substance_group_id'):
-                substance_domain.append(('substance_group_id', '=', filters['substance_group_id']))
-
-            if filters.get('hs_code'):
-                substance_domain.append(('hs_code', 'ilike', filters['hs_code']))
-
-            if substance_domain:
-                substance_ids = Substance.search(substance_domain).ids
-            else:
-                substance_ids = None
-
-            _logger.info(f"Phase 3: Substance filter: {len(substance_ids) if substance_ids else 'all'}")
-
-            # ===== PHASE 4: Query substance.aggregate =====
-            SubstanceAggregate = request.env['substance.aggregate'].sudo()
-            agg_domain = []
-
-            if final_org_ids is not None:
-                agg_domain.append(('organization_id', 'in', final_org_ids))
-
-            if substance_ids is not None:
-                agg_domain.append(('substance_id', 'in', substance_ids))
-
-            if filters.get('year_from'):
-                agg_domain.append(('year', '>=', filters['year_from']))
-
-            if filters.get('year_to'):
-                agg_domain.append(('year', '<=', filters['year_to']))
-
-            aggregates = SubstanceAggregate.search(agg_domain)
-
-            _logger.info(f"Phase 4: Found {len(aggregates)} aggregate records")
-
-            # ===== PHASE 5: Apply quantity filters =====
-            if filters.get('quantity_min') is not None:
-                aggregates = aggregates.filtered(lambda r: r.total_usage_kg >= filters['quantity_min'])
-
-            if filters.get('quantity_max') is not None:
-                aggregates = aggregates.filtered(lambda r: r.total_usage_kg <= filters['quantity_max'])
-
-            _logger.info(f"Phase 5: After quantity filters: {len(aggregates)} records")
-
-            # ===== PHASE 6: Calculate KPIs =====
-            total_kg = sum(aggregates.mapped('total_usage_kg'))
-            total_co2e = sum(aggregates.mapped('total_co2e'))
-            org_count = len(set(aggregates.mapped('organization_id').ids))
-
-            # Document count by unique (year, org, doc_type)
-            unique_docs = set()
-            for agg in aggregates:
-                if agg.organization_id:
-                    doc_key = (agg.year, agg.organization_id.id, agg.document_type)
-                    unique_docs.add(doc_key)
-            doc_count = len(unique_docs)
-
-            # Verified percentage (from filtered docs)
-            if filtered_docs:
-                verified_docs = filtered_docs.filtered(lambda d: d.state == 'validated')
-                verified_pct = (len(verified_docs) / len(filtered_docs) * 100)
-            else:
-                verified_pct = 0
-
-            _logger.info(f"Phase 6: KPIs - Orgs: {org_count}, Docs: {doc_count}, kg: {total_kg:.2f}, CO2e: {total_co2e:.2f}")
-
-            # ===== PHASE 7: Prepare chart data =====
-
-            # Chart 1: Trend by year & substance (for bar chart)
-            trend_data = {}
-            for agg in aggregates:
-                key = (agg.year, agg.substance_id.id, agg.substance_id.name)
-                if key not in trend_data:
-                    trend_data[key] = {
-                        'year': agg.year,
-                        'substance_id': agg.substance_id.id,
-                        'substance_name': agg.substance_id.name,
-                        'total_kg': 0,
-                        'co2e': 0
-                    }
-                trend_data[key]['total_kg'] += agg.total_usage_kg
-                trend_data[key]['co2e'] += agg.total_co2e
-
-            trend_list = sorted(trend_data.values(), key=lambda x: (x['year'], x['substance_name']))
-
-            # Chart 2: By activity type (for pie chart)
-            activity_labels = {
-                'production': 'Sản xuất',
-                'import': 'Nhập khẩu',
-                'export': 'Xuất khẩu',
-                'equipment_manufacturing': 'SX/NK Thiết bị',
-                'equipment_operation': 'Vận hành thiết bị',
-                'collection': 'Thu gom',
-                'reuse': 'Tái sử dụng',
-                'recycle': 'Tái chế',
-                'disposal': 'Tiêu hủy'
-            }
-
-            activity_data = {}
-            for agg in aggregates:
-                if agg.usage_type:
-                    usage = agg.usage_type
-                    if usage not in activity_data:
-                        activity_data[usage] = {
-                            'activity_type': usage,
-                            'activity_label': activity_labels.get(usage, usage.title()),
-                            'total_kg': 0,
-                            'co2e': 0
-                        }
-                    activity_data[usage]['total_kg'] += agg.total_usage_kg
-                    activity_data[usage]['co2e'] += agg.total_co2e
-
-            activity_list = sorted(activity_data.values(), key=lambda x: x['total_kg'], reverse=True)
-
-            # Table 1: Top 10 records by (org, year, substance)
-            top_records = {}
-            for agg in aggregates:
-                if not agg.organization_id:
-                    continue
-
-                key = (agg.organization_id.id, agg.year, agg.substance_id.id)
-                if key not in top_records:
-                    # Get activity tags from document
-                    doc = Document.search([
-                        ('organization_id', '=', agg.organization_id.id),
-                        ('year', '=', agg.year),
-                        ('document_type', '=', agg.document_type)
-                    ], limit=1)
-
-                    activity_tags = []
-                    if doc and doc.activity_field_ids:
-                        activity_tags = doc.activity_field_ids.mapped('name')
-
-                    top_records[key] = {
-                        'organization_id': agg.organization_id.id,
-                        'organization_name': agg.organization_id.name,
-                        'substance_id': agg.substance_id.id,
-                        'substance_name': agg.substance_id.name,
-                        'year': agg.year,
-                        'total_kg': 0,
-                        'co2e': 0,
-                        'activity_tags': activity_tags,
-                        'status': doc.state if doc else 'draft'
-                    }
-                top_records[key]['total_kg'] += agg.total_usage_kg
-                top_records[key]['co2e'] += agg.total_co2e
-
-            top_10 = sorted(top_records.values(), key=lambda x: x['total_kg'], reverse=True)[:10]
-
-            # Table 2: Pivot data (DN × Chất, columns: Years)
-            pivot_data = {}
-            for agg in aggregates:
-                if not agg.organization_id:
-                    continue
-
-                key = (agg.organization_id.id, agg.substance_id.id)
-                if key not in pivot_data:
-                    pivot_data[key] = {
-                        'organization_id': agg.organization_id.id,
-                        'organization_name': agg.organization_id.name,
-                        'substance_id': agg.substance_id.id,
-                        'substance_name': agg.substance_id.name,
-                        'year_2021_kg': 0,
-                        'year_2022_kg': 0,
-                        'year_2023_kg': 0,
-                        'year_2024_kg': 0,
-                        'total_co2e': 0
-                    }
-
-                year_key = f'year_{agg.year}_kg'
-                if year_key in pivot_data[key]:
-                    pivot_data[key][year_key] += agg.total_usage_kg
-                pivot_data[key]['total_co2e'] += agg.total_co2e
-
-            pivot_list = sorted(pivot_data.values(),
-                               key=lambda x: (x['organization_name'], x['substance_name']))[:50]
-
-            _logger.info(f"Phase 7: Charts prepared - Trend: {len(trend_list)}, Activity: {len(activity_list)}, Top10: {len(top_10)}, Pivot: {len(pivot_list)}")
-
-            # ===== PHASE 8: Return response =====
+            # Step 5: Return response
             return {
                 'error': False,
-                'kpis': {
-                    'total_organizations': org_count,
-                    'total_kg': total_kg,
-                    'total_co2e': total_co2e,
-                    'verified_percentage': verified_pct
-                },
+                'kpis': kpis,
                 'charts': {
-                    'trend_by_year_substance': trend_list,
-                    'by_activity_type': activity_list,
+                    'trend_by_year_substance': trend_data,
+                    'by_activity_type': activity_data,
                     'top_10_records': top_10,
-                    'pivot_data': pivot_list
+                    'pivot_data': pivot,
                 },
                 'filter_metadata': {
-                    'available_years': sorted(set(aggregates.mapped('year')), reverse=True) if aggregates else []
+                    'available_years': available_years
                 }
             }
 
         except Exception as e:
-            _logger.error(f'Error fetching HFC dashboard data: {str(e)}', exc_info=True)
+            _logger.error(f"HFC Dashboard error: {str(e)}", exc_info=True)
             return {
                 'error': True,
-                'message': str(e)
+                'message': f'Lỗi tải dữ liệu dashboard: {str(e)}'
             }
 
     @http.route('/document_extractor/recovery_dashboard_data', type='json', auth='user', methods=['POST'])
@@ -1316,6 +1094,519 @@ class ExtractionController(http.Controller):
             _logger.error(f'Error fetching recovery dashboard data: {str(e)}', exc_info=True)
             return {'error': True, 'message': str(e)}
 
+    # ===== HFC DASHBOARD AGGREGATION HELPERS =====
+
+    def _aggregate_dashboard_kpis(self, data):
+        """
+        Aggregate KPIs from filtered documents
+
+        Args:
+            data (dict): {
+                'documents': RecordSet[document.extraction],
+                'substance_filter_ids': [int] or None,
+                'filters': dict
+            }
+
+        Returns:
+            dict: {
+                'total_organizations': int,
+                'total_kg': float,
+                'total_co2e': float,
+                'verified_percentage': float
+            }
+        """
+        documents = data['documents']
+        substance_filter_ids = data['substance_filter_ids']
+        filters = data['filters']
+
+        # KPI 1: Total unique organizations
+        total_organizations = len(set(documents.mapped('organization_id').ids))
+
+        # KPI 2 & 3: Total kg and CO2e
+        total_kg = 0.0
+        total_co2e = 0.0
+        quantity_min = filters.get('quantity_min')
+        quantity_max = filters.get('quantity_max')
+
+        for doc in documents:
+            doc_kg = 0.0
+            doc_co2e = 0.0
+
+            if doc.document_type == '01':
+                # Form 01: substance_usage_ids (single field)
+                for usage in doc.substance_usage_ids:
+                    if usage.is_title:
+                        continue
+                    # Apply substance filter
+                    if substance_filter_ids and usage.substance_id.id not in substance_filter_ids:
+                        continue
+
+                    # Sum all 3 years
+                    qty = (usage.year_1_quantity_kg or 0.0) + \
+                          (usage.year_2_quantity_kg or 0.0) + \
+                          (usage.year_3_quantity_kg or 0.0)
+
+                    co2e = (usage.year_1_quantity_co2 or 0.0) + \
+                           (usage.year_2_quantity_co2 or 0.0) + \
+                           (usage.year_3_quantity_co2 or 0.0)
+
+                    doc_kg += qty
+                    doc_co2e += co2e
+
+            elif doc.document_type == '02':
+                # Form 02: quota usage
+                for usage in doc.quota_usage_ids:
+                    if usage.is_title:
+                        continue
+                    # Apply substance filter
+                    if substance_filter_ids and usage.substance_id.id not in substance_filter_ids:
+                        continue
+
+                    qty = usage.total_quota_kg or 0.0
+                    co2e = usage.total_quota_co2 or 0.0
+
+                    doc_kg += qty
+                    doc_co2e += co2e
+
+            # Apply quantity filters at document level
+            if quantity_min is not None and doc_kg < quantity_min:
+                continue
+            if quantity_max is not None and doc_kg > quantity_max:
+                continue
+
+            total_kg += doc_kg
+            total_co2e += doc_co2e
+
+        # KPI 4: Verified percentage
+        total_docs = len(documents)
+        validated_docs = len(documents.filtered(lambda d: d.state == 'validated'))
+        verified_percentage = (validated_docs / total_docs * 100.0) if total_docs > 0 else 0.0
+
+        return {
+            'total_organizations': total_organizations,
+            'total_kg': total_kg,
+            'total_co2e': total_co2e,
+            'verified_percentage': verified_percentage
+        }
+
+    def _aggregate_trend_by_year_substance(self, data):
+        """
+        Aggregate trend data by year and substance for bar chart
+
+        Args:
+            data (dict): {documents, substance_filter_ids, filters}
+
+        Returns:
+            list: [
+                {year, substance_id, substance_name, total_kg, co2e},
+                ...
+            ]
+            Sorted by year ASC, substance_name ASC
+        """
+        documents = data['documents']
+        substance_filter_ids = data['substance_filter_ids']
+
+        # Group by (year, substance_id, substance_name)
+        trend_groups = {}
+
+        for doc in documents:
+            year = doc.year
+
+            if doc.document_type == '01':
+                # Form 01: substance_usage_ids (single field)
+                for usage in doc.substance_usage_ids:
+                    if usage.is_title:
+                        continue
+                    # Apply substance filter
+                    if substance_filter_ids and usage.substance_id.id not in substance_filter_ids:
+                        continue
+
+                    substance = usage.substance_id
+                    key = (year, substance.id, substance.name)
+
+                    if key not in trend_groups:
+                        trend_groups[key] = {'total_kg': 0.0, 'co2e': 0.0}
+
+                    # Sum all 3 years
+                    qty = (usage.year_1_quantity_kg or 0.0) + \
+                          (usage.year_2_quantity_kg or 0.0) + \
+                          (usage.year_3_quantity_kg or 0.0)
+
+                    co2e = (usage.year_1_quantity_co2 or 0.0) + \
+                           (usage.year_2_quantity_co2 or 0.0) + \
+                           (usage.year_3_quantity_co2 or 0.0)
+
+                    trend_groups[key]['total_kg'] += qty
+                    trend_groups[key]['co2e'] += co2e
+
+            elif doc.document_type == '02':
+                # Form 02: quota usage
+                for usage in doc.quota_usage_ids:
+                    if usage.is_title:
+                        continue
+                    # Apply substance filter
+                    if substance_filter_ids and usage.substance_id.id not in substance_filter_ids:
+                        continue
+
+                    substance = usage.substance_id
+                    key = (year, substance.id, substance.name)
+
+                    if key not in trend_groups:
+                        trend_groups[key] = {'total_kg': 0.0, 'co2e': 0.0}
+
+                    qty = usage.total_quota_kg or 0.0
+                    co2e = usage.total_quota_co2 or 0.0
+
+                    trend_groups[key]['total_kg'] += qty
+                    trend_groups[key]['co2e'] += co2e
+
+        # Convert to list and sort
+        result = []
+        for (year, substance_id, substance_name), values in trend_groups.items():
+            result.append({
+                'year': year,
+                'substance_id': substance_id,
+                'substance_name': substance_name,
+                'total_kg': values['total_kg'],
+                'co2e': values['co2e']
+            })
+
+        # Sort by year ASC, then substance_name ASC (handle None values)
+        result.sort(key=lambda x: (x['year'] or 0, x['substance_name'] or ''))
+
+        return result
+
+    def _aggregate_by_activity_type(self, data):
+        """
+        Aggregate by activity type for pie chart
+
+        Args:
+            data (dict): {documents, substance_filter_ids, filters}
+
+        Returns:
+            list: [
+                {activity_label, total_kg},
+                ...
+            ]
+            Sorted by total_kg DESC
+        """
+        documents = data['documents']
+        substance_filter_ids = data['substance_filter_ids']
+
+        # Activity type labels for Form 02
+        ACTIVITY_TYPE_LABELS = {
+            'production': 'Sản xuất',
+            'import': 'Nhập khẩu',
+            'export': 'Xuất khẩu',
+        }
+
+        # Group by activity label
+        activity_groups = {}
+
+        for doc in documents:
+            if doc.document_type == '01':
+                # Form 01: substance_usage_ids (single field)
+                # Activity type determined by is_title pattern (usage_type field)
+                for usage in doc.substance_usage_ids:
+                    if usage.is_title:
+                        continue
+                    # Apply substance filter
+                    if substance_filter_ids and usage.substance_id.id not in substance_filter_ids:
+                        continue
+
+                    # Map usage_type to label
+                    label = ACTIVITY_TYPE_LABELS.get(usage.usage_type, usage.usage_type or 'Khác')
+
+                    if label not in activity_groups:
+                        activity_groups[label] = 0.0
+
+                    # Sum all 3 years
+                    qty = (usage.year_1_quantity_kg or 0.0) + \
+                          (usage.year_2_quantity_kg or 0.0) + \
+                          (usage.year_3_quantity_kg or 0.0)
+
+                    activity_groups[label] += qty
+
+            elif doc.document_type == '02':
+                # Form 02: Use usage_type field
+                for usage in doc.quota_usage_ids:
+                    if usage.is_title:
+                        continue
+                    # Apply substance filter
+                    if substance_filter_ids and usage.substance_id.id not in substance_filter_ids:
+                        continue
+
+                    label = ACTIVITY_TYPE_LABELS.get(usage.usage_type, usage.usage_type)
+                    if label not in activity_groups:
+                        activity_groups[label] = 0.0
+
+                    qty = usage.total_quota_kg or 0.0
+                    activity_groups[label] += qty
+
+        # Convert to list and sort by total_kg DESC
+        result = []
+        for label, total_kg in activity_groups.items():
+            result.append({
+                'activity_label': label,
+                'total_kg': total_kg
+            })
+
+        result.sort(key=lambda x: x['total_kg'], reverse=True)
+
+        return result
+
+    def _aggregate_top_10_records(self, data):
+        """
+        Aggregate top 10 records by weight for table
+
+        Args:
+            data (dict): {documents, substance_filter_ids, filters}
+
+        Returns:
+            list: [
+                {
+                    organization_id, organization_name, substance_id, substance_name,
+                    year, total_kg, co2e, activity_tags, status
+                },
+                ...
+            ]
+            Top 10 by total_kg DESC
+        """
+        documents = data['documents']
+        substance_filter_ids = data['substance_filter_ids']
+
+        # Group by (org_id, year, substance_id)
+        # Store: {key: {'total_kg', 'co2e', 'doc': document_record}}
+        top_groups = {}
+
+        STATE_PRIORITY = {'completed': 3, 'validated': 2, 'draft': 1}
+
+        for doc in documents:
+            year = doc.year
+            org_id = doc.organization_id.id
+            org_name = doc.organization_id.name or ''
+
+            if doc.document_type == '01':
+                # Form 01: substance_usage_ids (single field)
+                for usage in doc.substance_usage_ids:
+                    if usage.is_title:
+                        continue
+                    # Apply substance filter
+                    if substance_filter_ids and usage.substance_id.id not in substance_filter_ids:
+                        continue
+
+                    substance = usage.substance_id
+                    key = (org_id, year, substance.id)
+
+                    if key not in top_groups:
+                        top_groups[key] = {
+                            'org_id': org_id,
+                            'org_name': org_name,
+                            'substance_id': substance.id,
+                            'substance_name': substance.name,
+                            'year': year,
+                            'total_kg': 0.0,
+                            'co2e': 0.0,
+                            'doc': doc  # Track document
+                        }
+
+                    # Sum all 3 years
+                    qty = (usage.year_1_quantity_kg or 0.0) + \
+                          (usage.year_2_quantity_kg or 0.0) + \
+                          (usage.year_3_quantity_kg or 0.0)
+
+                    co2e = (usage.year_1_quantity_co2 or 0.0) + \
+                           (usage.year_2_quantity_co2 or 0.0) + \
+                           (usage.year_3_quantity_co2 or 0.0)
+
+                    top_groups[key]['total_kg'] += qty
+                    top_groups[key]['co2e'] += co2e
+
+                    # Update doc if higher state priority
+                    current_doc = top_groups[key]['doc']
+                    if STATE_PRIORITY.get(doc.state, 0) > STATE_PRIORITY.get(current_doc.state, 0):
+                        top_groups[key]['doc'] = doc
+
+            elif doc.document_type == '02':
+                # Form 02: quota usage
+                for usage in doc.quota_usage_ids:
+                    if usage.is_title:
+                        continue
+                    # Apply substance filter
+                    if substance_filter_ids and usage.substance_id.id not in substance_filter_ids:
+                        continue
+
+                    substance = usage.substance_id
+                    key = (org_id, year, substance.id)
+
+                    if key not in top_groups:
+                        top_groups[key] = {
+                            'org_id': org_id,
+                            'org_name': org_name,
+                            'substance_id': substance.id,
+                            'substance_name': substance.name,
+                            'year': year,
+                            'total_kg': 0.0,
+                            'co2e': 0.0,
+                            'doc': doc
+                        }
+
+                    qty = usage.total_quota_kg or 0.0
+                    co2e = usage.total_quota_co2 or 0.0
+
+                    top_groups[key]['total_kg'] += qty
+                    top_groups[key]['co2e'] += co2e
+
+                    # Update doc if higher state priority
+                    current_doc = top_groups[key]['doc']
+                    if STATE_PRIORITY.get(doc.state, 0) > STATE_PRIORITY.get(current_doc.state, 0):
+                        top_groups[key]['doc'] = doc
+
+        # Convert to list, extract activity_tags and status, sort, take top 10
+        result = []
+        for group in top_groups.values():
+            doc = group['doc']
+            result.append({
+                'organization_id': group['org_id'],
+                'organization_name': group['org_name'],
+                'substance_id': group['substance_id'],
+                'substance_name': group['substance_name'],
+                'year': group['year'],
+                'total_kg': group['total_kg'],
+                'co2e': group['co2e'],
+                'activity_tags': doc.activity_field_ids.mapped('name'),
+                'status': doc.state
+            })
+
+        # Sort by total_kg DESC
+        result.sort(key=lambda x: x['total_kg'], reverse=True)
+
+        # Take top 10
+        return result[:10]
+
+    def _aggregate_pivot_data(self, data):
+        """
+        Aggregate pivot table data: Organization × Substance × Year
+
+        Args:
+            data (dict): {documents, substance_filter_ids, filters}
+
+        Returns:
+            list: [
+                {
+                    organization_id, organization_name, substance_id, substance_name,
+                    year_2021_kg, year_2022_kg, ..., total_co2e
+                },
+                ...
+            ]
+            Max 50 records, sorted by org_name, substance_name
+            Year columns are dynamic based on available years
+        """
+        documents = data['documents']
+        substance_filter_ids = data['substance_filter_ids']
+
+        # Detect available years
+        available_years = sorted(set(documents.mapped('year'))) if documents else []
+
+        # Group by (org_id, substance_id)
+        # Store: {key: {'org_name', 'substance_name', 'years': {year: kg}, 'total_co2e': float}}
+        pivot_groups = {}
+
+        for doc in documents:
+            org_id = doc.organization_id.id
+            org_name = doc.organization_id.name or ''
+            year = doc.year
+
+            if doc.document_type == '01':
+                # Form 01: substance_usage_ids (single field)
+                for usage in doc.substance_usage_ids:
+                    if usage.is_title:
+                        continue
+                    # Apply substance filter
+                    if substance_filter_ids and usage.substance_id.id not in substance_filter_ids:
+                        continue
+
+                    substance = usage.substance_id
+                    key = (org_id, substance.id)
+
+                    if key not in pivot_groups:
+                        pivot_groups[key] = {
+                            'org_id': org_id,
+                            'org_name': org_name,
+                            'substance_id': substance.id,
+                            'substance_name': substance.name,
+                            'years': {},  # {year: kg}
+                            'total_co2e': 0.0
+                        }
+
+                    # Sum all 3 years
+                    qty = (usage.year_1_quantity_kg or 0.0) + \
+                          (usage.year_2_quantity_kg or 0.0) + \
+                          (usage.year_3_quantity_kg or 0.0)
+
+                    co2e = (usage.year_1_quantity_co2 or 0.0) + \
+                           (usage.year_2_quantity_co2 or 0.0) + \
+                           (usage.year_3_quantity_co2 or 0.0)
+
+                    if year not in pivot_groups[key]['years']:
+                        pivot_groups[key]['years'][year] = 0.0
+                    pivot_groups[key]['years'][year] += qty
+                    pivot_groups[key]['total_co2e'] += co2e
+
+            elif doc.document_type == '02':
+                # Form 02: quota usage
+                for usage in doc.quota_usage_ids:
+                    if usage.is_title:
+                        continue
+                    # Apply substance filter
+                    if substance_filter_ids and usage.substance_id.id not in substance_filter_ids:
+                        continue
+
+                    substance = usage.substance_id
+                    key = (org_id, substance.id)
+
+                    if key not in pivot_groups:
+                        pivot_groups[key] = {
+                            'org_id': org_id,
+                            'org_name': org_name,
+                            'substance_id': substance.id,
+                            'substance_name': substance.name,
+                            'years': {},
+                            'total_co2e': 0.0
+                        }
+
+                    qty = usage.total_quota_kg or 0.0
+                    co2e = usage.total_quota_co2 or 0.0
+
+                    if year not in pivot_groups[key]['years']:
+                        pivot_groups[key]['years'][year] = 0.0
+                    pivot_groups[key]['years'][year] += qty
+                    pivot_groups[key]['total_co2e'] += co2e
+
+        # Convert to list with dynamic year columns
+        result = []
+        for group in pivot_groups.values():
+            row = {
+                'organization_id': group['org_id'],
+                'organization_name': group['org_name'],
+                'substance_id': group['substance_id'],
+                'substance_name': group['substance_name'],
+                'total_co2e': group['total_co2e']
+            }
+
+            # Add year columns
+            for year in available_years:
+                col_name = f'year_{year}_kg'
+                row[col_name] = group['years'].get(year, 0.0)
+
+            result.append(row)
+
+        # Sort by org_name, substance_name (handle None values)
+        result.sort(key=lambda x: (x['organization_name'] or '', x['substance_name'] or ''))
+
+        # Limit to 50
+        return result[:50]
+
     @http.route('/document_extractor/export_hfc_report', type='http', auth='user', methods=['POST'], csrf=False)
     def export_hfc_report(self, filters='{}', **kwargs):
         """
@@ -1334,8 +1625,16 @@ class ExtractionController(http.Controller):
         import os
 
         try:
-            # Parse filters
-            filters_dict = json.loads(filters) if isinstance(filters, str) else filters
+            # Parse and validate filters
+            try:
+                filters_dict = json.loads(filters) if isinstance(filters, str) else filters
+            except json.JSONDecodeError as e:
+                _logger.error(f"Invalid filter JSON: {str(e)}")
+                return request.make_response(
+                    json.dumps({'error': True, 'message': 'Định dạng bộ lọc không hợp lệ'}),
+                    headers=[('Content-Type', 'application/json')]
+                )
+
             _logger.info(f"Export HFC report with filters: {filters_dict}")
 
             # Get template path
@@ -1350,26 +1649,65 @@ class ExtractionController(http.Controller):
                 )
 
             # Load template
-            wb = openpyxl.load_workbook(template_path)
+            try:
+                wb = openpyxl.load_workbook(template_path)
+            except Exception as e:
+                _logger.error(f"Error loading template: {str(e)}", exc_info=True)
+                return request.make_response(
+                    json.dumps({'error': True, 'message': 'Lỗi khi tải template Excel'}),
+                    headers=[('Content-Type', 'application/json')]
+                )
 
-            # Query data using same logic as dashboard
-            data = self._get_export_data(filters_dict)
+            # Collect data using new helper
+            try:
+                data = self._collect_export_data(filters_dict)
+            except Exception as e:
+                _logger.error(f"Error collecting data: {str(e)}", exc_info=True)
+                return request.make_response(
+                    json.dumps({'error': True, 'message': f'Lỗi khi tải dữ liệu: {str(e)}'}),
+                    headers=[('Content-Type', 'application/json')]
+                )
 
-            # Fill each sheet
-            self._fill_sheet1_company(wb, data['companies'])
-            self._fill_sheet2_equipment_ownership(wb, data['equipment_ownership'])
-            self._fill_sheet3_equipment_production(wb, data['equipment_production'])
-            self._fill_sheet4_eol_substances(wb, data['eol_substances'])
-            self._fill_sheet5_bulk_substances(wb, data['bulk_substances'])
+            # Validate dataset
+            if not data['documents']:
+                _logger.warning("No documents found matching filters")
+                return request.make_response(
+                    json.dumps({'error': True, 'message': 'Không tìm thấy dữ liệu phù hợp với bộ lọc. Vui lòng điều chỉnh bộ lọc và thử lại.'}),
+                    headers=[('Content-Type', 'application/json')]
+                )
+
+            # Fill all 6 sheets
+            try:
+                self._fill_sheet1_company(wb, data)
+                self._fill_sheet2_equipment_ownership(wb, data)
+                self._fill_sheet3_equipment_production(wb, data)
+                self._fill_sheet4_eol_substances(wb, data)
+                self._fill_sheet5_bulk_substances(wb, data)
+                self._fill_sheet6_quota_management(wb, data)
+            except Exception as e:
+                _logger.error(f"Error filling sheets: {str(e)}", exc_info=True)
+                return request.make_response(
+                    json.dumps({'error': True, 'message': f'Lỗi khi xuất dữ liệu: {str(e)}'}),
+                    headers=[('Content-Type', 'application/json')]
+                )
 
             # Save to BytesIO
-            output = BytesIO()
-            wb.save(output)
-            output.seek(0)
+            try:
+                output = BytesIO()
+                wb.save(output)
+                output.seek(0)
+            except Exception as e:
+                _logger.error(f"Error saving workbook: {str(e)}", exc_info=True)
+                return request.make_response(
+                    json.dumps({'error': True, 'message': 'Lỗi khi lưu file Excel'}),
+                    headers=[('Content-Type', 'application/json')]
+                )
 
             # Generate filename with timestamp
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
             filename = f'HFC_Report_{timestamp}.xlsx'
+
+            _logger.info(f"Successfully generated {filename} ({len(data['documents'])} documents)")
 
             # Return as HTTP response
             return request.make_response(
@@ -1381,423 +1719,1067 @@ class ExtractionController(http.Controller):
             )
 
         except Exception as e:
-            _logger.error(f'Error exporting HFC report: {str(e)}', exc_info=True)
+            # Catch-all for unexpected errors
+            _logger.error(f'Unexpected error in export_hfc_report: {str(e)}', exc_info=True)
             return request.make_response(
-                json.dumps({'error': True, 'message': str(e)}),
+                json.dumps({'error': True, 'message': 'Đã xảy ra lỗi không mong muốn. Vui lòng thử lại hoặc liên hệ hỗ trợ.'}),
                 headers=[('Content-Type', 'application/json')]
             )
 
-    def _get_export_data(self, filters):
-        """
-        Query all data needed for export based on filters
-        Similar to get_hfc_dashboard_data but returns raw records
-        """
-        # Phase 1: Filter documents
-        Document = request.env['document.extraction'].sudo()
-        doc_domain = []
+    # ===================================================================================
+    # PHASE 1: HELPER UTILITIES (11 methods)
+    # ===================================================================================
 
+    # -------------------------------------------------------------------
+    # Phase 1.1: Filter & Data Collection Helpers
+    # -------------------------------------------------------------------
+
+    def _build_filter_domain(self, filters):
+        """
+        Build Odoo domain for filtering document.extraction records
+        Matches exactly with HFC dashboard filter logic
+
+        Args:
+            filters (dict): Filter criteria from frontend
+                - status (list): Document states to include
+                - year_from (int): Start year filter
+                - year_to (int): End year filter
+                - activity_field_ids (list): Activity field IDs
+                - organization_search (str): Organization name search
+                - organization_code (str): Business license number
+                - province (str): Province name
+                - substance_name (str): Substance name search
+                - substance_group_id (int): Substance group ID
+                - hs_code (str): HS code search
+
+        Returns:
+            list: Odoo domain for document.extraction.search()
+        """
+        domain = []
+
+        # Base filter: Only completed documents
         if filters.get('status'):
-            doc_domain.append(('state', 'in', filters['status']))
+            domain.append(('state', 'in', filters['status']))
+        else:
+            domain.append(('state', '=', 'completed'))
 
+        # Activity field filter
         if filters.get('activity_field_ids'):
-            activity_field_ids = filters['activity_field_ids']
-            if activity_field_ids:
-                doc_domain.append(('activity_field_ids', 'in', activity_field_ids))
+            domain.append(('activity_field_ids', 'in', filters['activity_field_ids']))
 
-        filtered_docs = Document.search(doc_domain)
-        filtered_org_ids = filtered_docs.mapped('organization_id').ids if filtered_docs else []
-
-        # Phase 2: Filter organizations
-        Partner = request.env['res.partner'].sudo()
-        org_domain = [('id', 'in', filtered_org_ids)] if filtered_org_ids else []
-
-        if filters.get('organization_search'):
-            org_domain.append(('name', 'ilike', filters['organization_search']))
-
-        if filters.get('organization_code'):
-            org_domain.append(('business_id', 'ilike', filters['organization_code']))
-
-        if filters.get('province'):
-            State = request.env['res.country.state'].sudo()
-            state_ids = State.search([('name', 'ilike', filters['province'])]).ids
-            if state_ids:
-                org_domain.append(('state_id', 'in', state_ids))
-
-        if org_domain:
-            final_orgs = Partner.search(org_domain)
-            final_org_ids = final_orgs.ids
-        else:
-            final_orgs = Partner.browse([])
-            final_org_ids = None
-
-        # Phase 3: Filter by substance
-        Substance = request.env['controlled.substance'].sudo()
-        substance_domain = []
-
-        if filters.get('substance_name'):
-            substance_domain.append(('name', 'ilike', filters['substance_name']))
-
-        if filters.get('substance_group_id'):
-            substance_domain.append(('substance_group_id', '=', filters['substance_group_id']))
-
-        if filters.get('hs_code'):
-            substance_domain.append(('hs_code', 'ilike', filters['hs_code']))
-
-        if substance_domain:
-            substance_ids = Substance.search(substance_domain).ids
-        else:
-            substance_ids = None
-
-        # Phase 4: Get documents in scope
-        final_doc_domain = []
-        if final_org_ids is not None:
-            final_doc_domain.append(('organization_id', 'in', final_org_ids))
-
+        # Year range filter
         if filters.get('year_from'):
-            final_doc_domain.append(('year', '>=', filters['year_from']))
-
+            domain.append(('year', '>=', filters['year_from']))
         if filters.get('year_to'):
-            final_doc_domain.append(('year', '<=', filters['year_to']))
+            domain.append(('year', '<=', filters['year_to']))
 
-        documents = Document.search(final_doc_domain, limit=10000)  # Limit to prevent huge exports
+        # Organization filters (pre-filter)
+        if filters.get('organization_search') or filters.get('organization_code') or filters.get('province'):
+            Partner = request.env['res.partner'].sudo()
+            org_domain = []
 
-        # Phase 5: Extract data for each sheet
-        companies_data = []
-        equipment_ownership_data = []
-        equipment_production_data = []
-        eol_substances_data = []
-        bulk_substances_data = []
+            if filters.get('organization_search'):
+                org_domain.append(('name', 'ilike', filters['organization_search']))
+
+            if filters.get('organization_code'):
+                org_domain.append(('business_id', 'ilike', filters['organization_code']))
+
+            if filters.get('province'):
+                State = request.env['res.country.state'].sudo()
+                state_ids = State.search([('name', 'ilike', filters['province'])]).ids
+                if state_ids:
+                    org_domain.append(('state_id', 'in', state_ids))
+
+            if org_domain:
+                org_ids = Partner.search(org_domain).ids
+                if org_ids:
+                    domain.append(('organization_id', 'in', org_ids))
+                else:
+                    # No organizations match - return empty domain
+                    domain.append(('id', '=', False))
+
+        return domain
+
+    def _collect_export_data(self, filters):
+        """
+        Centralized data collection for all sheets
+        Returns ONLY the latest document per (organization, year, document_type)
+
+        Args:
+            filters (dict): Filter criteria from frontend
+
+        Returns:
+            dict: {
+                'documents': filtered & grouped document.extraction recordset,
+                'substance_filter_ids': list of substance IDs to filter (or None),
+                'filters': original filters dict
+            }
+        """
+        # Build filter domain
+        doc_domain = self._build_filter_domain(filters)
+
+        # Load all documents matching filters
+        Document = request.env['document.extraction'].sudo()
+        all_documents = Document.search(
+            doc_domain,
+            order='create_date DESC, id DESC'  # Order by latest first for max() stability
+        )
+
+        _logger.info(f"HFC Export: Found {len(all_documents)} total documents matching filters")
+
+        if not all_documents:
+            return {
+                'documents': Document,
+                'substance_filter_ids': None,
+                'filters': filters
+            }
+
+        # Group by (organization, year, document_type) using Odoo's grouped()
+        grouped_docs = all_documents.grouped(
+            lambda d: (d.organization_id.id, d.year, d.document_type)
+        )
+
+        # Get latest document in each group (by create_date)
+        latest_docs = []
+        for group_key, docs in grouped_docs.items():
+            # docs is already a recordset, sorted by our order clause
+            # Take the first one (latest by create_date)
+            latest = max(docs, key=lambda d: (d.create_date or d.id))
+            latest_docs.append(latest)
+
+        # Sort for consistent output
+        latest_docs.sort(
+            key=lambda d: (
+                d.organization_id.name or '',
+                d.year or 0,
+                d.document_type or ''
+            )
+        )
+
+        # Convert back to recordset
+        documents = Document.browse([d.id for d in latest_docs])
+
+        _logger.info(f"HFC Export: After grouping - {len(documents)} unique (org, year, type) documents")
+
+        # Build substance filter if needed
+        substance_filter_ids = None
+        if filters.get('substance_name') or filters.get('substance_group_id') or filters.get('hs_code'):
+            Substance = request.env['controlled.substance'].sudo()
+            sub_domain = []
+
+            if filters.get('substance_name'):
+                sub_domain.append(('name', 'ilike', filters['substance_name']))
+            if filters.get('substance_group_id'):
+                sub_domain.append(('substance_group_id', '=', filters['substance_group_id']))
+            if filters.get('hs_code'):
+                sub_domain.append(('hs_code', 'ilike', filters['hs_code']))
+
+            if sub_domain:
+                substance_filter_ids = Substance.search(sub_domain).ids
+                _logger.info(f"HFC Export: Substance filter active - {len(substance_filter_ids)} substances")
+
+        return {
+            'documents': documents,
+            'substance_filter_ids': substance_filter_ids,
+            'filters': filters
+        }
+
+    # -------------------------------------------------------------------
+    # Phase 1.2: Generic Excel Writer (Eliminates Duplicate Code)
+    # -------------------------------------------------------------------
+
+    def _write_sheet_data(self, workbook, sheet_name, data_rows, start_row=2):
+        """
+        Generic method to write data rows to Excel sheet with style preservation
+        REUSABLE for all 6 sheets - eliminates duplicate cell-writing code
+
+        Args:
+            workbook (openpyxl.Workbook): Excel workbook object
+            sheet_name (str): Sheet name (e.g., 'HoSo_DoanhNghiep', 'DL_ThietBi_SoHuu')
+            data_rows (list of lists): Each inner list = row of cell values
+                                       Example: [[1, 'Company A', '123'], [2, 'Company B', '456']]
+            start_row (int): Starting row number (default 2, row 1 is header)
+
+        Returns:
+            int: Number of rows written
+
+        Features:
+            - Writes data values to cells
+            - Copies font style from header row (row 1) to maintain consistent formatting
+
+        Example:
+            data_rows = [
+                [1, 'Company A', '12345', 2024],
+                [2, 'Company B', '67890', 2024],
+            ]
+            self._write_sheet_data(wb, 'HoSo_DoanhNghiep', data_rows)
+        """
+        from copy import copy
+        from openpyxl.styles import Font
+
+        if sheet_name not in workbook.sheetnames:
+            _logger.error(f"HFC Export: Sheet '{sheet_name}' not found in template")
+            raise ValueError(f"Sheet '{sheet_name}' not found in template")
+
+        sheet = workbook[sheet_name]
+        rows_written = 0
+
+        # Get header row (row 1) for style reference
+        header_row = 1
+
+        for row_idx, row_data in enumerate(data_rows, start=start_row):
+            for col_idx, value in enumerate(row_data, start=1):
+                cell = sheet.cell(row=row_idx, column=col_idx)
+                cell.value = value
+
+                # Copy ONLY font name and size from header (no bold/italic/color)
+                header_cell = sheet.cell(row=header_row, column=col_idx)
+                if header_cell.font:
+                    cell.font = Font(
+                        name=header_cell.font.name,
+                        size=header_cell.font.size
+                    )
+                if header_cell.alignment:
+                    cell.alignment = copy(header_cell.alignment)
+                if header_cell.border:
+                    cell.border = copy(header_cell.border)
+
+            rows_written += 1
+
+        _logger.info(f"HFC Export: Sheet '{sheet_name}' - {rows_written} rows written")
+
+        return rows_written
+
+    # -------------------------------------------------------------------
+    # Phase 1.3: Pattern Resolver Helpers
+    # -------------------------------------------------------------------
+
+    def _resolve_is_title_context(self, records, title_field_name='substance_name'):
+        """
+        Resolve is_title pattern: build mapping from data record → title record
+
+        Pattern explanation (using substance_name as example):
+            line 1: is_title=True, substance_name='Sản xuất' (section title)
+            line 2: is_title=False, substance_name='R-134a' → maps to 'Sản xuất'
+            line 3: is_title=False, substance_name='R-410A' → maps to 'Sản xuất'
+            line 4: is_title=True, substance_name='Nhập khẩu' (section title)
+            line 5: is_title=False, substance_name='R-22' → maps to 'Nhập khẩu'
+
+        Args:
+            records (recordset): Ordered recordset with is_title field
+            title_field_name (str): Field to extract from title record
+                                   Valid fields: 'substance_name', 'equipment_type', 'product_type'
+
+        Returns:
+            dict: {record.id: title_value}
+                 Maps each data record (is_title=False) to its title context value
+
+        Example:
+            context = self._resolve_is_title_context(substance_usage_ids, 'substance_name')
+            # Returns: {2: 'Sản xuất', 3: 'Sản xuất', 5: 'Nhập khẩu'}
+        """
+        mapping = {}
+        current_title_value = None
+
+        # Records should already be ordered by sequence
+        for record in records.sorted('sequence'):
+            if record.is_title:
+                # This is a title row - update context
+                current_title_value = record[title_field_name]
+            else:
+                # This is a data row - map to current title
+                if current_title_value is not None:
+                    mapping[record.id] = current_title_value
+
+        _logger.debug(f"HFC Export: Resolved {len(mapping)} is_title mappings")
+
+        return mapping
+
+    def _format_capacity(self, record):
+        """
+        Format capacity field for equipment records
+        Logic: If capacity exists → use it, else → combine cooling_capacity/power_capacity with "/"
+
+        Args:
+            record: equipment.ownership, equipment.ownership.report,
+                   equipment.product, or equipment.product.report record
+                   Must have fields: capacity, cooling_capacity, power_capacity
+
+        Returns:
+            str or float: Formatted capacity value
+                         Examples: "5.5", "2500/1800", ""
+        """
+        # Use capacity if exists
+        if record.capacity:
+            return record.capacity
+
+        # Build combined capacity from cooling/power fields
+        parts = []
+        if record.cooling_capacity:
+            parts.append(str(record.cooling_capacity))
+        if record.power_capacity:
+            parts.append(str(record.power_capacity))
+
+        return '/'.join(parts) if parts else ''
+
+    # -------------------------------------------------------------------
+    # Phase 1.4: Unpivot Helpers (Complex Data Transformation)
+    # -------------------------------------------------------------------
+
+    def _unpivot_substance_usage(self, usage_record, title_context, doc):
+        """
+        Unpivot substance_usage record (Form 01):
+        1 record → 3 rows (year_1, year_2, year_3)
+
+        Used in Sheet 5 (DL_MoiChat_Bulk) and Sheet 6 (DL_QuanLy_HanNgach)
+
+        Args:
+            usage_record (substance.usage): Record with is_title=False
+            title_context (dict): Mapping {record.id → usage_type value}
+            doc (document.extraction): Parent document
+
+        Returns:
+            list of dict: Up to 3 rows (one per year with data)
+        """
+        usage_type = title_context.get(usage_record.id, 'import')
+        usage_type_map = {
+            'production': 'Sản xuất',
+            'import': 'Nhập khẩu',
+            'export': 'Xuất khẩu'
+        }
+
+        # Common data for all rows
+        base_row = {
+            'TenDoanhNghiep': doc.organization_id.name or '',
+            'MaSoDN': doc.organization_id.business_id or '',
+            'NamBaoCao': doc.year,
+            'HoatDong': usage_type_map.get(usage_type, ''),
+            'TenChat': usage_record.substance_name or '',
+            'GhiChu': usage_record.notes or '',
+        }
+
+        rows = []
+
+        # Year 1
+        if usage_record.year_1_quantity_kg or usage_record.year_1_quantity_co2:
+            rows.append({
+                **base_row,
+                'NamDuLieu': doc.year_1,
+                'Luong_kg': usage_record.year_1_quantity_kg or 0,
+                'Luong_CO2td': usage_record.year_1_quantity_co2 or 0,
+            })
+
+        # Year 2
+        if usage_record.year_2_quantity_kg or usage_record.year_2_quantity_co2:
+            rows.append({
+                **base_row,
+                'NamDuLieu': doc.year_2,
+                'Luong_kg': usage_record.year_2_quantity_kg or 0,
+                'Luong_CO2td': usage_record.year_2_quantity_co2 or 0,
+            })
+
+        # Year 3
+        if usage_record.year_3_quantity_kg or usage_record.year_3_quantity_co2:
+            rows.append({
+                **base_row,
+                'NamDuLieu': doc.year_3,
+                'Luong_kg': usage_record.year_3_quantity_kg or 0,
+                'Luong_CO2td': usage_record.year_3_quantity_co2 or 0,
+            })
+
+        return rows
+
+    def _unpivot_quota_usage(self, quota_record, title_context, doc):
+        """
+        Unpivot quota_usage record (Form 02):
+        1 record → 4 rows (allocated, adjusted, used, next_year quotas)
+
+        Used in Sheet 6 (DL_QuanLy_HanNgach) only
+
+        Args:
+            quota_record (quota.usage): Record with is_title=False
+            title_context (dict): Mapping {record.id → usage_type value}
+            doc (document.extraction): Parent document
+
+        Returns:
+            list of dict: Up to 4 rows (one per quota type with data)
+        """
+        usage_type = title_context.get(quota_record.id, 'import')
+        usage_type_map = {
+            'production': 'Sản xuất',
+            'import': 'Nhập khẩu',
+            'export': 'Xuất khẩu'
+        }
+
+        # Common data for all rows
+        base_row = {
+            'TenDoanhNghiep': doc.organization_id.name or '',
+            'MaSoDN': doc.organization_id.business_id or '',
+            'NguonDuLieu': 'Mẫu 02',
+            'NamBaoCao': doc.year,
+            'NamDuLieu': doc.year,
+            'HoatDong': usage_type_map.get(usage_type, ''),
+            'TenChat': quota_record.substance_name or '',
+            'MaHS': quota_record.hs_code or '',
+            'GhiChu': quota_record.notes or ''
+        }
+
+        rows = []
+
+        # Row 1: Hạn ngạch được phân bổ
+        if quota_record.allocated_quota_kg or quota_record.allocated_quota_co2:
+            rows.append({
+                **base_row,
+                'LoaiThongTin': 'Hạn ngạch được phân bổ',
+                'Luong_kg': quota_record.allocated_quota_kg or 0,
+                'Luong_CO2td': quota_record.allocated_quota_co2 or 0,
+            })
+
+        # Row 2: Hạn ngạch điều chỉnh
+        if quota_record.adjusted_quota_kg or quota_record.adjusted_quota_co2:
+            rows.append({
+                **base_row,
+                'LoaiThongTin': 'Hạn ngạch điều chỉnh',
+                'Luong_kg': quota_record.adjusted_quota_kg or 0,
+                'Luong_CO2td': quota_record.adjusted_quota_co2 or 0,
+            })
+
+        # Row 3: Hạn ngạch đã sử dụng
+        if quota_record.total_quota_kg or quota_record.total_quota_co2:
+            rows.append({
+                **base_row,
+                'LoaiThongTin': 'Hạn ngạch đã sử dụng',
+                'Luong_kg': quota_record.total_quota_kg or 0,
+                'Luong_CO2td': quota_record.total_quota_co2 or 0,
+            })
+
+        # Row 4: Đăng ký hạn ngạch năm sau
+        if quota_record.next_year_quota_kg or quota_record.next_year_quota_co2:
+            rows.append({
+                **base_row,
+                'LoaiThongTin': 'Đăng ký hạn ngạch năm sau',
+                'Luong_kg': quota_record.next_year_quota_kg or 0,
+                'Luong_CO2td': quota_record.next_year_quota_co2 or 0,
+            })
+
+        return rows
+
+    def _unpivot_collection_report(self, report_record, doc):
+        """
+        Unpivot collection_recycling_report record (Form 02):
+        1 record → up to 4 rows (collection, reuse, recycle, disposal)
+
+        Only create rows where quantity_kg > 0
+
+        Used in Sheet 4 (DL_MoiChat_EoL) only
+
+        Args:
+            report_record (collection.recycling.report): Record with horizontal structure
+            doc (document.extraction): Parent document
+
+        Returns:
+            list of dict: 0-4 rows (only activities with quantity > 0)
+        """
+        # Common data for all rows
+        base_row = {
+            'TenDoanhNghiep': doc.organization_id.name or '',
+            'MaSoDN': doc.organization_id.business_id or '',
+            'NamBaoCao': doc.year,
+            'NguonDuLieu': 'Mẫu 02 - Bảng 2.4',
+            'TenChat': report_record.substance_id.name if report_record.substance_id else '',
+        }
+
+        rows = []
+
+        # Row 1: Thu gom
+        if report_record.collection_quantity_kg and report_record.collection_quantity_kg > 0:
+            rows.append({
+                **base_row,
+                'HoatDong': 'Thu gom',
+                'KhoiLuong_kg': report_record.collection_quantity_kg,
+                'ChiTiet_1': report_record.collection_location or '',
+                'ChiTiet_2': report_record.storage_location or '',
+            })
+
+        # Row 2: Tái sử dụng
+        if report_record.reuse_quantity_kg and report_record.reuse_quantity_kg > 0:
+            rows.append({
+                **base_row,
+                'HoatDong': 'Tái sử dụng',
+                'KhoiLuong_kg': report_record.reuse_quantity_kg,
+                'ChiTiet_1': report_record.reuse_technology or '',
+                'ChiTiet_2': '',
+            })
+
+        # Row 3: Tái chế
+        if report_record.recycle_quantity_kg and report_record.recycle_quantity_kg > 0:
+            rows.append({
+                **base_row,
+                'HoatDong': 'Tái chế',
+                'KhoiLuong_kg': report_record.recycle_quantity_kg,
+                'ChiTiet_1': report_record.recycle_technology or '',
+                'ChiTiet_2': report_record.recycle_usage_location or '',
+            })
+
+        # Row 4: Xử lý/Tiêu hủy
+        if report_record.disposal_quantity_kg and report_record.disposal_quantity_kg > 0:
+            rows.append({
+                **base_row,
+                'HoatDong': 'Xử lý/Tiêu hủy',
+                'KhoiLuong_kg': report_record.disposal_quantity_kg,
+                'ChiTiet_1': report_record.disposal_technology or '',
+                'ChiTiet_2': report_record.disposal_facility or '',
+            })
+
+        return rows
+
+    # ===================================================================================
+    # PHASE 2: SHEET FILLER METHODS (6 sheets)
+    # ===================================================================================
+
+    def _fill_sheet1_company(self, workbook, data):
+        """
+        Fill Sheet 1: HoSo_DoanhNghiep (Company/Organization Profile)
+
+        Logic:
+            - Receives pre-grouped documents (latest per org/year/type)
+            - Extract activity fields as boolean columns
+
+        Args:
+            workbook (openpyxl.Workbook): Excel workbook
+            data (dict): Data from _collect_export_data() (already grouped)
+
+        Returns:
+            None (modifies workbook in-place)
+        """
+        documents = data['documents']
+
+        data_rows = []
+
+        for idx, doc in enumerate(documents, start=1):
+            org = doc.organization_id
+
+            # Get activity field codes for this document
+            doc_activity_codes = doc.activity_field_ids.mapped('code')
+
+            # Map document_type to NguonDuLieu
+            nguon_du_lieu = 'Mẫu 01' if doc.document_type == '01' else 'Mẫu 02'
+
+            # Build row (20 columns)
+            row = [
+                idx,                                          # 1. STT
+                org.name or '',                               # 2. TenDoanhNghiep
+                org.business_id or '',                        # 3. MaSoDN
+                doc.year,                                     # 4. NamBaoCao
+                nguon_du_lieu,                                # 5. NguonDuLieu
+                doc.legal_representative_name or '',          # 6. TenNguoiDaiDienPhapLuat
+                doc.legal_representative_position or '',      # 7. ChucVu
+                doc.contact_person_name or '',                # 8. TenNguoiDaiDienLienLac
+                doc.contact_address or '',                    # 9. DiaChi
+                doc.contact_state_id.name if doc.contact_state_id else '',  # 10. Tinh_ThanhPho
+                doc.contact_phone or '',                      # 11. DienThoai
+                doc.contact_email or '',                      # 12. Email
+                # Activity fields (13-20): 'X' if present, '' if not
+                'X' if 'production' in doc_activity_codes else '',           # 13. LinhVuc_SanXuatChat
+                'X' if 'import' in doc_activity_codes else '',               # 14. LinhVuc_NhapKhauChat
+                'X' if 'export' in doc_activity_codes else '',               # 15. LinhVuc_XuatKhauChat
+                'X' if 'equipment_production' in doc_activity_codes else '', # 16. LinhVuc_SanXuatThietBi
+                'X' if 'equipment_import' in doc_activity_codes else '',     # 17. LinhVuc_NhapKhauThietBi
+                'X' if 'ac_ownership' in doc_activity_codes else '',         # 18. LinhVuc_SoHuu_DHKK
+                'X' if 'refrigeration_ownership' in doc_activity_codes else '',  # 19. LinhVuc_SoHuu_ThietBiLanh
+                'X' if 'collection_recycling' in doc_activity_codes else '', # 20. LinhVuc_ThuGomXuLy
+            ]
+
+            data_rows.append(row)
+
+        # Write all rows at once using generic writer
+        self._write_sheet_data(workbook, '1_Hoso_DoanhNhiep', data_rows)
+
+    def _fill_sheet5_bulk_substances(self, workbook, data):
+        """
+        Fill Sheet 5: DL_MoiChat_Bulk (Bulk Substances - Production/Import/Export)
+
+        Logic:
+            - Form 01: Unpivot substance_usage (1 record → 3 rows for 3 years)
+            - Form 02: Direct mapping from quota_usage (1 record → 1 row)
+            - Use is_title pattern to determine HoatDong
+
+        Args:
+            workbook (openpyxl.Workbook): Excel workbook
+            data (dict): Data from _collect_export_data()
+
+        Returns:
+            None (modifies workbook in-place)
+        """
+        documents = data['documents']
+        substance_filter_ids = data['substance_filter_ids']
+
+        data_rows = []
 
         for doc in documents:
             org = doc.organization_id
-            if not org:
-                continue
 
-            # Sheet 1: Company info (one row per company)
-            if org.id not in [c['org_id'] for c in companies_data]:
-                companies_data.append({
-                    'org_id': org.id,
-                    'name': org.name or '',
-                    'license_number': org.business_id or '',
-                    'legal_representative': org.legal_representative_name or '',
-                    'legal_representative_position': org.legal_representative_position or '',
-                    'contact_person': org.contact_person_name or '',
-                    'address': doc.contact_address,
-                    'phone': org.phone or '',
-                    'fax': org.fax or '',
-                    'email': org.email or '',
-                    'activity_fields': doc.activity_field_ids.mapped('code'),
-                })
-
-            # Sheet 2: Equipment ownership (Form 01)
+            # Form 01: substance_usage_ids (unpivot 3 years)
             if doc.document_type == '01':
-                for eq in doc.equipment_ownership_ids:
+                records = doc.substance_usage_ids.sorted('sequence')
+
+                # Resolve is_title context
+                title_context = self._resolve_is_title_context(records, 'substance_name')
+
+                for record in records:
+                    # Skip title rows
+                    if record.is_title:
+                        continue
+
                     # Apply substance filter
-                    if substance_ids and eq.substance_id.id not in substance_ids:
+                    if substance_filter_ids and record.substance_id.id not in substance_filter_ids:
                         continue
 
-                    equipment_ownership_data.append({
-                        'license_number': org.business_id or '',
-                        'year': doc.year,
-                        'data_source': 'Mẫu 01',
-                        'equipment_category': '',  # Field doesn't exist in model
-                        'equipment_type': eq.equipment_type_id.name if eq.equipment_type_id else '',
-                        'substance_name': eq.substance_id.name if eq.substance_id else '',
-                        'capacity': eq.capacity or 0,
-                        'year_in_use': eq.start_year or 0,
-                        'quantity': eq.equipment_quantity or 0,
-                        'refill_frequency': eq.refill_frequency or '',
-                        'refill_quantity_kg': eq.substance_quantity_per_refill or '',
-                        'note': '',  # Field doesn't exist in model
-                    })
+                    # Unpivot: 1 record → up to 3 rows
+                    unpivoted_rows = self._unpivot_substance_usage(record, title_context, doc)
 
-            # Sheet 2: Equipment ownership report (Form 02)
-            if doc.document_type == '02':
-                for eq in doc.equipment_ownership_report_ids:
-                    if substance_ids and eq.substance_id.id not in substance_ids:
+                    # Convert dict rows to list rows (9 columns)
+                    for row_dict in unpivoted_rows:
+                        row = [
+                            row_dict['TenDoanhNghiep'],     # 1
+                            row_dict['MaSoDN'],             # 2
+                            'Mẫu 01 - Bảng 1.1',            # 3. NguonDuLieu
+                            row_dict['HoatDong'],           # 4
+                            row_dict['TenChat'],            # 5
+                            row_dict['NamDuLieu'],          # 6
+                            row_dict['Luong_kg'],           # 7
+                            row_dict['Luong_CO2td'],        # 8
+                            '',                             # 9. MaHS (Form 01 doesn't have)
+                        ]
+                        data_rows.append(row)
+
+            # Form 02: quota_usage_ids (direct 1-to-1)
+            elif doc.document_type == '02':
+                records = doc.quota_usage_ids.sorted('sequence')
+
+                # Resolve is_title context
+                title_context = self._resolve_is_title_context(records, 'substance_name')
+
+                # Mapping for HoatDong
+                usage_type_map = {
+                    'production': 'Sản xuất',
+                    'import': 'Nhập khẩu',
+                    'export': 'Xuất khẩu'
+                }
+
+                for record in records:
+                    # Skip title rows
+                    if record.is_title:
                         continue
 
-                    equipment_ownership_data.append({
-                        'license_number': org.business_id or '',
-                        'year': doc.year,
-                        'data_source': 'Mẫu 02',
-                        'equipment_category': '',  # Field doesn't exist in model
-                        'equipment_type': eq.equipment_type_id.name if eq.equipment_type_id else '',
-                        'substance_name': eq.substance_id.name if eq.substance_id else '',
-                        'capacity': eq.capacity or 0,
-                        'year_in_use': eq.start_year or 0,
-                        'quantity': eq.equipment_quantity or 0,
-                        'refill_frequency': eq.refill_frequency or '',
-                        'refill_quantity_kg': eq.substance_quantity_per_refill or '',
-                        'note': eq.notes or '',
-                    })
+                    # Apply substance filter
+                    if substance_filter_ids and record.substance_id.id not in substance_filter_ids:
+                        continue
 
-            # Sheet 3: Equipment production/import (Form 01)
+                    usage_type = title_context.get(record.id, 'import')
+
+                    row = [
+                        org.name or '',                     # 1. TenDoanhNghiep
+                        org.business_id or '',              # 2. MaSoDN
+                        'Mẫu 02 - Bảng 2.1',                # 3. NguonDuLieu
+                        usage_type_map.get(usage_type, ''), # 4. HoatDong
+                        record.substance_name or '',        # 5. TenChat
+                        doc.year,                           # 6. NamDuLieu
+                        record.total_quota_kg or 0,         # 7. Luong_kg
+                        record.total_quota_co2 or 0,        # 8. Luong_CO2td
+                        record.hs_code or '',               # 9. MaHS
+                    ]
+                    data_rows.append(row)
+
+        # Write all rows at once
+        self._write_sheet_data(workbook, '5_DL_MoiChat_Bulk', data_rows)
+
+    def _fill_sheet2_equipment_ownership(self, workbook, data):
+        """
+        Fill Sheet 2: DL_ThietBi_SoHuu (Equipment Ownership)
+
+        Logic:
+            - Form 01: equipment_ownership_ids
+            - Form 02: equipment_ownership_report_ids
+            - Use is_title pattern to get PhanLoaiThietBi
+            - Format capacity using helper
+
+        Args:
+            workbook (openpyxl.Workbook): Excel workbook
+            data (dict): Data from _collect_export_data()
+
+        Returns:
+            None (modifies workbook in-place)
+        """
+        documents = data['documents']
+        substance_filter_ids = data['substance_filter_ids']
+
+        data_rows = []
+
+        for doc in documents:
+            org = doc.organization_id
+
+            # Form 01: equipment_ownership_ids
             if doc.document_type == '01':
-                for eq in doc.equipment_product_ids:
-                    if substance_ids and eq.substance_id.id not in substance_ids:
+                records = doc.equipment_ownership_ids.sorted('sequence')
+
+                # Resolve is_title context for PhanLoaiThietBi
+                title_context = self._resolve_is_title_context(records, 'equipment_type')
+
+                for record in records:
+                    # Skip title rows
+                    if record.is_title:
                         continue
 
-                    equipment_production_data.append({
-                        'license_number': org.business_id or '',
-                        'year': doc.year,
-                        'data_source': 'Mẫu 01',
-                        'activity': '',  # Field doesn't exist in equipment.product
-                        'product_type': eq.product_type or '',
-                        'hs_code': eq.hs_code_id.code if eq.hs_code_id else '',
-                        'capacity': eq.capacity or 0,
-                        'quantity': eq.quantity or 0,
-                        'substance_name': eq.substance_id.name if eq.substance_id else '',
-                        'substance_quantity_kg': eq.substance_quantity_per_unit or '',  # Now Char (2025-12-18)
-                    })
-
-            # Sheet 3: Equipment production report (Form 02)
-            if doc.document_type == '02':
-                for eq in doc.equipment_product_report_ids:
-                    if substance_ids and eq.substance_id.id not in substance_ids:
+                    # Apply substance filter
+                    if substance_filter_ids and record.substance_id and record.substance_id.id not in substance_filter_ids:
                         continue
 
-                    equipment_production_data.append({
-                        'license_number': org.business_id or '',
-                        'year': doc.year,
-                        'data_source': 'Mẫu 02',
-                        'activity': eq.production_type,
-                        'product_type': eq.product_type or '',
-                        'hs_code': eq.hs_code_id.code if eq.hs_code_id else '',
-                        'capacity': eq.capacity or 0,
-                        'quantity': eq.quantity or 0,
-                        'substance_name': eq.substance_id.name if eq.substance_id else '',
-                        'substance_quantity_kg': eq.substance_quantity_per_unit or '',  # Now Char (2025-12-18)
-                    })
+                    # Get PhanLoaiThietBi from title context
+                    phan_loai_thiet_bi = title_context.get(record.id, '')
 
-            # Sheet 4: EoL substances (collection/recycling)
+                    row = [
+                        org.name or '',                                  # 1. TenDoanhNghiep
+                        org.business_id or '',                           # 2. MaSoDN
+                        doc.year,                                        # 3. NamBaoCao
+                        'Mẫu 01 - Bảng 1.3',                             # 4. NguonDuLieu
+                        phan_loai_thiet_bi,                              # 5. PhanLoaiThietBi
+                        record.equipment_type or '',                     # 6. TenLoaiThietBi
+                        record.substance_id.name if record.substance_id else '',  # 7. TenChat
+                        self._format_capacity(record),                   # 8. NangSuat
+                        record.start_year or '',                         # 9. NamSuDung
+                        record.equipment_quantity or 0,                  # 10. SoLuong
+                        record.refill_frequency or '',                   # 11. TanSuatNapMoi
+                        record.substance_quantity_per_refill or 0,       # 12. LuongNapMoi_kg
+                        '',                                              # 13. GhiChu_ThietBiMoi (Form 01 doesn't have)
+                    ]
+                    data_rows.append(row)
+
+            # Form 02: equipment_ownership_report_ids
+            elif doc.document_type == '02':
+                records = doc.equipment_ownership_report_ids.sorted('sequence')
+
+                # Resolve is_title context
+                title_context = self._resolve_is_title_context(records, 'equipment_type')
+
+                for record in records:
+                    # Skip title rows
+                    if record.is_title:
+                        continue
+
+                    # Apply substance filter
+                    if substance_filter_ids and record.substance_id and record.substance_id.id not in substance_filter_ids:
+                        continue
+
+                    phan_loai_thiet_bi = title_context.get(record.id, '')
+
+                    row = [
+                        org.name or '',                                  # 1
+                        org.business_id or '',                           # 2
+                        doc.year,                                        # 3
+                        'Mẫu 02 - Bảng 2.3',                             # 4
+                        phan_loai_thiet_bi,                              # 5
+                        record.equipment_type or '',                     # 6
+                        record.substance_id.name if record.substance_id else '',  # 7
+                        self._format_capacity(record),                   # 8
+                        record.start_year or '',                         # 9
+                        record.equipment_quantity or 0,                  # 10
+                        record.refill_frequency or '',                   # 11
+                        record.substance_quantity_per_refill or 0,       # 12
+                        record.notes or '',                              # 13. GhiChu_ThietBiMoi (Form 02 has this)
+                    ]
+                    data_rows.append(row)
+
+        # Write all rows
+        self._write_sheet_data(workbook, '2_DL_ThietBi_SoHuu', data_rows)
+
+    def _fill_sheet3_equipment_production(self, workbook, data):
+        """
+        Fill Sheet 3: DL_ThietBi_SX_NK (Equipment Production/Import)
+
+        Logic:
+            - Form 01: equipment_product_ids
+            - Form 02: equipment_product_report_ids (has production_type field)
+            - Similar to Sheet 2 but with HoatDong column
+
+        Args:
+            workbook (openpyxl.Workbook): Excel workbook
+            data (dict): Data from _collect_export_data()
+
+        Returns:
+            None (modifies workbook in-place)
+        """
+        documents = data['documents']
+        substance_filter_ids = data['substance_filter_ids']
+
+        data_rows = []
+
+        for doc in documents:
+            org = doc.organization_id
+
+            # Form 01: equipment_product_ids
             if doc.document_type == '01':
-                for rec in doc.collection_recycling_ids:
-                    if substance_ids and rec.substance_id.id not in substance_ids:
+                records = doc.equipment_product_ids.sorted('sequence')
+
+                for record in records:
+                    # Skip title rows
+                    if record.is_title:
                         continue
 
-                    eol_substances_data.append({
-                        'license_number': org.business_id or '',
-                        'year': doc.year,
-                        'substance_name': rec.substance_id.name if rec.substance_id else rec.substance_name or '',
-                        'activity': rec.activity_type,
-                        'quantity_kg': rec.quantity_kg or 0,
-                        'detail_1': '',  # Field doesn't exist in collection.recycling
-                        'detail_2': '',  # Field doesn't exist in collection.recycling
-                    })
-
-            if doc.document_type == '02':
-                for rep in doc.collection_recycling_report_ids:
-                    if substance_ids and rep.substance_id.id not in substance_ids:
+                    # Apply substance filter
+                    if substance_filter_ids and record.substance_id and record.substance_id.id not in substance_filter_ids:
                         continue
 
-                    # Create separate rows for each activity type
-                    substance_name = rep.substance_id.name if rep.substance_id else rep.substance_name or ''
+                    # Note: Form 01 doesn't have production_type field
+                    # Leave HoatDong empty for now (can be inferred later if needed)
+                    hoat_dong = ''
 
-                    if rep.collection_quantity_kg:
-                        eol_substances_data.append({
-                            'license_number': org.business_id or '',
-                            'year': doc.year,
-                            'substance_name': substance_name,
-                            'activity': 'collection',
-                            'quantity_kg': rep.collection_quantity_kg or 0,
-                            'detail_1': rep.collection_location or '',
-                            'detail_2': '',
-                        })
+                    row = [
+                        org.name or '',                                  # 1. TenDoanhNghiep
+                        org.business_id or '',                           # 2. MaSoDN
+                        doc.year,                                        # 3. NamBaoCao
+                        'Mẫu 01 - Bảng 1.2',                             # 4. NguonDuLieu
+                        hoat_dong,                                       # 5. HoatDong
+                        record.product_type or '',                       # 6. TenLoaiSanPham
+                        record.hs_code_id.code if record.hs_code_id else '',  # 7. MaHS
+                        self._format_capacity(record),                   # 8. NangSuat
+                        record.quantity or 0,                            # 9. SoLuong
+                        record.substance_id.name if record.substance_id else '',  # 10. TenChat
+                        record.substance_quantity_per_unit or '',        # 11. LuongChatTrongTB_kg
+                    ]
+                    data_rows.append(row)
 
-                    if rep.reuse_quantity_kg:
-                        eol_substances_data.append({
-                            'license_number': org.business_id or '',
-                            'year': doc.year,
-                            'substance_name': substance_name,
-                            'activity': 'reuse',
-                            'quantity_kg': rep.reuse_quantity_kg or 0,
-                            'detail_1': '',
-                            'detail_2': '',
-                        })
+            # Form 02: equipment_product_report_ids
+            elif doc.document_type == '02':
+                records = doc.equipment_product_report_ids.sorted('sequence')
 
-                    if rep.recycle_quantity_kg:
-                        eol_substances_data.append({
-                            'license_number': org.business_id or '',
-                            'year': doc.year,
-                            'substance_name': substance_name,
-                            'activity': 'recycling',
-                            'quantity_kg': rep.recycle_quantity_kg or 0,
-                            'detail_1': rep.recycle_technology or '',
-                            'detail_2': rep.recycle_facility_id.name if rep.recycle_facility_id else '',
-                        })
-
-                    if rep.disposal_quantity_kg:
-                        eol_substances_data.append({
-                            'license_number': org.business_id or '',
-                            'year': doc.year,
-                            'substance_name': substance_name,
-                            'activity': 'disposal',
-                            'quantity_kg': rep.disposal_quantity_kg or 0,
-                            'detail_1': rep.disposal_technology or '',
-                            'detail_2': rep.disposal_facility or '',
-                        })
-
-            # Sheet 5: Bulk substances (production/import/export)
-            if doc.document_type == '01':
-                for usage in doc.substance_usage_ids:
-                    if substance_ids and usage.substance_id.id not in substance_ids:
+                for record in records:
+                    # Skip title rows
+                    if record.is_title:
                         continue
 
-                    # Determine activity type from usage_type field
-                    activity = usage.usage_type
-
-                    bulk_substances_data.append({
-                        'license_number': org.business_id or '',
-                        'data_source': 'Mẫu 01',
-                        'activity': activity,
-                        'substance_name': usage.substance_id.name if usage.substance_id else usage.substance_name or '',
-                        'year': doc.year,
-                        'quantity_kg': usage.year_2_quantity_kg or 0,  # Use year 2 as requested
-                        'co2e_tons': usage.year_2_quantity_co2 or 0,
-                        'hs_code': '',  # substance.usage doesn't have hs_code field
-                    })
-
-            if doc.document_type == '02':
-                for quota in doc.quota_usage_ids:
-                    if substance_ids and quota.substance_id.id not in substance_ids:
+                    # Apply substance filter
+                    if substance_filter_ids and record.substance_id and record.substance_id.id not in substance_filter_ids:
                         continue
 
-                    bulk_substances_data.append({
-                        'license_number': org.business_id or '',
-                        'data_source': 'Mẫu 02',
-                        'activity': quota.usage_type,
-                        'substance_name': quota.substance_id.name if quota.substance_id else quota.substance_name or '',
-                        'year': doc.year,
-                        'quantity_kg': quota.total_quota_kg or 0,
-                        'co2e_tons': quota.total_quota_co2 or 0,  # Now using correct field
-                        'hs_code': quota.hs_code or '',
-                    })
+                    # Form 02 has production_type field
+                    hoat_dong = 'Sản xuất' if record.production_type == 'production' else 'Nhập khẩu'
 
-        return {
-            'companies': companies_data,
-            'equipment_ownership': equipment_ownership_data,
-            'equipment_production': equipment_production_data,
-            'eol_substances': eol_substances_data,
-            'bulk_substances': bulk_substances_data,
+                    row = [
+                        org.name or '',                                  # 1
+                        org.business_id or '',                           # 2
+                        doc.year,                                        # 3
+                        'Mẫu 02 - Bảng 2.2',                             # 4
+                        hoat_dong,                                       # 5
+                        record.product_type or '',                       # 6
+                        record.hs_code_id.code if record.hs_code_id else '',  # 7
+                        self._format_capacity(record),                   # 8
+                        record.quantity or 0,                            # 9
+                        record.substance_id.name if record.substance_id else '',  # 10
+                        record.substance_quantity_per_unit or '',        # 11
+                    ]
+                    data_rows.append(row)
+
+        # Write all rows
+        self._write_sheet_data(workbook, '3_DL_ThietBi_SX_NK', data_rows)
+
+    def _fill_sheet4_eol_substances(self, workbook, data):
+        """
+        Fill Sheet 4: DL_MoiChat_EoL (End-of-Life Substances - Collection/Recycling)
+
+        Logic:
+            - Form 01: collection_recycling_ids (vertical, is_title pattern)
+            - Form 02: collection_recycling_report_ids (horizontal → unpivot)
+            - Only export rows where quantity_kg > 0
+
+        Args:
+            workbook (openpyxl.Workbook): Excel workbook
+            data (dict): Data from _collect_export_data()
+
+        Returns:
+            None (modifies workbook in-place)
+        """
+        documents = data['documents']
+        substance_filter_ids = data['substance_filter_ids']
+
+        # Activity type mapping
+        activity_map = {
+            'collection': 'Thu gom',
+            'reuse': 'Tái sử dụng',
+            'recycle': 'Tái chế',
+            'disposal': 'Xử lý/Tiêu hủy'
         }
 
-    def _fill_sheet1_company(self, wb, companies_data):
-        """Fill Sheet 1: Company/Document info"""
-        ws = wb['1_Hoso_DoanhNhiep']
+        data_rows = []
 
-        # Activity field column mapping
-        activity_field_cols = {
-            'production': 'K',
-            'import': 'L',
-            'export': 'M',
-            'equipment_production': 'N',
-            'equipment_import': 'O',
-            'ac_ownership': 'P',
-            'refrigeration_ownership': 'Q',
-            'collection_recycling': 'R',
-        }
+        for doc in documents:
+            org = doc.organization_id
 
-        row_idx = 2  # Start after header
-        for idx, company in enumerate(companies_data, start=1):
-            ws[f'A{row_idx}'] = idx
-            ws[f'B{row_idx}'] = company['name']
-            ws[f'C{row_idx}'] = company['license_number']
-            ws[f'D{row_idx}'] = company['legal_representative']
-            ws[f'E{row_idx}'] = company['legal_representative_position']
-            ws[f'F{row_idx}'] = company['contact_person']
-            ws[f'G{row_idx}'] = company['address']
-            ws[f'H{row_idx}'] = company['phone']
-            ws[f'I{row_idx}'] = company['fax']
-            ws[f'J{row_idx}'] = company['email']
+            # Form 01: collection_recycling_ids (vertical structure)
+            if doc.document_type == '01':
+                records = doc.collection_recycling_ids.sorted('sequence')
 
-            # Activity fields - mark with 'X' if present
-            for field_code, col in activity_field_cols.items():
-                if field_code in company['activity_fields']:
-                    ws[f'{col}{row_idx}'] = 'X'
+                # Resolve is_title context
+                title_context = self._resolve_is_title_context(records, 'substance_name')
 
-            row_idx += 1
+                for record in records:
+                    # Skip title rows
+                    if record.is_title:
+                        continue
 
-    def _fill_sheet2_equipment_ownership(self, wb, equipment_ownership_data):
-        """Fill Sheet 2: Equipment Ownership"""
-        ws = wb['2_DL_ThietBi_SoHuu']
+                    # Apply substance filter
+                    if substance_filter_ids and record.substance_id and record.substance_id.id not in substance_filter_ids:
+                        continue
 
-        row_idx = 2  # Start after header
-        for eq in equipment_ownership_data:
-            ws[f'A{row_idx}'] = eq['license_number']
-            ws[f'B{row_idx}'] = eq['year']
-            ws[f'C{row_idx}'] = eq['data_source']
-            ws[f'D{row_idx}'] = eq['equipment_category']
-            ws[f'E{row_idx}'] = eq['equipment_type']
-            ws[f'F{row_idx}'] = eq['substance_name']
-            ws[f'G{row_idx}'] = eq['capacity']
-            ws[f'H{row_idx}'] = eq['year_in_use']
-            ws[f'I{row_idx}'] = eq['quantity']
-            ws[f'J{row_idx}'] = eq['refill_frequency']
-            ws[f'K{row_idx}'] = eq['refill_quantity_kg']
-            ws[f'L{row_idx}'] = eq['note']
-            row_idx += 1
+                    # Skip if quantity is 0 or empty
+                    if not record.quantity_kg or record.quantity_kg <= 0:
+                        continue
 
-    def _fill_sheet3_equipment_production(self, wb, equipment_production_data):
-        """Fill Sheet 3: Equipment Production/Import"""
-        ws = wb['3_DL_ThietBi_SX_NK']
+                    activity_type = title_context.get(record.id, 'collection')
+                    hoat_dong = activity_map.get(activity_type, '')
 
-        row_idx = 2  # Start after header
-        for eq in equipment_production_data:
-            ws[f'A{row_idx}'] = eq['license_number']
-            ws[f'B{row_idx}'] = eq['year']
-            ws[f'C{row_idx}'] = eq['data_source']
-            ws[f'D{row_idx}'] = eq['activity']
-            ws[f'E{row_idx}'] = eq['product_type']
-            ws[f'F{row_idx}'] = eq['hs_code']
-            ws[f'G{row_idx}'] = eq['capacity']
-            ws[f'H{row_idx}'] = eq['quantity']
-            ws[f'I{row_idx}'] = eq['substance_name']
-            ws[f'J{row_idx}'] = eq['substance_quantity_kg']
-            row_idx += 1
+                    row = [
+                        org.name or '',                                  # 1. TenDoanhNghiep
+                        org.business_id or '',                           # 2. MaSoDN
+                        doc.year,                                        # 3. NamBaoCao
+                        'Mẫu 01 - Bảng 1.4',                             # 4. NguonDuLieu
+                        record.substance_id.name if record.substance_id else '',  # 5. TenChat
+                        hoat_dong,                                       # 6. HoatDong
+                        record.quantity_kg or 0,                         # 7. KhoiLuong_kg
+                        '',                                              # 8. ChiTiet_1 (Form 01 doesn't have)
+                        '',                                              # 9. ChiTiet_2
+                    ]
+                    data_rows.append(row)
 
-    def _fill_sheet4_eol_substances(self, wb, eol_substances_data):
-        """Fill Sheet 4: EoL Substances (Collection/Recycling)"""
-        ws = wb['4_DL_MoiChat_EoL']
+            # Form 02: collection_recycling_report_ids (horizontal → unpivot)
+            elif doc.document_type == '02':
+                records = doc.collection_recycling_report_ids
 
-        row_idx = 2  # Start after header
-        for rec in eol_substances_data:
-            ws[f'A{row_idx}'] = rec['license_number']
-            ws[f'B{row_idx}'] = rec['year']
-            ws[f'C{row_idx}'] = rec['substance_name']
-            activity_map = {
-                'collection': 'Thu gom',
-                'reuse': 'Tái sử dụng',
-                'recycling': 'Tái chế',
-                'disposal': 'Tiêu hủy'
-            }
-            ws[f'D{row_idx}'] = activity_map.get(rec['activity'], rec['activity'])
-            ws[f'E{row_idx}'] = rec['quantity_kg']
-            ws[f'F{row_idx}'] = rec['detail_1']
-            ws[f'G{row_idx}'] = rec['detail_2']
-            row_idx += 1
+                for record in records:
+                    # Apply substance filter
+                    if substance_filter_ids and record.substance_id and record.substance_id.id not in substance_filter_ids:
+                        continue
 
-    def _fill_sheet5_bulk_substances(self, wb, bulk_substances_data):
-        """Fill Sheet 5: Bulk Substances (Production/Import/Export)"""
-        ws = wb['5. DL_MoiChat_Bulk']
+                    # Unpivot: 1 record → up to 4 rows
+                    unpivoted_rows = self._unpivot_collection_report(record, doc)
 
-        row_idx = 2  # Start after header
-        for usage in bulk_substances_data:
-            ws[f'A{row_idx}'] = usage['license_number']
-            ws[f'B{row_idx}'] = usage['data_source']
-            activity_map = {
-                'production': 'Sản xuất',
-                'import': 'Nhập khẩu',
-                'export': 'Xuất khẩu',
-                'collection': 'Thu gom',
-            }
-            ws[f'C{row_idx}'] = activity_map.get(usage['activity'], usage['activity'])
-            ws[f'D{row_idx}'] = usage['substance_name']
-            ws[f'E{row_idx}'] = usage['year']
-            ws[f'F{row_idx}'] = usage['quantity_kg']
-            ws[f'G{row_idx}'] = usage['co2e_tons']
-            ws[f'H{row_idx}'] = usage['hs_code']
-            row_idx += 1
+                    # Convert dict rows to list rows (9 columns)
+                    for row_dict in unpivoted_rows:
+                        row = [
+                            row_dict['TenDoanhNghiep'],     # 1
+                            row_dict['MaSoDN'],             # 2
+                            row_dict['NamBaoCao'],          # 3
+                            row_dict['NguonDuLieu'],        # 4
+                            row_dict['TenChat'],            # 5
+                            row_dict['HoatDong'],           # 6
+                            row_dict['KhoiLuong_kg'],       # 7
+                            row_dict['ChiTiet_1'],          # 8
+                            row_dict['ChiTiet_2'],          # 9
+                        ]
+                        data_rows.append(row)
+
+        # Write all rows
+        self._write_sheet_data(workbook, '4_DL_MoiChat_EoL', data_rows)
+
+    def _fill_sheet6_quota_management(self, workbook, data):
+        """
+        Fill Sheet 6: DL_QuanLy_HanNgach (Quota Management) - MOST COMPLEX
+
+        Logic:
+            - Form 01: substance_usage_ids (unpivot 3 years, LoaiThongTin = "Lượng sử dụng quá khứ")
+            - Form 02: quota_usage_ids (unpivot 4 quota types)
+
+        Args:
+            workbook (openpyxl.Workbook): Excel workbook
+            data (dict): Data from _collect_export_data()
+
+        Returns:
+            None (modifies workbook in-place)
+        """
+        documents = data['documents']
+        substance_filter_ids = data['substance_filter_ids']
+
+        data_rows = []
+
+        for doc in documents:
+            org = doc.organization_id
+
+            # Form 01: substance_usage_ids (unpivot 3 years)
+            if doc.document_type == '01':
+                records = doc.substance_usage_ids.sorted('sequence')
+
+                # Resolve is_title context
+                title_context = self._resolve_is_title_context(records, 'substance_name')
+
+                for record in records:
+                    # Skip title rows
+                    if record.is_title:
+                        continue
+
+                    # Apply substance filter
+                    if substance_filter_ids and record.substance_id.id not in substance_filter_ids:
+                        continue
+
+                    # Unpivot: 1 record → up to 3 rows
+                    unpivoted_rows = self._unpivot_substance_usage(record, title_context, doc)
+
+                    # Convert dict rows to list rows (12 columns)
+                    for row_dict in unpivoted_rows:
+                        row = [
+                            row_dict['TenDoanhNghiep'],     # 1
+                            row_dict['MaSoDN'],             # 2
+                            'Mẫu 01',                       # 3. NguonDuLieu
+                            row_dict['NamBaoCao'],          # 4
+                            row_dict['NamDuLieu'],          # 5
+                            row_dict['HoatDong'],           # 6
+                            row_dict['TenChat'],            # 7
+                            '',                             # 8. MaHS (Form 01 doesn't have)
+                            'Lượng sử dụng quá khứ',        # 9. LoaiThongTin
+                            row_dict['Luong_kg'],           # 10
+                            row_dict['Luong_CO2td'],        # 11
+                            row_dict['GhiChu'],             # 12
+                        ]
+                        data_rows.append(row)
+
+            # Form 02: quota_usage_ids (unpivot 4 quota types)
+            elif doc.document_type == '02':
+                records = doc.quota_usage_ids.sorted('sequence')
+
+                # Resolve is_title context
+                title_context = self._resolve_is_title_context(records, 'substance_name')
+
+                for record in records:
+                    # Skip title rows
+                    if record.is_title:
+                        continue
+
+                    # Apply substance filter
+                    if substance_filter_ids and record.substance_id.id not in substance_filter_ids:
+                        continue
+
+                    # Unpivot: 1 record → up to 4 rows
+                    unpivoted_rows = self._unpivot_quota_usage(record, title_context, doc)
+
+                    # Convert dict rows to list rows (12 columns)
+                    for row_dict in unpivoted_rows:
+                        row = [
+                            row_dict['TenDoanhNghiep'],     # 1
+                            row_dict['MaSoDN'],             # 2
+                            row_dict['NguonDuLieu'],        # 3
+                            row_dict['NamBaoCao'],          # 4
+                            row_dict['NamDuLieu'],          # 5
+                            row_dict['HoatDong'],           # 6
+                            row_dict['TenChat'],            # 7
+                            row_dict['MaHS'],               # 8
+                            row_dict['LoaiThongTin'],       # 9
+                            row_dict['Luong_kg'],           # 10
+                            row_dict['Luong_CO2td'],        # 11
+                            row_dict['GhiChu'],             # 12
+                        ]
+                        data_rows.append(row)
+
+        # Write all rows (note: sheet name has trailing space!)
+        self._write_sheet_data(workbook, '6_DL_QuanLy_HanNgach ', data_rows)
 
     @http.route('/document_extractor/overview_dashboard_data', type='json', auth='user', methods=['POST'])
     def get_overview_dashboard_data(self):
@@ -1875,10 +2857,16 @@ class ExtractionController(http.Controller):
 
             # 5. Calculate Top Substances (optimized SQL query)
             # Use direct SQL query to aggregate and sort in database
+            # Extract translated name from JSONB field based on user's language
+            user_lang = env.user.lang or 'en_US'
             env.cr.execute("""
                 SELECT
                     cs.id,
-                    cs.name,
+                    COALESCE(
+                        cs.name->>%s,
+                        cs.name->>'en_US',
+                        cs.name::text
+                    ) as translated_name,
                     SUM(COALESCE(sa.total_co2e, 0)) as total_co2e
                 FROM substance_aggregate sa
                 INNER JOIN controlled_substance cs ON sa.substance_id = cs.id
@@ -1886,7 +2874,7 @@ class ExtractionController(http.Controller):
                 GROUP BY cs.id, cs.name
                 ORDER BY total_co2e DESC
                 LIMIT 5
-            """)
+            """, (user_lang,))
 
             top_substances_raw = env.cr.fetchall()
             top_substances = [

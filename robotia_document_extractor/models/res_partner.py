@@ -43,6 +43,8 @@ class ResPartner(models.Model):
         string='Fax'
     )
 
+    document_ids = fields.One2many('document.extraction', 'organization_id', 'Related documents')
+
     # Partner type for filtering
     x_partner_type = fields.Selection(
         selection=[

@@ -184,7 +184,7 @@ export class SubstanceDashboard extends Component {
             data: {
                 labels: labels,
                 datasets: [{
-                    label: `${this.state.substanceName} (kg)`,
+                    label: this.state.substanceName,
                     data: data,
                     borderColor: CHART_COLORS.primary,
                     backgroundColor: hexToRgba(CHART_COLORS.primary, 0.1),
@@ -205,6 +205,32 @@ export class SubstanceDashboard extends Component {
                         font: {
                             size: 14,
                             weight: 'bold'
+                        }
+                    },
+                    tooltip: {
+                        ...LINE_CHART_OPTIONS.plugins.tooltip,
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.dataset.label || '';
+                                const value = formatWeight(context.parsed.y);
+                                return `${label}: ${value}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    ...LINE_CHART_OPTIONS.scales,
+                    y: {
+                        ...LINE_CHART_OPTIONS.scales.y,
+                        title: {
+                            display: true,
+                            text: 'Khối lượng'
+                        },
+                        ticks: {
+                            ...LINE_CHART_OPTIONS.scales.y.ticks,
+                            callback: function(value) {
+                                return formatWeight(value);
+                            }
                         }
                     }
                 }
@@ -285,15 +311,25 @@ export class SubstanceDashboard extends Component {
                     }
                 },
                 scales: {
+                    ...BAR_CHART_OPTIONS.scales,
                     y: {
+                        ...BAR_CHART_OPTIONS.scales.y,
                         beginAtZero: true,
                         title: {
                             display: true,
-                            text: 'Khối lượng (kg)'
+                            text: 'Khối lượng'
+                        },
+                        ticks: {
+                            ...BAR_CHART_OPTIONS.scales.y.ticks,
+                            callback: function(value) {
+                                return formatWeight(value);
+                            }
                         }
                     },
                     x: {
+                        ...BAR_CHART_OPTIONS.scales.x,
                         ticks: {
+                            ...BAR_CHART_OPTIONS.scales.x.ticks,
                             maxRotation: 45,
                             minRotation: 45
                         }
