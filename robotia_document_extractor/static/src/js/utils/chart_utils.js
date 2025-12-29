@@ -189,15 +189,53 @@ export function formatCO2e(value) {
 }
 
 /**
- * Format weight in kg
+ * Format weight with automatic unit scaling
+ * Rules:
+ * - < 1000 kg → display in kg
+ * - >= 1000 kg → convert to tons (tấn)
+ * - >= 1000 tons → apply metric prefixes (K, M, B, T)
+ *
+ * Examples:
+ * - 500 → "500 kg"
+ * - 1500 → "1.5 tấn"
+ * - 1,500,000 → "1.5K tấn"
+ * - 2,500,000,000 → "2.5M tấn"
+ *
  * @param {number} value - Weight in kg
- * @returns {string} Formatted weight with unit
+ * @returns {string} Formatted weight with appropriate unit
  */
 export function formatWeight(value) {
     if (value === null || value === undefined || isNaN(value)) {
         return '0 kg';
     }
-    return `${formatNumber(value, 0)} kg`;
+
+    // If less than 1000 kg, display in kg
+    if (value < 1000) {
+        return `${formatNumber(value, 0)} kg`;
+    }
+
+    // Convert to tons
+    let tons = value / 1000;
+
+    // If less than 1000 tons, display in tons
+    if (tons < 1000) {
+        // Show decimal if less than 10 tons, otherwise show whole number
+        const decimals = tons < 10 ? 1 : 0;
+        return `${formatNumber(tons, decimals)} tấn`;
+    }
+
+    // Apply metric prefixes for 1000+ tons
+    const units = ['tấn', 'K tấn', 'M tấn', 'B tấn', 'T tấn'];
+    let unitIndex = 0;
+
+    while (tons >= 1000 && unitIndex < units.length - 1) {
+        tons = tons / 1000;
+        unitIndex++;
+    }
+
+    // Show 1 decimal place for scaled values
+    const decimals = tons < 10 ? 1 : 0;
+    return `${formatNumber(tons, decimals)} ${units[unitIndex]}`;
 }
 
 /**
