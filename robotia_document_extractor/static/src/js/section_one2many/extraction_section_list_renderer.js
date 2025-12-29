@@ -186,7 +186,7 @@ export class ExtractionSectionListRenderer extends X2ManyNumberedListRenderer {
                 editable = this.props.editable;
             }
         }
-        super.add({ ...params, editable });
+        super.add({ ...params, editable: this.props.editable });
     }
 
     /**

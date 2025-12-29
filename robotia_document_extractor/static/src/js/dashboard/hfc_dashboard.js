@@ -55,7 +55,7 @@ export class HfcDashboard extends Component {
                 quantity_min: null,
                 quantity_max: null,
                 quota_min: null,
-                status: [],
+                status: ['completed'],  // Default: only show completed reports
             },
 
             // Filter metadata for dropdowns
@@ -167,11 +167,15 @@ export class HfcDashboard extends Component {
             this.state.loading = true;
             this.state.error = null;
 
-            console.log("Fetching HFC dashboard data with filters:", this.state.filters);
+            // Prepare filters - if status is empty array, set to all statuses
+            const filters = {...this.state.filters};
+            if (!filters.status || filters.status.length === 0) {
+                filters.status = ['draft', 'validated', 'completed'];  // All statuses
+            }
 
             const dashboardData = await rpc(
                 '/document_extractor/hfc_dashboard_data',
-                { filters: this.state.filters }
+                { filters: filters }
             );
 
             if (dashboardData.error) {
@@ -224,7 +228,7 @@ export class HfcDashboard extends Component {
             quantity_min: null,
             quantity_max: null,
             quota_min: null,
-            status: [],
+            status: ['completed'],  // Reset to default
         };
         this.loadData();
     }
@@ -463,11 +467,15 @@ export class HfcDashboard extends Component {
                 }
             });
 
-            console.log("Exporting HFC report with filters:", this.state.filters);
+            // Prepare filters - if status is empty array, set to all statuses
+            const filters = {...this.state.filters};
+            if (!filters.status || filters.status.length === 0) {
+                filters.status = ['draft', 'validated', 'completed'];  // All statuses
+            }
 
             // Prepare form data
             const formData = new FormData();
-            formData.append('filters', JSON.stringify(this.state.filters));
+            formData.append('filters', JSON.stringify(filters));
 
             // Call backend via HTTP POST (not RPC because we need binary response)
             const response = await fetch('/document_extractor/export_hfc_report', {

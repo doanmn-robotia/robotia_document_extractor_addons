@@ -166,6 +166,12 @@
                                     <field name="notes"/>
                                     <control>
                                         <create name="add_data_control" string="Add substance"/>
+                                        <create name="add_production_section" string="Add Production Section"
+                                                context="{'default_is_title': True, 'default_substance_name': 'Sản xuất chất được kiểm soát', 'default_sequence': 1}"/>
+                                        <create name="add_import_section" string="Add Import Section"
+                                                context="{'default_is_title': True, 'default_substance_name': 'Nhập khẩu chất được kiểm soát', 'default_sequence': 1}"/>
+                                        <create name="add_export_section" string="Add Export Section"
+                                                context="{'default_is_title': True, 'default_substance_name': 'Xuất khẩu chất được kiểm soát', 'default_sequence': 1}"/>
                                         <create name="add_section_control" string="Add section title"
                                                 context="{'default_is_title': True, 'default_sequence': 1}"/>
                                     </control>
@@ -191,6 +197,10 @@
                                     <field name="is_title" column_invisible="1"/>
                                     <control>
                                         <create name="add_data_control" string="Add equipment/product"/>
+                                        <create name="add_production_equipment_section" string="Add Production Equipment Section"
+                                                context="{'default_is_title': True, 'default_product_type': 'Sản xuất thiết bị, sản phẩm có chứa hoặc sản xuất từ chất được kiểm soát', 'default_sequence': 1}"/>
+                                        <create name="add_import_equipment_section" string="Add Import Equipment Section"
+                                                context="{'default_is_title': True, 'default_product_type': 'Nhập khẩu thiết bị, sản phẩm có chứa hoặc sản xuất từ chất được kiểm soát', 'default_sequence': 1}"/>
                                         <create name="add_section_control" string="Add section title"
                                                 context="{'default_is_title': True, 'default_sequence': 1}"/>
                                     </control>
@@ -216,6 +226,10 @@
                                     <field name="is_title" column_invisible="1"/>
                                     <control>
                                         <create name="add_data_control" string="Add equipment"/>
+                                        <create name="add_air_conditioner_section" string="Add Air Conditioner Section"
+                                                context="{'default_is_title': True, 'default_equipment_type': 'Máy điều hòa không khí có năng suất lạnh danh định lớn hơn 26,5 kW (90.000 BTU/h) và có tổng năng suất lạnh danh định của các thiết bị lớn hơn 586 kW (2.000.000 BTU/h)', 'default_sequence': 1}"/>
+                                        <create name="add_industrial_cooling_section" string="Add Industrial Cooling Section"
+                                                context="{'default_is_title': True, 'default_equipment_type': 'Thiết bị lạnh công nghiệp có công suất điện lớn hơn 40 kW', 'default_sequence': 1}"/>
                                         <create name="add_section_control" string="Add section title"
                                                 context="{'default_is_title': True, 'default_sequence': 1}"/>
                                     </control>
@@ -238,6 +252,14 @@
                                     <field name="is_title" column_invisible="1"/>
                                     <control>
                                         <create name="add_data_control" string="Add substance"/>
+                                        <create name="add_collection_section" string="Add Collection Section"
+                                                context="{'default_is_title': True, 'default_substance_name': 'Thu gom chất được kiểm soát', 'default_sequence': 1}"/>
+                                        <create name="add_reuse_section" string="Add Reuse Section"
+                                                context="{'default_is_title': True, 'default_substance_name': 'Tái sử dụng chất được kiểm soát sau thu gom', 'default_sequence': 1}"/>
+                                        <create name="add_recycle_section" string="Add Recycle Section"
+                                                context="{'default_is_title': True, 'default_substance_name': 'Tái chế chất sau thu gom', 'default_sequence': 1}"/>
+                                        <create name="add_disposal_section" string="Add Disposal Section"
+                                                context="{'default_is_title': True, 'default_substance_name': 'Xử lý chất được kiểm soát', 'default_sequence': 1}"/>
                                         <create name="add_section_control" string="Add section title"
                                                 context="{'default_is_title': True, 'default_sequence': 1}"/>
                                     </control>
@@ -270,6 +292,12 @@
                                     <field name="usage_type" column_invisible="1"/>
                                     <control>
                                         <create name="add_data_control" string="Add substance"/>
+                                        <create name="add_production_quota_section" string="Add Production Section"
+                                                context="{'default_is_title': True, 'default_substance_name': 'Sản xuất chất được kiểm soát', 'default_sequence': 1}"/>
+                                        <create name="add_import_quota_section" string="Add Import Section"
+                                                context="{'default_is_title': True, 'default_substance_name': 'Nhập khẩu chất được kiểm soát', 'default_sequence': 1}"/>
+                                        <create name="add_export_quota_section" string="Add Export Section"
+                                                context="{'default_is_title': True, 'default_substance_name': 'Xuất khẩu chất được kiểm soát', 'default_sequence': 1}"/>
                                         <create name="add_section_control" string="Add section title"
                                                 context="{'default_is_title': True, 'default_sequence': 1}"/>
                                     </control>
@@ -296,6 +324,10 @@
                                     <field name="production_type" column_invisible="1"/>
                                     <control>
                                         <create name="add_data_control" string="Add equipment/product"/>
+                                        <create name="add_production_equipment_report_section" string="Add Production Equipment Section"
+                                                context="{'default_is_title': True, 'default_product_type': 'Sản xuất thiết bị, sản phẩm có chứa hoặc sản xuất từ chất được kiểm soát', 'default_sequence': 1}"/>
+                                        <create name="add_import_equipment_report_section" string="Add Import Equipment Section"
+                                                context="{'default_is_title': True, 'default_product_type': 'Nhập khẩu thiết bị, sản phẩm có chứa hoặc sản xuất từ chất được kiểm soát', 'default_sequence': 1}"/>
                                         <create name="add_section_control" string="Add section title"
                                                 context="{'default_is_title': True, 'default_sequence': 1}"/>
                                     </control>
@@ -323,6 +355,10 @@
                                     <field name="ownership_type" column_invisible="1"/>
                                     <control>
                                         <create name="add_data_control" string="Add equipment"/>
+                                        <create name="add_air_conditioner_report_section" string="Add Air Conditioner Section"
+                                                context="{'default_is_title': True, 'default_equipment_type': 'Máy điều hòa không khí có năng suất lạnh danh định lớn hơn 26,5 kW (90.000 BTU/h) và có tổng năng suất lạnh danh định của các thiết bị lớn hơn 586 kW (2.000.000 BTU/h)', 'default_sequence': 1}"/>
+                                        <create name="add_industrial_cooling_report_section" string="Add Industrial Cooling Section"
+                                                context="{'default_is_title': True, 'default_equipment_type': 'Thiết bị lạnh công nghiệp có công suất điện lớn hơn 40 kW', 'default_sequence': 1}"/>
                                         <create name="add_section_control" string="Add section title"
                                                 context="{'default_is_title': True, 'default_sequence': 1}"/>
                                     </control>
@@ -390,6 +426,11 @@
         <field name="model">document.extraction</field>
         <field name="arch" type="xml">
             <list create="0" string="Document Extractions">
+                <header>
+                    <button name="action_bulk_set_draft" type="object" string="Set to Draft" class="btn btn-light"/>
+                    <button name="action_bulk_set_validated" type="object" string="Set to Validated" class="btn btn-light"/>
+                    <button name="action_bulk_set_completed" type="object" string="Set to Completed" class="btn btn-light"/>
+                </header>
                 <field name="name"/>
                 <field name="document_type"/>
                 <field name="organization_id"/>

@@ -596,7 +596,7 @@
 
         <!-- Other pure HFC (HS Code 29034900) -->
         <record id="substance_other_pure_hfc" model="controlled.substance">
-            <field name="name">Other pure HFC</field>
+            <field name="name">Other HFC</field>
             <field name="code">OTHER-HFC</field>
             <field name="formula">Other pure hydrofluorocarbon substances</field>
             <field name="cas_number">Various</field>

@@ -486,6 +486,8 @@ class DocumentExtraction(models.Model):
             if not vals.get('organization_id') and vals.get('business_id'):
                 # Search existing partner by business license number
                 partner = self.env['res.partner'].search([
+                    '|',
+                    ('name', 'ilike', vals.get('organization_name'))
                     ('business_id', '=', vals.get('business_id'))
                 ], limit=1)
 
@@ -503,6 +505,8 @@ class DocumentExtraction(models.Model):
                         'legal_representative_position': vals.get('legal_representative_position'),
                         'contact_person_name': vals.get('contact_person_name'),
                         'street': vals.get('contact_address'),
+                        'state_id': vals.get('contact_state_id'),
+                        'country_id': vals.get('contact_country_id'),
                         'phone': vals.get('contact_phone'),
                         'fax': vals.get('contact_fax'),
                         'email': vals.get('contact_email'),
@@ -623,6 +627,18 @@ class DocumentExtraction(models.Model):
     def action_draft(self):
         """Reset document to draft"""
         self.write({'state': 'draft'})
+
+    def action_bulk_set_draft(self):
+        """Bulk set selected documents to draft"""
+        self.write({'state': 'draft'})
+
+    def action_bulk_set_validated(self):
+        """Bulk set selected documents to validated"""
+        self.write({'state': 'validated'})
+
+    def action_bulk_set_completed(self):
+        """Bulk set selected documents to completed"""
+        self.write({'state': 'completed'})
 
     def action_view_extraction_log(self):
         """Smart button to view extraction log"""

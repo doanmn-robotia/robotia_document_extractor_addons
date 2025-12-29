@@ -1019,6 +1019,66 @@ msgid "Other HCFC"
 msgstr "Chất HCFC khác"
 
 #. module: robotia_document_extractor
+#: model:controlled.substance,name:robotia_document_extractor.substance_other_hfc_mixtures
+msgid "Other HFC mixtures"
+msgstr "Hỗn hợp HFC khác"
+
+#. module: robotia_document_extractor
+#: model:controlled.substance,formula:robotia_document_extractor.substance_other_hfc_mixtures
+msgid "R-407B, R-419A, R-421A, R-421B, R-422B, R-422C, R-423A, R-424A, R-425A, R-426A, R-428A and other HFC blends"
+msgstr "R-407B, R-419A, R-421A, R-421B, R-422B, R-422C, R-423A, R-424A, R-425A, R-426A, R-428A và các hỗn hợp HFC khác"
+
+#. module: robotia_document_extractor
+#: model:controlled.substance,cas_number:robotia_document_extractor.substance_other_hfc_mixtures
+msgid "Various"
+msgstr "Đa dạng"
+
+#. module: robotia_document_extractor
+#: model:controlled.substance,name:robotia_document_extractor.substance_other_hfc23_mixtures
+msgid "Other HFC-23 mixtures"
+msgstr "Hỗn hợp HFC-23 khác"
+
+#. module: robotia_document_extractor
+#: model:controlled.substance,formula:robotia_document_extractor.substance_other_hfc23_mixtures
+msgid "R-508A and other HFC-23 containing mixtures"
+msgstr "R-508A và các hỗn hợp chứa HFC-23 khác"
+
+#. module: robotia_document_extractor
+#: model:controlled.substance,cas_number:robotia_document_extractor.substance_other_hfc23_mixtures
+msgid "Various"
+msgstr "Đa dạng"
+
+#. module: robotia_document_extractor
+#: model:controlled.substance,name:robotia_document_extractor.substance_other_hcfc_mixtures
+msgid "Other HCFC mixtures"
+msgstr "Hỗn hợp HCFC khác"
+
+#. module: robotia_document_extractor
+#: model:controlled.substance,formula:robotia_document_extractor.substance_other_hcfc_mixtures
+msgid "R-402B, R-403A, R-403B, R-409B, R-411A, R-412A, R-415A, R-416A, R-418A, R-420A, R-509A and other HCFC blends"
+msgstr "R-402B, R-403A, R-403B, R-409B, R-411A, R-412A, R-415A, R-416A, R-418A, R-420A, R-509A và các hỗn hợp HCFC khác"
+
+#. module: robotia_document_extractor
+#: model:controlled.substance,cas_number:robotia_document_extractor.substance_other_hcfc_mixtures
+msgid "Various"
+msgstr "Đa dạng"
+
+#. module: robotia_document_extractor
+#: model:controlled.substance,name:robotia_document_extractor.substance_other_pure_hfc
+msgid "Other HFC"
+msgstr "Chất HFC khác"
+
+#. module: robotia_document_extractor
+#: model:controlled.substance,formula:robotia_document_extractor.substance_other_pure_hfc
+msgid "Other pure hydrofluorocarbon substances"
+msgstr "Các chất hydrofluorocarbon tinh khiết khác"
+
+#. module: robotia_document_extractor
+#: model:controlled.substance,cas_number:robotia_document_extractor.substance_other_pure_hfc
+msgid "Various"
+msgstr "Đa dạng"
+
+#. module: robotia_document_extractor
 #: model:activity.field,name:robotia_document_extractor.activity_field_production
 msgid "Production of controlled substances"
 msgstr "Sản xuất chất được kiểm soát"
@@ -2234,6 +2294,11 @@ msgstr "Công ty vận hành cơ sở này"
 #: model:ir.model.fields,field_description:robotia_document_extractor.field_res_partner__x_partner_type
 msgid "Partner Type"
 msgstr "Loại đối tác"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_res_partner__document_ids
+msgid "Related documents"
+msgstr "Tài liệu liên quan"
 
 #. module: robotia_document_extractor
 #: model:ir.model.fields,help:robotia_document_extractor.field_res_partner__x_partner_type
@@ -6491,6 +6556,76 @@ msgstr "Bảng tìm kiếm"
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_queue_job_extraction_dialog_form
 msgid "Set to Done"
 msgstr "Đặt thành hoàn thành"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_list
+msgid "Set to Completed"
+msgstr "Đặt về Hoàn thành"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_list
+msgid "Set to Draft"
+msgstr "Đặt về Nháp"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_list
+msgid "Set to Validated"
+msgstr "Đặt về Đã xác thực"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_form
+msgid "Add Production Section"
+msgstr "Thêm mục Sản xuất"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_form
+msgid "Add Import Section"
+msgstr "Thêm mục Nhập khẩu"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_form
+msgid "Add Export Section"
+msgstr "Thêm mục Xuất khẩu"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_form
+msgid "Add Production Equipment Section"
+msgstr "Thêm mục Sản xuất thiết bị"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_form
+msgid "Add Import Equipment Section"
+msgstr "Thêm mục Nhập khẩu thiết bị"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_form
+msgid "Add Air Conditioner Section"
+msgstr "Thêm mục Máy điều hòa"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_form
+msgid "Add Industrial Cooling Section"
+msgstr "Thêm mục Thiết bị lạnh công nghiệp"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_form
+msgid "Add Collection Section"
+msgstr "Thêm mục Thu gom"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_form
+msgid "Add Reuse Section"
+msgstr "Thêm mục Tái sử dụng"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_form
+msgid "Add Recycle Section"
+msgstr "Thêm mục Tái chế"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_form
+msgid "Add Disposal Section"
+msgstr "Thêm mục Xử lý"
 
 #. module: robotia_document_extractor
 #. odoo-javascript
