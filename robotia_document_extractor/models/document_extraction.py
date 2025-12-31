@@ -487,7 +487,7 @@ class DocumentExtraction(models.Model):
                 # Search existing partner by business license number
                 partner = self.env['res.partner'].search([
                     '|',
-                    ('name', 'ilike', vals.get('organization_name'))
+                    ('name', 'ilike', vals.get('organization_name')),
                     ('business_id', '=', vals.get('business_id'))
                 ], limit=1)
 

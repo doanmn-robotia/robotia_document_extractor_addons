@@ -112,22 +112,6 @@
                             </t>
                         </select>
                     </div>
-
-                    <div class="filter-row">
-                        <label>Khối lượng (kg) từ</label>
-                        <input type="number"
-                               class="form-control form-control-sm"
-                               t-model.number="state.filters.quantity_min"
-                               placeholder="Min"/>
-                    </div>
-
-                    <div class="filter-row">
-                        <label>Khối lượng (kg) đến</label>
-                        <input type="number"
-                               class="form-control form-control-sm"
-                               t-model.number="state.filters.quantity_max"
-                               placeholder="Max"/>
-                    </div>
                 </div>
 
                 <!-- Filter Group: Trạng thái hồ sơ (Dynamic from DB) -->
@@ -233,6 +217,26 @@
                                 <t t-esc="formatNumber(state.kpiData.verified_percentage, 0)"/>%
                             </div>
                             <div class="kpi-sub">Số hồ sơ trạng thái "Đã xác thực"</div>
+                        </div>
+
+                        <div class="kpi-card">
+                            <div class="kpi-label">
+                                <span>% Hạn ngạch đã sử dụng</span>
+                                <span class="kpi-pill">Quota</span>
+                            </div>
+                            <div class="kpi-value">
+                                <t t-esc="formatNumber(state.kpiData.quota_utilization, 1)"/>%
+                            </div>
+                            <div class="kpi-sub">Form 02 - Mức sử dụng so với phân bổ</div>
+                        </div>
+
+                        <div class="kpi-card">
+                            <div class="kpi-label">
+                                <span>Tổng khối lượng thu gom</span>
+                                <span class="kpi-pill">EoL</span>
+                            </div>
+                            <div class="kpi-value" t-esc="formatNumber(state.kpiData.total_eol_kg, 0)"/>
+                            <div class="kpi-sub">Thu gom + Tái sử dụng + Tái chế + Xử lý</div>
                         </div>
                     </section>
 

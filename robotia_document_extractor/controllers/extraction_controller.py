@@ -1112,7 +1112,9 @@ class ExtractionController(http.Controller):
                 'total_organizations': int,
                 'total_kg': float,
                 'total_co2e': float,
-                'verified_percentage': float
+                'verified_percentage': float,
+                'quota_utilization': float,  # percentage of quota used (Form 02 only)
+                'total_eol_kg': float,  # total collection/recycling (Form 01 + 02)
             }
         """
         documents = data['documents']
@@ -1182,11 +1184,39 @@ class ExtractionController(http.Controller):
         validated_docs = len(documents.filtered(lambda d: d.state == 'validated'))
         verified_percentage = (validated_docs / total_docs * 100.0) if total_docs > 0 else 0.0
 
+        # KPI 5: Quota utilization (Form 02 only)
+        total_allocated = 0.0
+        total_used = 0.0
+        for doc in documents.filtered(lambda d: d.document_type == '02'):
+            for usage in doc.quota_usage_ids:
+                if usage.is_title:
+                    continue
+                total_allocated += usage.allocated_quota_kg or 0.0
+                total_used += usage.total_quota_kg or 0.0
+        quota_utilization = (total_used / total_allocated * 100.0) if total_allocated > 0 else 0.0
+
+        # KPI 6: Collection/Recycling total (Form 01 + 02)
+        total_eol = 0.0
+        # Form 01: collection.recycling with activity_type
+        for doc in documents.filtered(lambda d: d.document_type == '01'):
+            for record in doc.collection_recycling_ids:
+                if not record.is_title:
+                    total_eol += record.quantity_kg or 0.0
+        # Form 02: collection.recycling.report has separate fields
+        for doc in documents.filtered(lambda d: d.document_type == '02'):
+            for report in doc.collection_recycling_report_ids:
+                total_eol += (report.collection_quantity_kg or 0.0) + \
+                             (report.reuse_quantity_kg or 0.0) + \
+                             (report.recycle_quantity_kg or 0.0) + \
+                             (report.disposal_quantity_kg or 0.0)
+
         return {
             'total_organizations': total_organizations,
             'total_kg': total_kg,
             'total_co2e': total_co2e,
-            'verified_percentage': verified_percentage
+            'verified_percentage': verified_percentage,
+            'quota_utilization': quota_utilization,
+            'total_eol_kg': total_eol,
         }
 
     def _aggregate_trend_by_year_substance(self, data):
