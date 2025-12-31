@@ -14,7 +14,7 @@
     // ============= KPI CARDS =============
     .kpi-row {
         display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
+        grid-template-columns: repeat(3, minmax(0, 1fr));  // 3 columns for 6 cards (2 rows)
         gap: 12px;
     }
 

@@ -73,6 +73,8 @@ export class HfcDashboard extends Component {
                 total_kg: 0,
                 total_co2e: 0,
                 verified_percentage: 0,
+                quota_utilization: 0,    // NEW: % quota used (Form 02)
+                total_eol_kg: 0,         // NEW: Collection/Recycling total
             },
 
             // Chart data
