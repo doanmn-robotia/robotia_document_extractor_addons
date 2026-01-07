@@ -4,6 +4,7 @@ import { Component, useState, useRef, onMounted, markup } from "@odoo/owl";
 import { registry } from "@web/core/registry";
 import { standardWidgetProps } from "@web/views/widgets/standard_widget_props";
 import { useService } from "@web/core/utils/hooks";
+import { _t } from "@web/core/l10n/translation";
 
 /**
  * Raw OCR Viewer Widget
@@ -25,7 +26,8 @@ export class RawOCRViewer extends Component {
             selectedPage: 0,
             selectedItem: null,
             expandedPages: new Set([0]), // First page expanded by default
-            markedLoaded: false
+            markedLoaded: false,
+            viewMode: 'items' // 'items' or 'preview'
         });
 
         onMounted(() => {
@@ -455,6 +457,66 @@ export class RawOCRViewer extends Component {
     getItemPreview(item) {
         const text = item.value || item.md || '';
         return text.length > 100 ? text.substring(0, 100) + '...' : text;
+    }
+
+    /**
+     * Get combined markdown from all pages
+     */
+    get allMarkdown() {
+        if (!this.pages || this.pages.length === 0) {
+            return '';
+        }
+
+        // Concatenate all page markdown without separator
+        return this.pages
+            .map(page => page.md || '')
+            .filter(md => md.trim()) // Remove empty pages
+            .join('\n\n');
+    }
+
+    /**
+     * Toggle between items view and preview view
+     */
+    togglePreview() {
+        this.state.viewMode = this.state.viewMode === 'items' ? 'preview' : 'items';
+    }
+
+    /**
+     * Download combined markdown as .md file
+     */
+    onDownloadMarkdown() {
+        try {
+            const content = this.allMarkdown;
+
+            if (!content || !content.trim()) {
+                this.notification.add(_t("No markdown content to download"), { type: "warning" });
+                return;
+            }
+
+            // Create blob from content
+            const blob = new Blob([content], { type: 'text/markdown' });
+
+            // Generate dynamic filename from record name
+            const recordName = this.props.record.data.name || 'extraction';
+            const filename = `${recordName}_ocr.md`;
+
+            // Create temporary anchor element and trigger download
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+
+            // Cleanup
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            this.notification.add(_t("Markdown downloaded successfully"), { type: "success" });
+        } catch (error) {
+            console.error("Download failed:", error);
+            this.notification.add(_t("Download failed: %s", error.message), { type: "danger" });
+        }
     }
 
     /**

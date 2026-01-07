@@ -58,7 +58,7 @@
                         </group>
                     </group>
 
-                    <group string="Year Information (Table Columns)" invisible="1">
+                    <group string="Year Information (Table Columns)" invisible="document_type != '01' or not has_table_1_1">
                         <group>
                             <field name="year_1" options="{'enable_formatting': false}"/>
                             <field name="year_2" options="{'enable_formatting': false}"/>

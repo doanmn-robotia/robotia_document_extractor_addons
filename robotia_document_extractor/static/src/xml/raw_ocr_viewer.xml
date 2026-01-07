@@ -15,11 +15,40 @@
                 <!-- Items List Panel -->
                 <div class="ocr-items-panel">
                     <div class="panel-header">
-                        <h5 class="mb-0">OCR Items</h5>
-                        <span class="badge bg-secondary"><t t-esc="totalItems"/> items</span>
+                        <h5 class="mb-0" t-if="state.viewMode === 'items'">OCR Items</h5>
+                        <h5 class="mb-0" t-if="state.viewMode === 'preview'">Markdown Preview</h5>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-secondary" t-if="state.viewMode === 'items'">
+                                <t t-esc="totalItems"/> items
+                            </span>
+
+                            <!-- Back button (preview mode only) -->
+                            <button t-if="state.viewMode === 'preview'"
+                                    class="btn btn-sm btn-outline-secondary"
+                                    t-on-click="togglePreview"
+                                    title="Back to items list">
+                                <i class="fa fa-arrow-left"/>
+                            </button>
+
+                            <!-- Preview button (items mode only) -->
+                            <button t-if="state.viewMode === 'items'"
+                                    class="btn btn-sm btn-outline-secondary"
+                                    t-on-click="togglePreview"
+                                    title="Preview markdown">
+                                <i class="fa fa-eye"/>
+                            </button>
+
+                            <!-- Download button (always visible) -->
+                            <button class="btn btn-sm btn-outline-secondary"
+                                    t-on-click="onDownloadMarkdown"
+                                    title="Download all markdown content">
+                                <i class="fa fa-download"/>
+                            </button>
+                        </div>
                     </div>
-                    
-                    <div class="items-list">
+
+                    <!-- Items List View -->
+                    <div class="items-list" t-if="state.viewMode === 'items'">
                         <t t-foreach="pages" t-as="pageData" t-key="pageData.page">
                             <div class="page-section">
                                 <!-- Page header (clickable to expand/collapse) -->
@@ -62,6 +91,19 @@
                                     </t>
                                 </div>
                             </div>
+                        </t>
+                    </div>
+
+                    <!-- Markdown Preview View -->
+                    <div class="markdown-preview-panel" t-if="state.viewMode === 'preview'">
+                        <t t-if="!state.markedLoaded or !allMarkdown">
+                            <div class="alert alert-warning m-3">
+                                <i class="fa fa-exclamation-triangle me-2"/>
+                                <span>No markdown content available or markdown library not loaded.</span>
+                            </div>
+                        </t>
+                        <t t-else="">
+                            <div class="markdown-content" t-out="renderMarkdown(allMarkdown)"/>
                         </t>
                     </div>
                 </div>

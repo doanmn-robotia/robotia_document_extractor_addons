@@ -718,6 +718,11 @@ msgstr "Thông tin người đại diện"
 
 #. module: robotia_document_extractor
 #: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_form
+msgid "Year Information (Table Columns)"
+msgstr "Thông tin năm (Cột bảng)"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_form
 msgid "Contact Details"
 msgstr "Thông tin liên hệ"
 
@@ -977,6 +982,21 @@ msgstr "Đã xác nhận"
 #: model:ir.model.fields,field_description:robotia_document_extractor.field_document_extraction__year
 msgid "Year"
 msgstr "Năm"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_document_extraction__year_1
+msgid "Year 1 (Past Year)"
+msgstr "Năm 1 (Năm trước)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_document_extraction__year_2
+msgid "Year 2 (Current Year)"
+msgstr "Năm 2 (Năm hiện tại)"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_document_extraction__year_3
+msgid "Year 3 (Next Year)"
+msgstr "Năm 3 (Năm sau)"
 
 #. module: robotia_document_extractor
 #: model:ir.model.fields,field_description:robotia_document_extractor.field_substance_usage__year_1_quantity_kg
@@ -6999,6 +7019,54 @@ msgstr "Liên kết xem web cho tệp trong Google Drive"
 #: code:addons/robotia_document_extractor/static/src/xml/raw_ocr_viewer.xml:0
 msgid "items"
 msgstr "mục"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/raw_ocr_viewer.xml:0
+msgid "Download all markdown content"
+msgstr "Tải xuống toàn bộ nội dung markdown"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/raw_ocr_viewer/raw_ocr_viewer.js:0
+msgid "Download failed: %s"
+msgstr "Tải xuống thất bại: %s"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/raw_ocr_viewer/raw_ocr_viewer.js:0
+msgid "Markdown downloaded successfully"
+msgstr "Tải xuống markdown thành công"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/raw_ocr_viewer/raw_ocr_viewer.js:0
+msgid "No markdown content to download"
+msgstr "Không có nội dung markdown để tải xuống"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/raw_ocr_viewer.xml:0
+msgid "Markdown Preview"
+msgstr "Xem trước Markdown"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/raw_ocr_viewer.xml:0
+msgid "Back to items list"
+msgstr "Quay lại danh sách mục"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/raw_ocr_viewer.xml:0
+msgid "Preview markdown"
+msgstr "Xem trước markdown"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/xml/raw_ocr_viewer.xml:0
+msgid "No markdown content available or markdown library not loaded."
+msgstr "Không có nội dung markdown hoặc thư viện markdown chưa được tải."
 
 #. module: robotia_document_extractor
 #. odoo-javascript

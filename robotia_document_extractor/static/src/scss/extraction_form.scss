@@ -41,8 +41,12 @@
                     background-color: #f8fafc; // Ensure header background
                 }
 
+                td.o_data_cell:not(.o_list_text,.o_extraction_title_field_cell) {
+                    text-align: center;
+                }
+
                 // ZEBRA STRIPING: Alternating row colors for all tables
-                tbody tr:not(.o_is_section) {
+                tbody tr.o_data_row:not(.o_is_section) {
                     &:nth-child(even) {
                         background-color: #dee2e6; // White for even rows
                     }
