@@ -187,6 +187,7 @@
                                     <field name="sequence" widget="handle" options="{'enable_formatting': false}"/>
                                     <field name="product_type" widget="extraction_title_field"/>
                                     <field name="hs_code"/>
+                                    <field name="capacity"/>
                                     <field name="cooling_capacity" column_invisible="1" force_save="1"/>
                                     <field name="power_capacity" column_invisible="1" force_save="1"/>
                                     <field name="quantity" options="{'enable_formatting': false}"/>
@@ -215,6 +216,7 @@
                                     <field name="sequence" width="30px" widget="handle"/>
                                     <field name="equipment_type" widget="extraction_title_field"/>
                                     <field name="start_year" options="{'enable_formatting': false}"/>
+                                    <field name="capacity"/>
                                     <field name="cooling_capacity" column_invisible="1" force_save="1"/>
                                     <field name="power_capacity" column_invisible="1" force_save="1"/>
                                     <field name="equipment_quantity" options="{'enable_formatting': false}"/>
@@ -311,6 +313,7 @@
                                     <field name="sequence" widget="handle" options="{'enable_formatting': false}"/>
                                     <field name="product_type" widget="extraction_title_field"/>
                                     <field name="hs_code"/>
+                                    <field name="capacity"/>
                                     <field name="cooling_capacity" column_invisible="1" force_save="1"/>
                                     <field name="power_capacity" column_invisible="1" force_save="1"/>
                                     <field name="quantity" options="{'enable_formatting': false}"/>
@@ -341,6 +344,7 @@
                                     <field name="equipment_type" widget="extraction_title_field"/>
                                     <field name="equipment_quantity" options="{'enable_formatting': false}"/>
                                     <field name="substance_id" options="{'no_create': True, 'no_quick_create': True}"/>
+                                    <field name="capacity"/>
                                     <field name="cooling_capacity" column_invisible="1" force_save="1"/>
                                     <field name="power_capacity" column_invisible="1" force_save="1"/>
                                     <field name="start_year" options="{'enable_formatting': false}"/>
