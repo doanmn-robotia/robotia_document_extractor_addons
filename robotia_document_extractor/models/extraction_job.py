@@ -326,7 +326,7 @@ class ExtractionJob(models.Model):
 
             record.can_retry_from_ai = (
                 bool(record.llama_ocr_json) and
-                record.last_completed_step in ['llama_ocr', 'ai_batch_processing']
+                record.last_completed_step in ['llama_ocr', 'ai_batch_processing', 'merge_validate', 'completed']
             )
 
     # ========== RETRY ACTION METHODS ==========

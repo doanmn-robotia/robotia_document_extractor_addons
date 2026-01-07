@@ -187,9 +187,8 @@
                                     <field name="sequence" widget="handle" options="{'enable_formatting': false}"/>
                                     <field name="product_type" widget="extraction_title_field"/>
                                     <field name="hs_code"/>
-                                    <field name="capacity" column_invisible="not parent.is_capacity_merged_table_1_2"/>
-                                    <field name="cooling_capacity" column_invisible="parent.is_capacity_merged_table_1_2"/>
-                                    <field name="power_capacity" column_invisible="parent.is_capacity_merged_table_1_2"/>
+                                    <field name="cooling_capacity" column_invisible="1" force_save="1"/>
+                                    <field name="power_capacity" column_invisible="1" force_save="1"/>
                                     <field name="quantity" options="{'enable_formatting': false}"/>
                                     <field name="substance_id" options="{'no_create': True, 'no_quick_create': True}"/>
                                     <field name="substance_quantity_per_unit"/>
@@ -216,9 +215,8 @@
                                     <field name="sequence" width="30px" widget="handle"/>
                                     <field name="equipment_type" widget="extraction_title_field"/>
                                     <field name="start_year" options="{'enable_formatting': false}"/>
-                                    <field name="capacity" column_invisible="not parent.is_capacity_merged_table_1_3"/>
-                                    <field name="cooling_capacity" column_invisible="parent.is_capacity_merged_table_1_3"/>
-                                    <field name="power_capacity" column_invisible="parent.is_capacity_merged_table_1_3"/>
+                                    <field name="cooling_capacity" column_invisible="1" force_save="1"/>
+                                    <field name="power_capacity" column_invisible="1" force_save="1"/>
                                     <field name="equipment_quantity" options="{'enable_formatting': false}"/>
                                     <field name="substance_id" options="{'no_create': True, 'no_quick_create': True}"/>
                                     <field name="refill_frequency"/>
@@ -313,9 +311,8 @@
                                     <field name="sequence" widget="handle" options="{'enable_formatting': false}"/>
                                     <field name="product_type" widget="extraction_title_field"/>
                                     <field name="hs_code"/>
-                                    <field name="capacity" column_invisible="not parent.is_capacity_merged_table_2_2"/>
-                                    <field name="cooling_capacity" column_invisible="parent.is_capacity_merged_table_2_2"/>
-                                    <field name="power_capacity" column_invisible="parent.is_capacity_merged_table_2_2"/>
+                                    <field name="cooling_capacity" column_invisible="1" force_save="1"/>
+                                    <field name="power_capacity" column_invisible="1" force_save="1"/>
                                     <field name="quantity" options="{'enable_formatting': false}"/>
                                     <field name="substance_id" options="{'no_create': True, 'no_quick_create': True}"/>
                                     <field name="substance_quantity_per_unit"/>
@@ -344,9 +341,8 @@
                                     <field name="equipment_type" widget="extraction_title_field"/>
                                     <field name="equipment_quantity" options="{'enable_formatting': false}"/>
                                     <field name="substance_id" options="{'no_create': True, 'no_quick_create': True}"/>
-                                    <field name="capacity" column_invisible="not parent.is_capacity_merged_table_2_3"/>
-                                    <field name="cooling_capacity" column_invisible="parent.is_capacity_merged_table_2_3"/>
-                                    <field name="power_capacity" column_invisible="parent.is_capacity_merged_table_2_3"/>
+                                    <field name="cooling_capacity" column_invisible="1" force_save="1"/>
+                                    <field name="power_capacity" column_invisible="1" force_save="1"/>
                                     <field name="start_year" options="{'enable_formatting': false}"/>
                                     <field name="refill_frequency"/>
                                     <field name="substance_quantity_per_refill"/>

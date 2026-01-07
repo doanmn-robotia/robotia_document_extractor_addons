@@ -427,6 +427,7 @@ class ExtractionHelper(models.AbstractModel):
             Also cleans empty title sections:
             - Title row (is_title=True) without data children (is_title=False) → removed
             - Data rows without substance_id get default substance (other_hcfc)
+            - Normalizes capacity from cooling_capacity and power_capacity using EquipmentCapacityMixin
             """
             if not data_list:
                 return []
@@ -438,6 +439,9 @@ class ExtractionHelper(models.AbstractModel):
             except Exception as e:
                 _logger.warning(f"Could not resolve default substance 'other_hcfc': {e}")
                 default_substance_id = False
+
+            # Get capacity mixin for normalization
+            capacity_mixin = self.env['equipment.capacity.mixin']
 
             # Clean empty sections first
             cleaned_data = []
@@ -452,7 +456,10 @@ class ExtractionHelper(models.AbstractModel):
                     if not row.get('substance_id') and default_substance_id:
                         row['substance_id'] = default_substance_id
                         _logger.debug(f"Set default substance_id={default_substance_id} for data row without substance")
-                    
+
+                    # Normalize capacity from cooling_capacity and power_capacity
+                    row = capacity_mixin._normalize_capacity(row)
+
                     cleaned_data.append(row)
                     i += 1
                     continue
