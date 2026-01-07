@@ -11,15 +11,7 @@
         overflow: hidden;
         width: 100%;
 
-        // RESPONSIVE: Mobile/Tablet - Stack vertically
-        @media (max-width: 991px) {
-            flex-direction: column;
-        }
-
-        // RESPONSIVE: Desktop - Split horizontally
-        @media (min-width: 992px) {
-            flex-direction: row;
-        }
+        flex-direction: row !important;
 
         .o_notebook {
 
@@ -30,6 +22,43 @@
 
             th.o_handle_cell {
                 width: 40px !important;
+            }
+
+            // STICKY HEADER: Apply to all tables in extraction form
+            .o_list_table {
+
+                --table-bg: transparent !important;
+
+                thead {
+                    position: sticky;
+                    top: 0;
+                    z-index: 10;
+                    background-color: #f8fafc; // Prevent transparency when scrolling
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); // Subtle shadow for depth
+                }
+
+                thead th {
+                    background-color: #f8fafc; // Ensure header background
+                }
+
+                // ZEBRA STRIPING: Alternating row colors for all tables
+                tbody tr:not(.o_is_section) {
+                    &:nth-child(even) {
+                        background-color: #dee2e6; // White for even rows
+                    }
+
+                    &:nth-child(odd) {
+                        background-color: #f9fafb; // Very light gray for odd rows (gray-50)
+                    }
+
+                    &:hover {
+                        background-color: #f0f4f8 !important; // Light blue-gray on hover
+                    }
+                }
+            }
+
+            .o_list_renderer {
+                max-height: 500px;
             }
         }
 
@@ -72,7 +101,6 @@
             // RESPONSIVE: Mobile - Full width, fixed height, top border
             @media (max-width: 991px) {
                 width: 100%;
-                height: 500px;
                 border-left: none;
                 border-top: 1px solid #e2e8f0; // slate-200
             }

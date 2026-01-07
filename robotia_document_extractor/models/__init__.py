@@ -17,6 +17,9 @@ from . import res_users
 # Queue Job Extensions
 from . import queue_job_inherit
 
+# Mixins (must load before models that use them)
+from . import equipment_capacity_mixin
+
 # Document Extraction
 from . import document_extraction
 from . import substance_usage

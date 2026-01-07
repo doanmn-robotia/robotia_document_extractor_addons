@@ -45,10 +45,20 @@
         }
     }
 
-    // Regular data rows
+    // Regular data rows with zebra striping
     tbody tr:not(.o_is_section) {
+        // ZEBRA STRIPING: Alternating row colors for better readability
+        &:nth-child(even) {
+            background-color: #ffffff; // White for even rows
+        }
+
+        &:nth-child(odd) {
+            background-color: #f9fafb; // Very light gray for odd rows (gray-50)
+        }
+
+        // Hover state with stronger color
         &:hover {
-            background-color: #fafafa;
+            background-color: #f0f4f8 !important; // Light blue-gray on hover
         }
 
         // Handle styling for data rows
@@ -95,7 +105,16 @@
             }
         }
 
-        // Header styling
+        // STICKY HEADER: Entire thead sticky for single and multi-row headers
+        thead {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background-color: #f8fafc; // Prevent transparency when scrolling
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); // Subtle shadow for depth
+        }
+
+        // Header cell styling
         thead th {
             background-color: #f8fafc;
             font-weight: 600;

@@ -6,6 +6,7 @@ from odoo import models, fields, api
 class EquipmentProduct(models.Model):
     """Table 1.2: Equipment/Product Info"""
     _name = 'equipment.product'
+    _inherit = ['equipment.capacity.mixin']
     _description = 'Equipment/Product Info'
     _order = 'sequence, id'
 
@@ -115,8 +116,10 @@ class EquipmentProduct(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
-        """Override create to auto-create master data if not exists"""
+        """Override create to auto-create master data if not exists and normalize capacity"""
         for vals in vals_list:
+            # Normalize capacity (from mixin will be called via super)
+
             if vals.get('is_title'):
                 continue
 
@@ -125,6 +128,7 @@ class EquipmentProduct(models.Model):
                 equipment_type = self._find_or_create_equipment_type(vals.get('product_type'))
                 vals['equipment_type_id'] = equipment_type.id
 
+        # Super call will trigger mixin's create which normalizes capacity
         return super(EquipmentProduct, self).create(vals_list)
 
     def _find_or_create_equipment_type(self, type_text):
