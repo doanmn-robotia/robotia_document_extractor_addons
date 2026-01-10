@@ -38,7 +38,7 @@ class EquipmentOwnershipReport(models.Model):
         help='Type of equipment ownership. Auto-filled by AI extraction if available.'
     )
     equipment_type_id = fields.Many2one('equipment.type', string='Equipment Type', ondelete='restrict', index=True)
-    equipment_type = fields.Char(string='Equipment Type Text', compute='_compute_equipment_type', store=True, readonly=False)
+    equipment_type = fields.Char(string='Equipment Type', help='Title text for section headers (air conditioner/refrigeration)')
     equipment_quantity = fields.Integer(string='Quantity')
     substance_id = fields.Many2one('controlled.substance', string='Controlled Substance', ondelete='restrict', index=True)
     substance_name = fields.Char(string='Substance Name', compute='_compute_substance_name', store=True, readonly=False)
@@ -49,11 +49,6 @@ class EquipmentOwnershipReport(models.Model):
     refill_frequency = fields.Char(string='Refill Frequency (times/year)')
     substance_quantity_per_refill = fields.Char(string='Substance Quantity per Refill')
     notes = fields.Text(string='Notes')
-
-    @api.depends('equipment_type_id')
-    def _compute_equipment_type(self):
-        for r in self:
-            r.equipment_type = r.equipment_type_id.name if r.equipment_type_id else ''
 
     @api.depends('substance_id')
     def _compute_substance_name(self):
@@ -68,8 +63,9 @@ class EquipmentOwnershipReport(models.Model):
 
             if vals.get('is_title'):
                 continue
-            if not vals.get('equipment_type_id') and vals.get('equipment_type'):
-                vals['equipment_type_id'] = self._find_or_create('equipment.type', vals['equipment_type']).id
+            # TODO-TITLE: Handle Equipment Type auto-creation (commented for now, will be handled later)
+            # if not vals.get('equipment_type_id') and vals.get('equipment_type'):
+            #     vals['equipment_type_id'] = self._find_or_create('equipment.type', vals['equipment_type']).id
 
         # Super call will trigger mixin's create which normalizes capacity
         return super(EquipmentOwnershipReport, self).create(vals_list)

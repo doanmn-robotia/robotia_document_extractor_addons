@@ -70,7 +70,7 @@ export class ExtractionPageSelector extends Component {
 
         // Get params from action
         const params = this.props.action.params;
-        const job_id = params?.job_id;
+        const job_id = params?.job_id || params?.job_uuid;
 
         if (job_id) {
             this.state.isProcessing = true
@@ -83,6 +83,8 @@ export class ExtractionPageSelector extends Component {
             if (params.progress) {
                 this.state.progress = params.progress
             }
+
+            this.state.documentType = params.document_type || '01';
 
             this.subscribe(job_id)
             this.startJobPolling()

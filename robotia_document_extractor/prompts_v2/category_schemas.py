@@ -427,13 +427,18 @@ def get_collection_recycling_report_schema(form_type):
 
 Extract collection/recycling report data.
 
-### Data Rows
+### Data Rows with Title Support
 
-⚠️ IMPORTANT: NO is_title field in this table. All rows are data rows.
+⚠️ IMPORTANT: This table supports TITLE ROWS for section headers.
+- If row is title: `is_title=true`, `title_name="section text"`, other fields null
+- If row is data: `is_title=false`, `title_name=null`, substance_name and data fields populated
 
 | Field | Type | Description |
 |-------|------|-------------|
-| substance_name | str | Standardized substance name |
+| is_title | bool | True for section title rows, False for data rows |
+| title_name | str/null | Title text for section headers (only if is_title=true) |
+| sequence | int | Row sequence number for ordering |
+| substance_name | str/null | Standardized substance name (only if is_title=false) |
 | collection_quantity_kg | float/null | Collection quantity (kg) |
 | collection_location | str/null | Collection location |
 | storage_location | str/null | Storage location |
@@ -453,6 +458,15 @@ Extract collection/recycling report data.
   "has_table_2_4": true,
   "collection_recycling_report": [
     {
+      "is_title": true,
+      "sequence": 1,
+      "title_name": "Thu gom chất được kiểm soát",
+      "substance_name": null
+    },
+    {
+      "is_title": false,
+      "sequence": 2,
+      "title_name": null,
       "substance_name": "HFC-134a",
       "collection_quantity_kg": 100,
       "collection_location": "TP.HCM"

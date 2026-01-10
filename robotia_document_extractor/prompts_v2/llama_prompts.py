@@ -259,15 +259,19 @@ Output: HTML table OR Markdown with structure annotations OR plain text.""",
 
 **TABLE-SPECIFIC NOTES:**
 
-Bảng này có merged activity group headers (NO section title rows):
-- "Thu gom" (merged cho 3 columns: Khối lượng, Địa điểm thu gom, Địa điểm lưu giữ)
-- "Tái sử dụng" (merged cho 2 columns: Khối lượng, Công nghệ)
-- "Tái chế" (merged cho 3 columns: Khối lượng, Công nghệ, Nơi sử dụng)
-- "Tiêu hủy" (merged cho 3 columns: Khối lượng, Công nghệ, Cơ sở xử lý)
+Bảng này có cấu trúc PHỨC TẠP với TITLE ROWS và merged headers:
+- TITLE ROWS: Có thể có các dòng tiêu đề phân nhóm (vd: "Thu gom chất được kiểm soát", "Tái sử dụng", "Tái chế", "Tiêu hủy")
+- MERGED HEADERS: Các cột được nhóm theo hoạt động:
+  * "Thu gom" (merged cho 3 columns: Khối lượng, Địa điểm thu gom, Địa điểm lưu giữ)
+  * "Tái sử dụng" (merged cho 2 columns: Khối lượng, Công nghệ)
+  * "Tái chế" (merged cho 3 columns: Khối lượng, Công nghệ, Nơi sử dụng)
+  * "Tiêu hủy" (merged cho 3 columns: Khối lượng, Công nghệ, Cơ sở xử lý)
 
-Each substance = 1 row with MANY columns
+CRITICAL: Preserve TITLE ROWS exactly - they structure the data!
+Each substance = 1 row with MANY columns under its section
 
-Output: HTML table with colspan OR Markdown with structure annotations OR plain text.""",
+Output: HTML table with colspan OR Markdown with structure annotations OR plain text.
+Mark title rows clearly if present.""",
     }
 
     return prompts.get(category, "Trích xuất MARKDOWN từ tài liệu.")

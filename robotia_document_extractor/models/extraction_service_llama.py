@@ -489,7 +489,7 @@ class ExtractionService(models.AbstractModel):
         # Save checkpoint (will be committed by main transaction)
         if job:
             job.write({
-                'category_mapping_json': json.dumps(categories, ensure_ascii=False),
+                'category_mapping_json': json.dumps(categories, ensure_ascii=False, indent=2),
                 'last_completed_step': 'category_mapping',
                 'current_step': 'category_mapping',
                 'progress': 20,
@@ -525,7 +525,7 @@ class ExtractionService(models.AbstractModel):
         # Save checkpoint (will be committed by main transaction)
         if job:
             job.write({
-                'llama_ocr_json': json.dumps(llama_json, ensure_ascii=False),
+                'llama_ocr_json': json.dumps(llama_json, ensure_ascii=False, indent=2),
                 'last_completed_step': 'llama_ocr',
                 'current_step': 'llama_ocr',
                 'progress': 40,
@@ -619,7 +619,7 @@ class ExtractionService(models.AbstractModel):
         # Save checkpoint (will be committed by main transaction)
         if job:
             job.write({
-                'ai_extracted_json': json.dumps(extracted_datas, ensure_ascii=False),
+                'ai_extracted_json': json.dumps(extracted_datas, ensure_ascii=False, indent=2),
                 'last_completed_step': 'ai_batch_processing',
                 'current_step': 'ai_batch_processing',
                 'progress': 80,
@@ -693,8 +693,27 @@ Extract data following the schema above and return ONLY valid JSON.
                 category_prompt = batch_context + category_prompt
 
             try:
-                response = chat.send_message(category_prompt)
-                response_json = self._parse_json_response(response.text)
+                # Use streaming to avoid timeout with long API responses
+                _logger.info(f"Starting batch {batch_num}/{total_batches} for category '{category}' (pages {page_start}-{page_end})")
+
+                # Send message with streaming enabled
+                response_stream = chat.send_message_stream(category_prompt)
+
+                # Accumulate streaming chunks
+                full_text = ""
+                chunk_count = 0
+                for chunk in response_stream:
+                    if chunk.text:
+                        full_text += chunk.text
+                        chunk_count += 1
+                        if chunk_count % 10 == 0:  # Log every 10 chunks to avoid spam
+                            _logger.debug(f"Batch {batch_num}: received {chunk_count} chunks, {len(full_text)} chars total")
+
+                _logger.info(f"Batch {batch_num} streaming completed: {chunk_count} chunks, {len(full_text)} chars total")
+
+                # Parse accumulated response
+                full_text.replace('\n', '')
+                response_json = self._parse_json_response(full_text)
 
                 if isinstance(response_json, list):
                     batch_responses.extend(response_json)
@@ -722,12 +741,12 @@ Extract data following the schema above and return ONLY valid JSON.
         self.update_progress(new_env, 'merge_validate', _('Merging and validating...'), job.id if job else None)
 
         extracted_data = self._merge_category_data(extracted_datas)
-        extracted_data = self._validate_and_fix_metadata_flags(extracted_data, document_type)
+        # extracted_data = self._validate_and_fix_metadata_flags(extracted_data, document_type)
 
         # Save checkpoint (will be committed by main transaction)
         if job:
             job.write({
-                'final_result_json': json.dumps(extracted_data, ensure_ascii=False),
+                'final_result_json': json.dumps(extracted_data, ensure_ascii=False, indent=2),
                 'last_completed_step': 'merge_validate',
                 'current_step': 'merge_validate',
                 'progress': 95,

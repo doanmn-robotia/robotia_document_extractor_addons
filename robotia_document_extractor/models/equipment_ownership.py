@@ -27,6 +27,15 @@ class EquipmentOwnership(models.Model):
         default=False,
         help='If True, this row is a section title'
     )
+    ownership_type = fields.Selection(
+        selection=[
+            ('air_conditioner', 'Air Conditioner'),
+            ('refrigeration', 'Refrigeration'),
+        ],
+        string='Ownership Type',
+        index=True,
+        help='Air conditioner or refrigeration equipment'
+    )
     equipment_type_id = fields.Many2one(
         comodel_name='equipment.type',
         string='Equipment Type',
@@ -35,11 +44,8 @@ class EquipmentOwnership(models.Model):
         help='Link to equipment type master data'
     )
     equipment_type = fields.Char(
-        string='Equipment Type Text',
-        compute='_compute_equipment_type',
-        store=True,
-        readonly=False,
-        help='Equipment model and manufacturer (auto-filled from equipment_type_id)'
+        string='Equipment Type',
+        help='Title text for section headers (air conditioner/refrigeration)'
     )
     start_year = fields.Integer(
         string='Year Started'
@@ -80,12 +86,6 @@ class EquipmentOwnership(models.Model):
         string='Substance Quantity per Refill'
     )
 
-    @api.depends('equipment_type_id')
-    def _compute_equipment_type(self):
-        for record in self:
-            if record.equipment_type_id:
-                record.equipment_type = record.equipment_type_id.name
-
     @api.depends('substance_id')
     def _compute_substance_name(self):
         for record in self:
@@ -101,10 +101,10 @@ class EquipmentOwnership(models.Model):
             if vals.get('is_title'):
                 continue
 
-            # Handle Equipment Type
-            if not vals.get('equipment_type_id') and vals.get('equipment_type'):
-                equipment_type = self._find_or_create_equipment_type(vals.get('equipment_type'))
-                vals['equipment_type_id'] = equipment_type.id
+            # TODO-TITLE: Handle Equipment Type auto-creation (commented for now, will be handled later)
+            # if not vals.get('equipment_type_id') and vals.get('equipment_type'):
+            #     equipment_type = self._find_or_create_equipment_type(vals.get('equipment_type'))
+            #     vals['equipment_type_id'] = equipment_type.id
 
         # Super call will trigger mixin's create which normalizes capacity
         return super(EquipmentOwnership, self).create(vals_list)

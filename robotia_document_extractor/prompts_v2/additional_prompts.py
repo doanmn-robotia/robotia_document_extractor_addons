@@ -602,7 +602,46 @@ def _get_equipment_ownership_report_additional_prompt():
 
 def _get_collection_recycling_report_additional_prompt():
     """Additional prompts for collection/recycling report (Bảng 2.4)."""
-    return _get_collection_recycling_additional_prompt()  # Same structure as Bảng 1.4
+    return f"""
+
+---
+
+## ⚠️ CRITICAL REMINDERS FOR COLLECTION/RECYCLING REPORT (Bảng 2.4)
+
+### 1. TITLE ROWS SUPPORT
+
+**Bảng 2.4 supports TITLE ROWS for section headers:**
+- Title rows have `is_title = true` and `title_name = "section text"`
+- Data rows have `is_title = false` and `title_name = null`
+- Each section may group substances by activity type
+
+**Common title row examples:**
+- "Thu gom chất được kiểm soát"
+- "Tái sử dụng"
+- "Tái chế"
+- "Tiêu hủy"
+
+### 2. COMPLEX COLUMN STRUCTURE
+
+**Bảng 2.4 has MANY columns grouped by activity:**
+- Thu gom (3 columns): Khối lượng, Địa điểm thu gom, Địa điểm lưu giữ
+- Tái sử dụng (2 columns): Khối lượng, Công nghệ
+- Tái chế (3 columns): Khối lượng, Công nghệ, Nơi sử dụng
+- Tiêu hủy (3 columns): Khối lượng, Công nghệ, Cơ sở xử lý
+
+**BE EXTREMELY CAREFUL with column alignment!**
+Each substance row has up to 11+ data columns.
+
+### 3. NULL VALUE HANDLING
+
+- If a substance doesn't have data for an activity → Set those columns to null
+- Don't leave fields empty - use explicit null
+- Title rows should have all data fields as null
+
+{_get_table_column_accuracy_prompt()}
+
+---
+"""
 
 
 def _get_default_additional_prompt():

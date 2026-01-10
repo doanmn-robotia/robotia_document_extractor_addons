@@ -366,7 +366,8 @@ class ExtractionJob(models.Model):
             'params': {
                 'mode': 'progress_only',
                 'job_id': self.id,
-                'job_uuid': self.uuid,
+                'job_id': self.uuid,
+                'document_type': self.document_type,
                 'merged_pdf_url': merged_pdf_url,  # Pass PDF URL for preview
                 'retry_from_step': 'category_mapping',  # Pass retry step
             }
@@ -403,8 +404,8 @@ class ExtractionJob(models.Model):
             'tag': 'robotia_document_extractor.page_selector',
             'params': {
                 'mode': 'progress_only',
-                'job_id': self.id,
-                'job_uuid': self.uuid,
+                'job_id': self.uuid,
+                'document_type': self.document_type,
                 'merged_pdf_url': merged_pdf_url,  # Pass PDF URL for preview
                 'retry_from_step': 'llama_ocr',  # Pass retry step
             }
@@ -441,8 +442,8 @@ class ExtractionJob(models.Model):
             'tag': 'robotia_document_extractor.page_selector',
             'params': {
                 'mode': 'progress_only',
-                'job_id': self.id,
-                'job_uuid': self.uuid,
+                'job_id': self.uuid,
+                'document_type': self.document_type,
                 'merged_pdf_url': merged_pdf_url,  # Pass PDF URL for preview
                 'retry_from_step': 'ai_batch_processing',  # Pass retry step
             }

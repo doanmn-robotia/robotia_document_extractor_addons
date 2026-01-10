@@ -27,6 +27,15 @@ class EquipmentProduct(models.Model):
         default=False,
         help='If True, this row is a section title'
     )
+    production_type = fields.Selection(
+        selection=[
+            ('production', 'Production'),
+            ('import', 'Import'),
+        ],
+        string='Production Type',
+        index=True,
+        help='Production or Import equipment category'
+    )
     equipment_type_id = fields.Many2one(
         comodel_name='equipment.type',
         string='Equipment Type',
@@ -36,10 +45,7 @@ class EquipmentProduct(models.Model):
     )
     product_type = fields.Char(
         string='Product/Equipment Type',
-        compute='_compute_product_type',
-        store=True,
-        readonly=False,
-        help='Equipment model number and manufacturer (auto-filled from equipment_type_id)'
+        help='Title text for section headers (production/import equipment)'
     )
     hs_code_id = fields.Many2one(
         comodel_name='hs.code',
@@ -93,13 +99,6 @@ class EquipmentProduct(models.Model):
         string='Notes'
     )
 
-    @api.depends('equipment_type_id')
-    def _compute_product_type(self):
-        """Auto-fill product_type from equipment_type_id"""
-        for record in self:
-            if record.equipment_type_id:
-                record.product_type = record.equipment_type_id.name
-
     @api.depends('hs_code_id')
     def _compute_hs_code(self):
         """Auto-fill hs_code from hs_code_id"""
@@ -123,10 +122,10 @@ class EquipmentProduct(models.Model):
             if vals.get('is_title'):
                 continue
 
-            # 1. Handle Equipment Type
-            if not vals.get('equipment_type_id') and vals.get('product_type'):
-                equipment_type = self._find_or_create_equipment_type(vals.get('product_type'))
-                vals['equipment_type_id'] = equipment_type.id
+            # TODO-TITLE: Handle Equipment Type auto-creation (commented for now, will be handled later)
+            # if not vals.get('equipment_type_id') and vals.get('product_type'):
+            #     equipment_type = self._find_or_create_equipment_type(vals.get('product_type'))
+            #     vals['equipment_type_id'] = equipment_type.id
 
         # Super call will trigger mixin's create which normalizes capacity
         return super(EquipmentProduct, self).create(vals_list)

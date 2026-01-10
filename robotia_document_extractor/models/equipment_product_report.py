@@ -37,7 +37,7 @@ class EquipmentProductReport(models.Model):
         index=True
     )
     equipment_type_id = fields.Many2one('equipment.type', string='Equipment Type', ondelete='restrict', index=True)
-    product_type = fields.Char(string='Product/Equipment Type', compute='_compute_product_type', store=True, readonly=False)
+    product_type = fields.Char(string='Product/Equipment Type', help='Title text for section headers (production/import equipment)')
     hs_code_id = fields.Many2one('hs.code', string='HS Code', ondelete='restrict', index=True)
     hs_code = fields.Char(string='HS Code Text', compute='_compute_hs_code', store=True, readonly=False)
     capacity = fields.Char(string='Cooling Capacity/Power Capacity', help='Combined capacity when PDF has merged column (e.g., "5 HP/3.5 kW"). Only use when is_capacity_merged = True.')
@@ -48,11 +48,6 @@ class EquipmentProductReport(models.Model):
     substance_name = fields.Char(string='Substance Name', compute='_compute_substance_name', store=True, readonly=False)
     substance_quantity_per_unit = fields.Char(string='Substance Quantity per Unit', help='Substance quantity per unit - supports both numeric and text values')
     notes = fields.Text(string='Notes')
-
-    @api.depends('equipment_type_id')
-    def _compute_product_type(self):
-        for r in self:
-            r.product_type = r.equipment_type_id.name if r.equipment_type_id else ''
 
     @api.depends('hs_code_id')
     def _compute_hs_code(self):
@@ -72,8 +67,9 @@ class EquipmentProductReport(models.Model):
 
             if vals.get('is_title'):
                 continue
-            if not vals.get('equipment_type_id') and vals.get('product_type'):
-                vals['equipment_type_id'] = self._find_or_create('equipment.type', vals['product_type']).id
+            # TODO-TITLE: Handle Equipment Type auto-creation (commented for now, will be handled later)
+            # if not vals.get('equipment_type_id') and vals.get('product_type'):
+            #     vals['equipment_type_id'] = self._find_or_create('equipment.type', vals['product_type']).id
 
         # Super call will trigger mixin's create which normalizes capacity
         return super(EquipmentProductReport, self).create(vals_list)

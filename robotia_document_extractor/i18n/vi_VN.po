@@ -7912,3 +7912,85 @@ msgstr "Tải lên thủ công"
 msgid "Maximum cooling/heating capacity in kW"
 msgstr "Công suất làm lạnh/sưởi tối đa tính bằng kW"
 
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_product__production_type
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_product_report__production_type
+msgid "Production Type"
+msgstr "Loại sản xuất"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_equipment_product__production_type
+#: model:ir.model.fields,help:robotia_document_extractor.field_equipment_product_report__production_type
+msgid "Production or Import equipment category"
+msgstr "Phân loại thiết bị sản xuất hoặc nhập khẩu"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_ownership__ownership_type
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_ownership_report__ownership_type
+msgid "Ownership Type"
+msgstr "Loại sở hữu"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_equipment_ownership__ownership_type
+msgid "Air conditioner or refrigeration equipment"
+msgstr "Thiết bị điều hòa hoặc thiết bị lạnh"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_equipment_ownership_report__ownership_type
+msgid "Type of equipment ownership. Auto-filled by AI extraction if available."
+msgstr "Loại sở hữu thiết bị. Được AI tự động điền nếu có sẵn."
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__equipment_product__production_type__production
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__equipment_product_report__production_type__production
+msgid "Production"
+msgstr "Sản xuất"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__equipment_product__production_type__import
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__equipment_product_report__production_type__import
+msgid "Import"
+msgstr "Nhập khẩu"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__equipment_ownership__ownership_type__air_conditioner
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__equipment_ownership_report__ownership_type__air_conditioner
+msgid "Air Conditioner"
+msgstr "Máy điều hòa"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__equipment_ownership__ownership_type__refrigeration
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__equipment_ownership_report__ownership_type__refrigeration
+msgid "Refrigeration"
+msgstr "Thiết bị lạnh"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_form
+msgid "Add Production Equipment Section"
+msgstr "Thêm phần Sản xuất thiết bị"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_form
+msgid "Add Import Equipment Section"
+msgstr "Thêm phần Nhập khẩu thiết bị"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_form
+msgid "Add Air Conditioner Section"
+msgstr "Thêm phần Máy điều hòa"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_form
+msgid "Add Industrial Cooling Section"
+msgstr "Thêm phần Thiết bị lạnh công nghiệp"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_form
+msgid "Add a line"
+msgstr "Thêm 1 dòng"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_form
+msgid "Add Section"
+msgstr "Thêm đầu mục"
+

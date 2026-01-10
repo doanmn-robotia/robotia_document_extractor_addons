@@ -107,7 +107,7 @@
                                     <field name="has_table_1_4"/>
                                 </group>
                             </group>
-                            <group string="Report Tables (Form 02 only)" invisible="1">
+                            <group string="Report Tables (Form 02 only)">
                                 <group>
                                     <field name="has_table_2_1"/>
                                     <field name="has_table_2_2"/>
@@ -198,9 +198,9 @@
                                     <control>
                                         <create name="add_data_control" string="Add equipment/product"/>
                                         <create name="add_production_equipment_section" string="Add Production Equipment Section"
-                                                context="{'default_is_title': True, 'default_product_type': 'Sản xuất thiết bị, sản phẩm có chứa hoặc sản xuất từ chất được kiểm soát', 'default_sequence': 1}"/>
+                                                context="{'default_is_title': True, 'default_production_type': 'production', 'default_product_type': 'Sản xuất thiết bị, sản phẩm có chứa hoặc sản xuất từ chất được kiểm soát', 'default_sequence': 1}"/>
                                         <create name="add_import_equipment_section" string="Add Import Equipment Section"
-                                                context="{'default_is_title': True, 'default_product_type': 'Nhập khẩu thiết bị, sản phẩm có chứa hoặc sản xuất từ chất được kiểm soát', 'default_sequence': 1}"/>
+                                                context="{'default_is_title': True, 'default_production_type': 'import', 'default_product_type': 'Nhập khẩu thiết bị, sản phẩm có chứa hoặc sản xuất từ chất được kiểm soát', 'default_sequence': 1}"/>
                                         <create name="add_section_control" string="Add section title"
                                                 context="{'default_is_title': True, 'default_sequence': 1}"/>
                                     </control>
@@ -227,9 +227,9 @@
                                     <control>
                                         <create name="add_data_control" string="Add equipment"/>
                                         <create name="add_air_conditioner_section" string="Add Air Conditioner Section"
-                                                context="{'default_is_title': True, 'default_equipment_type': 'Máy điều hòa không khí có năng suất lạnh danh định lớn hơn 26,5 kW (90.000 BTU/h) và có tổng năng suất lạnh danh định của các thiết bị lớn hơn 586 kW (2.000.000 BTU/h)', 'default_sequence': 1}"/>
+                                                context="{'default_is_title': True, 'default_ownership_type': 'air_conditioner', 'default_equipment_type': 'Máy điều hòa không khí có năng suất lạnh danh định lớn hơn 26,5 kW (90.000 BTU/h) và có tổng năng suất lạnh danh định của các thiết bị lớn hơn 586 kW (2.000.000 BTU/h)', 'default_sequence': 1}"/>
                                         <create name="add_industrial_cooling_section" string="Add Industrial Cooling Section"
-                                                context="{'default_is_title': True, 'default_equipment_type': 'Thiết bị lạnh công nghiệp có công suất điện lớn hơn 40 kW', 'default_sequence': 1}"/>
+                                                context="{'default_is_title': True, 'default_ownership_type': 'refrigeration', 'default_equipment_type': 'Thiết bị lạnh công nghiệp có công suất điện lớn hơn 40 kW', 'default_sequence': 1}"/>
                                         <create name="add_section_control" string="Add section title"
                                                 context="{'default_is_title': True, 'default_sequence': 1}"/>
                                     </control>
@@ -325,9 +325,9 @@
                                     <control>
                                         <create name="add_data_control" string="Add equipment/product"/>
                                         <create name="add_production_equipment_report_section" string="Add Production Equipment Section"
-                                                context="{'default_is_title': True, 'default_product_type': 'Sản xuất thiết bị, sản phẩm có chứa hoặc sản xuất từ chất được kiểm soát', 'default_sequence': 1}"/>
+                                                context="{'default_is_title': True, 'default_production_type': 'production', 'default_product_type': 'Sản xuất thiết bị, sản phẩm có chứa hoặc sản xuất từ chất được kiểm soát', 'default_sequence': 1}"/>
                                         <create name="add_import_equipment_report_section" string="Add Import Equipment Section"
-                                                context="{'default_is_title': True, 'default_product_type': 'Nhập khẩu thiết bị, sản phẩm có chứa hoặc sản xuất từ chất được kiểm soát', 'default_sequence': 1}"/>
+                                                context="{'default_is_title': True, 'default_production_type': 'import', 'default_product_type': 'Nhập khẩu thiết bị, sản phẩm có chứa hoặc sản xuất từ chất được kiểm soát', 'default_sequence': 1}"/>
                                         <create name="add_section_control" string="Add section title"
                                                 context="{'default_is_title': True, 'default_sequence': 1}"/>
                                     </control>
@@ -356,9 +356,9 @@
                                     <control>
                                         <create name="add_data_control" string="Add equipment"/>
                                         <create name="add_air_conditioner_report_section" string="Add Air Conditioner Section"
-                                                context="{'default_is_title': True, 'default_equipment_type': 'Máy điều hòa không khí có năng suất lạnh danh định lớn hơn 26,5 kW (90.000 BTU/h) và có tổng năng suất lạnh danh định của các thiết bị lớn hơn 586 kW (2.000.000 BTU/h)', 'default_sequence': 1}"/>
+                                                context="{'default_is_title': True, 'default_ownership_type': 'air_conditioner', 'default_equipment_type': 'Máy điều hòa không khí có năng suất lạnh danh định lớn hơn 26,5 kW (90.000 BTU/h) và có tổng năng suất lạnh danh định của các thiết bị lớn hơn 586 kW (2.000.000 BTU/h)', 'default_sequence': 1}"/>
                                         <create name="add_industrial_cooling_report_section" string="Add Industrial Cooling Section"
-                                                context="{'default_is_title': True, 'default_equipment_type': 'Thiết bị lạnh công nghiệp có công suất điện lớn hơn 40 kW', 'default_sequence': 1}"/>
+                                                context="{'default_is_title': True, 'default_ownership_type': 'refrigeration', 'default_equipment_type': 'Thiết bị lạnh công nghiệp có công suất điện lớn hơn 40 kW', 'default_sequence': 1}"/>
                                         <create name="add_section_control" string="Add section title"
                                                 context="{'default_is_title': True, 'default_sequence': 1}"/>
                                     </control>
@@ -369,9 +369,10 @@
                         <!-- Page 9: Table 2.4 - Collection & Recycling Report (Complex structure) -->
                         <page string="Table 2.4: Collection &amp; Recycling Report" name="table_2_4"
                               invisible="document_type != '02' or not has_table_2_4">
-                            <field name="collection_recycling_report_ids">
+                            <field name="collection_recycling_report_ids" widget="extraction_section_one2many" options="{'titleField': 'title_name'}" nolabel="1">
                                 <list editable="bottom">
-                                    <field name="sequence" widget="handle"/>
+                                    <field name="sequence" widget="handle" options="{'enable_formatting': false}"/>
+                                    <field name="title_name" widget="extraction_title_field"/>
                                     <field name="substance_id" options="{'no_create': True, 'no_quick_create': True}"/>
                                     <!-- Collection -->
                                     <field name="collection_quantity_kg" options="{'enable_formatting': false}"/>
@@ -389,6 +390,12 @@
                                     <field name="disposal_technology"/>
                                     <field name="disposal_facility"/>
                                     <field name="notes"/>
+                                    <field name="is_title" column_invisible="1"/>
+                                    <control>
+                                        <create name="add_data_control" string="Add a line"/>
+                                        <create name="add_section_control" string="Add Section"
+                                                context="{'default_is_title': True, 'default_sequence': 1}"/>
+                                    </control>
                                 </list>
                             </field>
                         </page>
