@@ -307,7 +307,8 @@ class DocumentExtractionService(models.AbstractModel):
         _logger.info(f"Successfully merged {len(pages_data)} pages into PDF ({len(pdf_binary)} bytes)")
         return pdf_binary
 
-    def update_progress(self, new_env, progress, message, job_id=None):
+    def update_progress(self, new_env, progress, message, job_id=None, 
+                         detected_categories=None, current_sub_step=None):
         """
         Update progress notification for frontend (via bus.bus only)
 
@@ -320,6 +321,8 @@ class DocumentExtractionService(models.AbstractModel):
             progress: Can be int (0-100) for legacy, or str (step_key) for step-based
             message: Human-readable Vietnamese message
             job_id: Not used (kept for backward compatibility)
+            detected_categories: List of detected category keys (for category_mapping step)
+            current_sub_step: Current category being processed (for llama_ocr/ai_batch_processing)
         """
         # Convert step_key to progress percentage if needed
         if isinstance(progress, str):
@@ -337,6 +340,12 @@ class DocumentExtractionService(models.AbstractModel):
             }
             if step_key:
                 notification_data["step"] = step_key
+            
+            # Add sub-step info if provided
+            if detected_categories:
+                notification_data["detected_categories"] = detected_categories
+            if current_sub_step:
+                notification_data["current_sub_step"] = current_sub_step
 
             new_env['bus.bus']._sendone(
                 self.env.context.get('notify_channel'),
@@ -348,6 +357,7 @@ class DocumentExtractionService(models.AbstractModel):
     def _calculate_progress_from_step(self, step_key):
         """Map step to percentage for backward compatibility"""
         step_progress = {
+            'queue_pending': 0,
             'upload_validate': 10,
             'category_mapping': 20,
             'llama_ocr': 40,

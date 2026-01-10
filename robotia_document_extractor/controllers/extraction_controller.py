@@ -1954,25 +1954,41 @@ class ExtractionController(http.Controller):
         sheet = workbook[sheet_name]
         rows_written = 0
 
-        # Get header row (row 1) for style reference
+        # Get header row (row 1) for style reference and cache header cell styles by column
         header_row = 1
+        header_cells_cache = {}
+
+        # Pre-calculate max columns needed based on first row
+        max_cols = len(data_rows[0]) if data_rows else 0
+
+        # Build header cells cache (column index -> style info dict)
+        for col_idx in range(1, max_cols + 1):
+            header_cell = sheet.cell(row=header_row, column=col_idx)
+            # Store style info (not objects) to avoid shared references
+            header_cells_cache[col_idx] = {
+                'font_name': header_cell.font.name if header_cell.font else None,
+                'font_size': header_cell.font.size if header_cell.font else None,
+                'alignment': header_cell.alignment,
+                'border': header_cell.border,
+            }
 
         for row_idx, row_data in enumerate(data_rows, start=start_row):
             for col_idx, value in enumerate(row_data, start=1):
                 cell = sheet.cell(row=row_idx, column=col_idx)
                 cell.value = value
 
-                # Copy ONLY font name and size from header (no bold/italic/color)
-                header_cell = sheet.cell(row=header_row, column=col_idx)
-                if header_cell.font:
-                    cell.font = Font(
-                        name=header_cell.font.name,
-                        size=header_cell.font.size
-                    )
-                if header_cell.alignment:
-                    cell.alignment = copy(header_cell.alignment)
-                if header_cell.border:
-                    cell.border = copy(header_cell.border)
+                # Apply cached header styles (copy to avoid shared references)
+                cached_styles = header_cells_cache.get(col_idx)
+                if cached_styles:
+                    if cached_styles['font_name'] or cached_styles['font_size']:
+                        cell.font = Font(
+                            name=cached_styles['font_name'],
+                            size=cached_styles['font_size']
+                        )
+                    if cached_styles['alignment']:
+                        cell.alignment = copy(cached_styles['alignment'])
+                    # if cached_styles['border']:
+                    #     cell.border = copy(cached_styles['border'])
 
             rows_written += 1
 
@@ -2080,8 +2096,8 @@ class ExtractionController(http.Controller):
 
         # Common data for all rows
         base_row = {
-            'TenDoanhNghiep': doc.organization_id.name or '',
-            'MaSoDN': doc.organization_id.business_id or '',
+            'TenDoanhNghiep': doc.organization_name or doc.organization_id.name or '',
+            'MaSoDN': doc.business_id or doc.organization_id.business_id or '',
             'NamBaoCao': doc.year or '',
             'HoatDong': usage_type_map.get(usage_type, ''),
             'TenChat': usage_record.substance_name or '',
@@ -2298,17 +2314,17 @@ class ExtractionController(http.Controller):
             # Build row (20 columns)
             row = [
                 idx,                                          # 1. STT
-                org.name or '',                               # 2. TenDoanhNghiep
-                org.business_id or '',                        # 3. MaSoDN
+                doc.organization_name or org.name or '',                               # 2. TenDoanhNghiep
+                doc.business_id or org.business_id or '',     # 3. MaSoDN
                 doc.year,                                     # 4. NamBaoCao
                 nguon_du_lieu,                                # 5. NguonDuLieu
                 doc.legal_representative_name or '',          # 6. TenNguoiDaiDienPhapLuat
                 doc.legal_representative_position or '',      # 7. ChucVu
                 doc.contact_person_name or '',                # 8. TenNguoiDaiDienLienLac
-                doc.contact_address or '',                    # 9. DiaChi
+                doc.contact_address or org.contact_address or '',  # 9. DiaChi
                 doc.contact_state_id.name if doc.contact_state_id else '',  # 10. Tinh_ThanhPho
-                doc.contact_phone or '',                      # 11. DienThoai
-                doc.contact_email or '',                      # 12. Email
+                doc.contact_phone or org.phone or '',         # 11. DienThoai
+                doc.contact_email or org.email or '',         # 12. Email
                 # Activity fields (13-20): 'X' if present, '' if not
                 'X' if 'production' in doc_activity_codes else '',           # 13. LinhVuc_SanXuatChat
                 'X' if 'import' in doc_activity_codes else '',               # 14. LinhVuc_NhapKhauChat
@@ -2350,7 +2366,7 @@ class ExtractionController(http.Controller):
             org = doc.organization_id
 
             # Form 01: substance_usage_ids (unpivot 3 years)
-            if doc.document_type == '01':
+            if doc.document_type == '01' and doc.has_table_1_1:
                 records = doc.substance_usage_ids.sorted('sequence')
 
                 # Resolve is_title context
@@ -2384,7 +2400,7 @@ class ExtractionController(http.Controller):
                         data_rows.append(row)
 
             # Form 02: quota_usage_ids (direct 1-to-1)
-            elif doc.document_type == '02':
+            elif doc.document_type == '02' and doc.has_table_2_1:
                 records = doc.quota_usage_ids.sorted('sequence')
 
                 # Resolve is_title context
@@ -2409,8 +2425,8 @@ class ExtractionController(http.Controller):
                     usage_type = title_context.get(record.id, 'import')
 
                     row = [
-                        org.name or '',                     # 1. TenDoanhNghiep
-                        org.business_id or '',              # 2. MaSoDN
+                        doc.organization_name or org.name or '',                     # 1. TenDoanhNghiep
+                        doc.business_id or org.business_id or '',  # 2. MaSoDN
                         'Mẫu 02 - Bảng 2.1',                # 3. NguonDuLieu
                         usage_type_map.get(usage_type, ''), # 4. HoatDong
                         record.substance_name or '',        # 5. TenChat
@@ -2450,7 +2466,7 @@ class ExtractionController(http.Controller):
             org = doc.organization_id
 
             # Form 01: equipment_ownership_ids
-            if doc.document_type == '01':
+            if doc.document_type == '01' and doc.has_table_1_3:
                 records = doc.equipment_ownership_ids.sorted('sequence')
 
                 # Resolve is_title context for PhanLoaiThietBi
@@ -2469,8 +2485,8 @@ class ExtractionController(http.Controller):
                     phan_loai_thiet_bi = title_context.get(record.id, '')
 
                     row = [
-                        org.name or '',                                  # 1. TenDoanhNghiep
-                        org.business_id or '',                           # 2. MaSoDN
+                        doc.organization_name or org.name or '',                                  # 1. TenDoanhNghiep
+                        doc.business_id or org.business_id or '',        # 2. MaSoDN
                         doc.year,                                        # 3. NamBaoCao
                         'Mẫu 01 - Bảng 1.3',                             # 4. NguonDuLieu
                         phan_loai_thiet_bi,                              # 5. PhanLoaiThietBi
@@ -2486,7 +2502,7 @@ class ExtractionController(http.Controller):
                     data_rows.append(row)
 
             # Form 02: equipment_ownership_report_ids
-            elif doc.document_type == '02':
+            elif doc.document_type == '02' and doc.has_table_2_3:
                 records = doc.equipment_ownership_report_ids.sorted('sequence')
 
                 # Resolve is_title context
@@ -2504,8 +2520,8 @@ class ExtractionController(http.Controller):
                     phan_loai_thiet_bi = title_context.get(record.id, '')
 
                     row = [
-                        org.name or '',                                  # 1
-                        org.business_id or '',                           # 2
+                        doc.organization_name or org.name or '',                                  # 1
+                        doc.business_id or org.business_id or '',        # 2
                         doc.year,                                        # 3
                         'Mẫu 02 - Bảng 2.3',                             # 4
                         phan_loai_thiet_bi,                              # 5
@@ -2548,7 +2564,7 @@ class ExtractionController(http.Controller):
             org = doc.organization_id
 
             # Form 01: equipment_product_ids
-            if doc.document_type == '01':
+            if doc.document_type == '01' and doc.has_table_1_2:
                 records = doc.equipment_product_ids.sorted('sequence')
 
                 for record in records:
@@ -2565,8 +2581,8 @@ class ExtractionController(http.Controller):
                     hoat_dong = ''
 
                     row = [
-                        org.name or '',                                  # 1. TenDoanhNghiep
-                        org.business_id or '',                           # 2. MaSoDN
+                        doc.organization_name or org.name or '',                                  # 1. TenDoanhNghiep
+                        doc.business_id or org.business_id or '',        # 2. MaSoDN
                         doc.year,                                        # 3. NamBaoCao
                         'Mẫu 01 - Bảng 1.2',                             # 4. NguonDuLieu
                         hoat_dong,                                       # 5. HoatDong
@@ -2580,7 +2596,7 @@ class ExtractionController(http.Controller):
                     data_rows.append(row)
 
             # Form 02: equipment_product_report_ids
-            elif doc.document_type == '02':
+            elif doc.document_type == '02' and doc.has_table_2_2:
                 records = doc.equipment_product_report_ids.sorted('sequence')
 
                 for record in records:
@@ -2596,8 +2612,8 @@ class ExtractionController(http.Controller):
                     hoat_dong = 'Sản xuất' if record.production_type == 'production' else 'Nhập khẩu'
 
                     row = [
-                        org.name or '',                                  # 1
-                        org.business_id or '',                           # 2
+                        doc.organization_name or org.name or '',                                  # 1
+                        doc.business_id or org.business_id or '',        # 2
                         doc.year,                                        # 3
                         'Mẫu 02 - Bảng 2.2',                             # 4
                         hoat_dong,                                       # 5
@@ -2646,7 +2662,7 @@ class ExtractionController(http.Controller):
             org = doc.organization_id
 
             # Form 01: collection_recycling_ids (vertical structure)
-            if doc.document_type == '01':
+            if doc.document_type == '01' and doc.has_table_1_4:
                 records = doc.collection_recycling_ids.sorted('sequence')
 
                 # Resolve is_title context
@@ -2669,8 +2685,8 @@ class ExtractionController(http.Controller):
                     hoat_dong = activity_map.get(activity_type, '')
 
                     row = [
-                        org.name or '',                                  # 1. TenDoanhNghiep
-                        org.business_id or '',                           # 2. MaSoDN
+                        doc.organization_name or org.name or '',                                  # 1. TenDoanhNghiep
+                        doc.business_id or org.business_id or '',        # 2. MaSoDN
                         doc.year,                                        # 3. NamBaoCao
                         'Mẫu 01 - Bảng 1.4',                             # 4. NguonDuLieu
                         record.substance_id.name if record.substance_id else '',  # 5. TenChat
@@ -2682,7 +2698,7 @@ class ExtractionController(http.Controller):
                     data_rows.append(row)
 
             # Form 02: collection_recycling_report_ids (horizontal → unpivot)
-            elif doc.document_type == '02':
+            elif doc.document_type == '02' and doc.has_table_2_4:
                 records = doc.collection_recycling_report_ids
 
                 for record in records:
@@ -2735,7 +2751,7 @@ class ExtractionController(http.Controller):
             org = doc.organization_id
 
             # Form 01: substance_usage_ids (unpivot 3 years)
-            if doc.document_type == '01':
+            if doc.document_type == '01' and doc.has_table_1_1:
                 records = doc.substance_usage_ids.sorted('sequence')
 
                 # Resolve is_title context
@@ -2756,8 +2772,8 @@ class ExtractionController(http.Controller):
                     # Convert dict rows to list rows (12 columns)
                     for row_dict in unpivoted_rows:
                         row = [
-                            row_dict['TenDoanhNghiep'],     # 1
-                            row_dict['MaSoDN'],             # 2
+                            row_dict['TenDoanhNghiep'] or doc.organization_name or '',     # 1
+                            row_dict['MaSoDN'] or doc.business_id or '',  # 2
                             'Mẫu 01',                       # 3. NguonDuLieu
                             row_dict['NamBaoCao'],          # 4
                             row_dict['NamDuLieu'],          # 5
@@ -2772,7 +2788,7 @@ class ExtractionController(http.Controller):
                         data_rows.append(row)
 
             # Form 02: quota_usage_ids (unpivot 4 quota types)
-            elif doc.document_type == '02':
+            elif doc.document_type == '02' and doc.has_table_2_1:
                 records = doc.quota_usage_ids.sorted('sequence')
 
                 # Resolve is_title context
@@ -2793,7 +2809,7 @@ class ExtractionController(http.Controller):
                     # Convert dict rows to list rows (12 columns)
                     for row_dict in unpivoted_rows:
                         row = [
-                            row_dict['TenDoanhNghiep'],     # 1
+                            row_dict['TenDoanhNghiep'] or doc.organization_name or '',     # 1
                             row_dict['MaSoDN'],             # 2
                             row_dict['NguonDuLieu'],        # 3
                             row_dict['NamBaoCao'],          # 4

@@ -58,15 +58,17 @@ class ExtractionJob(models.Model):
 
     # ========== STEP TRACKING ==========
     current_step = fields.Selection([
+        ('queue_pending', 'Step 0: Queue Pending'),
         ('upload_validate', 'Step 1: Upload & Validate'),
         ('category_mapping', 'Step 2: Category Mapping'),
         ('llama_ocr', 'Step 3: Llama OCR'),
         ('ai_batch_processing', 'Step 4: AI Batch Processing'),
         ('merge_validate', 'Step 5: Merge & Validate'),
         ('completed', 'Completed'),
-    ], string='Current Step', default='upload_validate', index=True)
+    ], string='Current Step', default='queue_pending', index=True)
 
     last_completed_step = fields.Selection([
+        ('queue_pending', 'Step 0: Queue Pending'),
         ('upload_validate', 'Step 1: Upload & Validate'),
         ('category_mapping', 'Step 2: Category Mapping'),
         ('llama_ocr', 'Step 3: Llama OCR'),

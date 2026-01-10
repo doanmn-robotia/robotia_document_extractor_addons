@@ -19,6 +19,7 @@ class CollectionRecyclingReport(models.Model):
         ondelete='cascade',
         index=True
     )
+    sequence = fields.Integer()
     substance_id = fields.Many2one('controlled.substance', string='Controlled Substance', ondelete='restrict', index=True)
     substance_name = fields.Char(string='Substance Name', compute='_compute_substance_name', store=True, readonly=False, required=False)
 

@@ -35,6 +35,7 @@ export class HfcDashboard extends Component {
         this.pieChartRef = useRef("pieChart");
         this.barChart = null;
         this.pieChart = null;
+        this.ui = useService("ui")
 
         // State management
         this.state = useState({
@@ -170,7 +171,7 @@ export class HfcDashboard extends Component {
             this.state.error = null;
 
             // Prepare filters - if status is empty array, set to all statuses
-            const filters = {...this.state.filters};
+            const filters = { ...this.state.filters };
             if (!filters.status || filters.status.length === 0) {
                 filters.status = ['draft', 'validated', 'completed'];  // All statuses
             }
@@ -469,8 +470,10 @@ export class HfcDashboard extends Component {
                 }
             });
 
+            this.ui.block()
+
             // Prepare filters - if status is empty array, set to all statuses
-            const filters = {...this.state.filters};
+            const filters = { ...this.state.filters };
             if (!filters.status || filters.status.length === 0) {
                 filters.status = ['draft', 'validated', 'completed'];  // All statuses
             }
@@ -542,6 +545,8 @@ export class HfcDashboard extends Component {
                     sticky: true,
                 }
             });
+        } finally {
+            this.ui.unblock()
         }
     }
 

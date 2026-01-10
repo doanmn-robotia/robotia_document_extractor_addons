@@ -371,6 +371,7 @@
                               invisible="document_type != '02' or not has_table_2_4">
                             <field name="collection_recycling_report_ids">
                                 <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
                                     <field name="substance_id" options="{'no_create': True, 'no_quick_create': True}"/>
                                     <!-- Collection -->
                                     <field name="collection_quantity_kg" options="{'enable_formatting': false}"/>
@@ -401,8 +402,7 @@
                             <div class="o_pdf_preview_content">
                                 <field name="id" invisible="1"/>
                                 <field name="pdf_attachment_id" invisible="1"/>
-                                <field name="pdf_file" widget="pdf_viewer" invisible="not id" options="{'height': '100%'}"/>
-                                <field name="pdf_url" widget="pdf_url_viewer" invisible="id"/>
+                                <field name="pdf_url" widget="pdf_url_viewer"/>
                             </div>
                         </page>
                         <page name="ocr" string="OCR Output" invisible="not raw_ocr_data">
