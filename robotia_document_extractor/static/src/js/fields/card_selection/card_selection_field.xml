@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="robotia_document_extractor.CardSelectionField">
+        <div class="o_field_card_selection">
+            <div class="card-selection-grid">
+                <t t-foreach="options" t-as="option" t-key="option[0]">
+                    <t t-set="optionValue" t-value="option[0]"/>
+                    <t t-set="optionLabel" t-value="option[1]"/>
+
+                    <div
+                        t-att-class="'role-card role-card-' + getCardColor(optionValue) + (value === optionValue ? ' role-card-selected' : '')"
+                        t-on-click="() => this.onCardClick(optionValue)"
+                        t-att-data-value="optionValue">
+
+                        <div class="role-card-header">
+                            <div t-att-class="'role-card-icon role-icon-' + getCardColor(optionValue)">
+                                <i t-att-class="'fa ' + getCardIcon(optionValue)"/>
+                            </div>
+                            <div class="role-card-checkbox">
+                                <t t-if="value === optionValue">
+                                    <i class="fa fa-check-circle text-primary"/>
+                                </t>
+                                <t t-else="">
+                                    <i class="fa fa-circle-o text-muted"/>
+                                </t>
+                            </div>
+                        </div>
+
+                        <h4 class="role-card-title" t-esc="optionLabel"/>
+                        <p class="role-card-description" t-esc="getCardDescription(optionValue)"/>
+                    </div>
+                </t>
+            </div>
+        </div>
+    </t>
+</templates>

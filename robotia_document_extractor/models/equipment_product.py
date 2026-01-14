@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from odoo import models, fields, api
+from .document_extraction import auto_detect_title_selection
 
 
 class EquipmentProduct(models.Model):
@@ -27,6 +28,15 @@ class EquipmentProduct(models.Model):
         default=False,
         help='If True, this row is a section title'
     )
+    production_type = fields.Selection(
+        selection=[
+            ('production', 'Sản xuất'),
+            ('import', 'Nhập khẩu'),
+        ],
+        string='Activity',
+        index=True,
+        help='Production or Import equipment category'
+    )
     equipment_type_id = fields.Many2one(
         comodel_name='equipment.type',
         string='Equipment Type',
@@ -36,10 +46,7 @@ class EquipmentProduct(models.Model):
     )
     product_type = fields.Char(
         string='Product/Equipment Type',
-        compute='_compute_product_type',
-        store=True,
-        readonly=False,
-        help='Equipment model number and manufacturer (auto-filled from equipment_type_id)'
+        help='Title text for section headers (production/import equipment)'
     )
     hs_code_id = fields.Many2one(
         comodel_name='hs.code',
@@ -93,13 +100,6 @@ class EquipmentProduct(models.Model):
         string='Notes'
     )
 
-    @api.depends('equipment_type_id')
-    def _compute_product_type(self):
-        """Auto-fill product_type from equipment_type_id"""
-        for record in self:
-            if record.equipment_type_id:
-                record.product_type = record.equipment_type_id.name
-
     @api.depends('hs_code_id')
     def _compute_hs_code(self):
         """Auto-fill hs_code from hs_code_id"""
@@ -117,19 +117,69 @@ class EquipmentProduct(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         """Override create to auto-create master data if not exists and normalize capacity"""
+        
         for vals in vals_list:
-            # Normalize capacity (from mixin will be called via super)
-
+            # Auto-detect selection for title rows
             if vals.get('is_title'):
-                continue
+                text_value = vals.get('product_type', '')
+                current_value = vals.get('production_type')
+                
+                detected_value = auto_detect_title_selection(
+                    'equipment.product',
+                    text_value,
+                    current_value
+                )
+                
+                if detected_value:
+                    vals['production_type'] = detected_value
+                
+                continue  # Skip master data creation for title rows
 
-            # 1. Handle Equipment Type
-            if not vals.get('equipment_type_id') and vals.get('product_type'):
-                equipment_type = self._find_or_create_equipment_type(vals.get('product_type'))
-                vals['equipment_type_id'] = equipment_type.id
+            # TODO-TITLE: Handle Equipment Type auto-creation (commented for now, will be handled later)
+            # if not vals.get('equipment_type_id') and vals.get('product_type'):
+            #     equipment_type = self._find_or_create_equipment_type(vals.get('product_type'))
+            #     vals['equipment_type_id'] = equipment_type.id
 
         # Super call will trigger mixin's create which normalizes capacity
         return super(EquipmentProduct, self).create(vals_list)
+
+    def write(self, vals):
+        """Override write to auto-detect selection for title rows"""
+        title_records = self.env['equipment.product']
+        non_title_records = self.env['equipment.product']
+        
+        for record in self:
+            is_title = vals.get('is_title', record.is_title)
+            
+            if is_title:
+                title_records |= record
+            else:
+                non_title_records |= record
+        
+        # Process title records individually
+        for record in title_records:
+            text_value = vals.get('product_type', record.product_type)
+            current_value = vals.get('production_type', record.production_type)
+            
+            detected_value = auto_detect_title_selection(
+                'equipment.product',
+                text_value,
+                current_value
+            )
+            
+            if detected_value:
+                # Create copy of vals for this record
+                record_vals = vals.copy()
+                record_vals['production_type'] = detected_value
+                super(EquipmentProduct, record).write(record_vals)
+            else:
+                super(EquipmentProduct, record).write(vals)
+        
+        # Process non-title records in batch
+        if non_title_records:
+            super(EquipmentProduct, non_title_records).write(vals)
+        
+        return True
 
     def _find_or_create_equipment_type(self, type_text):
         """Search for equipment type, create if not found"""

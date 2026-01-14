@@ -42,7 +42,12 @@ export class ExtractionPageSelector extends Component {
             progress: 0,
             progressMessage: "",
             errorMessage: "",
-            currentStep: 'upload_validate', // Current step key for stepper UI
+            currentStep: 'queue_pending', // Current step key for stepper UI (default to queue pending)
+            // Sub-step state for category-level progress
+            detectedCategories: [], // Category keys detected in mapping step
+            currentSubStep: null, // Current category being processed
+            // Store sub-steps per step (persisted when step completes)
+            stepSubSteps: {}, // { 'llama_ocr': ['cat1', 'cat2'], 'ai_batch_processing': ['cat1'] }
         });
 
         this.pollingInterval = null;
@@ -65,7 +70,7 @@ export class ExtractionPageSelector extends Component {
 
         // Get params from action
         const params = this.props.action.params;
-        const job_id = params?.job_id; 
+        const job_id = params?.job_id || params?.job_uuid;
 
         if (job_id) {
             this.state.isProcessing = true
@@ -79,8 +84,10 @@ export class ExtractionPageSelector extends Component {
                 this.state.progress = params.progress
             }
 
+            this.state.documentType = params.document_type || '01';
+
             this.subscribe(job_id)
-            this.pollJobStatus()
+            this.startJobPolling()
         } else if (params && params.fileUrl) {
             // Normal mode: Process file and show page selector
             this.state.documentType = params.documentType || '01';
@@ -97,13 +104,61 @@ export class ExtractionPageSelector extends Component {
     update_progress(progress) {
         this.state.progress = progress.progress
         this.state.progressMessage = progress.message
+
         // Update current step if provided
         if (progress.step) {
+            const previousStep = this.state.currentStep
+
+            // If step changed, save current sub-step to previous step and reset for new step
+            if (previousStep !== progress.step) {
+                // Save the last sub-step to completed list for previous step
+                if (this.state.currentSubStep && (previousStep === 'llama_ocr' || previousStep === 'ai_batch_processing')) {
+                    const prevSubSteps = this.state.stepSubSteps[previousStep] || []
+                    if (!prevSubSteps.includes(this.state.currentSubStep)) {
+                        this.state.stepSubSteps = {
+                            ...this.state.stepSubSteps,
+                            [previousStep]: [...prevSubSteps, this.state.currentSubStep]
+                        }
+                    }
+                }
+                // Reset current sub-step for new step
+                this.state.currentSubStep = null
+            }
+
             this.state.currentStep = progress.step
             this.props.updateActionState({
                 retry_from_step: progress.step
             })
         }
+
+        // Handle detected categories (from category_mapping step)
+        if (progress.detected_categories) {
+            this.state.detectedCategories = progress.detected_categories
+        }
+
+        // Handle current sub-step (from llama_ocr / ai_batch_processing)
+        if (progress.current_sub_step) {
+            const currentStep = this.state.currentStep
+
+            // Mark previous sub-step as completed if switching
+            if (this.state.currentSubStep && this.state.currentSubStep !== progress.current_sub_step) {
+                const stepSubSteps = this.state.stepSubSteps[currentStep] || []
+                if (!stepSubSteps.includes(this.state.currentSubStep)) {
+                    this.state.stepSubSteps = {
+                        ...this.state.stepSubSteps,
+                        [currentStep]: [...stepSubSteps, this.state.currentSubStep]
+                    }
+                }
+            }
+            this.state.currentSubStep = progress.current_sub_step
+        }
+    }
+
+    /**
+     * Get completed sub-steps for a specific step
+     */
+    getStepCompletedSubSteps(stepKey) {
+        return this.state.stepSubSteps[stepKey] || []
     }
 
     async processInitialFile(fileUrl, fileName) {
@@ -315,12 +370,36 @@ export class ExtractionPageSelector extends Component {
      */
     getStepConfig() {
         return [
-            { key: 'upload_validate', label: _t('Upload & Validate'), number: 1 },
-            { key: 'category_mapping', label: _t('Category Mapping'), number: 2 },
-            { key: 'llama_ocr', label: _t('Llama OCR'), number: 3 },
-            { key: 'ai_batch_processing', label: _t('AI Processing'), number: 4 },
-            { key: 'merge_validate', label: _t('Merge & Validate'), number: 5 },
+            { key: 'queue_pending', label: _t('Chuẩn bị tài nguyên'), number: 1 },
+            { key: 'upload_validate', label: _t('Upload & Validate'), number: 2 },
+            { key: 'category_mapping', label: _t('Category Mapping'), number: 3 },
+            { key: 'llama_ocr', label: _t('Llama OCR'), number: 4 },
+            { key: 'ai_batch_processing', label: _t('AI Processing'), number: 5 },
+            { key: 'merge_validate', label: _t('Merge & Validate'), number: 6 },
         ];
+    }
+
+    /**
+     * Get user-friendly label for category key based on document type
+     */
+    getCategoryLabel(categoryKey) {
+        const LABELS_FORM_01 = {
+            'metadata': 'Thông tin doanh nghiệp',
+            'substance_usage': 'Bảng 1.1 - Sử dụng chất',
+            'equipment_product': 'Bảng 1.2 - Thiết bị sản phẩm',
+            'equipment_ownership': 'Bảng 1.3 - Sở hữu thiết bị',
+            'collection_recycling': 'Bảng 1.4 - Thu gom tái chế',
+        };
+        const LABELS_FORM_02 = {
+            'metadata': 'Thông tin doanh nghiệp',
+            'quota_usage': 'Bảng 2.1 - Hạn ngạch',
+            'equipment_product_report': 'Bảng 2.2 - Thiết bị sản phẩm',
+            'equipment_ownership_report': 'Bảng 2.3 - Sở hữu thiết bị',
+            'collection_recycling_report': 'Bảng 2.4 - Thu gom tái chế',
+        };
+
+        const labels = this.state.documentType === '02' ? LABELS_FORM_02 : LABELS_FORM_01;
+        return labels[categoryKey] || categoryKey;
     }
 
     selectAll() {
@@ -441,7 +520,7 @@ export class ExtractionPageSelector extends Component {
                         job_id: null,
                         progress: null
                     })
-                    
+
                     await this.action.doAction(action, {
                         additionalContext: {
                             'no_breadcrumbs': true

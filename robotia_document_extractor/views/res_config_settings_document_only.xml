@@ -33,7 +33,8 @@
                         <!-- Extraction Strategy -->
                         <setting id="extraction_strategy_setting"
                                  string="Extraction Strategy"
-                                 help="Choose how PDF documents are processed for extraction">
+                                 help="Choose how PDF documents are processed for extraction"
+                                 invisible="1">
                             <field name="extraction_strategy" widget="radio" class="o_light_label"/>
                             <div class="content-group mt8">
                                 <div class="text-muted">
@@ -47,7 +48,8 @@
                         <!-- Gemini Core Configuration -->
                         <setting id="gemini_model_setting"
                                  string="Gemini Model"
-                                 help="Select the Gemini model to use for extraction. Different models have different capabilities and costs.">
+                                 help="Select the Gemini model to use for extraction. Different models have different capabilities and costs."
+                                 invisible="1">
                             <field name="gemini_model" class="oe_inline" placeholder="gemini-2.5-pro"/>
                             <div class="content-group mt8">
                                 <div class="text-muted">
@@ -60,7 +62,8 @@
 
                         <setting id="gemini_max_output_tokens_setting"
                                  string="Max Output Tokens"
-                                 help="Maximum number of tokens for Gemini API response. Increase if extraction fails for very long documents.">
+                                 help="Maximum number of tokens for Gemini API response. Increase if extraction fails for very long documents."
+                                 invisible="1">
                             <field name="gemini_max_output_tokens" class="oe_inline"/>
                             <div class="content-group mt8">
                                 <div class="text-muted">
@@ -71,7 +74,8 @@
 
                         <setting id="gemini_max_retries_setting"
                                  string="Max Retries"
-                                 help="Maximum retry attempts when Gemini API extraction fails. Retries are executed immediately without delay.">
+                                 help="Maximum retry attempts when Gemini API extraction fails. Retries are executed immediately without delay."
+                                 invisible="1">
                             <field name="gemini_max_retries" class="oe_inline"/>
                             <div class="content-group mt8">
                                 <div class="text-muted">
@@ -83,7 +87,8 @@
                         <!-- Gemini Advanced Parameters -->
                         <setting id="gemini_temperature_setting"
                                  string="Temperature"
-                                 help="Controls randomness in Gemini output. 0.0 = fully deterministic (recommended for accuracy).">
+                                 help="Controls randomness in Gemini output. 0.0 = fully deterministic (recommended for accuracy)."
+                                 invisible="1">
                             <field name="gemini_temperature"/>
                             <div class="content-group mt8">
                                 <div class="text-muted">
@@ -96,7 +101,8 @@
 
                         <setting id="gemini_top_p_setting"
                                  string="Top P (Nucleus Sampling)"
-                                 help="Controls diversity by limiting token selection. 0.95 = consider top 95% probability mass (recommended).">
+                                 help="Controls diversity by limiting token selection. 0.95 = consider top 95% probability mass (recommended)."
+                                 invisible="1">
                             <field name="gemini_top_p"/>
                             <div class="content-group mt8">
                                 <div class="text-muted">
@@ -109,7 +115,8 @@
 
                         <setting id="gemini_top_k_setting"
                                  string="Top K"
-                                 help="Limits vocabulary to top K tokens. 0 = no limit (recommended for precision).">
+                                 help="Limits vocabulary to top K tokens. 0 = no limit (recommended for precision)."
+                                 invisible="1">
                             <field name="gemini_top_k"/>
                             <div class="content-group mt8">
                                 <div class="text-muted">
@@ -122,7 +129,7 @@
                     </block>
 
                     <!-- Batch Extraction Configuration -->
-                    <block title="Batch Extraction Configuration" invisible="extraction_strategy != 'batch_extract'">
+                    <block title="Batch Extraction Configuration" invisible="1">
                         <setting id="batch_size_min_setting"
                                  string="Minimum Batch Size"
                                  help="Minimum pages per API call for complex documents with many table rows">
@@ -158,7 +165,7 @@
                         </setting>
                     </block>
 
-                    <block title="AI Extraction Prompts Configuration">
+                    <block title="AI Extraction Prompts Configuration" invisible="1">
                         <setting id="extraction_prompts_setting" string="Direct Extraction Prompts">
                             <div class="d-flex gap-2">
                                 <button string="Get Register Prompt" name="action_get_prompt_form_01" type="object" class="btn btn-outline-primary"/>
@@ -185,7 +192,7 @@
                         </setting>
                     </block>
 
-                    <block title="Integrations">
+                    <block title="Integrations" invisible="1">
                         <setting id="google_drive_integration_setting"
                                  string="Google Drive Integration"
                                  class="col w-100"

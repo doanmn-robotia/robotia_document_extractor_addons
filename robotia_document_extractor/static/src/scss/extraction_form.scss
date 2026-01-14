@@ -41,7 +41,7 @@
                     background-color: #f8fafc; // Ensure header background
                 }
 
-                td.o_data_cell:not(.o_list_text,.o_extraction_title_field_cell) {
+                td.o_data_cell:not(.o_list_text,.o_extraction_title_field_cell, .o_list_char) {
                     text-align: center;
                 }
 

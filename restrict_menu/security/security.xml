@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+
+    <record id="restrict_menu_rule" model="ir.rule">
+        <field name="name">Menu Access Rule</field>
+        <field name="model_id" ref="base.model_ir_ui_menu"/>
+        <field name="domain_force">['|', ('shown_for_user_ids', '=', False), ('shown_for_user_ids', 'in', user.id)]</field>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <record id="ir_ui_menu_rule_admin" model="ir.rule">
+        <field name="name">Show All Menu For Admin</field>
+        <field name="model_id" ref="base.model_ir_ui_menu"/>
+        <field name="groups" eval="[Command.link(ref('base.group_system'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+    
+</odoo>

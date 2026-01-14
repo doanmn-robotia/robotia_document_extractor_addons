@@ -1,0 +1,500 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ========================================== -->
+    <!-- Form 01 - Table Data Views -->
+    <!-- ========================================== -->
+
+    <!-- Table 1.1: Substance Usage -->
+    <record id="view_substance_usage_list" model="ir.ui.view">
+        <field name="name">substance.usage.list</field>
+        <field name="model">substance.usage</field>
+        <field name="arch" type="xml">
+            <list string="Substance Usage" create="false" edit="false" delete="false">
+                <field name="document_id"/>
+                <field name="usage_type"/>
+                <field name="substance_id"/>
+                <field name="year_1_quantity_kg"/>
+                <field name="year_1_quantity_co2"/>
+                <field name="year_2_quantity_kg"/>
+                <field name="year_2_quantity_co2"/>
+                <field name="year_3_quantity_kg"/>
+                <field name="year_3_quantity_co2"/>
+                <field name="avg_quantity_kg"/>
+                <field name="avg_quantity_co2"/>
+                <field name="notes" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_substance_usage_search" model="ir.ui.view">
+        <field name="name">substance.usage.search</field>
+        <field name="model">substance.usage</field>
+        <field name="arch" type="xml">
+            <search string="Search Substance Usage">
+                <field name="document_id"/>
+                <field name="substance_id"/>
+                <field name="substance_name"/>
+                <field name="usage_type"/>
+                <filter string="Production" name="filter_production"
+                        domain="[('usage_type', '=', 'production')]"/>
+                <filter string="Import" name="filter_import"
+                        domain="[('usage_type', '=', 'import')]"/>
+                <filter string="Export" name="filter_export"
+                        domain="[('usage_type', '=', 'export')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Document" name="group_by_document" context="{'group_by': 'document_id'}"/>
+                    <filter string="Usage Type" name="group_by_usage_type" context="{'group_by': 'usage_type'}"/>
+                    <filter string="Substance" name="group_by_substance" context="{'group_by': 'substance_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_substance_usage" model="ir.actions.act_window">
+        <field name="name">Substance Usage</field>
+        <field name="res_model">substance.usage</field>
+        <field name="view_mode">list</field>
+        <field name="domain">[('is_title', '=', False)]</field>
+        <field name="context">{'search_default_group_by_usage_type': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_empty_folder">
+                No substance usage records found
+            </p>
+            <p>
+                Substance usage data is extracted from Form 01 documents.
+            </p>
+        </field>
+    </record>
+
+    <!-- Table 1.2: Equipment/Product -->
+    <record id="view_equipment_product_list" model="ir.ui.view">
+        <field name="name">equipment.product.list</field>
+        <field name="model">equipment.product</field>
+        <field name="arch" type="xml">
+            <list string="Equipment/Product" create="false" edit="false" delete="false">
+                <field name="document_id"/>
+                <field name="production_type"/>
+                <field name="product_type"/>
+                <field name="equipment_type_id" optional="hide"/>
+                <field name="hs_code"/>
+                <field name="capacity"/>
+                <field name="quantity"/>
+                <field name="substance_id"/>
+                <field name="substance_quantity_per_unit"/>
+                <field name="notes" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_equipment_product_search" model="ir.ui.view">
+        <field name="name">equipment.product.search</field>
+        <field name="model">equipment.product</field>
+        <field name="arch" type="xml">
+            <search string="Search Equipment/Product">
+                <field name="document_id"/>
+                <field name="product_type"/>
+                <field name="equipment_type_id"/>
+                <field name="substance_id"/>
+                <field name="hs_code"/>
+                <field name="production_type"/>
+                <filter string="Production" name="filter_production"
+                        domain="[('production_type', '=', 'production')]"/>
+                <filter string="Import" name="filter_import"
+                        domain="[('production_type', '=', 'import')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Document" name="group_by_document" context="{'group_by': 'document_id'}"/>
+                    <filter string="Production Type" name="group_by_production_type" context="{'group_by': 'production_type'}"/>
+                    <filter string="Equipment Type" name="group_by_equipment_type" context="{'group_by': 'equipment_type_id'}"/>
+                    <filter string="Substance" name="group_by_substance" context="{'group_by': 'substance_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_equipment_product" model="ir.actions.act_window">
+        <field name="name">Equipment/Product</field>
+        <field name="res_model">equipment.product</field>
+        <field name="view_mode">list</field>
+        <field name="domain">[('is_title', '=', False)]</field>
+        <field name="context">{'search_default_group_by_production_type': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_empty_folder">
+                No equipment/product records found
+            </p>
+            <p>
+                Equipment/Product data is extracted from Form 01 documents.
+            </p>
+        </field>
+    </record>
+
+    <!-- Table 1.3: Equipment Ownership -->
+    <record id="view_equipment_ownership_list" model="ir.ui.view">
+        <field name="name">equipment.ownership.list</field>
+        <field name="model">equipment.ownership</field>
+        <field name="arch" type="xml">
+            <list string="Equipment Ownership" create="false" edit="false" delete="false">
+                <field name="document_id"/>
+                <field name="ownership_type"/>
+                <field name="equipment_type_id" optional="hide"/>
+                <field name="equipment_type"/>
+                <field name="start_year"/>
+                <field name="capacity"/>
+                <field name="equipment_quantity"/>
+                <field name="substance_id"/>
+                <field name="refill_frequency"/>
+                <field name="substance_quantity_per_refill"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_equipment_ownership_search" model="ir.ui.view">
+        <field name="name">equipment.ownership.search</field>
+        <field name="model">equipment.ownership</field>
+        <field name="arch" type="xml">
+            <search string="Search Equipment Ownership">
+                <field name="document_id"/>
+                <field name="equipment_type_id"/>
+                <field name="equipment_type"/>
+                <field name="substance_id"/>
+                <field name="ownership_type"/>
+                <filter string="Air Conditioner" name="filter_air_conditioner"
+                        domain="[('ownership_type', '=', 'air_conditioner')]"/>
+                <filter string="Refrigeration" name="filter_refrigeration"
+                        domain="[('ownership_type', '=', 'refrigeration')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Document" name="group_by_document" context="{'group_by': 'document_id'}"/>
+                    <filter string="Ownership Type" name="group_by_ownership_type" context="{'group_by': 'ownership_type'}"/>
+                    <filter string="Equipment Type" name="group_by_equipment_type" context="{'group_by': 'equipment_type_id'}"/>
+                    <filter string="Substance" name="group_by_substance" context="{'group_by': 'substance_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_equipment_ownership" model="ir.actions.act_window">
+        <field name="name">Equipment Ownership</field>
+        <field name="res_model">equipment.ownership</field>
+        <field name="view_mode">list</field>
+        <field name="domain">[('is_title', '=', False)]</field>
+        <field name="context">{'search_default_group_by_ownership_type': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_empty_folder">
+                No equipment ownership records found
+            </p>
+            <p>
+                Equipment ownership data is extracted from Form 01 documents.
+            </p>
+        </field>
+    </record>
+
+    <!-- Table 1.4: Collection/Recycling -->
+    <record id="view_collection_recycling_list" model="ir.ui.view">
+        <field name="name">collection.recycling.list</field>
+        <field name="model">collection.recycling</field>
+        <field name="arch" type="xml">
+            <list string="Collection/Recycling" create="false" edit="false" delete="false">
+                <field name="document_id"/>
+                <field name="activity_type"/>
+                <field name="substance_id"/>
+                <field name="quantity_kg"/>
+                <field name="quantity_co2"/>
+                <field name="notes" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_collection_recycling_search" model="ir.ui.view">
+        <field name="name">collection.recycling.search</field>
+        <field name="model">collection.recycling</field>
+        <field name="arch" type="xml">
+            <search string="Search Collection/Recycling">
+                <field name="document_id"/>
+                <field name="substance_id"/>
+                <field name="substance_name"/>
+                <field name="activity_type"/>
+                <filter string="Collection" name="filter_collection"
+                        domain="[('activity_type', '=', 'collection')]"/>
+                <filter string="Reuse" name="filter_reuse"
+                        domain="[('activity_type', '=', 'reuse')]"/>
+                <filter string="Recycle" name="filter_recycle"
+                        domain="[('activity_type', '=', 'recycle')]"/>
+                <filter string="Disposal" name="filter_disposal"
+                        domain="[('activity_type', '=', 'disposal')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Document" name="group_by_document" context="{'group_by': 'document_id'}"/>
+                    <filter string="Activity Type" name="group_by_activity" context="{'group_by': 'activity_type'}"/>
+                    <filter string="Substance" name="group_by_substance" context="{'group_by': 'substance_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_collection_recycling" model="ir.actions.act_window">
+        <field name="name">Collection/Recycling</field>
+        <field name="res_model">collection.recycling</field>
+        <field name="view_mode">list</field>
+        <field name="domain">[('is_title', '=', False)]</field>
+        <field name="context">{'search_default_group_by_activity': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_empty_folder">
+                No collection/recycling records found
+            </p>
+            <p>
+                Collection/Recycling data is extracted from Form 01 documents.
+            </p>
+        </field>
+    </record>
+
+    <!-- ========================================== -->
+    <!-- Form 02 - Table Data Views -->
+    <!-- ========================================== -->
+
+    <!-- Table 2.1: Quota Usage -->
+    <record id="view_quota_usage_list" model="ir.ui.view">
+        <field name="name">quota.usage.list</field>
+        <field name="model">quota.usage</field>
+        <field name="arch" type="xml">
+            <list string="Quota Usage" create="false" edit="false" delete="false">
+                <field name="document_id"/>
+                <field name="usage_type"/>
+                <field name="substance_id"/>
+                <field name="hs_code"/>
+                <field name="allocated_quota_kg"/>
+                <field name="allocated_quota_co2"/>
+                <field name="adjusted_quota_kg"/>
+                <field name="adjusted_quota_co2"/>
+                <field name="total_quota_kg"/>
+                <field name="total_quota_co2"/>
+                <field name="average_price"/>
+                <field name="country_text" optional="hide"/>
+                <field name="customs_declaration_number" optional="hide"/>
+                <field name="next_year_quota_kg"/>
+                <field name="next_year_quota_co2"/>
+                <field name="notes" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_quota_usage_search" model="ir.ui.view">
+        <field name="name">quota.usage.search</field>
+        <field name="model">quota.usage</field>
+        <field name="arch" type="xml">
+            <search string="Search Quota Usage">
+                <field name="document_id"/>
+                <field name="substance_id"/>
+                <field name="substance_name"/>
+                <field name="hs_code"/>
+                <field name="usage_type"/>
+                <filter string="Production" name="filter_production"
+                        domain="[('usage_type', '=', 'production')]"/>
+                <filter string="Import" name="filter_import"
+                        domain="[('usage_type', '=', 'import')]"/>
+                <filter string="Export" name="filter_export"
+                        domain="[('usage_type', '=', 'export')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Document" name="group_by_document" context="{'group_by': 'document_id'}"/>
+                    <filter string="Usage Type" name="group_by_usage_type" context="{'group_by': 'usage_type'}"/>
+                    <filter string="Substance" name="group_by_substance" context="{'group_by': 'substance_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_quota_usage" model="ir.actions.act_window">
+        <field name="name">Quota Usage</field>
+        <field name="res_model">quota.usage</field>
+        <field name="view_mode">list</field>
+        <field name="domain">[('is_title', '=', False)]</field>
+        <field name="context">{'search_default_group_by_usage_type': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_empty_folder">
+                No quota usage records found
+            </p>
+            <p>
+                Quota usage data is extracted from Form 02 documents.
+            </p>
+        </field>
+    </record>
+
+    <!-- Table 2.2: Equipment/Product Report -->
+    <record id="view_equipment_product_report_list" model="ir.ui.view">
+        <field name="name">equipment.product.report.list</field>
+        <field name="model">equipment.product.report</field>
+        <field name="arch" type="xml">
+            <list string="Equipment/Product Report" create="false" edit="false" delete="false">
+                <field name="document_id"/>
+                <field name="production_type"/>
+                <field name="product_type"/>
+                <field name="equipment_type_id" optional="hide"/>
+                <field name="hs_code"/>
+                <field name="capacity"/>
+                <field name="quantity"/>
+                <field name="substance_id"/>
+                <field name="substance_quantity_per_unit"/>
+                <field name="notes" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_equipment_product_report_search" model="ir.ui.view">
+        <field name="name">equipment.product.report.search</field>
+        <field name="model">equipment.product.report</field>
+        <field name="arch" type="xml">
+            <search string="Search Equipment/Product Report">
+                <field name="document_id"/>
+                <field name="product_type"/>
+                <field name="equipment_type_id"/>
+                <field name="substance_id"/>
+                <field name="hs_code"/>
+                <field name="production_type"/>
+                <filter string="Production" name="filter_production"
+                        domain="[('production_type', '=', 'production')]"/>
+                <filter string="Import" name="filter_import"
+                        domain="[('production_type', '=', 'import')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Document" name="group_by_document" context="{'group_by': 'document_id'}"/>
+                    <filter string="Production Type" name="group_by_production_type" context="{'group_by': 'production_type'}"/>
+                    <filter string="Equipment Type" name="group_by_equipment_type" context="{'group_by': 'equipment_type_id'}"/>
+                    <filter string="Substance" name="group_by_substance" context="{'group_by': 'substance_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_equipment_product_report" model="ir.actions.act_window">
+        <field name="name">Equipment/Product Report</field>
+        <field name="res_model">equipment.product.report</field>
+        <field name="view_mode">list</field>
+        <field name="domain">[('is_title', '=', False)]</field>
+        <field name="context">{'search_default_group_by_production_type': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_empty_folder">
+                No equipment/product report records found
+            </p>
+            <p>
+                Equipment/Product report data is extracted from Form 02 documents.
+            </p>
+        </field>
+    </record>
+
+    <!-- Table 2.3: Equipment Ownership Report -->
+    <record id="view_equipment_ownership_report_list" model="ir.ui.view">
+        <field name="name">equipment.ownership.report.list</field>
+        <field name="model">equipment.ownership.report</field>
+        <field name="arch" type="xml">
+            <list string="Equipment Ownership Report" create="false" edit="false" delete="false">
+                <field name="document_id"/>
+                <field name="ownership_type"/>
+                <field name="equipment_type_id" optional="hide"/>
+                <field name="equipment_type"/>
+                <field name="start_year"/>
+                <field name="capacity"/>
+                <field name="equipment_quantity"/>
+                <field name="substance_id"/>
+                <field name="refill_frequency"/>
+                <field name="substance_quantity_per_refill"/>
+                <field name="notes" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_equipment_ownership_report_search" model="ir.ui.view">
+        <field name="name">equipment.ownership.report.search</field>
+        <field name="model">equipment.ownership.report</field>
+        <field name="arch" type="xml">
+            <search string="Search Equipment Ownership Report">
+                <field name="document_id"/>
+                <field name="equipment_type_id"/>
+                <field name="equipment_type"/>
+                <field name="substance_id"/>
+                <field name="ownership_type"/>
+                <filter string="Air Conditioner" name="filter_air_conditioner"
+                        domain="[('ownership_type', '=', 'air_conditioner')]"/>
+                <filter string="Refrigeration" name="filter_refrigeration"
+                        domain="[('ownership_type', '=', 'refrigeration')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Document" name="group_by_document" context="{'group_by': 'document_id'}"/>
+                    <filter string="Ownership Type" name="group_by_ownership_type" context="{'group_by': 'ownership_type'}"/>
+                    <filter string="Equipment Type" name="group_by_equipment_type" context="{'group_by': 'equipment_type_id'}"/>
+                    <filter string="Substance" name="group_by_substance" context="{'group_by': 'substance_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_equipment_ownership_report" model="ir.actions.act_window">
+        <field name="name">Equipment Ownership Report</field>
+        <field name="res_model">equipment.ownership.report</field>
+        <field name="view_mode">list</field>
+        <field name="domain">[('is_title', '=', False)]</field>
+        <field name="context">{'search_default_group_by_ownership_type': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_empty_folder">
+                No equipment ownership report records found
+            </p>
+            <p>
+                Equipment ownership report data is extracted from Form 02 documents.
+            </p>
+        </field>
+    </record>
+
+    <!-- Table 2.4: Collection/Recycling Report -->
+    <record id="view_collection_recycling_report_list" model="ir.ui.view">
+        <field name="name">collection.recycling.report.list</field>
+        <field name="model">collection.recycling.report</field>
+        <field name="arch" type="xml">
+            <list string="Collection/Recycling Report" create="false" edit="false" delete="false">
+                <field name="document_id"/>
+                <field name="substance_id"/>
+                <field name="collection_quantity_kg"/>
+                <field name="collection_location_id" optional="hide"/>
+                <field name="storage_location_id" optional="hide"/>
+                <field name="reuse_quantity_kg"/>
+                <field name="reuse_technology_id" optional="hide"/>
+                <field name="recycle_quantity_kg"/>
+                <field name="recycle_technology_id" optional="hide"/>
+                <field name="recycle_facility_id" optional="hide"/>
+                <field name="disposal_quantity_kg"/>
+                <field name="disposal_technology_id" optional="hide"/>
+                <field name="disposal_facility_id" optional="hide"/>
+                <field name="notes" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_collection_recycling_report_search" model="ir.ui.view">
+        <field name="name">collection.recycling.report.search</field>
+        <field name="model">collection.recycling.report</field>
+        <field name="arch" type="xml">
+            <search string="Search Collection/Recycling Report">
+                <field name="document_id"/>
+                <field name="substance_id"/>
+                <field name="substance_name"/>
+                <field name="collection_location_id"/>
+                <field name="recycle_facility_id"/>
+                <group expand="0" string="Group By">
+                    <filter string="Document" name="group_by_document" context="{'group_by': 'document_id'}"/>
+                    <filter string="Substance" name="group_by_substance" context="{'group_by': 'substance_id'}"/>
+                    <filter string="Collection Location" name="group_by_collection_location" context="{'group_by': 'collection_location_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_collection_recycling_report" model="ir.actions.act_window">
+        <field name="name">Collection/Recycling Report</field>
+        <field name="res_model">collection.recycling.report</field>
+        <field name="view_mode">list</field>
+        <field name="domain">[('is_title', '=', False)]</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_empty_folder">
+                No collection/recycling report records found
+            </p>
+            <p>
+                Collection/Recycling report data is extracted from Form 02 documents.
+            </p>
+        </field>
+    </record>
+
+</odoo>

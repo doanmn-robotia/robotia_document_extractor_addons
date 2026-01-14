@@ -58,15 +58,17 @@ class ExtractionJob(models.Model):
 
     # ========== STEP TRACKING ==========
     current_step = fields.Selection([
+        ('queue_pending', 'Step 0: Queue Pending'),
         ('upload_validate', 'Step 1: Upload & Validate'),
         ('category_mapping', 'Step 2: Category Mapping'),
         ('llama_ocr', 'Step 3: Llama OCR'),
         ('ai_batch_processing', 'Step 4: AI Batch Processing'),
         ('merge_validate', 'Step 5: Merge & Validate'),
         ('completed', 'Completed'),
-    ], string='Current Step', default='upload_validate', index=True)
+    ], string='Current Step', default='queue_pending', index=True)
 
     last_completed_step = fields.Selection([
+        ('queue_pending', 'Step 0: Queue Pending'),
         ('upload_validate', 'Step 1: Upload & Validate'),
         ('category_mapping', 'Step 2: Category Mapping'),
         ('llama_ocr', 'Step 3: Llama OCR'),
@@ -364,7 +366,8 @@ class ExtractionJob(models.Model):
             'params': {
                 'mode': 'progress_only',
                 'job_id': self.id,
-                'job_uuid': self.uuid,
+                'job_id': self.uuid,
+                'document_type': self.document_type,
                 'merged_pdf_url': merged_pdf_url,  # Pass PDF URL for preview
                 'retry_from_step': 'category_mapping',  # Pass retry step
             }
@@ -401,8 +404,8 @@ class ExtractionJob(models.Model):
             'tag': 'robotia_document_extractor.page_selector',
             'params': {
                 'mode': 'progress_only',
-                'job_id': self.id,
-                'job_uuid': self.uuid,
+                'job_id': self.uuid,
+                'document_type': self.document_type,
                 'merged_pdf_url': merged_pdf_url,  # Pass PDF URL for preview
                 'retry_from_step': 'llama_ocr',  # Pass retry step
             }
@@ -439,8 +442,8 @@ class ExtractionJob(models.Model):
             'tag': 'robotia_document_extractor.page_selector',
             'params': {
                 'mode': 'progress_only',
-                'job_id': self.id,
-                'job_uuid': self.uuid,
+                'job_id': self.uuid,
+                'document_type': self.document_type,
                 'merged_pdf_url': merged_pdf_url,  # Pass PDF URL for preview
                 'retry_from_step': 'ai_batch_processing',  # Pass retry step
             }

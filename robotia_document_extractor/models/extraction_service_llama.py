@@ -7,6 +7,9 @@ from google import genai
 from llama_cloud_services import LlamaParse
 import math
 import json
+from ..prompts_v2 import category_reminders, category_schemas, mega_context, llama_prompts, additional_prompts
+
+
 
 _logger = logging.getLogger(__name__)
 
@@ -118,93 +121,31 @@ class ExtractionService(models.AbstractModel):
             }
         ]
 
-    def get_llama_category_prompt(self, category):
+    def get_llama_category_prompt(self, category, document_type='01'):
         """
-        Build LlamaParse system prompt for specific category
+        Build LlamaParse system prompt for specific category using prompts_v2
 
         Args:
             category (str): Category key (metadata, substance_usage, etc.)
+            document_type (str): '01' for Registration Form, '02' for Report Form
 
         Returns:
             str: System prompt for LlamaParse OCR
         """
 
-        if category == 'metadata':
-            return """
-Trích xuất MARKDOWN từ phần thông tin chung của doanh nghiệp:
-- Tên tổ chức, mã số doanh nghiệp
-- Người đại diện pháp luật, chức vụ
-- Thông tin liên hệ (địa chỉ, điện thoại, email)
-- Lĩnh vực hoạt động
+        return llama_prompts.get_llama_category_prompt(category, document_type)
 
-Giữ nguyên định dạng bảng nếu có. Bảo toàn ký tự tiếng Việt.
-"""
-
-        elif category in ['substance_usage', 'quota_usage']:
-            return """
-Trích xuất MARKDOWN từ bảng sử dụng chất kiểm soát.
-Bảng chứa:
-- Cột tên chất (HFC, HCFC, etc.)
-- Cột khối lượng (kg)
-- Cột CO2 tương đương
-- Cột mã HS (nếu có)
-
-Giữ CHÍNH XÁC cấu trúc bảng. Không bỏ sót dòng nào.
-Bảo toàn số liệu, không làm tròn.
-"""
-
-        elif category in ['equipment_product', 'equipment_product_report']:
-            return """
-Trích xuất MARKDOWN từ bảng thiết bị/sản phẩm.
-Bảng chứa:
-- Loại sản phẩm/thiết bị
-- Mã HS
-- Công suất (HP, kW)
-- Số lượng
-- Chất sử dụng
-- Khối lượng chất trên 1 đơn vị
-
-Giữ CHÍNH XÁC cấu trúc bảng với tất cả các cột.
-"""
-
-        elif category in ['equipment_ownership', 'equipment_ownership_report']:
-            return """
-Trích xuất MARKDOWN từ bảng sở hữu/sử dụng thiết bị.
-Bảng chứa:
-- Loại thiết bị
-- Năm đưa vào sử dụng
-- Công suất
-- Số lượng thiết bị
-- Chất sử dụng
-- Tần suất nạp mới
-- Lượng chất nạp mỗi lần
-
-Giữ nguyên cấu trúc bảng. Bảo toàn tất cả dòng dữ liệu.
-"""
-
-        elif category in ['collection_recycling', 'collection_recycling_report']:
-            return """
-Trích xuất MARKDOWN từ bảng thu gom, tái chế.
-Bảng chứa:
-- Loại hoạt động (Thu gom, Tái sử dụng, Tái chế, Tiêu hủy)
-- Tên chất
-- Khối lượng (kg, CO2e)
-- Địa điểm, công nghệ (nếu có)
-
-Giữ cấu trúc bảng với các phần con. Không bỏ sót dữ liệu.
-"""
-
-        else:
-            return "Trích xuất toàn bộ nội dung dưới dạng MARKDOWN, bảo toàn cấu trúc bảng."
-
-    def parse_categories_with_llama(self, categories, pdf_data, log_id):
+    def parse_categories_with_llama(self, categories, pdf_data, document_type, log_id = None, new_env = None, job=None):
         """
         Parse each category using LlamaParse
 
         Args:
             categories (dict): Category mapping {category_name: [page_indexes]}
             pdf_data (bytes): Original PDF binary
+            document_type (str): '01' for Registration Form, '02' for Report Form
             log_id: Extraction log record (optional)
+            new_env: Separate environment for bus notifications (optional)
+            job: Extraction job record (optional)
 
         Returns:
             list: Parse results with ocr_data for each category
@@ -221,8 +162,8 @@ Giữ cấu trúc bảng với các phần con. Không bỏ sót dữ liệu.
             # STEP 2: Build PDF file from selected pages using base class method
             file_path = self._build_pdf_from_pages(pdf_data, indexes)
 
-            # STEP 3: Get system prompt for this category
-            prompt = self.get_llama_category_prompt(category)
+            # STEP 3: Get system prompt for this category (using prompts_v2)
+            prompt = self.get_llama_category_prompt(category, document_type)
 
             # STEP 4: Append to category_files
             category_files[category] = {
@@ -234,6 +175,15 @@ Giữ cấu trúc bảng với các phần con. Không bỏ sót dữ liệu.
         parse_results = []
 
         for category, category_data in category_files.items():
+
+            # Notify sub-step start for this category
+            if new_env:
+                self.update_progress(
+                    new_env, 'llama_ocr', 
+                    _('Đang OCR: %s') % category,
+                    job.id if job else None,
+                    current_sub_step=category
+                )
 
             system_prompt = category_data.get('prompt')
 
@@ -345,6 +295,7 @@ Giữ cấu trúc bảng với các phần con. Không bỏ sót dữ liệu.
         new_env = None
         uploaded_file = None
         llama_json = None
+        job = None
 
         try:
             # Create separate cursor for bus.bus notifications only
@@ -362,7 +313,7 @@ Giữ cấu trúc bảng với các phần con. Không bỏ sót dữ liệu.
             categories = self._step_category_mapping(client, uploaded_file, document_type, new_env, job, resume_from_step)
 
             # ===== STEP 3: LLAMA OCR =====
-            llama_json = self._step_llama_ocr(categories, pdf_binary, log_id, new_env, job, resume_from_step)
+            llama_json = self._step_llama_ocr(categories, pdf_binary, document_type, log_id, new_env, job, resume_from_step)
 
             # ===== STEP 4: AI BATCH PROCESSING =====
             extracted_datas = self._step_ai_batch_processing(client, llama_json, document_type, new_env, job, resume_from_step)
@@ -526,10 +477,19 @@ Giữ cấu trúc bảng với các phần con. Không bỏ sót dữ liệu.
 
         categories = self._extract_categories(client, uploaded_file, document_type)
 
+        # Send notification with detected categories
+        detected_category_keys = list(categories.keys())
+        self.update_progress(
+            new_env, 'category_mapping', 
+            _('Hoàn thành phân loại - Tìm thấy %d loại dữ liệu') % len(detected_category_keys), 
+            job.id if job else None,
+            detected_categories=detected_category_keys
+        )
+
         # Save checkpoint (will be committed by main transaction)
         if job:
             job.write({
-                'category_mapping_json': json.dumps(categories, ensure_ascii=False),
+                'category_mapping_json': json.dumps(categories, ensure_ascii=False, indent=2),
                 'last_completed_step': 'category_mapping',
                 'current_step': 'category_mapping',
                 'progress': 20,
@@ -538,9 +498,12 @@ Giữ cấu trúc bảng với các phần con. Không bỏ sót dữ liệu.
 
         return categories
 
-    def _step_llama_ocr(self, categories, pdf_binary, log_id, new_env, job, resume_from_step):
+    def _step_llama_ocr(self, categories, pdf_binary, document_type, log_id, new_env, job, resume_from_step):
         """
         Step 3: Llama OCR extraction
+
+        Args:
+            document_type (str): '01' for Registration Form, '02' for Report Form
 
         Returns:
             llama_json: list of category OCR results
@@ -557,12 +520,12 @@ Giữ cấu trúc bảng với các phần con. Không bỏ sót dữ liệu.
         # Execute OCR
         self.update_progress(new_env, 'llama_ocr', _('Extracting markdown with Llama...'), job.id if job else None)
 
-        llama_json = self.parse_categories_with_llama(categories, pdf_binary, log_id)
+        llama_json = self.parse_categories_with_llama(categories, pdf_binary, document_type, log_id, new_env=new_env, job=job)
 
         # Save checkpoint (will be committed by main transaction)
         if job:
             job.write({
-                'llama_ocr_json': json.dumps(llama_json, ensure_ascii=False),
+                'llama_ocr_json': json.dumps(llama_json, ensure_ascii=False, indent=2),
                 'last_completed_step': 'llama_ocr',
                 'current_step': 'llama_ocr',
                 'progress': 40,
@@ -573,7 +536,9 @@ Giữ cấu trúc bảng với các phần con. Không bỏ sót dữ liệu.
 
     def _step_ai_batch_processing(self, client, llama_json, document_type, new_env, job, resume_from_step):
         """
-        Step 4: AI batch processing (Gemini Chat)
+        Step 4: AI batch processing (Gemini Chat) - OPTIMIZED with prompts_v2
+
+        Uses cached mega-context as system instruction for token efficiency.
 
         Returns:
             extracted_datas: list of category extraction results
@@ -590,45 +555,29 @@ Giữ cấu trúc bảng với các phần con. Không bỏ sót dữ liệu.
         # Execute AI processing
         self.update_progress(new_env, 'ai_batch_processing', _('Processing with AI...'), job.id if job else None)
 
-        # Create chat session
-        system_instruction = """
-Bạn là trợ lý AI chuyên trích xuất dữ liệu có cấu trúc từ tài liệu tiếng Việt.
+        # Build optimized mega-context as system instruction (will be cached by Gemini)
 
-NHIỆM VỤ:
-- Người dùng sẽ cung cấp: MARKDOWN content, CATEGORY key (Loại dữ liệu cần trích xuất), EXTRACTION RULES (Các quy tắc trích xuất cụ thể) và JSON SCHEMA (Cấu trúc đầu ra mong muốn).
-- Bạn phải trích xuất dữ liệu từ markdown theo đúng category, rules, và schema.
-- Trả về **JSON HỢP LỆ** (Valid JSON) làm đầu ra duy nhất.
+        # Get ALL substances (~40 in database)
+        substances = self.env['controlled.substance'].search(
+            mega_context.get_all_substances_query(),
+            order='code'
+        )
 
-⚠️ **QUAN TRỌNG - GHI NHỚ CONTEXT:**
-- Bạn sẽ được yêu cầu extract NHIỀU CATEGORY khác nhau theo thứ tự (substance_usage, equipment_product, equipment_ownership, collection_recycling, v.v.)
-- **CATEGORY "metadata" SẼ LUÔN ĐƯỢC EXTRACT SAU CÙNG**
-- Khi extract metadata, bạn CẦN NHÌN LẠI TOÀN BỘ LỊCH SỬ ĐỐI THOẠI để:
-  1. Xác định đã extract những category nào → set flags has_table_x_y = true
-  2. Lấy thông tin year_1, year_2, year_3 từ response của category substance_usage hoặc quota_usage
-  3. Xác định is_capacity_merged từ structure của bảng equipment
-  4. Suy luận activity_field_codes từ dữ liệu các bảng đã extract
+        # Get all activity fields
+        activity_fields = self.env['activity.field'].search([('active', '=', True)], order='sequence')
 
-QUY TẮC:
-1. **Chỉ trả về JSON**, không giải thích, không thêm bất kỳ văn bản nào khác.
-2. Chỉ trích xuất dữ liệu thuộc category được yêu cầu.
-3. **Bảo toàn ký tự tiếng Việt** và dấu câu chính xác.
-4. **Giữ nguyên số liệu**, không làm tròn, và giữ nguyên định dạng số (bao gồm cả dấu thập phân nếu có).
-5. **XỬ LÝ BẢNG PHÂN TÁN (Table Splitting):** Các bảng dữ liệu bị ngắt quãng giữa các dòng hoặc bị cắt ngang bởi các trang phải được nối (join) lại một cách thông minh:
-    * Khi đang trích xuất cho Bảng X, nếu gặp các dòng bị ngắt quãng hoặc không xác định có cấu trúc số cột tương tự, hãy gộp chúng vào Bảng X.
-    * Việc trích xuất cho Bảng X sẽ dừng lại ngay khi gặp tiêu đề của Bảng tiếp theo (Bảng Y), hoặc gặp một tiêu đề/đoạn văn bản không có cấu trúc cột tương tự.
-6. **XỬ LÝ DỮ LIỆU THIẾU (Missing Data):** Nếu một trường (key) trong JSON SCHEMA được yêu cầu nhưng không tìm thấy dữ liệu tương ứng trong tài liệu, hãy gán giá trị **null** cho trường đó.
-7. **PHÂN BIỆT DÒNG TIÊU ĐỀ vs DÒNG TRỐNG:**
-    ** Dòng tổng cộng, dòng không xác định...
-    * **DÒNG TIÊU ĐỀ/PHÂN LOẠI** (GIỮ LẠI): Là dòng có tên phân loại rõ ràng (ví dụ: "Sản xuất chất được kiểm soát", "Nhập khẩu chất được kiểm soát", "Xuất khẩu chất được kiểm soát") và có các dòng dữ liệu con bên dưới. Dòng này có thể có hầu hết trường số liệu là null nhưng phải được giữ lại để phân nhóm dữ liệu. Set trường is_title=true cho dòng này.
-    * **DÒNG TRỐNG/PLACEHOLDER** (LOẠI BỎ): Là dòng không có thông tin có ý nghĩa: chứa "...", gạch ngang "-", ký tự placeholder, hoặc trường tên chất/mã HS không rõ ràng, không phải là dòng TỔNG CỘNG. Dòng này phải bị loại bỏ hoàn toàn khỏi kết quả JSON.
-8. **XỬ LÝ DỮ LIỆU TRÙNG MÃ CHẤT:** Dữ liệu có thể bị trùng về mã chất giữa các bảng nhưng chúng là những dòng khác nhau (ví dụ: cùng chất nhưng khác lĩnh vực hoạt động, khác năm, khác giao dịch). Bạn phải tôn trọng dữ liệu đó và trả về đầy đủ TẤT CẢ các dòng, không được gộp hoặc loại bỏ.
-"""
+        # Get Vietnamese provinces list
+        provinces_list = self._get_vietnamese_provinces_list()
+
+        # Build mega-context system instruction (this will be sent ONCE and cached)
+        system_instruction = mega_context.build_mega_context_system_instruction(
+            substances, activity_fields, provinces_list
+        )
+
+        _logger.info(f"Built mega-context system instruction: ~{len(system_instruction)} chars")
+
+        # Create chat session with cached system instruction
         chat = self.create_chat_session(client, system_instruction)
-
-        # Build and send mega context
-        mega_context_parts = self._build_mega_prompt_context()
-        mega_context_text = "\n\n".join([part.text for part in mega_context_parts])
-        chat.send_message(f"CONTEXT:\n{mega_context_text}\n\nĐã hiểu. Sẵn sàng trích xuất dữ liệu.")
 
         # Reorder: metadata last
         meta_category = None
@@ -647,6 +596,14 @@ QUY TẮC:
             category = category_result.get('category')
             page_count = category_result.get('page_count')
 
+            # Notify sub-step start for this category
+            self.update_progress(
+                new_env, 'ai_batch_processing', 
+                _('Đang xử lý: %s') % category,
+                job.id if job else None,
+                current_sub_step=category
+            )
+
             batch_responses = self._process_category_batches(
                 chat, category_result, category, document_type, page_count
             )
@@ -655,14 +612,14 @@ QUY TẮC:
                 category: batch_responses
             } if category != 'metadata' else batch_responses)
 
-            # Progress update per category
-            category_progress_message = _(f'Processed {idx+1}/{len(llama_json_normalized)} categories')
+            # Progress update per category (after processing)
+            category_progress_message = _('Đã xử lý %d/%d loại dữ liệu') % (idx+1, len(llama_json_normalized))
             self.update_progress(new_env, 'ai_batch_processing', category_progress_message, job.id if job else None)
 
         # Save checkpoint (will be committed by main transaction)
         if job:
             job.write({
-                'ai_extracted_json': json.dumps(extracted_datas, ensure_ascii=False),
+                'ai_extracted_json': json.dumps(extracted_datas, ensure_ascii=False, indent=2),
                 'last_completed_step': 'ai_batch_processing',
                 'current_step': 'ai_batch_processing',
                 'progress': 80,
@@ -701,19 +658,62 @@ QUY TẮC:
                 pages_processed += 7
                 continue
 
-            category_prompt = self._build_category_extraction_prompt(category, markdown, document_type)
+            # Build optimized category prompt using prompts_v2
 
+            reminder = category_reminders.get_category_reminder(category, document_type)
+            schema = category_schemas.get_schema_for_category(category, document_type)
+
+            category_prompt = f"""{reminder}
+
+{schema}
+
+---
+
+## OCR MARKDOWN
+
+{markdown}
+
+---
+
+Extract data following the schema above and return ONLY valid JSON.
+"""
+
+            # Always add critical reminders (year extraction, column accuracy)
+            additional_prompt_text = additional_prompts.get_additional_prompt(category)
+            category_prompt = category_prompt + additional_prompt_text
+
+            # Add batch context if multi-batch processing
             if total_batches > 1:
                 batch_context = f"""
 ⚠️ **BATCH PROCESSING INFO**:
 - This is batch {batch_num} of {total_batches} batches for category "{category}"
 - You are extracting pages {page_start}-{page_end} of {page_count} total pages
+
 """
                 category_prompt = batch_context + category_prompt
 
             try:
-                response = chat.send_message(category_prompt)
-                response_json = self._parse_json_response(response.text)
+                # Use streaming to avoid timeout with long API responses
+                _logger.info(f"Starting batch {batch_num}/{total_batches} for category '{category}' (pages {page_start}-{page_end})")
+
+                # Send message with streaming enabled
+                response_stream = chat.send_message_stream(category_prompt)
+
+                # Accumulate streaming chunks
+                full_text = ""
+                chunk_count = 0
+                for chunk in response_stream:
+                    if chunk.text:
+                        full_text += chunk.text
+                        chunk_count += 1
+                        if chunk_count % 10 == 0:  # Log every 10 chunks to avoid spam
+                            _logger.debug(f"Batch {batch_num}: received {chunk_count} chunks, {len(full_text)} chars total")
+
+                _logger.info(f"Batch {batch_num} streaming completed: {chunk_count} chunks, {len(full_text)} chars total")
+
+                # Parse accumulated response
+                full_text.replace('\n', '')
+                response_json = self._parse_json_response(full_text)
 
                 if isinstance(response_json, list):
                     batch_responses.extend(response_json)
@@ -741,12 +741,12 @@ QUY TẮC:
         self.update_progress(new_env, 'merge_validate', _('Merging and validating...'), job.id if job else None)
 
         extracted_data = self._merge_category_data(extracted_datas)
-        extracted_data = self._validate_and_fix_metadata_flags(extracted_data, document_type)
+        # extracted_data = self._validate_and_fix_metadata_flags(extracted_data, document_type)
 
         # Save checkpoint (will be committed by main transaction)
         if job:
             job.write({
-                'final_result_json': json.dumps(extracted_data, ensure_ascii=False),
+                'final_result_json': json.dumps(extracted_data, ensure_ascii=False, indent=2),
                 'last_completed_step': 'merge_validate',
                 'current_step': 'merge_validate',
                 'progress': 95,

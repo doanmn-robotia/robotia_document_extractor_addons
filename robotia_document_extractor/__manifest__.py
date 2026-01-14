@@ -16,6 +16,7 @@
         'data/substance_groups_data.xml',
         'data/default_prompts.xml',
         'data/google_drive_cron.xml',
+        'data/cron_update_title_selections.xml',
         'data/extraction_job_sequence.xml',
         'data/queue_job_channel.xml',
         'wizard/google_drive_config_wizard_views.xml',
@@ -26,6 +27,9 @@
         'views/queue_job_extraction_views.xml',
         'views/res_config_settings_views.xml',
         'views/res_config_settings_document_only.xml',
+        'views/res_users_simplified_form.xml',
+        'views/res_users_actions.xml',
+        'views/table_data_views.xml',
         'views/menus.xml',
         'views/client_actions.xml',
     ],
@@ -104,6 +108,11 @@
             'robotia_document_extractor/static/src/xml/ace_copy_field.xml',
             'robotia_document_extractor/static/src/scss/ace_copy_field.scss',
 
+            # Card Selection Field Widget (card-based role selection)
+            'robotia_document_extractor/static/src/js/fields/card_selection/card_selection_field.js',
+            'robotia_document_extractor/static/src/js/fields/card_selection/card_selection_field.xml',
+            'robotia_document_extractor/static/src/js/fields/card_selection/card_selection_field.scss',
+
             # Settings Dashboard (Main Component)
             'robotia_document_extractor/static/src/js/dashboard/settings_dashboard.js',
 
@@ -138,6 +147,8 @@
             'PyMuPDF',
             'Pillow',
             'llama-cloud-services',
+            'rapidfuzz',
+            'unidecode',
         ]
     },
     'license': 'LGPL-3',

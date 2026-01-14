@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from odoo import models, fields, api
+from .document_extraction import auto_detect_title_selection
 
 
 class EquipmentOwnership(models.Model):
@@ -27,6 +28,15 @@ class EquipmentOwnership(models.Model):
         default=False,
         help='If True, this row is a section title'
     )
+    ownership_type = fields.Selection(
+        selection=[
+            ('air_conditioner', 'Máy điều hòa không khí'),
+            ('refrigeration', 'Thiết bị lạnh'),
+        ],
+        string='Activity',
+        index=True,
+        help='Air conditioner or refrigeration equipment'
+    )
     equipment_type_id = fields.Many2one(
         comodel_name='equipment.type',
         string='Equipment Type',
@@ -35,14 +45,12 @@ class EquipmentOwnership(models.Model):
         help='Link to equipment type master data'
     )
     equipment_type = fields.Char(
-        string='Equipment Type Text',
-        compute='_compute_equipment_type',
-        store=True,
-        readonly=False,
-        help='Equipment model and manufacturer (auto-filled from equipment_type_id)'
+        string='Equipment Type',
+        help='Title text for section headers (air conditioner/refrigeration)'
     )
     start_year = fields.Integer(
-        string='Year Started'
+        string='Year Started',
+        aggregator=False
     )
     capacity = fields.Char(
         string='Cooling Capacity/Power Capacity',
@@ -80,12 +88,6 @@ class EquipmentOwnership(models.Model):
         string='Substance Quantity per Refill'
     )
 
-    @api.depends('equipment_type_id')
-    def _compute_equipment_type(self):
-        for record in self:
-            if record.equipment_type_id:
-                record.equipment_type = record.equipment_type_id.name
-
     @api.depends('substance_id')
     def _compute_substance_name(self):
         for record in self:
@@ -95,19 +97,69 @@ class EquipmentOwnership(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         """Override create to auto-create master data if not exists and normalize capacity"""
+        
         for vals in vals_list:
-            # Normalize capacity (from mixin will be called via super)
-
+            # Auto-detect selection for title rows
             if vals.get('is_title'):
-                continue
+                text_value = vals.get('equipment_type', '')
+                current_value = vals.get('ownership_type')
+                
+                detected_value = auto_detect_title_selection(
+                    'equipment.ownership',
+                    text_value,
+                    current_value
+                )
+                
+                if detected_value:
+                    vals['ownership_type'] = detected_value
+                
+                continue  # Skip master data creation for title rows
 
-            # Handle Equipment Type
-            if not vals.get('equipment_type_id') and vals.get('equipment_type'):
-                equipment_type = self._find_or_create_equipment_type(vals.get('equipment_type'))
-                vals['equipment_type_id'] = equipment_type.id
+            # TODO-TITLE: Handle Equipment Type auto-creation (commented for now, will be handled later)
+            # if not vals.get('equipment_type_id') and vals.get('equipment_type'):
+            #     equipment_type = self._find_or_create_equipment_type(vals.get('equipment_type'))
+            #     vals['equipment_type_id'] = equipment_type.id
 
         # Super call will trigger mixin's create which normalizes capacity
         return super(EquipmentOwnership, self).create(vals_list)
+
+    def write(self, vals):
+        """Override write to auto-detect selection for title rows"""
+        title_records = self.env['equipment.ownership']
+        non_title_records = self.env['equipment.ownership']
+        
+        for record in self:
+            is_title = vals.get('is_title', record.is_title)
+            
+            if is_title:
+                title_records |= record
+            else:
+                non_title_records |= record
+        
+        # Process title records individually
+        for record in title_records:
+            text_value = vals.get('equipment_type', record.equipment_type)
+            current_value = vals.get('ownership_type', record.ownership_type)
+            
+            detected_value = auto_detect_title_selection(
+                'equipment.ownership',
+                text_value,
+                current_value
+            )
+            
+            if detected_value:
+                # Create copy of vals for this record
+                record_vals = vals.copy()
+                record_vals['ownership_type'] = detected_value
+                super(EquipmentOwnership, record).write(record_vals)
+            else:
+                super(EquipmentOwnership, record).write(vals)
+        
+        # Process non-title records in batch
+        if non_title_records:
+            super(EquipmentOwnership, non_title_records).write(vals)
+        
+        return True
 
     def _find_or_create_equipment_type(self, type_text):
         type_text = type_text.strip()

@@ -29,11 +29,11 @@ class QuotaUsage(models.Model):
     )
     usage_type = fields.Selection(
         selection=[
-            ('production', 'Production'),
-            ('import', 'Import'),
-            ('export', 'Export')
+            ('production', 'Sản xuất'),
+            ('import', 'Nhập khẩu'),
+            ('export', 'Xuất khẩu')
         ],
-        string='Usage Type',
+        string='Activity',
         default="import",
         index=True
     )
@@ -126,3 +126,65 @@ class QuotaUsage(models.Model):
     def _compute_hs_code(self):
         for r in self:
             r.hs_code = r.hs_code_id.code if r.hs_code_id else ''
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        """Override create to auto-detect selection for title rows"""
+        from .document_extraction import auto_detect_title_selection
+        
+        for vals in vals_list:
+            # Auto-detect selection for title rows
+            if vals.get('is_title'):
+                text_value = vals.get('substance_name', '')
+                current_value = vals.get('usage_type')
+                
+                detected_value = auto_detect_title_selection(
+                    'quota.usage',
+                    text_value,
+                    current_value
+                )
+                
+                if detected_value:
+                    vals['usage_type'] = detected_value
+        
+        return super(QuotaUsage, self).create(vals_list)
+
+    def write(self, vals):
+        """Override write to auto-detect selection for title rows"""
+        from .document_extraction import auto_detect_title_selection
+        
+        title_records = self.env['quota.usage']
+        non_title_records = self.env['quota.usage']
+        
+        for record in self:
+            is_title = vals.get('is_title', record.is_title)
+            
+            if is_title:
+                title_records |= record
+            else:
+                non_title_records |= record
+        
+        # Process title records individually
+        for record in title_records:
+            text_value = vals.get('substance_name', record.substance_name)
+            current_value = vals.get('usage_type', record.usage_type)
+            
+            detected_value = auto_detect_title_selection(
+                'quota.usage',
+                text_value,
+                current_value
+            )
+            
+            if detected_value:
+                # Create copy of vals for this record
+                record_vals = vals.copy()
+                record_vals['usage_type'] = detected_value
+                super(QuotaUsage, record).write(record_vals)
+            else:
+                super(QuotaUsage, record).write(vals)
+        
+        # Process non-title records in batch
+        if non_title_records:
+            super(QuotaUsage, non_title_records).write(vals)
+        
+        return True

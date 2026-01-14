@@ -143,6 +143,43 @@
                                             <div class="stepper-vertical-dot"></div>
                                             <div class="stepper-vertical-content">
                                                 <div class="stepper-vertical-label"><t t-esc="step.label"/></div>
+                                                
+                                                <!-- Sub-steps for Category Mapping: Show detected categories -->
+                                                <t t-if="step.key === 'category_mapping' and (isCompleted or isActive) and state.detectedCategories.length > 0">
+                                                    <div class="stepper-substeps">
+                                                        <t t-foreach="state.detectedCategories" t-as="catKey" t-key="catKey">
+                                                            <div class="substep-item completed">
+                                                                <i class="fa fa-check-circle-o"/>
+                                                                <span t-esc="getCategoryLabel(catKey)"/>
+                                                            </div>
+                                                        </t>
+                                                    </div>
+                                                </t>
+                                                
+                                                <!-- Sub-steps for Llama OCR and AI Processing: Show processing progress -->
+                                                <t t-if="(step.key === 'llama_ocr' or step.key === 'ai_batch_processing')">
+                                                    <t t-set="stepCompletedSubSteps" t-value="getStepCompletedSubSteps(step.key)"/>
+                                                    <t t-set="showSubSteps" t-value="(isActive and (stepCompletedSubSteps.length > 0 or state.currentSubStep)) or (isCompleted and stepCompletedSubSteps.length > 0)"/>
+                                                    
+                                                    <t t-if="showSubSteps">
+                                                        <div class="stepper-substeps">
+                                                            <!-- Completed sub-steps -->
+                                                            <t t-foreach="stepCompletedSubSteps" t-as="subKey" t-key="subKey">
+                                                                <div class="substep-item completed">
+                                                                    <i class="fa fa-check-circle"/>
+                                                                    <span t-esc="getCategoryLabel(subKey)"/>
+                                                                </div>
+                                                            </t>
+                                                            <!-- Current processing sub-step (only for active step) -->
+                                                            <t t-if="isActive and state.currentSubStep">
+                                                                <div class="substep-item active">
+                                                                    <i class="fa fa-spinner fa-spin"/>
+                                                                    <span t-esc="getCategoryLabel(state.currentSubStep)"/>
+                                                                </div>
+                                                            </t>
+                                                        </div>
+                                                    </t>
+                                                </t>
                                             </div>
                                         </div>
                                     </t>

@@ -10,6 +10,265 @@ from odoo.exceptions import ValidationError
 _logger = logging.getLogger(__name__)
 
 
+# ===== Title Selection Auto-Detection Configuration =====
+# Keyword mappings for auto-detecting selection values from title text
+TITLE_KEYWORD_CONFIG = {
+    'substance.usage': {
+        'field_name': 'substance_usage_ids',  # For cron job
+        'text_field': 'substance_name',
+        'selection_field': 'usage_type',
+        'templates': {
+            # Exact template texts from view XML (case-insensitive match)
+            'production': 'Sản xuất chất được kiểm soát',
+            'import': 'Nhập khẩu chất được kiểm soát',
+            'export': 'Xuất khẩu chất được kiểm soát'
+        },
+        'mappings': {
+            'production': ['sản xuất', 'production', 'produce', 'manufacturing', 'san xuat', 'sx'],
+            'import': ['nhập khẩu', 'import', 'nhap khau', 'nk', 'importing'],
+            'export': ['xuất khẩu', 'export', 'xuat khau', 'xk', 'exporting']
+        },
+        'default': 'import'
+    },
+    'equipment.product': {
+        'field_name': 'equipment_product_ids',
+        'text_field': 'product_type',
+        'selection_field': 'production_type',
+        'templates': {
+            'production': 'Sản xuất thiết bị, sản phẩm có chứa hoặc sản xuất từ chất được kiểm soát',
+            'import': 'Nhập khẩu thiết bị, sản phẩm có chứa hoặc sản xuất từ chất được kiểm soát'
+        },
+        'mappings': {
+            'production': ['sản xuất thiết bị', 'sản xuất sản phẩm', 'production equipment',
+                          'san xuat thiet bi', 'sx thiết bị', 'manufacturing'],
+            'import': ['nhập khẩu thiết bị', 'nhập khẩu sản phẩm', 'import equipment',
+                      'nhap khau thiet bi', 'nk thiết bị']
+        },
+        'default': 'production'
+    },
+    'equipment.ownership': {
+        'field_name': 'equipment_ownership_ids',
+        'text_field': 'equipment_type',
+        'selection_field': 'ownership_type',
+        'templates': {
+            'air_conditioner': 'Máy điều hòa không khí có năng suất lạnh danh định lớn hơn 26,5 kW (90.000 BTU/h) và có tổng năng suất lạnh danh định của các thiết bị lớn hơn 586 kW (2.000.000 BTU/h)',
+            'refrigeration': 'Thiết bị lạnh công nghiệp có công suất điện lớn hơn 40 kW'
+        },
+        'mappings': {
+            'air_conditioner': ['máy điều hòa', 'điều hòa không khí', 'air conditioner',
+                               'dieu hoa', '26,5 kw', '90.000 btu', '90000 btu', 'conditioning'],
+            'refrigeration': ['thiết bị lạnh', 'lạnh công nghiệp', 'industrial cooling',
+                             'refrigeration', 'thiet bi lanh', '40 kw', 'công suất điện']
+        },
+        'default': 'air_conditioner'
+    },
+    'collection.recycling': {
+        'field_name': 'collection_recycling_ids',
+        'text_field': 'substance_name',
+        'selection_field': 'activity_type',
+        'templates': {
+            'collection': 'Thu gom chất được kiểm soát',
+            'reuse': 'Tái sử dụng chất được kiểm soát sau thu gom',
+            'recycle': 'Tái chế chất sau thu gom',
+            'disposal': 'Xử lý chất được kiểm soát'
+        },
+        'mappings': {
+            'collection': ['thu gom', 'collection', 'collect', 'thu hồi', 'thu gôm', 'collecting'],
+            'reuse': ['tái sử dụng', 'reuse', 'tai su dung', 'tái dùng', 'reusing'],
+            'recycle': ['tái chế', 'recycle', 'tai che', 'recycling', 'chế tạo lại'],
+            'disposal': ['xử lý', 'tiêu hủy', 'disposal', 'xu ly', 'tieu huy',
+                        'destroy', 'destruction', 'hủy', 'tiêu huỷ']
+        },
+        'default': 'collection'
+    },
+    'quota.usage': {
+        'field_name': 'quota_usage_ids',
+        'text_field': 'substance_name',
+        'selection_field': 'usage_type',
+        'templates': {
+            'production': 'Sản xuất chất được kiểm soát',
+            'import': 'Nhập khẩu chất được kiểm soát',
+            'export': 'Xuất khẩu chất được kiểm soát'
+        },
+        'mappings': {
+            'production': ['sản xuất', 'production', 'produce', 'manufacturing', 'san xuat', 'sx'],
+            'import': ['nhập khẩu', 'import', 'nhap khau', 'nk', 'importing'],
+            'export': ['xuất khẩu', 'export', 'xuat khau', 'xk', 'exporting']
+        },
+        'default': 'import'
+    },
+    'equipment.product.report': {
+        'field_name': 'equipment_product_report_ids',
+        'text_field': 'product_type',
+        'selection_field': 'production_type',
+        'templates': {
+            'production': 'Sản xuất thiết bị, sản phẩm có chứa hoặc sản xuất từ chất được kiểm soát',
+            'import': 'Nhập khẩu thiết bị, sản phẩm có chứa hoặc sản xuất từ chất được kiểm soát'
+        },
+        'mappings': {
+            'production': ['sản xuất thiết bị', 'sản xuất sản phẩm', 'production equipment',
+                          'san xuat thiet bi', 'sx thiết bị', 'manufacturing'],
+            'import': ['nhập khẩu thiết bị', 'nhập khẩu sản phẩm', 'import equipment',
+                      'nhap khau thiet bi', 'nk thiết bị']
+        },
+        'default': 'import'
+    },
+    'equipment.ownership.report': {
+        'field_name': 'equipment_ownership_report_ids',
+        'text_field': 'equipment_type',
+        'selection_field': 'ownership_type',
+        'templates': {
+            'air_conditioner': 'Máy điều hòa không khí có năng suất lạnh danh định lớn hơn 26,5 kW (90.000 BTU/h) và có tổng năng suất lạnh danh định của các thiết bị lớn hơn 586 kW (2.000.000 BTU/h)',
+            'refrigeration': 'Thiết bị lạnh công nghiệp có công suất điện lớn hơn 40 kW'
+        },
+        'mappings': {
+            'air_conditioner': ['máy điều hòa', 'điều hòa không khí', 'air conditioner',
+                               'dieu hoa', '26,5 kw', '90.000 btu', '90000 btu', 'conditioning'],
+            'refrigeration': ['thiết bị lạnh', 'lạnh công nghiệp', 'industrial cooling',
+                             'refrigeration', 'thiet bi lanh', '40 kw', 'công suất điện']
+        },
+        'default': 'air_conditioner'
+    }
+}
+
+
+def match_title_selection(text, templates, mappings, default_value, use_default=True):
+    """
+    Module-level helper: Match text against templates and keyword mappings
+
+    Matching Strategy (in priority order):
+    1. Exact match with template texts (100% confidence) - case-insensitive
+    2. Fuzzy match first 4 words against keywords (90-99% confidence)
+    3. Fuzzy match full text against keywords (70-89% confidence)
+    4. Default value (0% confidence) - only if use_default=True
+
+    Args:
+        text: Text to match (e.g., "Nhập khẩu thiết bị, sản phẩm có chứa hoặc sản xuất từ chất được kiểm soát")
+        templates: Dict of {selection_value: template_text} from view XML
+        mappings: Dict of {selection_value: [keywords]}
+        default_value: Default selection value if no match found
+        use_default: If False, return None instead of default when no match (default: True)
+
+    Returns:
+        tuple: (matched_value, confidence_score, match_type)
+            - matched_value: The matched selection value, default, or None
+            - confidence_score: 0-100 confidence percentage
+            - match_type: 'template' | 'fuzzy_prefix' | 'fuzzy_full' | 'default' | 'no_match'
+    """
+    try:
+        from rapidfuzz import fuzz
+        from unidecode import unidecode
+    except ImportError:
+        _logger.warning("Missing dependencies: rapidfuzz or unidecode. Cannot auto-detect title selections.")
+        return (default_value if use_default else None, 0, 'default' if use_default else 'no_match')
+
+    if not text or not isinstance(text, str):
+        return (default_value if use_default else None, 0, 'default' if use_default else 'no_match')
+
+    # Normalize text for matching
+    normalized_text = unidecode(text.lower().strip())
+
+    # Strategy 1: Check exact match with template texts (100% confidence)
+    if templates:
+        for selection_value, template_text in templates.items():
+            normalized_template = unidecode(template_text.lower().strip())
+            if normalized_text == normalized_template:
+                return (selection_value, 100, 'template')
+
+    # Extract first 4 words for prefix matching
+    words = normalized_text.split()
+    first_4_words = ' '.join(words[:4]) if len(words) >= 4 else normalized_text
+
+    best_match = None
+    best_score = 0
+    best_type = 'default'
+
+    # Strategy 2: Fuzzy match first 4 words (prioritize beginning of text)
+    for selection_value, keywords in mappings.items():
+        for keyword in keywords:
+            normalized_keyword = unidecode(keyword.lower().strip())
+
+            # Try matching first 4 words
+            score_prefix = fuzz.partial_ratio(first_4_words, normalized_keyword)
+
+            if score_prefix > best_score:
+                best_score = score_prefix
+                best_match = selection_value
+                best_type = 'fuzzy_prefix'
+
+    # If prefix match is good enough (>= 80), return it
+    if best_score >= 80 and best_match:
+        return (best_match, best_score, best_type)
+
+    # Strategy 3: Fuzzy match full text (fallback)
+    for selection_value, keywords in mappings.items():
+        for keyword in keywords:
+            normalized_keyword = unidecode(keyword.lower().strip())
+
+            # Full text fuzzy matching
+            score_full = fuzz.partial_ratio(normalized_text, normalized_keyword)
+
+            if score_full > best_score:
+                best_score = score_full
+                best_match = selection_value
+                best_type = 'fuzzy_full'
+
+    # Apply confidence threshold (70%)
+    if best_score >= 70 and best_match:
+        return (best_match, best_score, best_type)
+
+    # Fallback to default or None
+    if use_default:
+        return (default_value, 0, 'default')
+    else:
+        return (None, 0, 'no_match')
+
+
+def auto_detect_title_selection(model_name, text_value, current_value=None, use_default=True):
+    """
+    Auto-detect selection field value for title rows based on text content
+
+    Logic:
+    1. If match found (template/fuzzy >= 70%):
+       - Always use matched value (override existing)
+    2. If no match and use_default=True:
+       - Use default value from config
+    3. If no match and use_default=False:
+       - Return current_value (keep existing or leave empty)
+
+    Args:
+        model_name: Model name (e.g., 'substance.usage')
+        text_value: Text to match against (e.g., "Nhập khẩu thiết bị, sản phẩm có chứa hoặc sản xuất từ chất được kiểm soát")
+        current_value: Current selection value (if any)
+        use_default: If True, use default when no match; if False, return None/current_value (default: True)
+
+    Returns:
+        str: Selection value to use (matched, default, existing, or None)
+    """
+    if model_name not in TITLE_KEYWORD_CONFIG:
+        return current_value
+
+    config = TITLE_KEYWORD_CONFIG[model_name]
+    matched_value, confidence, match_type = match_title_selection(
+        text_value,
+        config.get('templates', {}),  # Templates from view XML
+        config['mappings'],
+        config['default'],
+        use_default  # Pass through use_default parameter
+    )
+
+    # Priority: Match result > Current value > Default (if enabled)
+    if match_type in ['template', 'fuzzy_prefix', 'fuzzy_full']:
+        # Found a good match
+        return matched_value
+    elif match_type == 'default':
+        # No match, but default is enabled
+        return matched_value  # This is the default value
+    else:
+        # No match and use_default=False
+        return current_value  # Keep existing value or None
+
+
 class DocumentExtraction(models.Model):
     """Main model for document extraction (Form 01 & Form 02)"""
     _name = 'document.extraction'
@@ -82,15 +341,18 @@ class DocumentExtraction(models.Model):
     )
     year_1 = fields.Integer(
         string='Year 1 (Past Year)',
-        help='Actual year represented by year_1 column (e.g., 2023)'
+        help='Actual year represented by year_1 column (e.g., 2023)',
+        aggregator=False
     )
     year_2 = fields.Integer(
         string='Year 2 (Current Year)',
-        help='Actual year represented by year_2 column (e.g., 2024)'
+        help='Actual year represented by year_2 column (e.g., 2024)',
+        aggregator=False
     )
     year_3 = fields.Integer(
         string='Year 3 (Next Year)',
-        help='Actual year represented by year_3 column (e.g., 2025)'
+        help='Actual year represented by year_3 column (e.g., 2025)',
+        aggregator=False
     )
     state = fields.Selection(
         selection=[
@@ -374,8 +636,11 @@ class DocumentExtraction(models.Model):
         for record in self:
             if record.pdf_attachment_id:
                 # Generate URL to view attachment
-                base_url = record.env['ir.config_parameter'].sudo().get_param('web.base.url')
-                record.pdf_url = f"{base_url}/web/content/{record.pdf_attachment_id.id}?download=false"
+                # base_url = record.env['ir.config_parameter'].sudo().get_param('web.base.url')
+                # if base_url:
+                #     record.pdf_url = f"{base_url}/web/content/{record.pdf_attachment_id.id}?download=false"
+                # else:
+                    record.pdf_url = f'/web/content/{record.pdf_attachment_id.id}?download=false'
             else:
                 record.pdf_url = False
 
@@ -790,3 +1055,590 @@ class DocumentExtraction(models.Model):
             result.append(vals)
 
         return result
+
+    def update_all_title_selections(self, exclude_existing=True):
+        """
+        Cron job: Auto-update selection fields for all title rows across all documents
+        
+        This method:
+        1. Iterates through all document.extraction records
+        2. For each document, processes 7 table types (1.1, 1.2, 1.3, 1.4, 2.1, 2.2, 2.3)
+        3. Finds title rows (is_title=True) with empty selection values
+        4. Matches text against keywords using fuzzy matching
+        5. Updates selection field with matched value
+        6. Logs all actions (updated, skipped, errors)
+        7. Creates detailed CSV log for suspicious records (fuzzy < 90% or default)
+        
+        Usage:
+        - Run manually: document_extraction_obj.update_all_title_selections()
+        - Run via cron: Enable scheduled action in Settings > Technical > Scheduled Actions
+        
+        Returns:
+            dict: Notification action with log file path
+        """
+        import csv
+        from datetime import datetime
+        import os
+        
+        _logger.info("=" * 60)
+        _logger.info("Starting Title Selection Auto-Update Job")
+        _logger.info("=" * 60)
+        
+        # Create log file with timestamp
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        log_filename = f'title_selection_update_{timestamp}.csv'
+        log_filepath = os.path.join('/tmp', log_filename)
+        
+        # Prepare CSV file
+        csv_file = open(log_filepath, 'w', newline='', encoding='utf-8')
+        csv_writer = csv.writer(csv_file)
+        csv_writer.writerow([
+            'Document ID',
+            'Document Name',
+            'Table Name',
+            'Record ID',
+            'Text Value',
+            'Matched Selection',
+            'Confidence (%)',
+            'Match Type',
+            'Notes'
+        ])
+        
+        # Get all documents
+        all_documents = self.search([])
+        total_docs = len(all_documents)
+        _logger.info(f"Found {total_docs} documents to process")
+        
+        # Statistics
+        stats = {
+            'total_processed': 0,
+            'total_updated': 0,
+            'total_skipped': 0,
+            'total_errors': 0,
+            'by_confidence': {'exact': 0, 'fuzzy': 0, 'default': 0},
+            'suspicious_count': 0,  # fuzzy < 85% or default
+            'docs_without_titles': 0  # documents with no title rows found
+        }
+
+        # Process each document
+        for doc_idx, document in enumerate(all_documents, 1):
+            _logger.info(f"\n[{doc_idx}/{total_docs}] Processing document: {document.name} (ID: {document.id})")
+
+            doc_has_title_rows = False  # Track if this document has any title rows
+
+            try:
+                # Process each table type
+                for model_name, config in TITLE_KEYWORD_CONFIG.items():
+                    field_name = config['field_name']
+                    
+                    # Skip if document doesn't have this field
+                    if not hasattr(document, field_name):
+                        continue
+                    
+                    records = getattr(document, field_name)
+
+                    # Filter title rows with empty selection
+                    title_rows = records.filtered(
+                        lambda r: r.is_title and (not r[config['selection_field']] and exclude_existing)
+                    )
+
+                    if not title_rows:
+                        continue
+
+                    # Mark that this document has title rows
+                    doc_has_title_rows = True
+
+                    _logger.info(f"  Table {model_name}: Found {len(title_rows)} title rows to update")
+                    
+                    # Process each title row
+                    for record in title_rows:
+                        stats['total_processed'] += 1
+                        
+                        text_value = record[config['text_field']]
+
+                        # Match selection value (with templates for exact matching)
+                        matched_value, confidence, match_type = match_title_selection(
+                            text_value,
+                            config.get('templates', {}),
+                            config['mappings'],
+                            config['default']
+                        )
+                        
+                        # Update record
+                        try:
+                            record.write({config['selection_field']: matched_value})
+                            stats['total_updated'] += 1
+
+                            # Track by confidence type
+                            if match_type not in stats['by_confidence']:
+                                stats['by_confidence'][match_type] = 0
+                            stats['by_confidence'][match_type] += 1
+
+                            # Determine if this is suspicious (needs review)
+                            is_suspicious = (match_type == 'default') or (
+                                match_type in ['fuzzy_prefix', 'fuzzy_full'] and confidence < 85
+                            )
+
+                            if is_suspicious:
+                                stats['suspicious_count'] += 1
+                                notes = ''
+                                if match_type == 'default':
+                                    notes = 'NO MATCH - Used default value'
+                                elif confidence < 85:
+                                    notes = f'LOW CONFIDENCE - Match below 85%'
+
+                                # Write to CSV (only suspicious records)
+                                csv_writer.writerow([
+                                    document.id,
+                                    document.name,
+                                    model_name,
+                                    record.id,
+                                    text_value or '',
+                                    matched_value,
+                                    confidence,
+                                    match_type,
+                                    notes
+                                ])
+
+                            # Log based on match type
+                            if match_type == 'template':
+                                _logger.info(f"    ✓ Updated {model_name} #{record.id}: '{text_value}' → '{matched_value}' (template exact match)")
+                            elif match_type == 'fuzzy_prefix':
+                                if confidence < 85:
+                                    _logger.warning(f"    ⚠ Updated {model_name} #{record.id}: '{text_value}' → '{matched_value}' (prefix fuzzy: {confidence}%) - LOW CONFIDENCE")
+                                else:
+                                    _logger.info(f"    ✓ Updated {model_name} #{record.id}: '{text_value}' → '{matched_value}' (prefix fuzzy: {confidence}%)")
+                            elif match_type == 'fuzzy_full':
+                                if confidence < 85:
+                                    _logger.warning(f"    ⚠ Updated {model_name} #{record.id}: '{text_value}' → '{matched_value}' (full fuzzy: {confidence}%) - LOW CONFIDENCE")
+                                else:
+                                    _logger.info(f"    ✓ Updated {model_name} #{record.id}: '{text_value}' → '{matched_value}' (full fuzzy: {confidence}%)")
+                            else:  # default
+                                _logger.warning(f"    ⊘ Updated {model_name} #{record.id}: '{text_value}' → '{matched_value}' (default - NO MATCH)")
+                        
+                        except Exception as e:
+                            stats['total_errors'] += 1
+                            _logger.error(f"    ✗ Error updating {model_name} #{record.id}: {str(e)}")
+                            
+                            # Log error to CSV
+                            csv_writer.writerow([
+                                document.id,
+                                document.name,
+                                model_name,
+                                record.id,
+                                text_value or '',
+                                '',
+                                0,
+                                'error',
+                                f'ERROR: {str(e)}'
+                            ])
+
+                # Check if document has no title rows at all
+                if not doc_has_title_rows:
+                    stats['docs_without_titles'] += 1
+                    _logger.warning(f"  ⚠ Document {document.id} ({document.name}) has NO title rows (is_title=True) to process")
+
+                    # Write to CSV for tracking
+                    csv_writer.writerow([
+                        document.id,
+                        document.name,
+                        'N/A',
+                        'N/A',
+                        'N/A',
+                        'N/A',
+                        0,
+                        'no_titles',
+                        'WARNING: Document has no title rows (is_title=True) in any table'
+                    ])
+
+                # Commit after each document
+                # self.env.cr.commit()
+
+            except Exception as e:
+                stats['total_errors'] += 1
+                _logger.error(f"  ✗ Error processing document {document.id}: {str(e)}")
+                raise e
+                # self.env.cr.rollback()
+        
+        # Close CSV file
+        csv_file.close()
+        
+        # Print summary
+        _logger.info("\n" + "=" * 60)
+        _logger.info("Title Selection Update - Summary Report")
+        _logger.info("=" * 60)
+        _logger.info(f"Documents processed: {total_docs}")
+        _logger.info(f"Title rows processed: {stats['total_processed']}")
+        _logger.info(f"  ✓ Successfully updated: {stats['total_updated']}")
+        _logger.info(f"  ⊘ Skipped: {stats['total_skipped']}")
+        _logger.info(f"  ✗ Errors: {stats['total_errors']}")
+        _logger.info("\nMatch Type Distribution:")
+        _logger.info(f"  Template exact matches (100%): {stats['by_confidence'].get('template', 0)}")
+        _logger.info(f"  Fuzzy prefix matches (4 words): {stats['by_confidence'].get('fuzzy_prefix', 0)}")
+        _logger.info(f"  Fuzzy full text matches: {stats['by_confidence'].get('fuzzy_full', 0)}")
+        _logger.info(f"  Default values (no match): {stats['by_confidence'].get('default', 0)}")
+        _logger.info(f"\n⚠ Suspicious records (need review): {stats['suspicious_count']}")
+        _logger.info(f"⚠ Documents without title rows: {stats['docs_without_titles']}")
+        _logger.info(f"📄 Detailed CSV log: {log_filepath}")
+        _logger.info("=" * 60)
+        
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'Title Selection Update Complete',
+                'message': f"Updated {stats['total_updated']} title rows across {total_docs} documents.\n"
+                          f"⚠ {stats['suspicious_count']} suspicious records need review.\n"
+                          f"⚠ {stats['docs_without_titles']} documents have NO title rows.\n"
+                          f"📄 Log file: {log_filepath}",
+                'type': 'success' if (stats['suspicious_count'] == 0 and stats['docs_without_titles'] == 0) else 'warning',
+                'sticky': True,
+            }
+        }
+
+    def update_equipment_table_titles(self):
+        """
+        One-time update: Fix production_type for equipment tables (1.2 and 2.2)
+        
+        This method specifically handles the issue where titles like:
+        "Nhập khẩu thiết bị, sản phẩm có chứa hoặc sản xuất từ chất được kiểm soát"
+        were incorrectly matched as 'production' instead of 'import' due to 
+        the word "sản xuất" appearing at the end.
+        
+        Solution: Use first 4 words for matching priority
+        
+        Usage:
+        - Run manually: env['document.extraction'].update_equipment_table_titles()
+        - Run via cron: Enable scheduled action
+        """
+        try:
+            from rapidfuzz import fuzz
+            from unidecode import unidecode
+        except ImportError:
+            _logger.error("Missing dependencies: rapidfuzz or unidecode")
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': 'Error',
+                    'message': 'Missing dependencies: rapidfuzz or unidecode',
+                    'type': 'danger',
+                }
+            }
+        
+        _logger.info("=" * 60)
+        _logger.info("Equipment Tables Title Update (1.2 & 2.2)")
+        _logger.info("=" * 60)
+        
+        # Get all documents
+        all_documents = self.search(['|', ('has_table_1_2', '=', True), ('has_table_2_2', '=', True)])
+        total_docs = len(all_documents)
+        _logger.info(f"Found {total_docs} documents to process")
+        
+        # Statistics
+        stats = {
+            'total_processed': 0,
+            'total_updated': 0,
+            'total_unchanged': 0,
+            'total_errors': 0,
+            'by_table': {
+                'equipment.product': {'updated': 0, 'unchanged': 0},
+                'equipment.product.report': {'updated': 0, 'unchanged': 0}
+            }
+        }
+        
+        # Configuration for equipment tables only
+        EQUIPMENT_CONFIG = {
+            'equipment.product': {
+                'field_name': 'equipment_product_ids',
+                'text_field': 'product_type',
+                'selection_field': 'production_type',
+                'templates': {
+                    'production': 'Sản xuất thiết bị, sản phẩm có chứa hoặc sản xuất từ chất được kiểm soát',
+                    'import': 'Nhập khẩu thiết bị, sản phẩm có chứa hoặc sản xuất từ chất được kiểm soát'
+                },
+                'keywords': {
+                    'production': ['sản xuất thiết bị', 'sản xuất sản phẩm', 'san xuat thiet bi', 'production equipment'],
+                    'import': ['nhập khẩu thiết bị', 'nhập khẩu sản phẩm', 'nhap khau thiet bi', 'import equipment']
+                },
+                'default': 'production'
+            },
+            'equipment.product.report': {
+                'field_name': 'equipment_product_report_ids',
+                'text_field': 'product_type',
+                'selection_field': 'production_type',
+                'templates': {
+                    'production': 'Sản xuất thiết bị, sản phẩm có chứa hoặc sản xuất từ chất được kiểm soát',
+                    'import': 'Nhập khẩu thiết bị, sản phẩm có chứa hoặc sản xuất từ chất được kiểm soát'
+                },
+                'keywords': {
+                    'production': ['sản xuất thiết bị', 'sản xuất sản phẩm', 'san xuat thiet bi', 'production equipment'],
+                    'import': ['nhập khẩu thiết bị', 'nhập khẩu sản phẩm', 'nhap khau thiet bi', 'import equipment']
+                },
+                'default': 'import'
+            }
+        }
+        
+        # Process each document
+        for doc_idx, document in enumerate(all_documents, 1):
+            _logger.info(f"\n[{doc_idx}/{total_docs}] Processing document: {document.name} (ID: {document.id})")
+            
+            try:
+                # Process each table type
+                for model_name, config in EQUIPMENT_CONFIG.items():
+                    field_name = config['field_name']
+                    
+                    # Skip if document doesn't have this field
+                    if not hasattr(document, field_name):
+                        continue
+                    
+                    records = getattr(document, field_name)
+                    
+                    # Filter title rows only
+                    title_rows = records.filtered(lambda r: r.is_title)
+                    
+                    if not title_rows:
+                        continue
+                    
+                    _logger.info(f"  Table {model_name}: Found {len(title_rows)} title rows")
+                    
+                    # Process each title row
+                    for record in title_rows:
+                        stats['total_processed'] += 1
+                        
+                        text_value = record[config['text_field']] or ''
+                        current_value = record[config['selection_field']]
+                        
+                        # Normalize text
+                        normalized_text = unidecode(text_value.lower().strip())
+                        
+                        # Extract first 4 words
+                        words = normalized_text.split()
+                        first_4_words = ' '.join(words[:4]) if len(words) >= 4 else normalized_text
+                        
+                        matched_value = None
+                        match_type = None
+                        confidence = 0
+                        
+                        # Strategy 1: Template exact match
+                        for selection_value, template_text in config['templates'].items():
+                            normalized_template = unidecode(template_text.lower().strip())
+                            if normalized_text == normalized_template:
+                                matched_value = selection_value
+                                match_type = 'template'
+                                confidence = 100
+                                break
+                        
+                        # Strategy 2: Fuzzy prefix match (4 words)
+                        if not matched_value:
+                            best_score = 0
+                            for selection_value, keywords in config['keywords'].items():
+                                for keyword in keywords:
+                                    normalized_keyword = unidecode(keyword.lower().strip())
+                                    score = fuzz.partial_ratio(first_4_words, normalized_keyword)
+                                    
+                                    if score > best_score:
+                                        best_score = score
+                                        if score >= 80:
+                                            matched_value = selection_value
+                                            match_type = 'fuzzy_prefix'
+                                            confidence = score
+                        
+                        # Strategy 3: Fuzzy full text (fallback)
+                        if not matched_value:
+                            best_score = 0
+                            for selection_value, keywords in config['keywords'].items():
+                                for keyword in keywords:
+                                    normalized_keyword = unidecode(keyword.lower().strip())
+                                    score = fuzz.partial_ratio(normalized_text, normalized_keyword)
+                                    
+                                    if score > best_score:
+                                        best_score = score
+                                        if score >= 70:
+                                            matched_value = selection_value
+                                            match_type = 'fuzzy_full'
+                                            confidence = score
+                        
+                        # Use default if no match
+                        if not matched_value:
+                            matched_value = config['default']
+                            match_type = 'default'
+                            confidence = 0
+                        
+                        # Update if different from current value
+                        try:
+                            if matched_value != current_value:
+                                record.write({config['selection_field']: matched_value})
+                                stats['total_updated'] += 1
+                                stats['by_table'][model_name]['updated'] += 1
+                                
+                                _logger.info(
+                                    f"    ✓ Updated {model_name} #{record.id}: "
+                                    f"'{text_value}' → '{current_value}' ➜ '{matched_value}' "
+                                    f"({match_type}: {confidence}%)"
+                                )
+                            else:
+                                stats['total_unchanged'] += 1
+                                stats['by_table'][model_name]['unchanged'] += 1
+                                _logger.debug(
+                                    f"    - Unchanged {model_name} #{record.id}: "
+                                    f"'{text_value}' = '{matched_value}'"
+                                )
+                        
+                        except Exception as e:
+                            stats['total_errors'] += 1
+                            _logger.error(f"    ✗ Error updating {model_name} #{record.id}: {str(e)}")
+                
+            except Exception as e:
+                stats['total_errors'] += 1
+                _logger.error(f"  ✗ Error processing document {document.id}: {str(e)}")
+                self.env.cr.rollback()
+        
+        # Print summary
+        _logger.info("\n" + "=" * 60)
+        _logger.info("Equipment Tables Update - Summary Report")
+        _logger.info("=" * 60)
+        _logger.info(f"Documents processed: {total_docs}")
+        _logger.info(f"Title rows processed: {stats['total_processed']}")
+        _logger.info(f"  ✓ Updated: {stats['total_updated']}")
+        _logger.info(f"  - Unchanged: {stats['total_unchanged']}")
+        _logger.info(f"  ✗ Errors: {stats['total_errors']}")
+        _logger.info("\nBy Table:")
+        _logger.info(f"  equipment.product (1.2):")
+        _logger.info(f"    - Updated: {stats['by_table']['equipment.product']['updated']}")
+        _logger.info(f"    - Unchanged: {stats['by_table']['equipment.product']['unchanged']}")
+        _logger.info(f"  equipment.product.report (2.2):")
+        _logger.info(f"    - Updated: {stats['by_table']['equipment.product.report']['updated']}")
+        _logger.info(f"    - Unchanged: {stats['by_table']['equipment.product.report']['unchanged']}")
+        _logger.info("=" * 60)
+        
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'Equipment Tables Update Complete',
+                'message': f"Updated {stats['total_updated']} title rows in tables 1.2 and 2.2.\n"
+                          f"Unchanged: {stats['total_unchanged']}\n"
+                          f"Errors: {stats['total_errors']}",
+                'type': 'success' if stats['total_errors'] == 0 else 'warning',
+                'sticky': True,
+            }
+        }
+
+    def update_titles_matched_only(self):
+        """
+        One-time update: Update ONLY title rows that have a good match (>= 70%)
+        Do NOT use default values for unmatched titles - leave them as-is
+        
+        This is useful when you want to:
+        - Fix only the obvious matches
+        - Leave uncertain cases for manual review
+        - Avoid auto-filling defaults on unclear titles
+        
+        Usage:
+        - Run manually: env['document.extraction'].update_titles_matched_only()
+        - Run via cron: Create scheduled action
+        """
+        _logger.info("=" * 60)
+        _logger.info("Update Titles - Matched Only (No Defaults)")
+        _logger.info("=" * 60)
+        
+        all_documents = self.search([])
+        total_docs = len(all_documents)
+        _logger.info(f"Found {total_docs} documents to process")
+        
+        stats = {
+            'total_processed': 0,
+            'total_updated': 0,
+            'total_skipped': 0,
+            'by_match_type': {
+                'template': 0,
+                'fuzzy_prefix': 0,
+                'fuzzy_full': 0,
+                'no_match': 0
+            }
+        }
+        
+        for doc_idx, document in enumerate(all_documents, 1):
+            _logger.info(f"\n[{doc_idx}/{total_docs}] Processing: {document.name} (ID: {document.id})")
+            
+            try:
+                for model_name, config in TITLE_KEYWORD_CONFIG.items():
+                    field_name = config['field_name']
+                    
+                    if not hasattr(document, field_name):
+                        continue
+                    
+                    records = getattr(document, field_name)
+                    title_rows = records.filtered(lambda r: r.is_title)
+                    
+                    if not title_rows:
+                        continue
+                    
+                    for record in title_rows:
+                        stats['total_processed'] += 1
+                        text_value = record[config['text_field']] or ''
+                        current_value = record[config['selection_field']]
+                        
+                        # Match with use_default=False
+                        matched_value, confidence, match_type = match_title_selection(
+                            text_value,
+                            config.get('templates', {}),
+                            config['mappings'],
+                            config['default'],
+                            use_default=False  # ← DO NOT use default
+                        )
+                        
+                        # Track match type
+                        stats['by_match_type'][match_type] = stats['by_match_type'].get(match_type, 0) + 1
+                        
+                        # Only update if we found a real match
+                        if matched_value and matched_value != current_value:
+                            record.write({config['selection_field']: matched_value})
+                            stats['total_updated'] += 1
+                            _logger.info(
+                                f"  ✓ Updated {model_name} #{record.id}: "
+                                f"'{text_value}' → '{matched_value}' ({match_type}: {confidence}%)"
+                            )
+                        elif match_type == 'no_match':
+                            stats['total_skipped'] += 1
+                            _logger.info(
+                                f"  ⊘ Skipped {model_name} #{record.id}: "
+                                f"'{text_value}' - No match found (current: '{current_value}')"
+                            )
+                        else:
+                            stats['total_skipped'] += 1
+                
+                # Commit after each document
+                self.env.cr.commit()
+                
+            except Exception as e:
+                _logger.error(f"  ✗ Error processing document {document.id}: {str(e)}")
+                self.env.cr.rollback()
+        
+        # Summary
+        _logger.info("\n" + "=" * 60)
+        _logger.info("Update Summary - Matched Only")
+        _logger.info("=" * 60)
+        _logger.info(f"Documents processed: {total_docs}")
+        _logger.info(f"Title rows processed: {stats['total_processed']}")
+        _logger.info(f"  ✓ Updated (matched): {stats['total_updated']}")
+        _logger.info(f"  ⊘ Skipped (no match): {stats['total_skipped']}")
+        _logger.info("\nMatch Type Distribution:")
+        _logger.info(f"  Template exact: {stats['by_match_type'].get('template', 0)}")
+        _logger.info(f"  Fuzzy prefix: {stats['by_match_type'].get('fuzzy_prefix', 0)}")
+        _logger.info(f"  Fuzzy full: {stats['by_match_type'].get('fuzzy_full', 0)}")
+        _logger.info(f"  No match (skipped): {stats['by_match_type'].get('no_match', 0)}")
+        _logger.info("=" * 60)
+        
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'Title Update Complete (Matched Only)',
+                'message': f"Updated {stats['total_updated']} matched titles.\n"
+                          f"Skipped {stats['total_skipped']} unmatched titles (no defaults used).",
+                'type': 'success',
+                'sticky': True,
+            }
+        }

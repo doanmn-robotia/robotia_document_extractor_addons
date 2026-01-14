@@ -19,6 +19,9 @@ class CollectionRecyclingReport(models.Model):
         ondelete='cascade',
         index=True
     )
+    sequence = fields.Integer()
+    is_title = fields.Boolean(string='Is Title Row', default=False, help='Indicates if this is a section title row')
+    title_name = fields.Char(string='Title Name', help='Title text for section headers')
     substance_id = fields.Many2one('controlled.substance', string='Controlled Substance', ondelete='restrict', index=True)
     substance_name = fields.Char(string='Substance Name', compute='_compute_substance_name', store=True, readonly=False, required=False)
 

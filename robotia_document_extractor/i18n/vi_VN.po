@@ -41,8 +41,8 @@ msgstr "Lĩnh vực hoạt động"
 
 #. module: robotia_document_extractor
 #: model:ir.model.fields,field_description:robotia_document_extractor.field_collection_recycling__activity_type
-msgid "Activity Type"
-msgstr "Loại hoạt động"
+msgid "Activity"
+msgstr "Hoạt động"
 
 #. module: robotia_document_extractor
 #: model:ir.model.fields,help:robotia_document_extractor.field_collection_recycling__activity_type
@@ -968,8 +968,9 @@ msgstr "Tổng lượng hạn ngạch sử dụng (tấn CO2tđ)"
 
 #. module: robotia_document_extractor
 #: model:ir.model.fields,field_description:robotia_document_extractor.field_substance_usage__usage_type
-msgid "Usage Type"
-msgstr "Loại sử dụng"
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_quota_usage__usage_type
+msgid "Activity"
+msgstr "Hoạt động"
 
 #. module: robotia_document_extractor
 #. odoo-javascript
@@ -5015,13 +5016,13 @@ msgstr "Năm sau (tấn CO2tđ)"
 
 #. module: robotia_document_extractor
 #: model:ir.model.fields,field_description:robotia_document_extractor.field_extraction_review_equipment_product_report__production_type
-msgid "Production Type"
-msgstr "Loại hình sản xuất"
+msgid "Activity"
+msgstr "Hoạt động"
 
 #. module: robotia_document_extractor
 #: model:ir.model.fields,field_description:robotia_document_extractor.field_extraction_review_equipment_ownership_report__ownership_type
-msgid "Ownership Type"
-msgstr "Loại sở hữu"
+msgid "Activity"
+msgstr "Hoạt động"
 
 #. module: robotia_document_extractor
 #: model:ir.model.fields,field_description:robotia_document_extractor.field_extraction_review_equipment_ownership_report__equipment_type
@@ -6393,8 +6394,8 @@ msgstr "Số tổ chức"
 
 #. module: robotia_document_extractor
 #: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_ownership_report__ownership_type
-msgid "Ownership Type"
-msgstr "Loại quyền sở hữu"
+msgid "Activity"
+msgstr "Hoạt động"
 
 #. module: robotia_document_extractor
 #: model:ir.model.fields,field_description:robotia_document_extractor.field_document_extraction__pdf_attachment_id
@@ -6440,8 +6441,8 @@ msgstr "Mô tả sản phẩm"
 
 #. module: robotia_document_extractor
 #: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_product_report__production_type
-msgid "Production Type"
-msgstr "Loại sản xuất"
+msgid "Activity"
+msgstr "Hoạt động"
 
 #. module: robotia_document_extractor
 #: model:ir.model.fields,help:robotia_document_extractor.field_google_drive_extraction_log__merged_pdf_url
@@ -7912,3 +7913,409 @@ msgstr "Tải lên thủ công"
 msgid "Maximum cooling/heating capacity in kW"
 msgstr "Công suất làm lạnh/sưởi tối đa tính bằng kW"
 
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_product__production_type
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_product_report__production_type
+msgid "Activity"
+msgstr "Hoạt động"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_equipment_product__production_type
+#: model:ir.model.fields,help:robotia_document_extractor.field_equipment_product_report__production_type
+msgid "Production or Import equipment category"
+msgstr "Phân loại thiết bị sản xuất hoặc nhập khẩu"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_ownership__ownership_type
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_equipment_ownership_report__ownership_type
+msgid "Activity"
+msgstr "Hoạt động"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_equipment_ownership__ownership_type
+msgid "Air conditioner or refrigeration equipment"
+msgstr "Thiết bị điều hòa hoặc thiết bị lạnh"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_equipment_ownership_report__ownership_type
+msgid "Type of equipment ownership. Auto-filled by AI extraction if available."
+msgstr "Loại sở hữu thiết bị. Được AI tự động điền nếu có sẵn."
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__equipment_product__production_type__production
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__equipment_product_report__production_type__production
+msgid "Production"
+msgstr "Sản xuất"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__equipment_product__production_type__import
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__equipment_product_report__production_type__import
+msgid "Import"
+msgstr "Nhập khẩu"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__equipment_ownership__ownership_type__air_conditioner
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__equipment_ownership_report__ownership_type__air_conditioner
+msgid "Air Conditioner"
+msgstr "Máy điều hòa"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__equipment_ownership__ownership_type__refrigeration
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__equipment_ownership_report__ownership_type__refrigeration
+msgid "Refrigeration"
+msgstr "Thiết bị lạnh"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_form
+msgid "Add Production Equipment Section"
+msgstr "Thêm phần Sản xuất thiết bị"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_form
+msgid "Add Import Equipment Section"
+msgstr "Thêm phần Nhập khẩu thiết bị"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_form
+msgid "Add Air Conditioner Section"
+msgstr "Thêm phần Máy điều hòa"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_form
+msgid "Add Industrial Cooling Section"
+msgstr "Thêm phần Thiết bị lạnh công nghiệp"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_form
+msgid "Add a line"
+msgstr "Thêm 1 dòng"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_document_extraction_form
+msgid "Add Section"
+msgstr "Thêm đầu mục"
+
+#. module: robotia_document_extractor
+#: model:ir.actions.act_window,name:robotia_document_extractor.action_substance_usage
+msgid "Substance Usage"
+msgstr "Sử dụng chất"
+
+#. module: robotia_document_extractor
+#: model:ir.actions.act_window,name:robotia_document_extractor.action_equipment_product
+msgid "Equipment/Product"
+msgstr "Thiết bị/Sản phẩm"
+
+#. module: robotia_document_extractor
+#: model:ir.actions.act_window,name:robotia_document_extractor.action_equipment_ownership
+msgid "Equipment Ownership"
+msgstr "Sở hữu thiết bị"
+
+#. module: robotia_document_extractor
+#: model:ir.actions.act_window,name:robotia_document_extractor.action_collection_recycling
+msgid "Collection/Recycling"
+msgstr "Thu gom/Tái chế"
+
+#. module: robotia_document_extractor
+#: model:ir.actions.act_window,name:robotia_document_extractor.action_quota_usage
+msgid "Quota Usage"
+msgstr "Sử dụng hạn ngạch"
+
+#. module: robotia_document_extractor
+#: model:ir.actions.act_window,name:robotia_document_extractor.action_equipment_product_report
+msgid "Equipment/Product Report"
+msgstr "Báo cáo thiết bị/Sản phẩm"
+
+#. module: robotia_document_extractor
+#: model:ir.actions.act_window,name:robotia_document_extractor.action_equipment_ownership_report
+msgid "Equipment Ownership Report"
+msgstr "Báo cáo sở hữu thiết bị"
+
+#. module: robotia_document_extractor
+#: model:ir.actions.act_window,name:robotia_document_extractor.action_collection_recycling_report
+msgid "Collection/Recycling Report"
+msgstr "Báo cáo thu gom/Tái chế"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.action_substance_usage
+msgid "No substance usage records found"
+msgstr "Không tìm thấy bản ghi sử dụng chất"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.action_substance_usage
+msgid "Substance usage data is extracted from Form 01 documents."
+msgstr "Dữ liệu sử dụng chất được trích xuất từ Form 01."
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.action_equipment_product
+msgid "No equipment/product records found"
+msgstr "Không tìm thấy bản ghi thiết bị/sản phẩm"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.action_equipment_product
+msgid "Equipment/Product data is extracted from Form 01 documents."
+msgstr "Dữ liệu thiết bị/sản phẩm được trích xuất từ Form 01."
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.action_equipment_ownership
+msgid "No equipment ownership records found"
+msgstr "Không tìm thấy bản ghi sở hữu thiết bị"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.action_equipment_ownership
+msgid "Equipment ownership data is extracted from Form 01 documents."
+msgstr "Dữ liệu sở hữu thiết bị được trích xuất từ Form 01."
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.action_collection_recycling
+msgid "No collection/recycling records found"
+msgstr "Không tìm thấy bản ghi thu gom/tái chế"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.action_collection_recycling
+msgid "Collection/Recycling data is extracted from Form 01 documents."
+msgstr "Dữ liệu thu gom/tái chế được trích xuất từ Form 01."
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.action_quota_usage
+msgid "No quota usage records found"
+msgstr "Không tìm thấy bản ghi sử dụng hạn ngạch"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.action_quota_usage
+msgid "Quota usage data is extracted from Form 02 documents."
+msgstr "Dữ liệu sử dụng hạn ngạch được trích xuất từ Form 02."
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.action_equipment_product_report
+msgid "No equipment/product report records found"
+msgstr "Không tìm thấy bản ghi báo cáo thiết bị/sản phẩm"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.action_equipment_product_report
+msgid "Equipment/Product report data is extracted from Form 02 documents."
+msgstr "Dữ liệu báo cáo thiết bị/sản phẩm được trích xuất từ Form 02."
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.action_equipment_ownership_report
+msgid "No equipment ownership report records found"
+msgstr "Không tìm thấy bản ghi báo cáo sở hữu thiết bị"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.action_equipment_ownership_report
+msgid "Equipment ownership report data is extracted from Form 02 documents."
+msgstr "Dữ liệu báo cáo sở hữu thiết bị được trích xuất từ Form 02."
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.action_collection_recycling_report
+msgid "No collection/recycling report records found"
+msgstr "Không tìm thấy bản ghi báo cáo thu gom/tái chế"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.action_collection_recycling_report
+msgid "Collection/Recycling report data is extracted from Form 02 documents."
+msgstr "Dữ liệu báo cáo thu gom/tái chế được trích xuất từ Form 02."
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_substance_usage_search
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_equipment_product_search
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_quota_usage_search
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_equipment_product_report_search
+msgid "Production"
+msgstr "Sản xuất"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_substance_usage_search
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_equipment_product_search
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_quota_usage_search
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_equipment_product_report_search
+msgid "Import"
+msgstr "Nhập khẩu"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_substance_usage_search
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_quota_usage_search
+msgid "Export"
+msgstr "Xuất khẩu"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_equipment_ownership_search
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_equipment_ownership_report_search
+msgid "Air Conditioner"
+msgstr "Máy điều hòa"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_equipment_ownership_search
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_equipment_ownership_report_search
+msgid "Refrigeration"
+msgstr "Làm lạnh"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_collection_recycling_search
+msgid "Collection"
+msgstr "Thu gom"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_collection_recycling_search
+msgid "Reuse"
+msgstr "Tái sử dụng"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_collection_recycling_search
+msgid "Recycle"
+msgstr "Tái chế"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_collection_recycling_search
+msgid "Disposal"
+msgstr "Xử lý"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_substance_usage_search
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_equipment_product_search
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_equipment_ownership_search
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_collection_recycling_search
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_quota_usage_search
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_equipment_product_report_search
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_equipment_ownership_report_search
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_collection_recycling_report_search
+msgid "Document"
+msgstr "Tài liệu"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_substance_usage_search
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_quota_usage_search
+msgid "Usage Type"
+msgstr "Loại sử dụng"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_equipment_product_search
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_equipment_product_report_search
+msgid "Production Type"
+msgstr "Loại sản xuất"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_equipment_ownership_search
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_equipment_ownership_report_search
+msgid "Ownership Type"
+msgstr "Loại sở hữu"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_equipment_product_search
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_equipment_ownership_search
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_equipment_product_report_search
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_equipment_ownership_report_search
+msgid "Equipment Type"
+msgstr "Loại thiết bị"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_substance_usage_search
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_equipment_product_search
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_equipment_ownership_search
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_collection_recycling_search
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_quota_usage_search
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_equipment_product_report_search
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_equipment_ownership_report_search
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_collection_recycling_report_search
+msgid "Substance"
+msgstr "Chất"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_collection_recycling_search
+msgid "Activity Type"
+msgstr "Loại hoạt động"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_collection_recycling_report_search
+msgid "Collection Location"
+msgstr "Địa điểm thu gom"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,field_description:robotia_document_extractor.field_res_users__document_extractor_group
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_users_form_simplified
+msgid "Document Extractor Role"
+msgstr "Vai trò hệ thống"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields,help:robotia_document_extractor.field_res_users__document_extractor_group
+msgid "User's role in Document Extractor module"
+msgstr "Vai trò của người dùng trong module Document Extractor"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__res_users__document_extractor_group__none
+msgid "No Role"
+msgstr "Không có vai trò"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__res_users__document_extractor_group__viewer
+msgid "Viewer"
+msgstr "Người xem"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__res_users__document_extractor_group__checker
+msgid "Checker"
+msgstr "Người kiểm tra"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__res_users__document_extractor_group__maker
+msgid "Maker"
+msgstr "Người tạo"
+
+#. module: robotia_document_extractor
+#: model:ir.model.fields.selection,name:robotia_document_extractor.selection__res_users__document_extractor_group__admin
+msgid "Admin"
+msgstr "Quản trị viên"
+
+#. module: robotia_document_extractor
+#: model:ir.actions.act_window,name:robotia_document_extractor.action_users_simplified
+msgid "User"
+msgstr "Người dùng"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_users_form_simplified
+msgid "e.g. John Doe"
+msgstr "Ví dụ: Nguyễn Văn A"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_users_form_simplified
+msgid "Email Address"
+msgstr "Địa chỉ Email"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_users_form_simplified
+msgid "e.g. email@yourcompany.com"
+msgstr "Ví dụ: email@congtyban.com"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/fields/card_selection/card_selection_field.js:0
+#, python-format
+msgid "Can view documents and extractions (read-only)"
+msgstr "Có thể xem tài liệu và dữ liệu trích xuất (chỉ đọc)"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/fields/card_selection/card_selection_field.js:0
+#, python-format
+msgid "Can review and validate extractions"
+msgstr "Có thể xem xét và xác nhận dữ liệu trích xuất"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/fields/card_selection/card_selection_field.js:0
+#, python-format
+msgid "Can create and edit document extractions"
+msgstr "Có thể tạo và chỉnh sửa dữ liệu trích xuất"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/fields/card_selection/card_selection_field.js:0
+#, python-format
+msgid "Full access to Document Extractor module including settings"
+msgstr "Toàn quyền truy cập module Document Extractor bao gồm cài đặt"
+
+#. module: robotia_document_extractor
+#. odoo-javascript
+#: code:addons/robotia_document_extractor/static/src/js/fields/card_selection/card_selection_field.js:0
+#, python-format
+msgid "No Document Extractor access"
+msgstr "Không có quyền truy cập Document Extractor"

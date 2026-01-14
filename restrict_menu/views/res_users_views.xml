@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_users_form_inherit_restrict_menu" model="ir.ui.view">
+        <field name="name">res.users.form.inherit.restrict.menu</field>
+        <field name="model">res.users</field>
+        <field name="inherit_id" ref="base.view_users_form"/>
+        <field name="arch" type="xml">
+            <notebook position="inside">
+                <field name="is_admin" invisible="1"/>
+                <page string="Menu Access" name="menu_access" invisible="is_admin">
+                    <group>
+                        <field name="show_menu_ids" widget="many2many_tags" options="{'no_create': True}"/>
+                    </group>
+                    <div class="alert alert-info" role="alert"><p><i class="fa fa-info-circle"/>Note: Selecting a menu will automatically grant access to all its child menus.</p></div>
+                </page>
+            </notebook>
+        </field>
+    </record>
+</odoo>

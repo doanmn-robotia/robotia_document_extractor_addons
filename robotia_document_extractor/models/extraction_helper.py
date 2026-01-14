@@ -36,6 +36,127 @@ RELATION_MAPPINGS = {
     'collection_recycling_report': ('collection.recycling.report', 'collection_recycling_report_ids'),
 }
 
+# Title field auto-fill mapping for title rows without title text
+# Used in build_o2m_commands() to auto-fill title field based on selection value
+# Format: {
+#     'extracted_key': {
+#         'title_field': 'field_name',      # Field to auto-fill (e.g., 'substance_name')
+#         'selection_field': 'field_name',  # Selection field to check (e.g., 'usage_type')
+#         'mapping': {
+#             'selection_value': 'default_title_text'
+#         }
+#     }
+# }
+TITLE_FIELD_DEFAULTS = {
+    # Table 1.1: Substance Usage
+    'substance_usage': {
+        'title_field': 'substance_name',
+        'selection_field': 'usage_type',
+        'mapping': {
+            'production': 'Sản xuất chất được kiểm soát',
+            'import': 'Nhập khẩu chất được kiểm soát',
+            'export': 'Xuất khẩu chất được kiểm soát',
+        }
+    },
+    # Table 1.4: Collection & Recycling
+    'collection_recycling': {
+        'title_field': 'substance_name',
+        'selection_field': 'activity_type',
+        'mapping': {
+            'collection': 'Thu gom chất được kiểm soát',
+            'reuse': 'Tái sử dụng chất được kiểm soát sau thu gom',
+            'recycle': 'Tái chế chất sau thu gom',
+            'disposal': 'Xử lý chất được kiểm soát',
+        }
+    },
+    # Table 2.1: Quota Usage
+    'quota_usage': {
+        'title_field': 'substance_name',
+        'selection_field': 'usage_type',
+        'mapping': {
+            'production': 'Sản xuất chất được kiểm soát',
+            'import': 'Nhập khẩu chất được kiểm soát',
+            'export': 'Xuất khẩu chất được kiểm soát',
+        }
+    },
+    # Table 1.2: Equipment/Product
+    'equipment_product': {
+        'title_field': 'product_type',
+        'selection_field': 'production_type',
+        'mapping': {
+            'production': 'Sản xuất thiết bị, sản phẩm có chứa hoặc sản xuất từ chất được kiểm soát',
+            'import': 'Nhập khẩu thiết bị, sản phẩm có chứa hoặc sản xuất từ chất được kiểm soát',
+        }
+    },
+    # Table 1.3: Equipment Ownership
+    'equipment_ownership': {
+        'title_field': 'equipment_type',
+        'selection_field': 'ownership_type',
+        'mapping': {
+            'air_conditioner': 'Máy điều hòa không khí có năng suất lạnh danh định lớn hơn 26,5 kW (90.000 BTU/h) và có tổng năng suất lạnh danh định của các thiết bị lớn hơn 586 kW (2.000.000 BTU/h)',
+            'refrigeration': 'Thiết bị lạnh công nghiệp có công suất điện lớn hơn 40 kW',
+        }
+    },
+    # Table 2.2: Equipment/Product Report
+    'equipment_product_report': {
+        'title_field': 'product_type',
+        'selection_field': 'production_type',
+        'mapping': {
+            'production': 'Sản xuất thiết bị, sản phẩm có chứa hoặc sản xuất từ chất được kiểm soát',
+            'import': 'Nhập khẩu thiết bị, sản phẩm có chứa hoặc sản xuất từ chất được kiểm soát',
+        }
+    },
+    # Table 2.3: Equipment Ownership Report
+    'equipment_ownership_report': {
+        'title_field': 'equipment_type',
+        'selection_field': 'ownership_type',
+        'mapping': {
+            'air_conditioner': 'Máy điều hòa không khí có năng suất lạnh danh định lớn hơn 26,5 kW (90.000 BTU/h) và có tổng năng suất lạnh danh định của các thiết bị lớn hơn 586 kW (2.000.000 BTU/h)',
+            'refrigeration': 'Thiết bị lạnh công nghiệp có công suất điện lớn hơn 40 kW',
+        }
+    },
+    # Note: Table 2.4 (collection_recycling_report) uses title_name field, not covered by this mapping
+}
+
+
+# ========== HELPER FUNCTIONS ==========
+
+def _validate_has_table_flag_from_commands(ai_value, o2m_commands):
+    """
+    Validate has_table flag from One2many commands (after build_o2m_commands)
+
+    Same philosophy as extraction_service: Trust AI=True, validate AI=False
+
+    Args:
+        ai_value (bool): AI-extracted has_table flag value
+        o2m_commands (list): One2many commands [(0, 0, {...}), ...]
+
+    Returns:
+        bool: Validated flag value
+    """
+    # Trust AI when it detects a table
+    if ai_value:
+        return True
+
+    # AI says False - check if commands contain data rows
+    if not o2m_commands:
+        return False
+
+    for cmd_tuple in o2m_commands:
+        # One2many command format: (0, 0, vals_dict)
+        if len(cmd_tuple) != 3:
+            continue
+
+        vals = cmd_tuple[2]
+        # Found a data row (not title)
+        if not vals.get('is_title'):
+            _logger.info(
+                "AI missed table (AI=False but One2many has data) - overriding to True"
+            )
+            return True
+
+    return False
+
 
 class ExtractionHelper(models.AbstractModel):
     _name = 'extraction.helper'
@@ -420,14 +541,20 @@ class ExtractionHelper(models.AbstractModel):
         extracted_data = self._validate_extracted_data_keys(extracted_data, document_type)
 
         # Helper: Build One2many commands
-        def build_o2m_commands(data_list):
+        def build_o2m_commands(data_list, table_key=None):
             """
             Build One2many commands from data list
+
+            Args:
+                data_list: List of row dictionaries
+                table_key: Key from extracted_data (e.g., 'substance_usage', 'quota_usage')
+                           Used to auto-fill title fields based on selection values
 
             Also cleans empty title sections:
             - Title row (is_title=True) without data children (is_title=False) → removed
             - Data rows without substance_id get default substance (other_hcfc)
             - Normalizes capacity from cooling_capacity and power_capacity using EquipmentCapacityMixin
+            - Auto-fills title field if: row has is_title=True, title field empty, selection field has value
             """
             if not data_list:
                 return []
@@ -443,12 +570,33 @@ class ExtractionHelper(models.AbstractModel):
             # Get capacity mixin for normalization
             capacity_mixin = self.env['equipment.capacity.mixin']
 
+            # Get title field mapping for this table (if exists)
+            title_config = TITLE_FIELD_DEFAULTS.get(table_key) if table_key else None
+
             # Clean empty sections first
             cleaned_data = []
             i = 0
 
             while i < len(data_list):
                 row = data_list[i]
+
+                # Auto-fill title field if conditions met
+                if row.get('is_title') and title_config:
+                    title_field = title_config['title_field']
+                    selection_field = title_config['selection_field']
+                    mapping = title_config['mapping']
+
+                    # If title field is empty but selection field has value
+                    if not row.get(title_field) and row.get(selection_field):
+                        selection_value = row[selection_field]
+                        default_title = mapping.get(selection_value)
+
+                        if default_title:
+                            row[title_field] = default_title
+                            _logger.debug(
+                                f"Auto-filled {title_field}='{default_title}' "
+                                f"from {selection_field}='{selection_value}' for table '{table_key}'"
+                            )
 
                 # If not a title row, always keep
                 if not row.get('is_title'):
@@ -617,6 +765,9 @@ class ExtractionHelper(models.AbstractModel):
                         f"in country_id={contact_country_id}"
                     )
 
+        extracted_data = self.env['document.extraction.service']._validate_and_fix_metadata_flags(extracted_data, document_type)
+
+
         # ========== BUILD VALUES DICT ==========
         vals = {
             'document_type': document_type,
@@ -671,46 +822,91 @@ class ExtractionHelper(models.AbstractModel):
 
         # Form 01 specific
         if document_type == '01':
-            vals['has_table_1_1'] = extracted_data.get('has_table_1_1', False)
-            vals['has_table_1_2'] = extracted_data.get('has_table_1_2', False)
-            vals['has_table_1_3'] = extracted_data.get('has_table_1_3', False)
-            vals['has_table_1_4'] = extracted_data.get('has_table_1_4', False)
+            # Build One2many commands first
+            substance_usage_commands = normalize_sequences(
+                build_o2m_commands(extracted_data.get('substance_usage', []), table_key='substance_usage')
+            )
+            equipment_product_commands = normalize_sequences(
+                build_o2m_commands(extracted_data.get('equipment_product', []), table_key='equipment_product')
+            )
+            equipment_ownership_commands = normalize_sequences(
+                build_o2m_commands(extracted_data.get('equipment_ownership', []), table_key='equipment_ownership')
+            )
+            collection_recycling_commands = normalize_sequences(
+                build_o2m_commands(extracted_data.get('collection_recycling', []), table_key='collection_recycling')
+            )
+
+            # Validate has_table flags with AI priority logic
+            # (Trust AI=True, verify AI=False by checking actual One2many commands)
+            vals['has_table_1_1'] = _validate_has_table_flag_from_commands(
+                extracted_data.get('has_table_1_1', False),
+                substance_usage_commands
+            )
+            vals['has_table_1_2'] = _validate_has_table_flag_from_commands(
+                extracted_data.get('has_table_1_2', False),
+                equipment_product_commands
+            )
+            vals['has_table_1_3'] = _validate_has_table_flag_from_commands(
+                extracted_data.get('has_table_1_3', False),
+                equipment_ownership_commands
+            )
+            vals['has_table_1_4'] = _validate_has_table_flag_from_commands(
+                extracted_data.get('has_table_1_4', False),
+                collection_recycling_commands
+            )
+
+            # Set capacity merge flags (unchanged)
             vals['is_capacity_merged_table_1_2'] = extracted_data.get('is_capacity_merged_table_1_2', True)
             vals['is_capacity_merged_table_1_3'] = extracted_data.get('is_capacity_merged_table_1_3', True)
 
-            vals['substance_usage_ids'] = normalize_sequences(
-                build_o2m_commands(extracted_data.get('substance_usage', []))
-            )
-            vals['equipment_product_ids'] = normalize_sequences(
-                build_o2m_commands(extracted_data.get('equipment_product', []))
-            )
-            vals['equipment_ownership_ids'] = normalize_sequences(
-                build_o2m_commands(extracted_data.get('equipment_ownership', []))
-            )
-            vals['collection_recycling_ids'] = normalize_sequences(
-                build_o2m_commands(extracted_data.get('collection_recycling', []))
-            )
+            # Assign One2many commands
+            vals['substance_usage_ids'] = substance_usage_commands
+            vals['equipment_product_ids'] = equipment_product_commands
+            vals['equipment_ownership_ids'] = equipment_ownership_commands
+            vals['collection_recycling_ids'] = collection_recycling_commands
 
         # Form 02 specific
         elif document_type == '02':
-            vals['has_table_2_1'] = extracted_data.get('has_table_2_1', False)
-            vals['has_table_2_2'] = extracted_data.get('has_table_2_2', False)
-            vals['has_table_2_3'] = extracted_data.get('has_table_2_3', False)
-            vals['has_table_2_4'] = extracted_data.get('has_table_2_4', False)
+            # Build One2many commands first
+            quota_usage_commands = normalize_sequences(
+                build_o2m_commands(extracted_data.get('quota_usage', []), table_key='quota_usage')
+            )
+            equipment_product_report_commands = normalize_sequences(
+                build_o2m_commands(extracted_data.get('equipment_product_report', []), table_key='equipment_product_report')
+            )
+            equipment_ownership_report_commands = normalize_sequences(
+                build_o2m_commands(extracted_data.get('equipment_ownership_report', []), table_key='equipment_ownership_report')
+            )
+            collection_recycling_report_commands = normalize_sequences(
+                build_o2m_commands(extracted_data.get('collection_recycling_report', []), table_key='collection_recycling_report')
+            )
+
+            # Validate has_table flags with AI priority logic
+            vals['has_table_2_1'] = _validate_has_table_flag_from_commands(
+                extracted_data.get('has_table_2_1', False),
+                quota_usage_commands
+            )
+            vals['has_table_2_2'] = _validate_has_table_flag_from_commands(
+                extracted_data.get('has_table_2_2', False),
+                equipment_product_report_commands
+            )
+            vals['has_table_2_3'] = _validate_has_table_flag_from_commands(
+                extracted_data.get('has_table_2_3', False),
+                equipment_ownership_report_commands
+            )
+            vals['has_table_2_4'] = _validate_has_table_flag_from_commands(
+                extracted_data.get('has_table_2_4', False),
+                collection_recycling_report_commands
+            )
+
+            # Set capacity merge flags (unchanged)
             vals['is_capacity_merged_table_2_2'] = extracted_data.get('is_capacity_merged_table_2_2', True)
             vals['is_capacity_merged_table_2_3'] = extracted_data.get('is_capacity_merged_table_2_3', True)
 
-            vals['quota_usage_ids'] = normalize_sequences(
-                build_o2m_commands(extracted_data.get('quota_usage', []))
-            )
-            vals['equipment_product_report_ids'] = normalize_sequences(
-                build_o2m_commands(extracted_data.get('equipment_product_report', []))
-            )
-            vals['equipment_ownership_report_ids'] = normalize_sequences(
-                build_o2m_commands(extracted_data.get('equipment_ownership_report', []))
-            )
-            vals['collection_recycling_report_ids'] = normalize_sequences(
-                build_o2m_commands(extracted_data.get('collection_recycling_report', []))
-            )
+            # Assign One2many commands
+            vals['quota_usage_ids'] = quota_usage_commands
+            vals['equipment_product_report_ids'] = equipment_product_report_commands
+            vals['equipment_ownership_report_ids'] = equipment_ownership_report_commands
+            vals['collection_recycling_report_ids'] = collection_recycling_report_commands
 
         return vals

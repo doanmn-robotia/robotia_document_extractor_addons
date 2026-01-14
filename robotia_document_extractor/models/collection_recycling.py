@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from odoo import models, fields, api
+from .document_extraction import auto_detect_title_selection
 
 
 class CollectionRecycling(models.Model):
@@ -32,12 +33,12 @@ class CollectionRecycling(models.Model):
     )
     activity_type = fields.Selection(
         selection=[
-            ('collection', 'Collection'),
-            ('reuse', 'Reuse'),
-            ('recycle', 'Recycle'),
-            ('disposal', 'Disposal')
+            ('collection', 'Thu gom'),
+            ('reuse', 'Tái sử dụng'),
+            ('recycle', 'Tái chế'),
+            ('disposal', 'Xử lý/Tiêu hủy')
         ],
-        string='Activity Type',
+        string='Activity',
         index=True,
         help='Type of activity: Collection, Reuse, Recycle, or Disposal'
     )
@@ -72,3 +73,62 @@ class CollectionRecycling(models.Model):
         for record in self:
             if record.substance_id:
                 record.substance_name = record.substance_id.name
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        """Override create to auto-detect selection for title rows"""
+        
+        for vals in vals_list:
+            # Auto-detect selection for title rows
+            if vals.get('is_title'):
+                text_value = vals.get('substance_name', '')
+                current_value = vals.get('activity_type')
+                
+                detected_value = auto_detect_title_selection(
+                    'collection.recycling',
+                    text_value,
+                    current_value
+                )
+                
+                if detected_value:
+                    vals['activity_type'] = detected_value
+        
+        return super(CollectionRecycling, self).create(vals_list)
+
+    def write(self, vals):
+        """Override write to auto-detect selection for title rows"""
+        title_records = self.env['collection.recycling']
+        non_title_records = self.env['collection.recycling']
+        
+        for record in self:
+            is_title = vals.get('is_title', record.is_title)
+            
+            if is_title:
+                title_records |= record
+            else:
+                non_title_records |= record
+        
+        # Process title records individually
+        for record in title_records:
+            text_value = vals.get('substance_name', record.substance_name)
+            current_value = vals.get('activity_type', record.activity_type)
+            
+            detected_value = auto_detect_title_selection(
+                'collection.recycling',
+                text_value,
+                current_value
+            )
+            
+            if detected_value:
+                # Create copy of vals for this record
+                record_vals = vals.copy()
+                record_vals['activity_type'] = detected_value
+                super(CollectionRecycling, record).write(record_vals)
+            else:
+                super(CollectionRecycling, record).write(vals)
+        
+        # Process non-title records in batch
+        if non_title_records:
+            super(CollectionRecycling, non_title_records).write(vals)
+        
+        return True

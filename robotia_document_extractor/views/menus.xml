@@ -220,6 +220,56 @@
               action="action_collection_location"
               sequence="7"/>
 
+    <!-- Table Data Menus (Form 01) -->
+    <menuitem id="menu_table_1_1_substance_usage"
+              name="Bảng 1.1: Sử dụng chất"
+              parent="menu_master_data"
+              action="action_substance_usage"
+              sequence="10"/>
+
+    <menuitem id="menu_table_1_2_equipment_product"
+              name="Bảng 1.2: Thiết bị/Sản phẩm"
+              parent="menu_master_data"
+              action="action_equipment_product"
+              sequence="11"/>
+
+    <menuitem id="menu_table_1_3_equipment_ownership"
+              name="Bảng 1.3: Sở hữu thiết bị"
+              parent="menu_master_data"
+              action="action_equipment_ownership"
+              sequence="12"/>
+
+    <menuitem id="menu_table_1_4_collection_recycling"
+              name="Bảng 1.4: Thu gom/Tái chế"
+              parent="menu_master_data"
+              action="action_collection_recycling"
+              sequence="13"/>
+
+    <!-- Table Data Menus (Form 02) -->
+    <menuitem id="menu_table_2_1_quota_usage"
+              name="Bảng 2.1: Sử dụng hạn ngạch"
+              parent="menu_master_data"
+              action="action_quota_usage"
+              sequence="14"/>
+
+    <menuitem id="menu_table_2_2_equipment_product_report"
+              name="Bảng 2.2: Báo cáo thiết bị/Sản phẩm"
+              parent="menu_master_data"
+              action="action_equipment_product_report"
+              sequence="15"/>
+
+    <menuitem id="menu_table_2_3_equipment_ownership_report"
+              name="Bảng 2.3: Báo cáo sở hữu thiết bị"
+              parent="menu_master_data"
+              action="action_equipment_ownership_report"
+              sequence="16"/>
+
+    <menuitem id="menu_table_2_4_collection_recycling_report"
+              name="Bảng 2.4: Báo cáo thu gom/Tái chế"
+              parent="menu_master_data"
+              action="action_collection_recycling_report"
+              sequence="17"/>
+
     <!-- Configuration Menu -->
     <menuitem id="menu_configuration"
               name="Configuration"

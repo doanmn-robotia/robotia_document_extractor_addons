@@ -15,7 +15,7 @@ export class UsersTab extends Component {
 
         this.state = useState({
             users: [],
-            stats: { total: 0, admin: 0, maker: 0, checker: 0 },
+            stats: { total: 0, admin: 0, maker: 0, checker: 0, viewer: 0 },
             searchQuery: '',
             roleFilter: 'All',
             statusFilter: 'All',
@@ -48,6 +48,7 @@ export class UsersTab extends Component {
                     is_doc_admin: {},
                     is_doc_maker: {},
                     is_doc_checker: {},
+                    is_doc_viewer: {},
                     is_system_admin: {}
                 },
                 order: "create_date desc"
@@ -61,21 +62,24 @@ export class UsersTab extends Component {
         this.state.stats.total = this.state.users.length;
 
         // Admin card counts BOTH System Admin AND Document Admin
-        // Maker and Checker count only their respective roles
+        // Maker, Checker, Viewer count only their respective roles
         this.state.stats.admin = 0;
         this.state.stats.maker = 0;
         this.state.stats.checker = 0;
+        this.state.stats.viewer = 0;
 
         users.forEach(user => {
             // Admin card: count both System Admin and Document Admin
             if (user.is_system_admin || user.is_doc_admin) {
                 this.state.stats.admin++;
             }
-            // Only count Maker/Checker if user is NOT an admin
+            // Only count Maker/Checker/Viewer if user is NOT an admin
             else if (user.is_doc_maker) {
                 this.state.stats.maker++;
             } else if (user.is_doc_checker) {
                 this.state.stats.checker++;
+            } else if (user.is_doc_viewer) {
+                this.state.stats.viewer++;
             }
             // Users with no role are not counted in any category
         });
@@ -90,7 +94,8 @@ export class UsersTab extends Component {
             const matchRole = this.state.roleFilter === 'All' ||
                 (this.state.roleFilter === 'Admin' && user.is_doc_admin) ||
                 (this.state.roleFilter === 'Maker' && user.is_doc_maker) ||
-                (this.state.roleFilter === 'Checker' && user.is_doc_checker);
+                (this.state.roleFilter === 'Checker' && user.is_doc_checker) ||
+                (this.state.roleFilter === 'Viewer' && user.is_doc_viewer);
 
             const matchStatus = this.state.statusFilter === 'All' ||
                 (this.state.statusFilter === 'Active' && user.active) ||
@@ -102,7 +107,7 @@ export class UsersTab extends Component {
 
     getUserRoles(user) {
         // Return only the highest role (selection groups, not implied)
-        // Priority: System Admin > Document Admin > Maker > Checker > No role
+        // Priority: System Admin > Document Admin > Maker > Checker > Viewer > No role
         if (user.is_system_admin) {
             return [{ name: _t('System Admin'), class: 'bg-danger' }];
         } else if (user.is_doc_admin) {
@@ -111,15 +116,16 @@ export class UsersTab extends Component {
             return [{ name: _t('Maker'), class: 'bg-primary' }];
         } else if (user.is_doc_checker) {
             return [{ name: _t('Checker'), class: 'bg-warning' }];
+        } else if (user.is_doc_viewer) {
+            return [{ name: _t('Viewer'), class: 'bg-info' }];
         } else {
             return [{ name: _t('No Role'), class: 'bg-secondary' }];
         }
     }
 
     onRowClick(userId) {
-        // Click row opens full form view (not popup)
-        this.action.doAction('base.action_res_users', {
-            viewType: 'form',
+        // Click row opens simplified user form (not popup)
+        this.action.doAction('robotia_document_extractor.action_users_simplified', {
             props: {
                 resId: userId
             }
@@ -156,7 +162,7 @@ export class UsersTab extends Component {
 
     onAddUserClick() {
         // Add User opens full form view (not popup)
-        this.action.doAction('base.action_res_users', {
+        this.action.doAction('robotia_document_extractor.action_users_simplified', {
             viewType: 'form'
         });
     }

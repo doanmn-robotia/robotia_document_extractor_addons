@@ -307,7 +307,8 @@ class DocumentExtractionService(models.AbstractModel):
         _logger.info(f"Successfully merged {len(pages_data)} pages into PDF ({len(pdf_binary)} bytes)")
         return pdf_binary
 
-    def update_progress(self, new_env, progress, message, job_id=None):
+    def update_progress(self, new_env, progress, message, job_id=None, 
+                         detected_categories=None, current_sub_step=None):
         """
         Update progress notification for frontend (via bus.bus only)
 
@@ -320,6 +321,8 @@ class DocumentExtractionService(models.AbstractModel):
             progress: Can be int (0-100) for legacy, or str (step_key) for step-based
             message: Human-readable Vietnamese message
             job_id: Not used (kept for backward compatibility)
+            detected_categories: List of detected category keys (for category_mapping step)
+            current_sub_step: Current category being processed (for llama_ocr/ai_batch_processing)
         """
         # Convert step_key to progress percentage if needed
         if isinstance(progress, str):
@@ -337,6 +340,12 @@ class DocumentExtractionService(models.AbstractModel):
             }
             if step_key:
                 notification_data["step"] = step_key
+            
+            # Add sub-step info if provided
+            if detected_categories:
+                notification_data["detected_categories"] = detected_categories
+            if current_sub_step:
+                notification_data["current_sub_step"] = current_sub_step
 
             new_env['bus.bus']._sendone(
                 self.env.context.get('notify_channel'),
@@ -348,6 +357,7 @@ class DocumentExtractionService(models.AbstractModel):
     def _calculate_progress_from_step(self, step_key):
         """Map step to percentage for backward compatibility"""
         step_progress = {
+            'queue_pending': 0,
             'upload_validate': 10,
             'category_mapping': 20,
             'llama_ocr': 40,
@@ -916,23 +926,59 @@ OUTPUT FORMAT: {{"{category}": [...]}}
         """
         _logger.info("Validating and fixing metadata flags...")
         
-        # Step 1: Fix has_table flags based on key presence
+        # Step 1: Validate has_table flags with AI priority
+        # Philosophy: Trust AI when True, validate when False
+        _logger.info("Validating has_table_* flags with AI priority logic...")
+
         if document_type == '01':
-            extracted_data['has_table_1_1'] = 'substance_usage' in extracted_data and len(extracted_data.get('substance_usage', [])) > 0
-            extracted_data['has_table_1_2'] = 'equipment_product' in extracted_data and len(extracted_data.get('equipment_product', [])) > 0
-            extracted_data['has_table_1_3'] = 'equipment_ownership' in extracted_data and len(extracted_data.get('equipment_ownership', [])) > 0
-            extracted_data['has_table_1_4'] = 'collection_recycling' in extracted_data and len(extracted_data.get('collection_recycling', [])) > 0
-        else:  # '02'
-            extracted_data['has_table_2_1'] = 'quota_usage' in extracted_data and len(extracted_data.get('quota_usage', [])) > 0
-            extracted_data['has_table_2_2'] = 'equipment_product_report' in extracted_data and len(extracted_data.get('equipment_product_report', [])) > 0
-            extracted_data['has_table_2_3'] = 'equipment_ownership_report' in extracted_data and len(extracted_data.get('equipment_ownership_report', [])) > 0
-            extracted_data['has_table_2_4'] = 'collection_recycling_report' in extracted_data and len(extracted_data.get('collection_recycling_report', [])) > 0
+            # Get AI values
+            ai_has_table_1_1 = extracted_data.get('has_table_1_1', False)
+            ai_has_table_1_2 = extracted_data.get('has_table_1_2', False)
+            ai_has_table_1_3 = extracted_data.get('has_table_1_3', False)
+            ai_has_table_1_4 = extracted_data.get('has_table_1_4', False)
+
+            # Validate with hybrid logic (trust AI=True, verify AI=False)
+            extracted_data['has_table_1_1'] = self._validate_has_table_flag(
+                ai_has_table_1_1, extracted_data.get('substance_usage', [])
+            )
+            extracted_data['has_table_1_2'] = self._validate_has_table_flag(
+                ai_has_table_1_2, extracted_data.get('equipment_product', [])
+            )
+            extracted_data['has_table_1_3'] = self._validate_has_table_flag(
+                ai_has_table_1_3, extracted_data.get('equipment_ownership', [])
+            )
+            extracted_data['has_table_1_4'] = self._validate_has_table_flag(
+                ai_has_table_1_4, extracted_data.get('collection_recycling', [])
+            )
+
+        else:  # document_type == '02'
+            # Get AI values
+            ai_has_table_2_1 = extracted_data.get('has_table_2_1', False)
+            ai_has_table_2_2 = extracted_data.get('has_table_2_2', False)
+            ai_has_table_2_3 = extracted_data.get('has_table_2_3', False)
+            ai_has_table_2_4 = extracted_data.get('has_table_2_4', False)
+
+            # Validate with hybrid logic
+            extracted_data['has_table_2_1'] = self._validate_has_table_flag(
+                ai_has_table_2_1, extracted_data.get('quota_usage', [])
+            )
+            extracted_data['has_table_2_2'] = self._validate_has_table_flag(
+                ai_has_table_2_2, extracted_data.get('equipment_product_report', [])
+            )
+            extracted_data['has_table_2_3'] = self._validate_has_table_flag(
+                ai_has_table_2_3, extracted_data.get('equipment_ownership_report', [])
+            )
+            extracted_data['has_table_2_4'] = self._validate_has_table_flag(
+                ai_has_table_2_4, extracted_data.get('collection_recycling_report', [])
+            )
+
+        _logger.info("has_table_* flags validation complete")
         
-        try:
-            # Step 2: Extract year_1, year_2, year_3 from substance_usage or quota_usage
-            self._extract_years_from_tables(extracted_data, document_type)
-        except Exception as err:
-            _logger.error("INFER YEAR ERROR --- %s", err)
+        # try:
+        #     # Step 2: Extract year_1, year_2, year_3 from substance_usage or quota_usage
+        #     self._extract_years_from_tables(extracted_data, document_type)
+        # except Exception as err:
+        #     _logger.error("INFER YEAR ERROR --- %s", err)
         # try:
         #     # Step 3: Determine is_capacity_merged flags from table structure
         #     self._determine_capacity_merged_flags(extracted_data, document_type)
@@ -1113,6 +1159,40 @@ OUTPUT FORMAT: {{"{category}": [...]}}
                 if has_data:
                     return True
         return False
+
+    def _validate_has_table_flag(self, ai_value, table_data):
+        """
+        Validate has_table flag with AI priority logic
+
+        Philosophy: Trust AI when it says True, validate when it says False
+
+        Args:
+            ai_value (bool): AI-extracted has_table flag value
+            table_data (list): Table data rows from extracted_data
+
+        Returns:
+            bool: Validated flag value
+
+        Logic:
+            - If AI says True → Trust AI (return True)
+            - If AI says False → Check actual data using _has_valid_data_rows()
+              - If actual data exists → Override to True
+              - If no actual data → Keep False
+        """
+        # Trust AI when it detects a table
+        if ai_value:
+            return True
+
+        # AI says False - verify with actual data check
+        # This catches false negatives (AI missed a table that actually has data)
+        has_actual_data = self._has_valid_data_rows(table_data)
+
+        if has_actual_data:
+            _logger.info(
+                f"AI missed table (AI=False but actual data exists) - overriding to True"
+            )
+
+        return has_actual_data
 
 
     @api.model

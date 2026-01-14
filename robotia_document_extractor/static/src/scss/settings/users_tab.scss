@@ -127,7 +127,7 @@
         background: white;
         border: 1px solid #e5e7eb;
         border-radius: 12px !important;
-        overflow: hidden;
+        overflow: auto;
 
         .table {
             margin-bottom: 0;
@@ -159,6 +159,12 @@
                         padding: 16px 24px;
                         vertical-align: middle;
                         color: #374151;
+
+                        // Prevent wrapping for Created At and Actions columns
+                        &:nth-last-child(1),  // Actions column
+                        &:nth-last-child(2) {  // Created At column
+                            white-space: nowrap;
+                        }
                     }
                 }
             }
@@ -167,4 +173,35 @@
 
     // Badge styles moved to backend_theme/static/src/backend/app_menu/layout/style/layout_style.scss
     // for consistency across the entire application
+
+    // Icon-only Action Buttons
+    .btn-icon-only {
+        background: transparent;
+        border: none;
+        padding: 8px;
+        border-radius: 6px;
+        transition: all 0.15s ease;
+        color: #6b7280;
+        cursor: pointer;
+
+        &:hover {
+            background: #f3f4f6;
+        }
+
+        &.btn-edit:hover {
+            color: #3b82f6;
+            background: #eff6ff;
+        }
+
+        &.btn-archive:hover {
+            color: #f97316;
+            background: #fff7ed;
+        }
+
+        // Focus state for accessibility
+        &:focus {
+            outline: 2px solid #3b82f6;
+            outline-offset: 2px;
+        }
+    }
 }

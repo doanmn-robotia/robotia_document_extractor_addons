@@ -1,0 +1,19 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* restrict_menu
+#
+
+#. module: restrict_menu
+#: model_terms:ir.ui.view,arch_db:restrict_menu.view_users_form_inherit_restrict_menu
+msgid "Note: Selecting a menu will automatically grant access to all its child menus."
+msgstr "Lưu ý: Lựa chọn hiện một menu cũng sẽ hiện tất cả các menu con của nó."
+
+#. module: restrict_menu
+#: model_terms:ir.ui.view,arch_db:restrict_menu.view_users_form_inherit_restrict_menu
+msgid "Menu Access"
+msgstr "Truy cập menu"
+
+#. module: restrict_menu
+#: model:ir.model.fields,field_description:restrict_menu.field_res_users__show_menu_ids
+msgid "Show menus"
+msgstr "Hiển thị menu"

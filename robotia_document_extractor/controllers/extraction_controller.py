@@ -1832,8 +1832,13 @@ class ExtractionController(http.Controller):
 
     def _collect_export_data(self, filters):
         """
-        Centralized data collection for all sheets
+        OPTIMIZED: Centralized data collection for all sheets
         Returns ONLY the latest document per (organization, year, document_type)
+
+        Performance optimizations:
+        - Uses read_group() for database-level grouping with MAX(id) aggregate
+        - Uses search_read() to load only needed fields in one query
+        - Batch prefetches all One2many/Many2one relations to eliminate N+1 queries
 
         Args:
             filters (dict): Filter criteria from frontend
@@ -1845,51 +1850,145 @@ class ExtractionController(http.Controller):
                 'filters': original filters dict
             }
         """
+        import time
+        start_time = time.time()
+
         # Build filter domain
         doc_domain = self._build_filter_domain(filters)
-
-        # Load all documents matching filters
         Document = request.env['document.extraction'].sudo()
-        all_documents = Document.search(
-            doc_domain,
-            order='create_date DESC, id DESC'  # Order by latest first for max() stability
+
+        # OPTIMIZATION 1: Use read_group to find latest document ID per group
+        # This executes as a single SQL query with GROUP BY and MAX(id) aggregate
+        # Note: Using MAX(id) as proxy for latest since id is auto-incrementing
+        # Alternative: Use MAX(create_date) but requires subquery to get full record
+        grouped_data = Document.read_group(
+            domain=doc_domain,
+            fields=['id:max', 'organization_id', 'year', 'document_type'],
+            groupby=['organization_id', 'year', 'document_type'],
+            lazy=False  # Important: do all grouping in one call
         )
 
-        _logger.info(f"HFC Export: Found {len(all_documents)} total documents matching filters")
+        _logger.info(f"HFC Export: read_group found {len(grouped_data)} unique (org, year, type) groups")
 
-        if not all_documents:
+        if not grouped_data:
             return {
                 'documents': Document,
                 'substance_filter_ids': None,
                 'filters': filters
             }
 
-        # Group by (organization, year, document_type) using Odoo's grouped()
-        grouped_docs = all_documents.grouped(
-            lambda d: (d.organization_id.id, d.year, d.document_type)
+        # Extract latest document IDs from read_group results
+        latest_doc_ids = [group['id'] for group in grouped_data]
+
+        # OPTIMIZATION 2: Use search_read to load documents with specific fields
+        # This is more efficient than search() + field access which causes N queries
+        # Load all fields that will be accessed by the 6 sheet functions
+        fields_to_load = [
+            # Basic fields
+            'id', 'year', 'document_type', 'state',
+            'organization_name', 'business_id',
+            'legal_representative_name', 'legal_representative_position',
+            'contact_person_name', 'contact_address', 'contact_phone', 'contact_email',
+
+            # Relations (Many2one) - load IDs
+            'organization_id',
+            'contact_state_id',
+
+            # Many2many
+            'activity_field_ids',
+
+            # Boolean flags for table presence (only 8 fields exist)
+            'has_table_1_1', 'has_table_1_2', 'has_table_1_3', 'has_table_1_4',
+            'has_table_2_1', 'has_table_2_2', 'has_table_2_3', 'has_table_2_4',
+
+            # One2many relation field names (will prefetch separately)
+            'substance_usage_ids',
+            'quota_usage_ids',
+            'equipment_product_ids',
+            'equipment_ownership_ids',
+            'equipment_product_report_ids',
+            'equipment_ownership_report_ids',
+            'collection_recycling_ids',
+            'collection_recycling_report_ids',
+        ]
+
+        # Load documents using search_read (single query)
+        Document.search_read(
+            domain=[('id', 'in', latest_doc_ids)],
+            fields=fields_to_load
         )
 
-        # Get latest document in each group (by create_date)
-        latest_docs = []
-        for group_key, docs in grouped_docs.items():
-            # docs is already a recordset, sorted by our order clause
-            # Take the first one (latest by create_date)
-            latest = max(docs, key=lambda d: (d.create_date or d.id))
-            latest_docs.append(latest)
-
-        # Sort for consistent output
-        latest_docs.sort(
-            key=lambda d: (
-                d.organization_id.name or '',
-                d.year or 0,
-                d.document_type or ''
-            )
+        # Convert to recordset for compatibility with existing sheet functions
+        # Data is now cached from search_read, so browsing is efficient
+        documents = Document.browse(latest_doc_ids).sorted(
+            key=lambda d: (d.organization_id.name or '', d.year or 0, d.document_type or '')
         )
 
-        # Convert back to recordset
-        documents = Document.browse([d.id for d in latest_docs])
+        _logger.info(f"HFC Export: Loaded {len(documents)} documents with {len(fields_to_load)} fields")
 
-        _logger.info(f"HFC Export: After grouping - {len(documents)} unique (org, year, type) documents")
+        # OPTIMIZATION 3: Batch prefetch all One2many and Many2one relations
+        # This eliminates N+1 queries when sheet functions access related records
+        # Only prefetch fields that actually exist in the models
+
+        # Force load Many2one relations
+        documents.mapped('organization_id.name')
+        documents.mapped('organization_id.business_id')
+        documents.mapped('organization_id.phone')
+        documents.mapped('organization_id.email')
+        documents.mapped('organization_id.contact_address')
+        documents.mapped('contact_state_id.name')
+
+        # Force load Many2many relations
+        documents.mapped('activity_field_ids.code')
+        documents.mapped('activity_field_ids.name')
+
+        # Force load One2many relations with nested Many2one
+        # For substance usage (Form 01)
+        all_substance_usage = documents.mapped('substance_usage_ids')
+        if all_substance_usage:
+            all_substance_usage.mapped('substance_id.name')
+            _logger.info(f"  - Prefetched {len(all_substance_usage)} substance_usage records")
+
+        # For quota usage (Form 02)
+        all_quota_usage = documents.mapped('quota_usage_ids')
+        if all_quota_usage:
+            all_quota_usage.mapped('substance_id.name')
+            all_quota_usage.mapped('hs_code_id')
+            _logger.info(f"  - Prefetched {len(all_quota_usage)} quota_usage records")
+
+        # For equipment products (Form 01)
+        all_equipment_products = documents.mapped('equipment_product_ids')
+        if all_equipment_products:
+            all_equipment_products.mapped('substance_id.name')
+            _logger.info(f"  - Prefetched {len(all_equipment_products)} equipment_product records")
+
+        # For equipment ownership (Form 01)
+        all_equipment_ownership = documents.mapped('equipment_ownership_ids')
+        if all_equipment_ownership:
+            all_equipment_ownership.mapped('substance_id.name')
+            _logger.info(f"  - Prefetched {len(all_equipment_ownership)} equipment_ownership records")
+
+        # For equipment reports (Form 02)
+        all_equipment_product_reports = documents.mapped('equipment_product_report_ids')
+        if all_equipment_product_reports:
+            all_equipment_product_reports.mapped('substance_id.name')
+            _logger.info(f"  - Prefetched {len(all_equipment_product_reports)} equipment_product_report records")
+
+        all_equipment_ownership_reports = documents.mapped('equipment_ownership_report_ids')
+        if all_equipment_ownership_reports:
+            all_equipment_ownership_reports.mapped('substance_id.name')
+            _logger.info(f"  - Prefetched {len(all_equipment_ownership_reports)} equipment_ownership_report records")
+
+        # For collection/recycling records
+        all_collection_recycling = documents.mapped('collection_recycling_ids')
+        if all_collection_recycling:
+            all_collection_recycling.mapped('substance_id.name')
+            _logger.info(f"  - Prefetched {len(all_collection_recycling)} collection_recycling records")
+
+        all_collection_reports = documents.mapped('collection_recycling_report_ids')
+        if all_collection_reports:
+            all_collection_reports.mapped('substance_id.name')
+            _logger.info(f"  - Prefetched {len(all_collection_reports)} collection_recycling_report records")
 
         # Build substance filter if needed
         substance_filter_ids = None
@@ -1907,6 +2006,9 @@ class ExtractionController(http.Controller):
             if sub_domain:
                 substance_filter_ids = Substance.search(sub_domain).ids
                 _logger.info(f"HFC Export: Substance filter active - {len(substance_filter_ids)} substances")
+
+        elapsed_time = time.time() - start_time
+        _logger.info(f"HFC Export: Data collection completed in {elapsed_time:.2f}s")
 
         return {
             'documents': documents,
@@ -1954,25 +2056,41 @@ class ExtractionController(http.Controller):
         sheet = workbook[sheet_name]
         rows_written = 0
 
-        # Get header row (row 1) for style reference
+        # Get header row (row 1) for style reference and cache header cell styles by column
         header_row = 1
+        header_cells_cache = {}
+
+        # Pre-calculate max columns needed based on first row
+        max_cols = len(data_rows[0]) if data_rows else 0
+
+        # Build header cells cache (column index -> style info dict)
+        for col_idx in range(1, max_cols + 1):
+            header_cell = sheet.cell(row=header_row, column=col_idx)
+            # Store style info (not objects) to avoid shared references
+            header_cells_cache[col_idx] = {
+                'font_name': header_cell.font.name if header_cell.font else None,
+                'font_size': header_cell.font.size if header_cell.font else None,
+                'alignment': header_cell.alignment,
+                'border': header_cell.border,
+            }
 
         for row_idx, row_data in enumerate(data_rows, start=start_row):
             for col_idx, value in enumerate(row_data, start=1):
                 cell = sheet.cell(row=row_idx, column=col_idx)
                 cell.value = value
 
-                # Copy ONLY font name and size from header (no bold/italic/color)
-                header_cell = sheet.cell(row=header_row, column=col_idx)
-                if header_cell.font:
-                    cell.font = Font(
-                        name=header_cell.font.name,
-                        size=header_cell.font.size
-                    )
-                if header_cell.alignment:
-                    cell.alignment = copy(header_cell.alignment)
-                if header_cell.border:
-                    cell.border = copy(header_cell.border)
+                # Apply cached header styles (copy to avoid shared references)
+                cached_styles = header_cells_cache.get(col_idx)
+                if cached_styles:
+                    if cached_styles['font_name'] or cached_styles['font_size']:
+                        cell.font = Font(
+                            name=cached_styles['font_name'],
+                            size=cached_styles['font_size']
+                        )
+                    if cached_styles['alignment']:
+                        cell.alignment = copy(cached_styles['alignment'])
+                    # if cached_styles['border']:
+                    #     cell.border = copy(cached_styles['border'])
 
             rows_written += 1
 
@@ -1988,25 +2106,40 @@ class ExtractionController(http.Controller):
         """
         Resolve is_title pattern: build mapping from data record → title record
 
-        Pattern explanation (using substance_name as example):
+        This method works with BOTH text fields and selection fields.
+
+        Pattern explanation (text field example - substance_name):
             line 1: is_title=True, substance_name='Sản xuất' (section title)
             line 2: is_title=False, substance_name='R-134a' → maps to 'Sản xuất'
             line 3: is_title=False, substance_name='R-410A' → maps to 'Sản xuất'
             line 4: is_title=True, substance_name='Nhập khẩu' (section title)
             line 5: is_title=False, substance_name='R-22' → maps to 'Nhập khẩu'
 
+        Pattern explanation (selection field example - usage_type):
+            line 1: is_title=True, usage_type='production' (section title)
+            line 2: is_title=False, substance_name='R-134a' → maps to 'production'
+            line 3: is_title=False, substance_name='R-410A' → maps to 'production'
+            line 4: is_title=True, usage_type='import' (section title)
+            line 5: is_title=False, substance_name='R-22' → maps to 'import'
+
         Args:
             records (recordset): Ordered recordset with is_title field
             title_field_name (str): Field to extract from title record
-                                   Valid fields: 'substance_name', 'equipment_type', 'product_type'
+                                   Text fields: 'substance_name', 'equipment_type', 'product_type'
+                                   Selection fields: 'usage_type', 'production_type', 'ownership_type', 'activity_type'
 
         Returns:
             dict: {record.id: title_value}
                  Maps each data record (is_title=False) to its title context value
 
-        Example:
-            context = self._resolve_is_title_context(substance_usage_ids, 'substance_name')
-            # Returns: {2: 'Sản xuất', 3: 'Sản xuất', 5: 'Nhập khẩu'}
+        Examples:
+            # Get text from title rows:
+            text_map = self._resolve_is_title_context(substance_usage_ids, 'substance_name')
+            # Returns: {2: 'Sản xuất chất...', 3: 'Sản xuất chất...', 5: 'Nhập khẩu chất...'}
+
+            # Get selection value from title rows:
+            selection_map = self._resolve_is_title_context(substance_usage_ids, 'usage_type')
+            # Returns: {2: 'production', 3: 'production', 5: 'import'}
         """
         mapping = {}
         current_title_value = None
@@ -2080,8 +2213,8 @@ class ExtractionController(http.Controller):
 
         # Common data for all rows
         base_row = {
-            'TenDoanhNghiep': doc.organization_id.name or '',
-            'MaSoDN': doc.organization_id.business_id or '',
+            'TenDoanhNghiep': doc.organization_name or doc.organization_id.name or '',
+            'MaSoDN': doc.business_id or doc.organization_id.business_id or '',
             'NamBaoCao': doc.year or '',
             'HoatDong': usage_type_map.get(usage_type, ''),
             'TenChat': usage_record.substance_name or '',
@@ -2298,17 +2431,17 @@ class ExtractionController(http.Controller):
             # Build row (20 columns)
             row = [
                 idx,                                          # 1. STT
-                org.name or '',                               # 2. TenDoanhNghiep
-                org.business_id or '',                        # 3. MaSoDN
+                doc.organization_name or org.name or '',                               # 2. TenDoanhNghiep
+                doc.business_id or org.business_id or '',     # 3. MaSoDN
                 doc.year,                                     # 4. NamBaoCao
                 nguon_du_lieu,                                # 5. NguonDuLieu
                 doc.legal_representative_name or '',          # 6. TenNguoiDaiDienPhapLuat
                 doc.legal_representative_position or '',      # 7. ChucVu
                 doc.contact_person_name or '',                # 8. TenNguoiDaiDienLienLac
-                doc.contact_address or '',                    # 9. DiaChi
+                doc.contact_address or org.contact_address or '',  # 9. DiaChi
                 doc.contact_state_id.name if doc.contact_state_id else '',  # 10. Tinh_ThanhPho
-                doc.contact_phone or '',                      # 11. DienThoai
-                doc.contact_email or '',                      # 12. Email
+                doc.contact_phone or org.phone or '',         # 11. DienThoai
+                doc.contact_email or org.email or '',         # 12. Email
                 # Activity fields (13-20): 'X' if present, '' if not
                 'X' if 'production' in doc_activity_codes else '',           # 13. LinhVuc_SanXuatChat
                 'X' if 'import' in doc_activity_codes else '',               # 14. LinhVuc_NhapKhauChat
@@ -2332,7 +2465,7 @@ class ExtractionController(http.Controller):
         Logic:
             - Form 01: Unpivot substance_usage (1 record → 3 rows for 3 years)
             - Form 02: Direct mapping from quota_usage (1 record → 1 row)
-            - Use is_title pattern to determine HoatDong
+            - Use title selection to determine HoatDong
 
         Args:
             workbook (openpyxl.Workbook): Excel workbook
@@ -2344,17 +2477,24 @@ class ExtractionController(http.Controller):
         documents = data['documents']
         substance_filter_ids = data['substance_filter_ids']
 
+        # Usage type mapping
+        usage_type_map = {
+            'production': 'Sản xuất',
+            'import': 'Nhập khẩu',
+            'export': 'Xuất khẩu'
+        }
+
         data_rows = []
 
         for doc in documents:
             org = doc.organization_id
 
             # Form 01: substance_usage_ids (unpivot 3 years)
-            if doc.document_type == '01':
+            if doc.document_type == '01' and doc.has_table_1_1:
                 records = doc.substance_usage_ids.sorted('sequence')
 
-                # Resolve is_title context
-                title_context = self._resolve_is_title_context(records, 'substance_name')
+                # Resolve title selection for usage_type
+                selection_map = self._resolve_is_title_context(records, 'usage_type')
 
                 for record in records:
                     # Skip title rows
@@ -2366,7 +2506,7 @@ class ExtractionController(http.Controller):
                         continue
 
                     # Unpivot: 1 record → up to 3 rows
-                    unpivoted_rows = self._unpivot_substance_usage(record, title_context, doc)
+                    unpivoted_rows = self._unpivot_substance_usage(record, selection_map, doc)
 
                     # Convert dict rows to list rows (9 columns)
                     for row_dict in unpivoted_rows:
@@ -2384,18 +2524,11 @@ class ExtractionController(http.Controller):
                         data_rows.append(row)
 
             # Form 02: quota_usage_ids (direct 1-to-1)
-            elif doc.document_type == '02':
+            elif doc.document_type == '02' and doc.has_table_2_1:
                 records = doc.quota_usage_ids.sorted('sequence')
 
-                # Resolve is_title context
-                title_context = self._resolve_is_title_context(records, 'substance_name')
-
-                # Mapping for HoatDong
-                usage_type_map = {
-                    'production': 'Sản xuất',
-                    'import': 'Nhập khẩu',
-                    'export': 'Xuất khẩu'
-                }
+                # Resolve title selection for usage_type
+                selection_map = self._resolve_is_title_context(records, 'usage_type')
 
                 for record in records:
                     # Skip title rows
@@ -2406,13 +2539,15 @@ class ExtractionController(http.Controller):
                     if substance_filter_ids and record.substance_id.id not in substance_filter_ids:
                         continue
 
-                    usage_type = title_context.get(record.id, 'import')
+                    # Get usage_type from title selection
+                    usage_type = selection_map.get(record.id, 'import')
+                    hoat_dong = usage_type_map.get(usage_type, '')
 
                     row = [
-                        org.name or '',                     # 1. TenDoanhNghiep
-                        org.business_id or '',              # 2. MaSoDN
+                        doc.organization_name or org.name or '',                     # 1. TenDoanhNghiep
+                        doc.business_id or org.business_id or '',  # 2. MaSoDN
                         'Mẫu 02 - Bảng 2.1',                # 3. NguonDuLieu
-                        usage_type_map.get(usage_type, ''), # 4. HoatDong
+                        hoat_dong,                          # 4. HoatDong
                         record.substance_name or '',        # 5. TenChat
                         doc.year,                           # 6. NamDuLieu
                         record.total_quota_kg or 0,         # 7. Luong_kg
@@ -2431,7 +2566,7 @@ class ExtractionController(http.Controller):
         Logic:
             - Form 01: equipment_ownership_ids
             - Form 02: equipment_ownership_report_ids
-            - Use is_title pattern to get PhanLoaiThietBi
+            - Use title selection to get ownership_type
             - Format capacity using helper
 
         Args:
@@ -2444,17 +2579,23 @@ class ExtractionController(http.Controller):
         documents = data['documents']
         substance_filter_ids = data['substance_filter_ids']
 
+        # Ownership type mapping
+        ownership_type_map = {
+            'air_conditioner': 'Máy điều hòa không khí',
+            'refrigeration': 'Thiết bị lạnh công nghiệp'
+        }
+
         data_rows = []
 
         for doc in documents:
             org = doc.organization_id
 
             # Form 01: equipment_ownership_ids
-            if doc.document_type == '01':
+            if doc.document_type == '01' and doc.has_table_1_3:
                 records = doc.equipment_ownership_ids.sorted('sequence')
 
-                # Resolve is_title context for PhanLoaiThietBi
-                title_context = self._resolve_is_title_context(records, 'equipment_type')
+                # Resolve title selection for ownership_type
+                selection_map = self._resolve_is_title_context(records, 'ownership_type')
 
                 for record in records:
                     # Skip title rows
@@ -2465,12 +2606,13 @@ class ExtractionController(http.Controller):
                     if substance_filter_ids and record.substance_id and record.substance_id.id not in substance_filter_ids:
                         continue
 
-                    # Get PhanLoaiThietBi from title context
-                    phan_loai_thiet_bi = title_context.get(record.id, '')
+                    # Get ownership_type from title selection
+                    ownership_type = selection_map.get(record.id, 'air_conditioner')
+                    phan_loai_thiet_bi = ownership_type_map.get(ownership_type, '')
 
                     row = [
-                        org.name or '',                                  # 1. TenDoanhNghiep
-                        org.business_id or '',                           # 2. MaSoDN
+                        doc.organization_name or org.name or '',                                  # 1. TenDoanhNghiep
+                        doc.business_id or org.business_id or '',        # 2. MaSoDN
                         doc.year,                                        # 3. NamBaoCao
                         'Mẫu 01 - Bảng 1.3',                             # 4. NguonDuLieu
                         phan_loai_thiet_bi,                              # 5. PhanLoaiThietBi
@@ -2486,11 +2628,11 @@ class ExtractionController(http.Controller):
                     data_rows.append(row)
 
             # Form 02: equipment_ownership_report_ids
-            elif doc.document_type == '02':
+            elif doc.document_type == '02' and doc.has_table_2_3:
                 records = doc.equipment_ownership_report_ids.sorted('sequence')
 
-                # Resolve is_title context
-                title_context = self._resolve_is_title_context(records, 'equipment_type')
+                # Resolve title selection for ownership_type
+                selection_map = self._resolve_is_title_context(records, 'ownership_type')
 
                 for record in records:
                     # Skip title rows
@@ -2501,11 +2643,13 @@ class ExtractionController(http.Controller):
                     if substance_filter_ids and record.substance_id and record.substance_id.id not in substance_filter_ids:
                         continue
 
-                    phan_loai_thiet_bi = title_context.get(record.id, '')
+                    # Get ownership_type from title selection
+                    ownership_type = selection_map.get(record.id, 'air_conditioner')
+                    phan_loai_thiet_bi = ownership_type_map.get(ownership_type, '')
 
                     row = [
-                        org.name or '',                                  # 1
-                        org.business_id or '',                           # 2
+                        doc.organization_name or org.name or '',                                  # 1
+                        doc.business_id or org.business_id or '',        # 2
                         doc.year,                                        # 3
                         'Mẫu 02 - Bảng 2.3',                             # 4
                         phan_loai_thiet_bi,                              # 5
@@ -2530,7 +2674,7 @@ class ExtractionController(http.Controller):
         Logic:
             - Form 01: equipment_product_ids
             - Form 02: equipment_product_report_ids (has production_type field)
-            - Similar to Sheet 2 but with HoatDong column
+            - Use title selection to get production_type
 
         Args:
             workbook (openpyxl.Workbook): Excel workbook
@@ -2542,14 +2686,23 @@ class ExtractionController(http.Controller):
         documents = data['documents']
         substance_filter_ids = data['substance_filter_ids']
 
+        # Production type mapping
+        production_type_map = {
+            'production': 'Sản xuất',
+            'import': 'Nhập khẩu'
+        }
+
         data_rows = []
 
         for doc in documents:
             org = doc.organization_id
 
             # Form 01: equipment_product_ids
-            if doc.document_type == '01':
+            if doc.document_type == '01' and doc.has_table_1_2:
                 records = doc.equipment_product_ids.sorted('sequence')
+
+                # Resolve title selection for production_type
+                selection_map = self._resolve_is_title_context(records, 'production_type')
 
                 for record in records:
                     # Skip title rows
@@ -2560,13 +2713,13 @@ class ExtractionController(http.Controller):
                     if substance_filter_ids and record.substance_id and record.substance_id.id not in substance_filter_ids:
                         continue
 
-                    # Note: Form 01 doesn't have production_type field
-                    # Leave HoatDong empty for now (can be inferred later if needed)
-                    hoat_dong = ''
+                    # Get production_type from title context
+                    production_type = selection_map.get(record.id, 'production')
+                    hoat_dong = production_type_map.get(production_type, '')
 
                     row = [
-                        org.name or '',                                  # 1. TenDoanhNghiep
-                        org.business_id or '',                           # 2. MaSoDN
+                        doc.organization_name or org.name or '',                                  # 1. TenDoanhNghiep
+                        doc.business_id or org.business_id or '',        # 2. MaSoDN
                         doc.year,                                        # 3. NamBaoCao
                         'Mẫu 01 - Bảng 1.2',                             # 4. NguonDuLieu
                         hoat_dong,                                       # 5. HoatDong
@@ -2580,8 +2733,11 @@ class ExtractionController(http.Controller):
                     data_rows.append(row)
 
             # Form 02: equipment_product_report_ids
-            elif doc.document_type == '02':
+            elif doc.document_type == '02' and doc.has_table_2_2:
                 records = doc.equipment_product_report_ids.sorted('sequence')
+
+                # Resolve title selection for production_type
+                selection_map = self._resolve_is_title_context(records, 'production_type')
 
                 for record in records:
                     # Skip title rows
@@ -2592,12 +2748,13 @@ class ExtractionController(http.Controller):
                     if substance_filter_ids and record.substance_id and record.substance_id.id not in substance_filter_ids:
                         continue
 
-                    # Form 02 has production_type field
-                    hoat_dong = 'Sản xuất' if record.production_type == 'production' else 'Nhập khẩu'
+                    # Get production_type from title context
+                    production_type = selection_map.get(record.id, 'import')
+                    hoat_dong = production_type_map.get(production_type, '')
 
                     row = [
-                        org.name or '',                                  # 1
-                        org.business_id or '',                           # 2
+                        doc.organization_name or org.name or '',                                  # 1
+                        doc.business_id or org.business_id or '',        # 2
                         doc.year,                                        # 3
                         'Mẫu 02 - Bảng 2.2',                             # 4
                         hoat_dong,                                       # 5
@@ -2646,11 +2803,11 @@ class ExtractionController(http.Controller):
             org = doc.organization_id
 
             # Form 01: collection_recycling_ids (vertical structure)
-            if doc.document_type == '01':
+            if doc.document_type == '01' and doc.has_table_1_4:
                 records = doc.collection_recycling_ids.sorted('sequence')
 
-                # Resolve is_title context
-                title_context = self._resolve_is_title_context(records, 'substance_name')
+                # Resolve title selection for activity_type
+                selection_map = self._resolve_is_title_context(records, 'activity_type')
 
                 for record in records:
                     # Skip title rows
@@ -2665,12 +2822,13 @@ class ExtractionController(http.Controller):
                     if not record.quantity_kg or record.quantity_kg <= 0:
                         continue
 
-                    activity_type = title_context.get(record.id, 'collection')
+                    # Get activity_type from title selection
+                    activity_type = selection_map.get(record.id, 'collection')
                     hoat_dong = activity_map.get(activity_type, '')
 
                     row = [
-                        org.name or '',                                  # 1. TenDoanhNghiep
-                        org.business_id or '',                           # 2. MaSoDN
+                        doc.organization_name or org.name or '',                                  # 1. TenDoanhNghiep
+                        doc.business_id or org.business_id or '',        # 2. MaSoDN
                         doc.year,                                        # 3. NamBaoCao
                         'Mẫu 01 - Bảng 1.4',                             # 4. NguonDuLieu
                         record.substance_id.name if record.substance_id else '',  # 5. TenChat
@@ -2682,10 +2840,14 @@ class ExtractionController(http.Controller):
                     data_rows.append(row)
 
             # Form 02: collection_recycling_report_ids (horizontal → unpivot)
-            elif doc.document_type == '02':
+            elif doc.document_type == '02' and doc.has_table_2_4:
                 records = doc.collection_recycling_report_ids
 
                 for record in records:
+                    # Skip title rows
+                    if record.is_title:
+                        continue
+
                     # Apply substance filter
                     if substance_filter_ids and record.substance_id and record.substance_id.id not in substance_filter_ids:
                         continue
@@ -2735,11 +2897,11 @@ class ExtractionController(http.Controller):
             org = doc.organization_id
 
             # Form 01: substance_usage_ids (unpivot 3 years)
-            if doc.document_type == '01':
+            if doc.document_type == '01' and doc.has_table_1_1:
                 records = doc.substance_usage_ids.sorted('sequence')
 
-                # Resolve is_title context
-                title_context = self._resolve_is_title_context(records, 'substance_name')
+                # Resolve title selection for usage_type
+                selection_map = self._resolve_is_title_context(records, 'usage_type')
 
                 for record in records:
                     # Skip title rows
@@ -2751,13 +2913,13 @@ class ExtractionController(http.Controller):
                         continue
 
                     # Unpivot: 1 record → up to 3 rows
-                    unpivoted_rows = self._unpivot_substance_usage(record, title_context, doc)
+                    unpivoted_rows = self._unpivot_substance_usage(record, selection_map, doc)
 
                     # Convert dict rows to list rows (12 columns)
                     for row_dict in unpivoted_rows:
                         row = [
-                            row_dict['TenDoanhNghiep'],     # 1
-                            row_dict['MaSoDN'],             # 2
+                            row_dict['TenDoanhNghiep'] or doc.organization_name or '',     # 1
+                            row_dict['MaSoDN'] or doc.business_id or '',  # 2
                             'Mẫu 01',                       # 3. NguonDuLieu
                             row_dict['NamBaoCao'],          # 4
                             row_dict['NamDuLieu'],          # 5
@@ -2772,11 +2934,11 @@ class ExtractionController(http.Controller):
                         data_rows.append(row)
 
             # Form 02: quota_usage_ids (unpivot 4 quota types)
-            elif doc.document_type == '02':
+            elif doc.document_type == '02' and doc.has_table_2_1:
                 records = doc.quota_usage_ids.sorted('sequence')
 
-                # Resolve is_title context
-                title_context = self._resolve_is_title_context(records, 'substance_name')
+                # Resolve title selection for usage_type
+                selection_map = self._resolve_is_title_context(records, 'usage_type')
 
                 for record in records:
                     # Skip title rows
@@ -2788,12 +2950,12 @@ class ExtractionController(http.Controller):
                         continue
 
                     # Unpivot: 1 record → up to 4 rows
-                    unpivoted_rows = self._unpivot_quota_usage(record, title_context, doc)
+                    unpivoted_rows = self._unpivot_quota_usage(record, selection_map, doc)
 
                     # Convert dict rows to list rows (12 columns)
                     for row_dict in unpivoted_rows:
                         row = [
-                            row_dict['TenDoanhNghiep'],     # 1
+                            row_dict['TenDoanhNghiep'] or doc.organization_name or '',     # 1
                             row_dict['MaSoDN'],             # 2
                             row_dict['NguonDuLieu'],        # 3
                             row_dict['NamBaoCao'],          # 4

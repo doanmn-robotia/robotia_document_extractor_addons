@@ -91,11 +91,13 @@ access_chatbot_message_viewer,chatbot.message viewer,model_chatbot_message,group
 access_chatbot_message_checker,chatbot.message checker,model_chatbot_message,group_document_extractor_checker,1,1,1,1
 access_chatbot_message_maker,chatbot.message maker,model_chatbot_message,group_document_extractor_maker,1,1,1,1
 access_chatbot_message_admin,chatbot.message admin,model_chatbot_message,group_document_extractor_admin,1,1,1,1
-access_google_drive_service_user,google.drive.service user,model_google_drive_service,base.group_user,1,0,0,0
-access_google_drive_service_manager,google.drive.service manager,model_google_drive_service,base.group_system,1,1,1,1
-access_google_drive_config_wizard,google.drive.config.wizard,model_google_drive_config_wizard,base.group_system,1,1,1,1
-access_google_drive_extraction_log_user,google.drive.extraction.log.user,model_google_drive_extraction_log,base.group_user,1,0,0,0
-access_google_drive_extraction_log_manager,google.drive.extraction.log.manager,model_google_drive_extraction_log,base.group_system,1,1,1,1
+access_google_drive_service_viewer,google.drive.service viewer,model_google_drive_service,group_document_extractor_viewer,1,0,0,0
+access_google_drive_service_admin,google.drive.service admin,model_google_drive_service,group_document_extractor_admin,1,1,1,1
+access_google_drive_config_wizard_admin,google.drive.config.wizard admin,model_google_drive_config_wizard,group_document_extractor_admin,1,1,1,1
+access_google_drive_extraction_log_viewer,google.drive.extraction.log viewer,model_google_drive_extraction_log,group_document_extractor_viewer,1,1,1,0
+access_google_drive_extraction_log_checker,google.drive.extraction.log checker,model_google_drive_extraction_log,group_document_extractor_checker,1,1,1,0
+access_google_drive_extraction_log_maker,google.drive.extraction.log maker,model_google_drive_extraction_log,group_document_extractor_maker,1,1,1,0
+access_google_drive_extraction_log_admin,google.drive.extraction.log admin,model_google_drive_extraction_log,group_document_extractor_admin,1,1,1,1
 access_ir_ui_view_doc_admin,ir.ui.view document admin,base.model_ir_ui_view,group_document_extractor_admin,1,0,0,0
 access_res_config_settings_doc_admin,res.config.settings document admin,base.model_res_config_settings,group_document_extractor_admin,1,1,0,0
 access_ir_actions_act_window_doc_admin,ir.actions.act_window document admin,base.model_ir_actions_act_window,group_document_extractor_admin,1,1,0,0

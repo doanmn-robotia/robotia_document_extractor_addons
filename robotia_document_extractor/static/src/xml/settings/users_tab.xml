@@ -73,7 +73,7 @@
                 </div>
 
                 <!-- Users Table -->
-                <div class="users-table-container bg-white rounded border overflow-hidden">
+                <div class="users-table-container bg-white rounded border">
                     <table class="table table-hover mb-0">
                         <thead class="table-light">
                             <tr>
@@ -134,16 +134,16 @@
                                 </td>
                                 <td class="px-4 py-3 text-end">
                                     <button
-                                        class="btn btn-sm btn-light me-1"
+                                        class="btn btn-icon-only btn-edit"
                                         t-on-click="(ev) => this.onEditClick(user.id, ev)"
                                         title="Edit User">
                                         <i class="fa fa-edit"/>
                                     </button>
                                     <button
-                                        class="btn btn-sm btn-light"
+                                        class="btn btn-icon-only btn-archive"
                                         t-on-click="(ev) => this.onArchiveClick(user, ev)"
                                         title="Archive User">
-                                        <i class="fa fa-archive"/>
+                                        <i class="fa fa-trash"/>
                                     </button>
                                 </td>
                             </tr>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_users_simplified" model="ir.actions.act_window">
+        <field name="name">User</field>
+        <field name="res_model">res.users</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_users_form_simplified"/>
+        <field name="target">current</field>
+    </record>
+</odoo>
