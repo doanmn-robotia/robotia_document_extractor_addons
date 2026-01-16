@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 
+import base64
 import json
+import logging
 from odoo import api, models, fields, _
 from odoo.exceptions import UserError
+
+_logger = logging.getLogger(__name__)
 
 
 class ResConfigSettings(models.TransientModel):
@@ -167,6 +171,43 @@ class ResConfigSettings(models.TransientModel):
         help='Service account email (read-only, extracted from uploaded JSON)'
     )
 
+    # ===== Google Drive - Service Account File Upload =====
+    google_drive_service_account_file = fields.Binary(
+        string='Service Account JSON File',
+        help='Upload the JSON key file from Google Cloud Console'
+    )
+
+    google_drive_service_account_filename = fields.Char(
+        string='Service Account Filename'
+    )
+
+    # ===== Google Drive - Folder Configuration =====
+    google_drive_form01_folder_id = fields.Char(
+        string='Form 01 Folder ID',
+        config_parameter='google_drive_form01_folder_id',
+        help='Google Drive folder ID for Form 01 Registration documents'
+    )
+
+    google_drive_form02_folder_id = fields.Char(
+        string='Form 02 Folder ID',
+        config_parameter='google_drive_form02_folder_id',
+        help='Google Drive folder ID for Form 02 Report documents'
+    )
+
+    google_drive_processed_folder_id = fields.Char(
+        string='Processed Folder ID',
+        config_parameter='google_drive_processed_folder_id',
+        help='Google Drive folder where processed files will be moved'
+    )
+
+    # ===== Google Drive - Cron Control =====
+    google_drive_cron_active = fields.Boolean(
+        string='Cron Job Active',
+        compute='_compute_google_drive_cron_active',
+        inverse='_inverse_google_drive_cron_active',
+        help='Enable or disable the automatic extraction cron job'
+    )
+
     @api.depends('google_drive_service_account_json')
     def _compute_google_drive_configured(self):
         """Check if Google Drive is configured"""
@@ -186,6 +227,25 @@ class ResConfigSettings(models.TransientModel):
             else:
                 record.google_drive_service_account_email = 'Not configured'
 
+    @api.depends()
+    def _compute_google_drive_cron_active(self):
+        """Get current Google Drive cron active state"""
+        for record in self:
+            cron = self.env.ref(
+                'robotia_document_extractor.ir_cron_google_drive_auto_extract',
+                raise_if_not_found=False
+            )
+            record.google_drive_cron_active = cron.active if cron else False
+
+    def _inverse_google_drive_cron_active(self):
+        """Update Google Drive cron active state"""
+        for record in self:
+            cron = self.env.ref(
+                'robotia_document_extractor.ir_cron_google_drive_auto_extract',
+                raise_if_not_found=False
+            )
+            if cron:
+                cron.sudo().write({'active': record.google_drive_cron_active})
 
     def action_get_prompt_form_01(self):
         """Reset Form 01 prompt to default value"""
@@ -223,15 +283,95 @@ class ResConfigSettings(models.TransientModel):
         )
         return True
 
-    def action_open_google_drive_config_wizard(self):
-        """Open Google Drive configuration wizard"""
+    def action_upload_service_account_json(self):
+        """Process uploaded service account JSON file"""
+        self.ensure_one()
+
+        if not self.google_drive_service_account_file:
+            raise UserError(_('Please upload a service account JSON file.'))
+
+        try:
+            # Decode uploaded file
+            json_content = base64.b64decode(self.google_drive_service_account_file).decode('utf-8')
+
+            # Validate JSON format
+            credentials = json.loads(json_content)
+
+            # Validate required fields
+            required_fields = ['type', 'project_id', 'private_key_id', 'private_key', 'client_email']
+            missing_fields = [f for f in required_fields if f not in credentials]
+
+            if missing_fields:
+                raise UserError(
+                    _('Invalid service account file. Missing fields: %s') % ', '.join(missing_fields)
+                )
+
+            if credentials.get('type') != 'service_account':
+                raise UserError(
+                    _('Invalid service account file. Expected type "service_account", got "%s"')
+                    % credentials.get('type')
+                )
+
+            # Save to config parameter
+            self.env['ir.config_parameter'].sudo().set_param(
+                'google_drive_service_account_json',
+                json_content
+            )
+
+            service_email = credentials.get('client_email')
+            _logger.info("Google Drive service account uploaded: %s", service_email)
+
+            # Clear the binary field after successful save
+            self.write({
+                'google_drive_service_account_file': False,
+                'google_drive_service_account_filename': False
+            })
+
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Upload Successful'),
+                    'message': _('Service account configured: %s') % service_email,
+                    'type': 'success',
+                    'sticky': False,
+                }
+            }
+
+        except json.JSONDecodeError as e:
+            raise UserError(_('Invalid JSON file format: %s') % str(e))
+        except Exception as e:
+            _logger.error("Error uploading service account JSON: %s", e)
+            raise UserError(_('Upload failed: %s') % str(e))
+
+    def action_clear_google_drive_config(self):
+        """Clear all Google Drive configuration"""
+        ICP = self.env['ir.config_parameter'].sudo()
+        ICP.set_param('google_drive_service_account_json', '')
+        ICP.set_param('google_drive_form01_folder_id', '')
+        ICP.set_param('google_drive_form02_folder_id', '')
+        ICP.set_param('google_drive_processed_folder_id', '')
+
+        # Also clear binary field and folder IDs
+        self.write({
+            'google_drive_service_account_file': False,
+            'google_drive_service_account_filename': False,
+            'google_drive_form01_folder_id': '',
+            'google_drive_form02_folder_id': '',
+            'google_drive_processed_folder_id': ''
+        })
+
+        _logger.info("Google Drive configuration cleared")
+
         return {
-            'type': 'ir.actions.act_window',
-            'name': _('Configure Google Drive'),
-            'res_model': 'google.drive.config.wizard',
-            'view_mode': 'form',
-            'target': 'new',
-            'context': self.env.context,
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Configuration Cleared'),
+                'message': _('All Google Drive settings have been removed.'),
+                'type': 'info',
+                'sticky': False,
+            }
         }
 
     def action_test_google_drive_connection(self):

@@ -192,71 +192,239 @@
                         </setting>
                     </block>
 
-                    <block title="Integrations">
-                        <setting id="google_drive_integration_setting"
-                                 string="Google Drive Integration"
-                                 class="col w-100"
-                                 help="Configure Google Drive integration to sync documents for extraction">
-                            <div id="google_drive_enabled" class="col-12 col-lg-12 o_setting_box">
+                    <block title="Google Drive Integration">
+                        <!-- Enable Google Drive Toggle -->
+                        <setting id="google_drive_enabled_setting"
+                                 string="Enable Google Drive"
+                                 help="Enable automatic document extraction from Google Drive folders">
+                            <div class="col-12 col-lg-12 o_setting_box">
                                 <div class="o_setting_left_pane">
-                                    <field name="google_drive_enabled" readonly="False"/>
+                                    <field name="google_drive_enabled"/>
                                 </div>
                                 <div class="o_setting_right_pane">
-                                    <label for="google_drive_enabled"/>
-                                </div>
-                            </div>
-                            <div class="content-group" invisible="not google_drive_enabled">
-                                <!-- Hidden field that triggers recompute when JSON changes -->
-                                <field name="google_drive_service_account_json" invisible="1"/>
-
-                                <div class="row mt16">
-                                    <label class="col-lg-3 o_light_label" for="google_drive_max_file_size_mb"/>
-                                    <div  class="col-lg-9">
-                                        <field name="google_drive_max_file_size_mb" class="col-lg-9 oe_inline"/>
-                                    </div>
-                                    <span class="col-lg-9 offset-lg-3 text-muted">
-                                        Files larger than this size will be automatically skipped during scanning
-                                    </span>
-                                </div>
-
-                                <div class="row mt16">
-                                    <label class="col-lg-3 o_light_label" for="google_drive_configured" string="Service Account"/>
-                                    <div class="col-lg-9">
-                                        <field name="google_drive_configured" invisible="1"/>
-                                        <field name="google_drive_service_account_email" readonly="1" invisible="not google_drive_service_account_email" class="w-100"/>
-                                        <div class="mt-2 d-flex gap-2">
-                                            <button string="Configure Service Account"
-                                                    name="action_open_google_drive_config_wizard"
-                                                    type="object"
-                                                    class="btn btn-primary"
-                                                    icon="fa-upload"/>
-                                            <button string="Test Connection"
-                                                    name="action_test_google_drive_connection"
-                                                    type="object"
-                                                    class="btn btn-success ms-2"
-                                                    icon="fa-plug"
-                                                    invisible="not google_drive_configured"/>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="row mt16" invisible="not google_drive_configured">
-                                    <div class="col-12">
-                                        <div class="alert alert-success">
-                                            <i class="fa fa-check-circle"/> Google Drive is configured and ready to use.
-                                            Click "Configure Service Account" to update credentials or folder settings.
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="row mt16" invisible="google_drive_configured">
-                                    <div class="col-12">
-                                        <div class="alert alert-warning">
-                                            <i class="fa fa-exclamation-triangle"/> Google Drive is not configured yet.
-                                            Click "Configure Service Account" to upload your service account JSON file.
-                                        </div>
+                                    <label for="google_drive_enabled" string="Enable Google Drive Integration"/>
+                                    <div class="text-muted">
+                                        Automatically scan and extract PDFs from configured Google Drive folders
                                     </div>
                                 </div>
                             </div>
                         </setting>
+
+                        <!-- Configuration Section (visible when enabled) -->
+                        <div invisible="not google_drive_enabled" class="mt16">
+                            <!-- Hidden field that triggers recompute when JSON changes -->
+                            <field name="google_drive_service_account_json" invisible="1"/>
+                            <field name="google_drive_configured" invisible="1"/>
+
+                            <!-- STEP 1: Upload Service Account JSON -->
+                            <setting id="service_account_upload_setting"
+                                     string="Step 1: Service Account"
+                                     help="Upload the JSON key file from Google Cloud Console">
+                                <div class="row">
+                                    <label class="col-lg-3 o_light_label" string="Upload JSON File"/>
+                                    <div class="col-lg-9">
+                                        <!-- Current status -->
+                                        <field name="google_drive_service_account_email" readonly="1"
+                                               invisible="not google_drive_service_account_email"
+                                               class="mb-2 text-success fw-bold"/>
+
+                                        <!-- File upload -->
+                                        <field name="google_drive_service_account_file"
+                                               filename="google_drive_service_account_filename"
+                                               widget="binary"
+                                               class="mb-2"/>
+                                        <field name="google_drive_service_account_filename" invisible="1"/>
+
+                                        <!-- Upload button -->
+                                        <button string="Upload &amp; Validate"
+                                                name="action_upload_service_account_json"
+                                                type="object"
+                                                class="btn btn-primary mt-2"
+                                                icon="fa-upload"
+                                                invisible="not google_drive_service_account_file"/>
+                                    </div>
+                                </div>
+
+                                <!-- Status badges -->
+                                <div class="row mt-2" invisible="not google_drive_configured">
+                                    <div class="col-lg-9 offset-lg-3">
+                                        <div class="alert alert-success mb-0">
+                                            <i class="fa fa-check-circle"/> Service account is configured and ready
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row mt-2" invisible="google_drive_configured">
+                                    <div class="col-lg-9 offset-lg-3">
+                                        <div class="alert alert-warning mb-0">
+                                            <i class="fa fa-exclamation-triangle"/> Service account not configured yet
+                                        </div>
+                                    </div>
+                                </div>
+                            </setting>
+
+                            <!-- STEP 2: Folder Configuration -->
+                            <setting id="folder_configuration_setting"
+                                     string="Step 2: Folder IDs"
+                                     help="Configure the 3 Google Drive folder IDs for document management">
+                                <div class="row mb-2">
+                                    <label class="col-lg-3 o_light_label" for="google_drive_form01_folder_id"/>
+                                    <div class="col-lg-9">
+                                        <field name="google_drive_form01_folder_id"
+                                               placeholder="e.g., 1a2b3c4d5e6f7g8h9i0j"
+                                               class="oe_inline"/>
+                                    </div>
+                                    <span class="col-lg-9 offset-lg-3 text-muted">
+                                        Folder for Form 01 (Registration) documents
+                                    </span>
+                                </div>
+
+                                <div class="row mb-2 mt-3">
+                                    <label class="col-lg-3 o_light_label" for="google_drive_form02_folder_id"/>
+                                    <div class="col-lg-9">
+                                        <field name="google_drive_form02_folder_id"
+                                               placeholder="e.g., 1a2b3c4d5e6f7g8h9i0j"
+                                               class="oe_inline"/>
+                                    </div>
+                                    <span class="col-lg-9 offset-lg-3 text-muted">
+                                        Folder for Form 02 (Report) documents
+                                    </span>
+                                </div>
+
+                                <div class="row mb-2 mt-3">
+                                    <label class="col-lg-3 o_light_label" for="google_drive_processed_folder_id"/>
+                                    <div class="col-lg-9">
+                                        <field name="google_drive_processed_folder_id"
+                                               placeholder="e.g., 1a2b3c4d5e6f7g8h9i0j"
+                                               class="oe_inline"/>
+                                    </div>
+                                    <span class="col-lg-9 offset-lg-3 text-muted">
+                                        Folder where processed files will be moved
+                                    </span>
+                                </div>
+                            </setting>
+
+                            <!-- STEP 3: File Size Limit -->
+                            <setting id="max_file_size_setting"
+                                     string="Step 3: File Size Limit"
+                                     help="Maximum PDF file size to process automatically">
+                                <div class="row">
+                                    <label class="col-lg-3 o_light_label" for="google_drive_max_file_size_mb"/>
+                                    <div class="col-lg-9">
+                                        <field name="google_drive_max_file_size_mb" class="oe_inline"/>
+                                        <span class="ms-2">MB</span>
+                                    </div>
+                                    <span class="col-lg-9 offset-lg-3 text-muted">
+                                        Files larger than this will be automatically skipped and moved to "TooLarge" subfolder
+                                    </span>
+                                </div>
+                            </setting>
+
+                            <!-- STEP 4: Cron Job Control -->
+                            <setting id="google_drive_cron_setting"
+                                     string="Step 4: Auto-Extraction Cron"
+                                     help="Enable or disable automatic scanning every 50 minutes">
+                                <div class="row">
+                                    <label class="col-lg-3 o_light_label" string="Cron Status"/>
+                                    <div class="col-lg-9">
+                                        <!-- Status Badge + Toggle -->
+                                        <div class="d-flex align-items-center gap-3 mb-3">
+                                            <span t-if="google_drive_cron_active" class="badge bg-success px-3 py-2">
+                                                <i class="fa fa-check-circle"/> Active - Scanning every 50 minutes
+                                            </span>
+                                            <span t-else="" class="badge bg-secondary px-3 py-2">
+                                                <i class="fa fa-times-circle"/> Inactive - Auto-extraction disabled
+                                            </span>
+                                        </div>
+
+                                        <!-- Checkbox toggle -->
+                                        <div class="form-check">
+                                            <field name="google_drive_cron_active" widget="boolean_toggle"/>
+                                            <label class="form-check-label ms-2">
+                                                Enable automatic extraction cron job
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <span class="col-lg-9 offset-lg-3 text-muted mt-2">
+                                        When enabled, the system will automatically scan configured folders every 50 minutes and extract new PDFs
+                                    </span>
+                                </div>
+                            </setting>
+
+                            <!-- Action Buttons -->
+                            <setting id="google_drive_actions_setting"
+                                     string="Actions"
+                                     help="Test connection or clear all configuration">
+                                <div class="d-flex gap-2">
+                                    <button string="Test Connection"
+                                            name="action_test_google_drive_connection"
+                                            type="object"
+                                            class="btn btn-success"
+                                            icon="fa-plug"
+                                            invisible="not google_drive_configured"/>
+                                    <button string="Clear All Configuration"
+                                            name="action_clear_google_drive_config"
+                                            type="object"
+                                            class="btn btn-danger"
+                                            icon="fa-trash"
+                                            confirm="Are you sure you want to clear all Google Drive configuration? This action cannot be undone."
+                                            invisible="not google_drive_configured"/>
+                                </div>
+                            </setting>
+
+                            <!-- Instructions Collapsible -->
+                            <div class="alert alert-info mt-3">
+                                <details>
+                                    <summary class="fw-bold" style="cursor: pointer;">
+                                        <i class="fa fa-info-circle"/> How to configure Google Drive Integration (Click to expand)
+                                    </summary>
+                                    <div class="mt-3">
+                                        <h5>Setup Instructions:</h5>
+                                        <ol>
+                                            <li><strong>Create Service Account:</strong>
+                                                <ul>
+                                                    <li>Go to <a href="https://console.cloud.google.com/iam-admin/serviceaccounts" target="_blank">Google Cloud Console → Service Accounts</a></li>
+                                                    <li>Create new service account or select existing one</li>
+                                                </ul>
+                                            </li>
+                                            <li><strong>Enable Drive API:</strong>
+                                                <ul>
+                                                    <li>Go to <a href="https://console.cloud.google.com/apis/library/drive.googleapis.com" target="_blank">APIs Library</a></li>
+                                                    <li>Search "Google Drive API" and enable it</li>
+                                                </ul>
+                                            </li>
+                                            <li><strong>Download JSON Key:</strong>
+                                                <ul>
+                                                    <li>In Service Accounts, click <strong>Keys → Add Key → Create New Key → JSON</strong></li>
+                                                    <li>Download the JSON file (e.g., <code>project-123.json</code>)</li>
+                                                </ul>
+                                            </li>
+                                            <li><strong>Create Drive Folders:</strong>
+                                                <ul>
+                                                    <li>Create 3 folders in your Google Drive: <strong>Form01</strong>, <strong>Form02</strong>, <strong>Processed</strong></li>
+                                                    <li>Copy service account email (e.g., <code>my-service@project.iam.gserviceaccount.com</code>)</li>
+                                                    <li>Share all 3 folders with this email (give <strong>Editor</strong> permission)</li>
+                                                </ul>
+                                            </li>
+                                            <li><strong>Get Folder IDs:</strong>
+                                                <ul>
+                                                    <li>Open each folder in browser</li>
+                                                    <li>Copy ID from URL: <code>https://drive.google.com/drive/folders/<strong>FOLDER_ID_HERE</strong></code></li>
+                                                </ul>
+                                            </li>
+                                            <li><strong>Configure in Odoo:</strong>
+                                                <ul>
+                                                    <li>Upload the JSON file in Step 1</li>
+                                                    <li>Enter the 3 folder IDs in Step 2</li>
+                                                    <li>Set file size limit in Step 3</li>
+                                                    <li>Enable cron in Step 4</li>
+                                                    <li>Click "Test Connection" to verify</li>
+                                                </ul>
+                                            </li>
+                                        </ol>
+                                    </div>
+                                </details>
+                            </div>
+                        </div>
                     </block>
                 </div>
             </form>
