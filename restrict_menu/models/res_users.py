@@ -30,17 +30,25 @@ class ResUsers(models.Model):
     @api.model_create_single
     def create(self, vals):
         res = super().create(vals)
-        
+
         try:
             if not res.is_admin:
+                # Add Dashboard menu
                 dashboard_menu = self.env.ref('dashboard.company_dashboard_menu', raise_if_not_found=False)
                 if dashboard_menu:
                     res.show_menu_ids = [(4, dashboard_menu.id)]
                 else:
                     logger.warning('Dashboard menu not found. Please install Dashboard module.')
+
+                # Add Document Extractor menu
+                doc_extractor_menu = self.env.ref('robotia_document_extractor.menu_document_extractor_root', raise_if_not_found=False)
+                if doc_extractor_menu:
+                    res.show_menu_ids = [(4, doc_extractor_menu.id)]
+                else:
+                    logger.warning('Document Extractor menu not found. Please install Document Extractor module.')
         except Exception as e:
             logger.error(f'Error assigning default menu: {str(e)}')
-            
+
         return res
 
     def write(self, vals):
