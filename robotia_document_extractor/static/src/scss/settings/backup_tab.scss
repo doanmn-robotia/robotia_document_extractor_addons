@@ -1,82 +1,79 @@
-// Backup Tab Styles - Clean Design
+/* Backup Tab Styles - Modern Design System */
 
-.backup-tab {
-    .card {
-        background: white;
-        border: 1px solid #e5e7eb;
-        border-radius: 12px;
-    }
-
-    h4 {
-        color: #111827;
-        font-weight: 700;
-    }
-
-    .text-muted {
-        color: #6b7280;
-    }
-
-    .alert-info {
-        background: #dbeafe;
-        border: 1px solid #bfdbfe;
-        color: #1e40af;
-        border-radius: 8px;
-        padding: 12px 16px;
-
-        strong {
-            color: #1e3a8a;
-            font-weight: 600;
-        }
-
+.settings-backup-tab {
+    // Backup Icon
+    .backup-icon {
         i {
-            color: #3b82f6;
-            margin-right: 8px;
+            color: var(--accent-info);
         }
     }
 
+    // Best Practices List
+    .best-practices-list {
+        .practice-item {
+            display: flex;
+            gap: 16px;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--border-color);
+
+            &:last-child {
+                border-bottom: none;
+            }
+
+            .practice-icon {
+                flex-shrink: 0;
+                width: 32px;
+                height: 32px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 50%;
+                background: #dcfce7;
+
+                i {
+                    font-size: 18px;
+                    color: var(--accent-green);
+                }
+            }
+
+            .practice-content {
+                flex: 1;
+
+                h6 {
+                    font-size: 15px;
+                    font-weight: 600;
+                    color: var(--text-primary);
+                    margin-bottom: 4px;
+                }
+
+                p {
+                    font-size: 14px;
+                    color: var(--text-muted);
+                    line-height: 1.5;
+                }
+            }
+        }
+    }
+
+    // Info button styling
     .btn-info {
-        background: #06b6d4;
-        border-color: #06b6d4;
+        background-color: var(--accent-info);
+        border-color: var(--accent-info);
         color: white;
+        font-size: 16px;
+        padding: 12px 24px;
         border-radius: 8px;
-        padding: 8px 16px;
-        font-size: 14px;
         font-weight: 500;
+        transition: all 0.2s;
 
         &:hover {
-            background: #0891b2;
-            border-color: #0891b2;
+            background-color: #0284c7;
+            border-color: #0284c7;
+            box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.2);
         }
 
         i {
             margin-right: 8px;
         }
-    }
-
-    .list-group-item {
-        border: 1px solid #e5e7eb;
-        border-left: 3px solid transparent;
-        transition: border-color 0.15s ease, background-color 0.15s ease;
-        padding: 12px 16px;
-
-        &:hover {
-            border-left-color: #06b6d4;
-            background: #f9fafb;
-        }
-
-        i {
-            color: #22c55e;
-            margin-right: 8px;
-        }
-    }
-
-    h6 {
-        color: #6b7280;
-        font-weight: 500;
-        font-size: 14px;
-    }
-
-    i.fa-database {
-        color: #06b6d4;
     }
 }

@@ -49,7 +49,7 @@
                         <setting id="gemini_model_setting"
                                  string="Gemini Model"
                                  help="Select the Gemini model to use for extraction. Different models have different capabilities and costs."
-                                 invisible="1">
+                                >
                             <field name="gemini_model" class="oe_inline" placeholder="gemini-2.5-pro"/>
                             <div class="content-group mt8">
                                 <div class="text-muted">
@@ -88,7 +88,7 @@
                         <setting id="gemini_temperature_setting"
                                  string="Temperature"
                                  help="Controls randomness in Gemini output. 0.0 = fully deterministic (recommended for accuracy)."
-                                 invisible="1">
+                                 >
                             <field name="gemini_temperature"/>
                             <div class="content-group mt8">
                                 <div class="text-muted">
@@ -102,7 +102,7 @@
                         <setting id="gemini_top_p_setting"
                                  string="Top P (Nucleus Sampling)"
                                  help="Controls diversity by limiting token selection. 0.95 = consider top 95% probability mass (recommended)."
-                                 invisible="1">
+                                 >
                             <field name="gemini_top_p"/>
                             <div class="content-group mt8">
                                 <div class="text-muted">
@@ -116,7 +116,7 @@
                         <setting id="gemini_top_k_setting"
                                  string="Top K"
                                  help="Limits vocabulary to top K tokens. 0 = no limit (recommended for precision)."
-                                 invisible="1">
+                                 >
                             <field name="gemini_top_k"/>
                             <div class="content-group mt8">
                                 <div class="text-muted">
@@ -192,7 +192,7 @@
                         </setting>
                     </block>
 
-                    <block title="Integrations" invisible="1">
+                    <block title="Integrations">
                         <setting id="google_drive_integration_setting"
                                  string="Google Drive Integration"
                                  class="col w-100"

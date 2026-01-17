@@ -8,22 +8,40 @@
             <form string="User">
                 <sheet>
                     
-                    <field name="image_1920" widget="image" class="oe_avatar" options="{&quot;preview_image&quot;: &quot;avatar_128&quot;}"/>
                     <div class="oe_title">
-                        <label for="name"/>
-                        <h1><field name="name" placeholder="e.g. John Doe" required="1"/></h1>
+                        <div class="d-flex gap-3 align-items-end">
+                            <div class="flex-grow-1">
+                                <label for="name"/>
+                                <h1><field name="name" placeholder="e.g. John Doe" required="1"/></h1>
+                            </div>
+                            <field name="image_1920" widget="image" class="oe_avatar" options="{&quot;preview_image&quot;: &quot;avatar_128&quot;}"/>
+                        </div>
                         <field name="email" invisible="1"/><!-- needed to update partner's email from on_change_login() -->
                         <label for="login" string="Email Address"/>
                         <h2><field name="login" placeholder="e.g. email@yourcompany.com"/></h2>
                     </div>
 
-                    <group col="1">
-                        <field name="email"/>
-                        <field name="phone"/>
-                        <field name="lang"/>
-                        <field name="tz"/>
-                        <field name="groups_id" invisible="1"/>
-                    </group>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="email" class="d-block mb-2"/>
+                            <field name="email" class="w-100"/>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="phone" class="d-block mb-2"/>
+                            <field name="phone" class="w-100"/>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="lang" class="d-block mb-2"/>
+                            <field name="lang" class="w-100"/>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="tz" class="d-block mb-2"/>
+                            <field name="tz" class="w-100"/>
+                        </div>
+                    </div>
+                    <field name="groups_id" invisible="1"/>
 
                     <group string="Document Extractor Role">
                         <field name="document_extractor_group" colspan="2" widget="card_selection" nolabel="1"/>

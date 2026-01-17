@@ -61,8 +61,10 @@ export class LogsTab extends Component {
         this.state.devices = result.records;
     }
 
-    async revokeDevice(device, ev) {
-        ev.stopPropagation();
+    async revokeDevice(deviceId) {
+        // Find device by ID
+        const device = this.state.devices.find(d => d.id === deviceId);
+        if (!device) return;
 
         this.dialog.add(ConfirmationDialog, {
             body: _t('Are you sure you want to revoke device "%s"? This session will be logged out immediately.', device.display_name),
@@ -128,11 +130,11 @@ export class LogsTab extends Component {
             if (!this.state.searchQuery) return true;
 
             const query = this.state.searchQuery.toLowerCase();
-            return device.display_name.toLowerCase().includes(query) ||
-                   (device.ip_address && device.ip_address.includes(query)) ||
+            return (device.display_name && device.display_name.toLowerCase().includes(query)) ||
+                   (device.ip_address && device.ip_address.toLowerCase().includes(query)) ||
                    (device.country && device.country.toLowerCase().includes(query)) ||
                    (device.city && device.city.toLowerCase().includes(query)) ||
-                   (device.user_id && device.user_id[1].toLowerCase().includes(query));
+                   (device.user_id && device.user_id[1] && device.user_id[1].toLowerCase().includes(query));
         });
     }
 

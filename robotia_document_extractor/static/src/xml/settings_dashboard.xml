@@ -11,54 +11,56 @@
             </t>
 
             <t t-else="">
-                <!-- Header -->
-                <div class="dashboard-header">
-                    <h2>Settings</h2>
-                    <p class="text-muted">Manage users, permissions, and system configuration</p>
+                <!-- Header Section -->
+                <div class="settings-header">
+                    <div class="settings-header-text">
+                        <h1>Extraction Settings</h1>
+                        <p class="text-muted">Configure AI models, cloud integrations, and system access for automated document processing</p>
+                    </div>
+                    <div class="settings-header-actions" t-if="state.activeTab === 'AI'">
+                        <button
+                            type="button"
+                            class="btn btn-outline-secondary"
+                            t-on-click="handleCancel"
+                            t-att-disabled="!state.hasChanges">
+                            Cancel
+                        </button>
+                        <button
+                            type="button"
+                            class="btn btn-primary"
+                            t-on-click="handleSave"
+                            t-att-disabled="!state.hasChanges">
+                            <i class="fa fa-save me-1"></i>
+                            Save Changes
+                        </button>
+                    </div>
                 </div>
 
-                <!-- Tabs Navigation -->
-                <div class="tabs-navigation bg-white rounded shadow-sm border-gray-200 mb-3">
-                    <div class="d-flex overflow-auto">
-                        <t t-if="canViewTab('USERS')">
-                            <button
-                                t-att-class="state.activeTab === 'USERS' ? 'tab-button tab-active' : 'tab-button'"
-                                t-on-click="() => this.switchTab('USERS')">
-                                <i class="fa fa-users me-2"/>Users
-                            </button>
-                        </t>
-                        <t t-if="canViewTab('AI')">
-                            <button
-                                t-att-class="state.activeTab === 'AI' ? 'tab-button tab-active' : 'tab-button'"
-                                t-on-click="() => this.switchTab('AI')">
-                                <i class="fa fa-robot me-2"/>AI Configuration
-                            </button>
-                        </t>
-                        <t t-if="canViewTab('BACKUP')">
-                            <button
-                                t-att-class="state.activeTab === 'BACKUP' ? 'tab-button tab-active' : 'tab-button'"
-                                t-on-click="() => this.switchTab('BACKUP')">
-                                <i class="fa fa-database me-2"/>Backup
-                            </button>
-                        </t>
-                        <t t-if="canViewTab('LOGS')">
-                            <button
-                                t-att-class="state.activeTab === 'LOGS' ? 'tab-button tab-active' : 'tab-button'"
-                                t-on-click="() => this.switchTab('LOGS')">
-                                <i class="fa fa-history me-2"/>Device Logs
-                            </button>
-                        </t>
-                    </div>
-                    <!-- Tab Content -->
-                    <div class="tab-content-container">
-                        <UsersTab t-if="state.activeTab === 'USERS'"/>
-                        <AITab t-if="state.activeTab === 'AI'"/>
-                        <BackupTab t-if="state.activeTab === 'BACKUP'"/>
-                        <LogsTab t-if="state.activeTab === 'LOGS'"/>
-                    </div>
+                <!-- Tab Navigation -->
+                <div class="settings-tabs">
+                    <t t-foreach="tabs" t-as="tab" t-key="tab.name">
+                        <button
+                            type="button"
+                            t-att-class="getTabClass(tab.name)"
+                            t-on-click="() => this.switchTab(tab.name)">
+                            <i t-att-class="'fa ' + tab.icon + ' me-2'"></i>
+                            <t t-esc="tab.label"/>
+                        </button>
+                    </t>
+                </div>
+
+                <!-- Tab Content -->
+                <div class="settings-content">
+                    <UsersTab t-if="state.activeTab === 'USERS'"/>
+                    <AITab
+                        t-if="state.activeTab === 'AI'"
+                        onDirtyChange.bind="handleDirtyChange"
+                        onSaveRequest.bind="handleSaveRequest"
+                        onCancelRequest.bind="handleCancelRequest"/>
+                    <BackupTab t-if="state.activeTab === 'BACKUP'"/>
+                    <LogsTab t-if="state.activeTab === 'LOGS'"/>
                 </div>
             </t>
-
         </div>
     </t>
 </templates>

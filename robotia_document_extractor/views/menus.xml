@@ -172,110 +172,143 @@
               action="action_hfc_dashboard"
               sequence="4"/>
 
-    <!-- Master Data Menu -->
+    <!-- Lookup & Summary Menu -->
     <menuitem id="menu_master_data"
               name="Lookup &amp; Summary"
               parent="menu_document_extractor_root"
               sequence="20"/>
 
+    <!-- Master Data Submenu -->
+    <menuitem id="menu_master_data_section"
+              name="Master Data"
+              parent="menu_master_data"
+              sequence="1"/>
+
+    <menuitem id="menu_organizations"
+              name="Organizations"
+              parent="menu_master_data_section"
+              action="action_partner_organization"
+              sequence="1"/>
+
     <menuitem id="menu_controlled_substances"
               name="Controlled Substances"
-              parent="menu_master_data"
+              parent="menu_master_data_section"
               action="action_controlled_substance"
-              sequence="1"/>
+              sequence="2"/>
 
     <menuitem id="menu_activity_fields"
               name="Activity Fields"
-              parent="menu_master_data"
+              parent="menu_master_data_section"
               action="action_activity_field"
-              sequence="2"/>
+              sequence="3"/>
 
     <menuitem id="menu_equipment_types"
               name="Equipment Types"
-              parent="menu_master_data"
+              parent="menu_master_data_section"
               action="action_equipment_type"
-              sequence="3"/>
+              sequence="4"/>
 
     <menuitem id="menu_hs_codes"
               name="HS Codes"
-              parent="menu_master_data"
+              parent="menu_master_data_section"
               action="action_hs_code"
-              sequence="4"/>
+              sequence="5"/>
 
     <menuitem id="menu_recycling_technologies"
               name="Recycling Technologies"
-              parent="menu_master_data"
+              parent="menu_master_data_section"
               action="action_recycling_technology"
-              sequence="5"/>
+              sequence="6"/>
 
     <menuitem id="menu_recycling_facilities"
               name="Recycling Facilities"
-              parent="menu_master_data"
+              parent="menu_master_data_section"
               action="action_recycling_facility"
-              sequence="6"/>
+              sequence="7"/>
 
     <menuitem id="menu_collection_locations"
               name="Collection Locations"
-              parent="menu_master_data"
+              parent="menu_master_data_section"
               action="action_collection_location"
-              sequence="7"/>
+              sequence="8"/>
 
-    <!-- Table Data Menus (Form 01) -->
+    <!-- Logs Submenu -->
+    <menuitem id="menu_logs_section"
+              name="Logs"
+              parent="menu_master_data"
+              sequence="2"/>
+
+    <menuitem id="menu_extraction_job"
+              name="Extraction Jobs"
+              parent="menu_logs_section"
+              action="action_extraction_job"
+              sequence="1"/>
+
+    <menuitem id="menu_google_drive_extraction_log"
+              name="Extraction Logs"
+              parent="menu_logs_section"
+              action="action_google_drive_extraction_log"
+              sequence="2"/>
+
+    <!-- Tables - Form 01 Submenu -->
+    <menuitem id="menu_tables_form_01_section"
+              name="Tables - Form 01"
+              parent="menu_master_data"
+              sequence="3"/>
+
     <menuitem id="menu_table_1_1_substance_usage"
               name="Bảng 1.1: Sử dụng chất"
-              parent="menu_master_data"
+              parent="menu_tables_form_01_section"
               action="action_substance_usage"
-              sequence="10"/>
+              sequence="1"/>
 
     <menuitem id="menu_table_1_2_equipment_product"
               name="Bảng 1.2: Thiết bị/Sản phẩm"
-              parent="menu_master_data"
+              parent="menu_tables_form_01_section"
               action="action_equipment_product"
-              sequence="11"/>
+              sequence="2"/>
 
     <menuitem id="menu_table_1_3_equipment_ownership"
               name="Bảng 1.3: Sở hữu thiết bị"
-              parent="menu_master_data"
+              parent="menu_tables_form_01_section"
               action="action_equipment_ownership"
-              sequence="12"/>
+              sequence="3"/>
 
     <menuitem id="menu_table_1_4_collection_recycling"
               name="Bảng 1.4: Thu gom/Tái chế"
-              parent="menu_master_data"
+              parent="menu_tables_form_01_section"
               action="action_collection_recycling"
-              sequence="13"/>
+              sequence="4"/>
 
-    <!-- Table Data Menus (Form 02) -->
+    <!-- Tables - Form 02 Submenu -->
+    <menuitem id="menu_tables_form_02_section"
+              name="Tables - Form 02"
+              parent="menu_master_data"
+              sequence="4"/>
+
     <menuitem id="menu_table_2_1_quota_usage"
               name="Bảng 2.1: Sử dụng hạn ngạch"
-              parent="menu_master_data"
+              parent="menu_tables_form_02_section"
               action="action_quota_usage"
-              sequence="14"/>
+            sequence="1"/>
 
     <menuitem id="menu_table_2_2_equipment_product_report"
               name="Bảng 2.2: Báo cáo thiết bị/Sản phẩm"
-              parent="menu_master_data"
+              parent="menu_tables_form_02_section"
               action="action_equipment_product_report"
-              sequence="15"/>
+              sequence="2"/>
 
     <menuitem id="menu_table_2_3_equipment_ownership_report"
               name="Bảng 2.3: Báo cáo sở hữu thiết bị"
-              parent="menu_master_data"
+              parent="menu_tables_form_02_section"
               action="action_equipment_ownership_report"
-              sequence="16"/>
+              sequence="3"/>
 
     <menuitem id="menu_table_2_4_collection_recycling_report"
               name="Bảng 2.4: Báo cáo thu gom/Tái chế"
-              parent="menu_master_data"
+              parent="menu_tables_form_02_section"
               action="action_collection_recycling_report"
-              sequence="17"/>
-
-    <!-- Configuration Menu -->
-    <menuitem id="menu_configuration"
-              name="Configuration"
-              parent="menu_document_extractor_root"
-              sequence="90"
-              groups="group_document_extractor_admin"/>
+              sequence="4"/>
 
     <!-- Settings Dashboard (Client Action) -->
     <record id="action_settings_dashboard" model="ir.actions.client">
@@ -283,18 +316,12 @@
         <field name="tag">document_extractor.settings_dashboard</field>
     </record>
 
-    <menuitem id="menu_settings_dashboard"
-              name="Settings Dashboard"
-              parent="menu_configuration"
-              action="action_settings_dashboard"
-              sequence="0"
-              groups="group_document_extractor_admin"/>
-
+    <!-- Settings Menu - Opens Settings Dashboard directly -->
     <menuitem id="menu_settings"
-              name="System Settings"
-              parent="menu_configuration"
-              action="action_document_extractor_settings"
-              sequence="1"
+              name="Settings"
+              parent="menu_document_extractor_root"
+              action="action_settings_dashboard"
+              sequence="90"
               groups="group_document_extractor_admin"/>
 
     <!-- ========================================== -->
@@ -430,13 +457,6 @@
         </field>
     </record>
 
-    <!-- Add menu for Organizations -->
-    <menuitem id="menu_organizations"
-              name="Organizations"
-              parent="menu_master_data"
-              action="action_partner_organization"
-              sequence="0"/>
-
     <!-- ========================================== -->
     <!-- Recovery Dashboard Client Action -->
     <!-- ========================================== -->
@@ -444,12 +464,6 @@
         <field name="name">Collection &amp; Recycling Dashboard</field>
         <field name="tag">document_extractor.recovery_dashboard</field>
     </record>
-
-    <menuitem id="menu_recovery_dashboard"
-              name="Collection &amp; Recycling"
-              parent="menu_master_data"
-              action="action_recovery_dashboard"
-              sequence="9"/>
 
 
 </odoo>

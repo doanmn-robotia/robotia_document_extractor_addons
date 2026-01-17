@@ -1,86 +1,128 @@
-// Logs Tab Styles - Device Kanban Clean Design
+/* Logs Tab Styles - Modern Design System */
 
-.logs-tab {
-    .search-bar {
-        background: white;
-        border: 1px solid #e5e7eb;
-        border-radius: 12px;
-        margin-bottom: 16px;
-    }
-
-    .devices-kanban {
+.settings-logs-tab {
+    // Device Cards Grid
+    .devices-grid {
         .device-card {
             background: white;
-            border: 1px solid #e5e7eb;
+            border: 1px solid var(--border-color);
             border-radius: 12px;
-            padding: 16px;
-            transition: box-shadow 0.15s ease;
+            padding: 20px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            transition: border-color 0.2s ease;
 
-            .device-icon {
-                i {
-                    opacity: 0.7;
-                    color: #3b82f6;
-
-                    &.fa-mobile {
-                        color: #06b6d4;
-                    }
-                }
+            &:hover {
+                border-color: var(--accent-blue);
             }
 
+            // Device Header
             .device-header {
-                .badge {
-                    font-size: 10px;
-                    padding: 3px 8px;
-                    font-weight: 600;
-                    border-radius: 9999px;
+                display: flex;
+                gap: 12px;
+                margin-bottom: 16px;
+                padding-bottom: 16px;
+                border-bottom: 1px solid var(--border-color);
 
-                    &.bg-success {
+                .device-icon-wrapper {
+                    flex-shrink: 0;
+
+                    .device-icon-large {
+                        font-size: 36px;
+                        opacity: 0.8;
+
+                        &.text-primary {
+                            color: var(--accent-blue);
+                        }
+
+                        &.text-info {
+                            color: var(--accent-info);
+                        }
+                    }
+                }
+
+                .device-title {
+                    flex: 1;
+
+                    h6 {
+                        font-size: 16px;
+                        font-weight: 600;
+                        color: var(--text-primary);
+                        margin: 0;
+                    }
+
+                    .badge-current {
+                        display: inline-flex;
+                        align-items: center;
+                        gap: 6px;
                         background: #dcfce7;
                         color: #166534;
-                        border: 1px solid #bbf7d0;
+                        border: 1px solid #86efac;
+                        font-size: 11px;
+                        padding: 4px 10px;
+                        border-radius: 12px;
+                        font-weight: 600;
+                        margin-top: 4px;
+
+                        i.fa-circle {
+                            font-size: 6px;
+                            color: #22c55e;
+                            display: inline-block;
+                            will-change: opacity;
+
+                            &.pulse {
+                                animation: pulse-smooth 2s ease-in-out infinite;
+                            }
+                        }
                     }
                 }
             }
 
-            .device-info {
-                .device-name {
-                    font-weight: 700;
-                    color: #111827;
+            // Device Details
+            .device-details {
+                flex: 1;
+                margin-bottom: 16px;
+
+                .device-detail-item {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    margin-bottom: 10px;
                     font-size: 14px;
-                }
-            }
+                    color: var(--slate-700);
 
-            .device-detail {
-                font-size: 13px;
-                color: #6b7280;
-                margin-bottom: 4px;
+                    &:last-child {
+                        margin-bottom: 0;
+                    }
 
-                i {
-                    width: 16px;
-                    opacity: 0.6;
-                    margin-right: 4px;
-                }
-            }
+                    i {
+                        width: 18px;
+                        font-size: 14px;
+                        color: var(--text-muted);
+                        flex-shrink: 0;
+                    }
 
-            .btn-revoke {
-                font-size: 13px;
-                padding: 6px 12px;
-                border-radius: 6px;
+                    span {
+                        flex: 1;
+                        word-break: break-word;
+                    }
 
-                &.btn-outline-danger {
-                    color: #dc2626;
-                    border-color: #dc2626;
-
-                    &:hover {
-                        background: #dc2626;
-                        color: white;
+                    &.small {
+                        font-size: 12px;
+                        color: var(--text-muted);
                     }
                 }
+            }
 
-                &.btn-secondary {
-                    background: #f3f4f6;
-                    color: #6b7280;
-                    border-color: #e5e7eb;
+            // Device Actions
+            .device-actions {
+                padding-top: 16px;
+                border-top: 1px solid var(--border-color);
+
+                .btn {
+                    font-size: 13px;
+                    font-weight: 500;
                 }
             }
         }
@@ -92,13 +134,23 @@
         text-align: center;
 
         i {
-            color: #d1d5db;
+            color: var(--slate-300);
             margin-bottom: 16px;
         }
 
         p {
-            color: #6b7280;
+            color: var(--text-muted);
             font-size: 14px;
         }
+    }
+}
+
+// Pulse Animation for Current Badge (Smooth)
+@keyframes pulse-smooth {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.3;
     }
 }

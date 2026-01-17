@@ -367,6 +367,59 @@ html {
         margin: var(--space-2) 0;
         border-color: var(--border-color-light);
     }
+
+    // Menu Group Section Headers
+    .dropdown-header {
+        padding: var(--space-3) var(--space-3) var(--space-2);
+        margin: var(--space-3) 0 var(--space-1);
+        font-size: 0.75rem;
+        font-weight: var(--font-weight-semibold);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-muted);
+        border-bottom: 1px solid var(--border-color-light);
+        position: relative;
+
+        // First section - no top margin
+        &:first-child {
+            margin-top: 0;
+        }
+
+    }
+
+    // Menu Group Container
+    .dropdown-menu_group {
+        // Add subtle background to group
+        background: var(--gray-50);
+        border-radius: var(--radius-md);
+        padding: var(--space-1);
+        margin: var(--space-2) 0;
+
+        // Remove background from first/last groups
+        &:first-child {
+            margin-top: 0;
+        }
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+
+        // Style items within group
+        .dropdown-item {
+            margin: 0;
+
+            &:first-child {
+                margin-top: var(--space-1);
+            }
+        }
+
+        // Header within group container
+        .dropdown-header {
+            background: transparent;
+            margin-top: 0;
+            padding-top: var(--space-2);
+        }
+    }
 }
 
 /* ========================================================================
@@ -432,8 +485,12 @@ html {
         }
     }
 
-    .oe_title .o_field_widget {
+    .oe_title .o_field_widget.o_field_readonly {
         border: none !important;
+    }
+
+    .oe_title {
+        max-width: 100% !important;
     }
 
     // Modern field widgets - style the container like an input (specific field types only)
@@ -449,27 +506,48 @@ html {
     .o_field_widget.o_field_float,
     .o_field_widget.o_field_many2many_tags {
         border: 1px solid var(--border-color);
+        background-color: rgb(248, 250, 252);
         border-radius: var(--radius-md);
-        padding: var(--space-1) var(--space-2);
+        padding: 0;
         transition: border-color var(--transition-base) var(--ease-out),
                     box-shadow var(--transition-base) var(--ease-out);
         display: inline-block;
 
         &:focus-within {
-            border-color: var(--primary-accent);
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+            background-color: white;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
             outline: none;
         }
 
-        // Clear CSS for inputs inside o_field_widget to avoid conflicts
+        // Move padding to inputs so they are fully clickable
         input:not(.o_searchview_input),
         textarea,
         select {
             border: none !important;
             border-radius: 0 !important;
-            padding: 0 !important;
+            padding: 10px 12px !important;
             box-shadow: none !important;
             outline: none !important;
+            width: 100%;
+            background: transparent;
+        }
+    }
+
+    .o_list_renderer {
+        .o_field_widget.o_field_daterange,
+        .o_field_widget.o_field_date,
+        .o_field_widget.o_field_datetime,
+        .o_field_widget.o_field_integer,
+        .o_field_widget.o_field_char,
+        .o_field_widget.o_field_selection,
+        .o_field_widget.o_field_many2one_avatar,
+        .o_field_widget.o_field_many2one,
+        .o_field_widget.o_field_email,
+        .o_field_widget.o_field_float,
+        .o_field_widget.o_field_many2many_tags {
+            padding: unset !important;
+            background-color: transparent !important;
         }
     }
 

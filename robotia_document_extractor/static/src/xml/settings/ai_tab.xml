@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
     <t t-name="robotia_document_extractor.SettingsAITab">
-        <div class="ai-tab-container">
+        <div class="settings-ai-tab">
+            <!-- Loading Spinner -->
             <t t-if="state.loading">
                 <div class="d-flex justify-content-center p-5">
                     <div class="spinner-border" role="status">
@@ -11,15 +12,388 @@
             </t>
 
             <t t-else="">
-                <!-- Render Settings Form using View component -->
-                <t t-if="state.viewId">
-                    <View t-props="viewProps"/>
-                </t>
-                <t t-else="">
-                    <div class="alert alert-warning">
-                        <i class="fa fa-exclamation-triangle"/> Settings form not found. Please check view configuration.
+                <!-- AI Engine Configuration Card -->
+                <div class="settings-card">
+                    <div class="settings-card-header">
+                        <i class="fa fa-magic text-primary"></i>
+                        <h3>AI Engine Configuration</h3>
                     </div>
-                </t>
+                    <div class="settings-card-body">
+                        <div class="row">
+                            <!-- Left Column -->
+                            <div class="col-md-6">
+                                <!-- Gemini API Key -->
+                                <div class="form-group mb-4">
+                                    <label class="form-label">Gemini API Key</label>
+                                    <input
+                                        type="password"
+                                        class="form-control"
+                                        t-model="state.gemini_api_key"
+                                        t-on-input="onFieldChange"
+                                        placeholder="Enter your Gemini API key"/>
+                                    <small class="form-text text-muted">
+                                        Required for document extraction using Google Gemini AI
+                                    </small>
+                                </div>
+
+                                <!-- Gemini Model -->
+                                <div class="form-group mb-4">
+                                    <label class="form-label">Gemini Model</label>
+                                    <select class="form-select" t-model="state.gemini_model" t-on-change="onFieldChange">
+                                        <t t-foreach="geminiModelOptions" t-as="option" t-key="option.value">
+                                            <option t-att-value="option.value" t-esc="option.label"/>
+                                        </t>
+                                    </select>
+                                    <small class="form-text text-muted">
+                                        Select the AI model for extraction. Flash models are faster, Pro models are more accurate.
+                                    </small>
+                                </div>
+
+                                <!-- Top P (Nucleus Sampling) -->
+                                <div class="form-group mb-4">
+                                    <label class="form-label">
+                                        Top P (Nucleus Sampling)
+                                        <span class="badge bg-secondary ms-2" t-esc="state.gemini_top_p"/>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        class="form-control"
+                                        t-model="state.gemini_top_p"
+                                        t-on-input="onFieldChange"
+                                        step="0.05"
+                                        min="0"
+                                        max="1"/>
+                                    <small class="form-text text-muted">
+                                        Controls diversity. 0.95 = consider top 95% probability mass (recommended)
+                                    </small>
+                                </div>
+                            </div>
+
+                            <!-- Right Column -->
+                            <div class="col-md-6">
+                                <!-- LlamaCloud API Key -->
+                                <div class="form-group mb-4">
+                                    <label class="form-label">LlamaCloud API Key</label>
+                                    <input
+                                        type="password"
+                                        class="form-control"
+                                        t-model="state.llama_cloud_api_key"
+                                        t-on-input="onFieldChange"
+                                        placeholder="Enter your LlamaCloud API key"/>
+                                    <small class="form-text text-muted">
+                                        Required for OCR processing with LlamaParse
+                                    </small>
+                                </div>
+
+                                <!-- Temperature -->
+                                <div class="form-group mb-4">
+                                    <label class="form-label">
+                                        Temperature
+                                        <span class="badge bg-secondary ms-2" t-esc="state.gemini_temperature"/>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        class="form-control"
+                                        t-model="state.gemini_temperature"
+                                        t-on-input="onFieldChange"
+                                        step="0.1"
+                                        min="0"
+                                        max="2"/>
+                                    <small class="form-text text-muted">
+                                        Controls randomness. 0.0 = fully deterministic (recommended for accuracy)
+                                    </small>
+                                </div>
+
+                                <!-- Top K -->
+                                <div class="form-group mb-4">
+                                    <label class="form-label">
+                                        Top K
+                                        <span class="badge bg-secondary ms-2" t-esc="state.gemini_top_k"/>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        class="form-control"
+                                        t-model="state.gemini_top_k"
+                                        t-on-input="onFieldChange"
+                                        step="1"
+                                        min="0"/>
+                                    <small class="form-text text-muted">
+                                        Limits vocabulary to top K tokens. 0 = no limit (recommended)
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Advanced Settings Row -->
+                        <div class="row mt-3">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="form-label">Max Output Tokens</label>
+                                    <input
+                                        type="number"
+                                        class="form-control"
+                                        t-model="state.gemini_max_output_tokens"
+                                        t-on-input="onFieldChange"
+                                        step="1000"
+                                        min="1000"/>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="form-label">Max Retries</label>
+                                    <input
+                                        type="number"
+                                        class="form-control"
+                                        t-model="state.gemini_max_retries"
+                                        t-on-input="onFieldChange"
+                                        step="1"
+                                        min="0"
+                                        max="10"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Batch Extraction Configuration Card -->
+                <div class="settings-card">
+                    <div class="settings-card-header">
+                        <i class="fa fa-layer-group text-info"></i>
+                        <h3>Batch Extraction Configuration</h3>
+                    </div>
+                    <div class="settings-card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="form-label">Minimum Batch Size</label>
+                                    <input
+                                        type="number"
+                                        class="form-control"
+                                        t-model="state.batch_size_min"
+                                        t-on-input="onFieldChange"
+                                        step="1"
+                                        min="1"/>
+                                    <small class="form-text text-muted">
+                                        Minimum pages per API call (for complex documents)
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="form-label">Maximum Batch Size</label>
+                                    <input
+                                        type="number"
+                                        class="form-control"
+                                        t-model="state.batch_size_max"
+                                        t-on-input="onFieldChange"
+                                        step="1"
+                                        min="1"/>
+                                    <small class="form-text text-muted">
+                                        Maximum pages per API call (for simple documents)
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="form-label">Image Resolution (DPI)</label>
+                                    <input
+                                        type="number"
+                                        class="form-control"
+                                        t-model="state.batch_image_dpi"
+                                        t-on-input="onFieldChange"
+                                        step="50"
+                                        min="72"
+                                        max="600"/>
+                                    <small class="form-text text-muted">
+                                        Resolution for PDF to image conversion (150-300 recommended)
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Google Drive Integration Card -->
+                <div class="settings-card">
+                    <div class="settings-card-header">
+                        <i class="fa fa-cloud-arrow-up text-success"></i>
+                        <h3>Google Drive Integration</h3>
+                        <div class="form-check form-switch ms-auto">
+                            <input
+                                type="checkbox"
+                                class="form-check-input"
+                                id="google_drive_enabled"
+                                t-model="state.google_drive_enabled"
+                                t-on-change="onFieldChange"/>
+                            <label class="form-check-label" for="google_drive_enabled">Enabled</label>
+                        </div>
+                    </div>
+                    <div class="settings-card-body" t-if="state.google_drive_enabled">
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <!-- Service Account Status -->
+                                <div class="form-group mb-3">
+                                    <label class="form-label">Service Account</label>
+                                    <div class="service-account-status d-flex align-items-center gap-2 p-3 rounded bg-light mb-2">
+                                        <i t-if="state.google_drive_configured" class="fa fa-check-circle text-success"></i>
+                                        <i t-else="" class="fa fa-exclamation-circle text-warning"></i>
+                                        <span class="text-muted" t-esc="state.google_drive_service_account_email"/>
+                                    </div>
+
+                                    <!-- File Upload Input -->
+                                    <div class="service-account-upload">
+                                        <input
+                                            type="file"
+                                            class="form-control form-control-sm"
+                                            accept=".json"
+                                            t-on-change="handleServiceAccountUpload"
+                                            id="serviceAccountFile"/>
+                                        <label class="btn btn-sm btn-outline-secondary mt-1 w-100" for="serviceAccountFile">
+                                            <i class="fa fa-upload me-1"></i>
+                                            <t t-if="state.google_drive_configured">Update Service Account JSON</t>
+                                            <t t-else="">Upload Service Account JSON</t>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Info Banner -->
+                                <div class="alert alert-info d-flex gap-2 align-items-start">
+                                    <i class="fa fa-info-circle mt-1"></i>
+                                    <div>
+                                        <strong>Note:</strong> Ensure the service account has 'Editor' permissions on the folders below.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <!-- Max File Size -->
+                                <div class="form-group">
+                                    <label class="form-label">Max File Size (MB)</label>
+                                    <input
+                                        type="number"
+                                        class="form-control"
+                                        t-model="state.google_drive_max_file_size_mb"
+                                        t-on-input="onFieldChange"
+                                        step="5"
+                                        min="1"
+                                        max="200"/>
+                                    <small class="form-text text-muted">
+                                        Files larger than this limit will be skipped (recommended: 30MB)
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Folder IDs Grid (3 columns) -->
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="form-label">Form 01 Folder ID</label>
+                                    <input
+                                        type="text"
+                                        class="form-control"
+                                        t-model="state.google_drive_form01_folder_id"
+                                        t-on-input="onFieldChange"
+                                        placeholder="Google Drive folder ID"/>
+                                    <small class="form-text text-muted">
+                                        Folder containing Form 01 Registration PDFs
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="form-label">Form 02 Folder ID</label>
+                                    <input
+                                        type="text"
+                                        class="form-control"
+                                        t-model="state.google_drive_form02_folder_id"
+                                        t-on-input="onFieldChange"
+                                        placeholder="Google Drive folder ID"/>
+                                    <small class="form-text text-muted">
+                                        Folder containing Form 02 Report PDFs
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="form-label">Processed Folder ID</label>
+                                    <input
+                                        type="text"
+                                        class="form-control"
+                                        t-model="state.google_drive_processed_folder_id"
+                                        t-on-input="onFieldChange"
+                                        placeholder="Google Drive folder ID"/>
+                                    <small class="form-text text-muted">
+                                        Folder to move processed files to
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Auto-extraction Cron Settings + Action Buttons -->
+                        <div class="settings-card-footer">
+                            <!-- Cron Toggle + Interval Settings -->
+                            <div class="row align-items-center mb-3">
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch">
+                                        <input
+                                            type="checkbox"
+                                            class="form-check-input"
+                                            id="auto_extraction"
+                                            t-model="state.google_drive_auto_extraction_enabled"
+                                            t-on-change="onFieldChange"/>
+                                        <label class="form-check-label" for="auto_extraction">
+                                            Enable Auto-Extraction Cron
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6" t-if="state.google_drive_auto_extraction_enabled">
+                                    <div class="cron-interval-controls d-flex gap-2">
+                                        <div class="flex-shrink-0" style="width: 100px;">
+                                            <label class="form-label small mb-1">Interval</label>
+                                            <input
+                                                type="number"
+                                                class="form-control form-control-sm"
+                                                t-model="state.google_drive_cron_interval_number"
+                                                t-on-input="onFieldChange"
+                                                min="1"
+                                                step="1"/>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <label class="form-label small mb-1">Unit</label>
+                                            <select
+                                                class="form-select form-select-sm"
+                                                t-model="state.google_drive_cron_interval_type"
+                                                t-on-change="onFieldChange">
+                                                <t t-foreach="cronIntervalTypeOptions" t-as="option" t-key="option.value">
+                                                    <option t-att-value="option.value" t-esc="option.label"/>
+                                                </t>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="d-flex gap-2 justify-content-end">
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-outline-primary"
+                                    t-on-click="testGoogleDriveConnection"
+                                    t-att-disabled="!state.google_drive_configured">
+                                    <i class="fa fa-vial me-1"></i>
+                                    Test Connection
+                                </button>
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-outline-danger"
+                                    t-on-click="clearGoogleDriveConfig"
+                                    t-att-disabled="!state.google_drive_configured">
+                                    Clear All Config
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </t>
         </div>
     </t>

@@ -1,111 +1,132 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
     <t t-name="robotia_document_extractor.SettingsLogsTab">
-        <div class="logs-tab">
+        <div class="settings-logs-tab">
             <!-- Loading State -->
-            <div t-if="state.loading" class="text-center py-5">
-                <i class="fa fa-spinner fa-spin fa-3x text-primary"/>
-                <p class="mt-3">Loading device logs...</p>
+            <div t-if="state.loading" class="d-flex justify-content-center p-5">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
             </div>
 
             <!-- Content -->
             <div t-else="">
-                <!-- Search Bar -->
-                <div class="search-bar bg-white p-3 rounded-lg border mb-3">
-                    <div class="row g-3 align-items-center">
-                        <div class="col-md-8">
-                            <div class="position-relative">
-                                <i class="fa fa-search position-absolute" style="left: 12px; top: 50%; transform: translateY(-50%); color: #6c757d;"/>
-                                <input
-                                    type="text"
-                                    class="form-control ps-5"
-                                    placeholder="Search by device, IP, location, user..."
-                                    t-att-value="state.searchQuery"
-                                    t-on-input="onSearchInput"/>
+                <!-- Device Sessions Card -->
+                <div class="settings-card">
+                    <div class="settings-card-header">
+                        <i class="fa fa-history text-info"></i>
+                        <h3>Device Sessions</h3>
+                    </div>
+                    <div class="settings-card-body">
+                        <!-- Search Bar -->
+                        <div class="row g-3 align-items-center mb-4">
+                            <div class="col-md-8">
+                                <div class="search-box position-relative">
+                                    <i class="fa fa-search position-absolute" style="left: 12px; top: 50%; transform: translateY(-50%); color: var(--slate-400);"/>
+                                    <input
+                                        type="text"
+                                        class="form-control ps-5"
+                                        placeholder="Search by device, IP, location, user..."
+                                        t-att-value="state.searchQuery"
+                                        t-on-input="onSearchInput"/>
+                                </div>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <span class="text-muted small">
+                                    <i class="fa fa-info-circle me-1"/>
+                                    <t t-esc="filteredDevices.length"/> device(s) found
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Device Kanban Cards -->
+                        <div class="devices-grid">
+                            <div class="row g-3">
+                                <t t-foreach="filteredDevices" t-as="device" t-key="device.id">
+                                    <div class="col-md-6 col-lg-4">
+                                        <div class="device-card">
+                                            <!-- Device Header -->
+                                            <div class="device-header">
+                                                <div class="device-icon-wrapper">
+                                                    <i t-if="device.device_type === 'computer'"
+                                                       class="fa fa-laptop device-icon-large text-primary"/>
+                                                    <i t-else=""
+                                                       class="fa fa-mobile device-icon-large text-info"/>
+                                                </div>
+                                                <div class="device-title">
+                                                    <h6 class="mb-1" t-esc="device.display_name"/>
+                                                    <span t-if="device.is_current" class="badge badge-current">
+                                                        <i class="fa fa-circle pulse"/>
+                                                        Current Session
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            <!-- Device Details -->
+                                            <div class="device-details">
+                                                <!-- User -->
+                                                <div class="device-detail-item" t-if="device.user_id and device.user_id[1]">
+                                                    <i class="fa fa-user text-muted"/>
+                                                    <span t-esc="device.user_id[1]"/>
+                                                </div>
+
+                                                <!-- IP Address -->
+                                                <div class="device-detail-item">
+                                                    <i class="fa fa-network-wired text-muted"/>
+                                                    <span t-esc="device.ip_address || 'Unknown'"/>
+                                                </div>
+
+                                                <!-- Location -->
+                                                <div class="device-detail-item" t-if="device.country || device.city">
+                                                    <i class="fa fa-globe text-muted"/>
+                                                    <span t-esc="getLocationString(device)"/>
+                                                </div>
+
+                                                <!-- Last Activity -->
+                                                <div class="device-detail-item">
+                                                    <i class="fa fa-clock text-muted"/>
+                                                    <span class="text-muted" t-esc="getRelativeTime(device.last_activity)"/>
+                                                </div>
+
+                                                <!-- First Activity -->
+                                                <div class="device-detail-item small text-muted">
+                                                    <i class="fa fa-calendar text-muted"/>
+                                                    <span>First seen: <t t-esc="formatDateTime(device.first_activity)"/></span>
+                                                </div>
+                                            </div>
+
+                                            <!-- Device Actions -->
+                                            <div class="device-actions">
+                                                <button
+                                                    t-att-class="device.revoked ? 'btn btn-sm btn-secondary w-100 disabled' : 'btn btn-sm btn-outline-danger w-100'"
+                                                    t-on-click="() => this.revokeDevice(device.id)"
+                                                    t-att-disabled="device.revoked">
+                                                    <i class="fa fa-ban me-1"/>
+                                                    <t t-if="device.revoked">Session Revoked</t>
+                                                    <t t-else="">Revoke Session</t>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </t>
+                            </div>
+
+                            <!-- Empty State -->
+                            <div t-if="filteredDevices.length === 0" class="text-center py-5">
+                                <i class="fa fa-laptop fa-4x text-muted mb-3"/>
+                                <p class="text-muted mb-0">No device sessions found</p>
+                                <p class="small text-muted">Try adjusting your search query</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Device Kanban Cards -->
-                <div class="devices-kanban">
-                    <div class="row g-3">
-                        <t t-foreach="filteredDevices" t-as="device" t-key="device.id">
-                            <div class="col-md-6 col-lg-4">
-                                <div class="device-card bg-white rounded-lg hover border p-3 h-100">
-                                    <div class="d-flex align-items-start">
-                                        <!-- Device Icon -->
-                                        <div class="device-icon me-3">
-                                            <i t-if="device.device_type === 'computer'"
-                                               class="fa fa-laptop fa-3x text-primary"/>
-                                            <i t-else=""
-                                               class="fa fa-mobile fa-3x text-info"/>
-                                        </div>
-
-                                        <!-- Device Info -->
-                                        <div class="device-info flex-grow-1">
-                                            <!-- Header with Name and Current Badge -->
-                                            <div class="device-header mb-2">
-                                                <div class="d-flex align-items-center">
-                                                    <span class="fw-bold me-2" t-esc="device.display_name"/>
-                                                    <span t-if="device.is_current" class="badge badge-current">
-                                                        <i class="fa fa-circle"/>
-                                                        Current
-                                                    </span>
-                                                </div>
-                                            </div>
-
-                                            <!-- User -->
-                                            <div class="device-detail mb-1" t-if="device.user_id">
-                                                <i class="fa fa-user text-muted me-2"/>
-                                                <span class="small" t-esc="device.user_id[1]"/>
-                                            </div>
-
-                                            <!-- IP Address -->
-                                            <div class="device-detail mb-1">
-                                                <i class="fa fa-map-marker text-muted me-2"/>
-                                                <span class="small" t-esc="device.ip_address || 'Unknown'"/>
-                                            </div>
-
-                                            <!-- Location -->
-                                            <div class="device-detail mb-1" t-if="device.country || device.city">
-                                                <i class="fa fa-globe text-muted me-2"/>
-                                                <span class="small" t-esc="getLocationString(device)"/>
-                                            </div>
-
-                                            <!-- Last Activity (Relative Time) -->
-                                            <div class="device-detail mb-1">
-                                                <i class="fa fa-clock-o text-muted me-2"/>
-                                                <span class="small text-muted" t-esc="getRelativeTime(device.last_activity)"/>
-                                            </div>
-
-                                            <!-- First Activity -->
-                                            <div class="device-detail small text-muted" style="font-size: 0.8em;">
-                                                First seen: <t t-esc="formatDateTime(device.first_activity)"/>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Revoke Button -->
-                                    <div class="mt-3 text-end">
-                                        <button
-                                            t-att-class="device.revoked ? 'btn btn-sm btn-secondary disabled' : 'btn btn-sm btn-outline-danger'"
-                                            t-on-click="() => this.revokeDevice(device.id)"
-                                            t-att-disabled="device.revoked">
-                                            <i class="fa fa-ban me-1"/>
-                                            <t t-if="device.revoked">Revoked</t>
-                                            <t t-else="">Revoke</t>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </t>
-                    </div>
-
-                    <!-- Empty State -->
-                    <div t-if="filteredDevices.length === 0" class="text-center py-5">
-                        <i class="fa fa-laptop fa-4x text-muted mb-3"/>
-                        <p class="text-muted">No device sessions found</p>
+                <!-- Info Alert -->
+                <div class="alert alert-info mt-4 d-flex gap-3 align-items-start">
+                    <i class="fa fa-info-circle mt-1"/>
+                    <div>
+                        <strong>About Device Sessions:</strong> This page shows all active login sessions across different devices.
+                        You can revoke any session to force logout from that device for security purposes.
                     </div>
                 </div>
             </div>

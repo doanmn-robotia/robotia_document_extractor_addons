@@ -54,5 +54,29 @@
             <field name="perm_create" eval="False"/>
             <field name="perm_unlink" eval="True"/>
         </record>
+
+        <!-- Rule 5: Block non-system users from accessing res.config.settings -->
+        <record id="rule_res_config_settings_block_non_system" model="ir.rule">
+            <field name="name">Block non-system users from settings</field>
+            <field name="model_id" ref="base.model_res_config_settings"/>
+            <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+            <field name="domain_force">[(0, '=', 1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- Rule 6: Allow only base.group_system to access res.config.settings -->
+        <record id="rule_res_config_settings_system_only" model="ir.rule">
+            <field name="name">System Admin: Full access to settings</field>
+            <field name="model_id" ref="base.model_res_config_settings"/>
+            <field name="groups" eval="[(4, ref('base.group_system'))]"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
     </data>
 </odoo>

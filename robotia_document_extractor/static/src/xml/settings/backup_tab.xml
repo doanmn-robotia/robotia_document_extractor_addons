@@ -1,48 +1,101 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
     <t t-name="robotia_document_extractor.SettingsBackupTab">
-        <div class="backup-tab">
+        <div class="settings-backup-tab">
             <div class="row justify-content-center">
-                <div class="col">
-                    <div class="card">
-                        <div class="card-body text-center py-5">
-                            <i class="fa fa-database fa-4x text-info mb-3"/>
-                            <h4 class="mb-3">Database Backup</h4>
-                            <p class="text-muted mb-4">
-                                Manage database backups through Odoo's built-in database manager.
-                            </p>
-                            <div class="alert alert-light">
-                                <i class="fa fa-info-circle me-2"/>
-                                <strong>How to backup:</strong> Navigate to Database Manager to create, download, or restore backups.
+                <div class="col-lg-8">
+                    <!-- Main Backup Card -->
+                    <div class="settings-card text-center">
+                        <div class="settings-card-body py-5">
+                            <div class="backup-icon mb-4">
+                                <i class="fa fa-database fa-5x text-info"/>
                             </div>
-                            <a href="/web/database/manager" class="btn btn-info" target="_blank">
-                                <i class="fa fa-external-link me-2"/>
+                            <h3 class="mb-3">Database Backup &amp; Restore</h3>
+                            <p class="text-muted mb-4">
+                                Manage database backups through Odoo's built-in database manager.<br/>
+                                Create, download, or restore backups to protect your data.
+                            </p>
+                            <a href="/web/database/manager" class="btn btn-info btn-lg" target="_blank">
+                                <i class="fa fa-external-link-alt me-2"/>
                                 Open Database Manager
                             </a>
                         </div>
                     </div>
 
-                    <!-- Backup Best Practices -->
-                    <div class="mt-4">
-                        <h6 class="text-muted mb-3">Best Practices:</h6>
-                        <ul class="list-group">
-                            <li class="list-group-item">
-                                <i class="fa fa-check-circle text-success me-2"/>
-                                Schedule regular automatic backups
-                            </li>
-                            <li class="list-group-item">
-                                <i class="fa fa-check-circle text-success me-2"/>
-                                Store backups in a secure, off-site location
-                            </li>
-                            <li class="list-group-item">
-                                <i class="fa fa-check-circle text-success me-2"/>
-                                Test backup restoration periodically
-                            </li>
-                            <li class="list-group-item">
-                                <i class="fa fa-check-circle text-success me-2"/>
-                                Keep multiple backup versions
-                            </li>
-                        </ul>
+                    <!-- Best Practices Card -->
+                    <div class="settings-card mt-4">
+                        <div class="settings-card-header">
+                            <i class="fa fa-lightbulb text-warning"></i>
+                            <h3>Backup Best Practices</h3>
+                        </div>
+                        <div class="settings-card-body">
+                            <div class="best-practices-list">
+                                <div class="practice-item">
+                                    <div class="practice-icon">
+                                        <i class="fa fa-check-circle text-success"/>
+                                    </div>
+                                    <div class="practice-content">
+                                        <h6 class="mb-1">Schedule Regular Backups</h6>
+                                        <p class="text-muted small mb-0">
+                                            Set up automated daily or weekly backups to ensure data continuity
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="practice-item">
+                                    <div class="practice-icon">
+                                        <i class="fa fa-check-circle text-success"/>
+                                    </div>
+                                    <div class="practice-content">
+                                        <h6 class="mb-1">Off-Site Storage</h6>
+                                        <p class="text-muted small mb-0">
+                                            Store backups in a secure, off-site location (cloud storage, separate server)
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="practice-item">
+                                    <div class="practice-icon">
+                                        <i class="fa fa-check-circle text-success"/>
+                                    </div>
+                                    <div class="practice-content">
+                                        <h6 class="mb-1">Test Restoration Regularly</h6>
+                                        <p class="text-muted small mb-0">
+                                            Periodically test backup restoration to verify data integrity
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="practice-item">
+                                    <div class="practice-icon">
+                                        <i class="fa fa-check-circle text-success"/>
+                                    </div>
+                                    <div class="practice-content">
+                                        <h6 class="mb-1">Multiple Backup Versions</h6>
+                                        <p class="text-muted small mb-0">
+                                            Keep multiple backup versions to recover from various failure scenarios
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="practice-item">
+                                    <div class="practice-icon">
+                                        <i class="fa fa-check-circle text-success"/>
+                                    </div>
+                                    <div class="practice-content">
+                                        <h6 class="mb-1">Document Recovery Procedures</h6>
+                                        <p class="text-muted small mb-0">
+                                            Maintain clear documentation of backup and recovery procedures
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Info Alert -->
+                    <div class="alert alert-info mt-4 d-flex gap-3 align-items-start">
+                        <i class="fa fa-info-circle mt-1"/>
+                        <div>
+                            <strong>Important:</strong> Backups include all database records, attachments, and configuration settings.
+                            Ensure you have sufficient storage space before creating backups.
+                        </div>
                     </div>
                 </div>
             </div>

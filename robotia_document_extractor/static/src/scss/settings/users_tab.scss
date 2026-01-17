@@ -1,116 +1,110 @@
-// Users Tab Styles - Modern Clean Design
+/* Users Tab Styles - Modern Design System */
 
-.users-tab {
+.settings-users-tab {
     // KPI Cards Grid
-    .kpi-cards {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    .kpi-card {
+        display: flex;
+        align-items: center;
         gap: 16px;
-        margin-bottom: 24px;
+        padding: 20px;
+        border-radius: 12px;
+        background: white;
+        border: 1px solid var(--border-color);
+        transition: border-color 0.2s ease;
 
-        .kpi-card {
-            padding: 16px;
+        &:hover {
+            border-color: var(--accent-blue);
+        }
+
+        .kpi-icon {
+            width: 56px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             border-radius: 12px;
+            font-size: 24px;
+            flex-shrink: 0;
+        }
 
-            .kpi-label {
-                font-size: 12px;
-                font-weight: 500;
-                text-transform: uppercase;
-                letter-spacing: 0.05em;
+        .kpi-content {
+            flex: 1;
+
+            .kpi-value {
+                font-size: 28px;
+                font-weight: 700;
+                line-height: 1;
                 margin-bottom: 4px;
             }
 
-            .kpi-value {
-                font-size: 30px;
-                font-weight: 700;
-                line-height: 1;
-                margin-top: 4px;
-                color: white !important;
-            }
-
-            // PRIMARY CARD - Total Users (ONLY GRADIENT)
-            &.kpi-primary {
-                background: linear-gradient(to bottom right, #3b82f6, #2563eb);
-                color: white;
-
-                .kpi-label {
-                    color: rgba(255, 255, 255, 0.9);
-                }
-            }
-
-            // SECONDARY CARDS - Flat White with Colored Left Border
-            &.kpi-purple {
-                background: white;
-                color: #6f42c1 !important;
-                border: 1px solid #e5e7eb;
-                border-left: 4px solid #a855f7;
-
-                .kpi-label {
-                    color: #6b7280;
-                }
-
-                .kpi-value {
-                    font-size: 24px;
-                    color: #1f2937 !important;
-                }
-            }
-
-            &.kpi-green {
-                background: white;
-                color: #16a34a !important;
-                border: 1px solid #e5e7eb;
-                border-left: 4px solid #22c55e;
-
-                .kpi-label {
-                    color: #6b7280;
-                }
-
-                .kpi-value {
-                    font-size: 24px;
-                    color: #1f2937 !important;
-                }
-            }
-
-            &.kpi-orange {
-                background: white;
-                color: #ea580c !important;
-                border: 1px solid #e5e7eb;
-                border-left: 4px solid #f97316;
-
-                .kpi-label {
-                    color: #6b7280;
-                }
-
-                .kpi-value {
-                    font-size: 24px;
-                    color: #1f2937 !important;
-                }
-            }
-
-            &.kpi-gray {
-                background: white;
-                color: #6b7280 !important;
-                border: 1px solid #e5e7eb;
-                border-left: 4px solid #6b7280;
-
-                .kpi-label {
-                    color: #6b7280;
-                }
-
-                .kpi-value {
-                    font-size: 24px;
-                    color: #1f2937 !important;
-                }
+            .kpi-label {
+                font-size: 13px;
+                font-weight: 500;
+                color: var(--text-muted);
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
             }
         }
-    }
 
-    // Search & Filter Bar
-    .search-filter-bar {
-        background: white;
-        border: 1px solid #e5e7eb;
-        border-radius: 12px !important;
-        margin-bottom: 16px;
+        // Color Variants
+        &.kpi-primary {
+            background: linear-gradient(135deg, var(--accent-blue) 0%, #2563eb 100%);
+            color: white;
+            border: none;
+
+            .kpi-icon {
+                background: rgba(255, 255, 255, 0.2);
+                color: white;
+            }
+
+            .kpi-label {
+                color: rgba(255, 255, 255, 0.9);
+            }
+        }
+
+        &.kpi-purple {
+            .kpi-icon {
+                background: #f3e8ff;
+                color: #a855f7;
+            }
+
+            .kpi-value {
+                color: var(--text-primary);
+            }
+        }
+
+        &.kpi-green {
+            .kpi-icon {
+                background: #dcfce7;
+                color: var(--accent-green);
+            }
+
+            .kpi-value {
+                color: var(--text-primary);
+            }
+        }
+
+        &.kpi-orange {
+            .kpi-icon {
+                background: #ffedd5;
+                color: #f97316;
+            }
+
+            .kpi-value {
+                color: var(--text-primary);
+            }
+        }
+
+        &.kpi-gray {
+            .kpi-icon {
+                background: var(--slate-100);
+                color: var(--slate-600);
+            }
+
+            .kpi-value {
+                color: var(--text-primary);
+            }
+        }
     }
 
     // User Avatar
@@ -119,89 +113,92 @@
         height: 40px;
         border-radius: 50%;
         object-fit: cover;
-        border: 2px solid #e5e7eb;
+        border: 2px solid var(--border-color);
     }
 
     // Users Table
-    .users-table-container {
-        background: white;
-        border: 1px solid #e5e7eb;
-        border-radius: 12px !important;
-        overflow: auto;
+    .users-table {
+        thead {
+            background: var(--slate-50);
 
-        .table {
-            margin-bottom: 0;
-
-            thead {
-                background: #f9fafb;
-
-                th {
-                    padding: 12px 24px;
-                    font-weight: 500;
-                    font-size: 12px;
-                    text-transform: uppercase;
-                    letter-spacing: 0.05em;
-                    color: #6b7280;
-                    border-bottom: 1px solid #e5e7eb;
-                }
+            th {
+                padding: 14px 16px;
+                font-weight: 600;
+                font-size: 13px;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                color: var(--text-muted);
+                border-bottom: 2px solid var(--border-color);
             }
+        }
 
-            tbody {
-                tr {
-                    border-top: 1px solid #e5e7eb;
-                    transition: background-color 0.15s ease;
+        tbody {
+            tr.user-row {
+                border-top: 1px solid var(--border-color);
+                transition: all 0.2s;
+                cursor: pointer;
 
-                    &:hover {
-                        background: #f9fafb;
+                &:hover {
+                    background: var(--slate-50);
+                }
+
+                td {
+                    padding: 16px;
+                    vertical-align: middle;
+                    color: var(--text-primary);
+
+                    .fw-semibold {
+                        font-weight: 600;
+                        color: var(--text-primary);
                     }
 
-                    td {
-                        padding: 16px 24px;
-                        vertical-align: middle;
-                        color: #374151;
-
-                        // Prevent wrapping for Created At and Actions columns
-                        &:nth-last-child(1),  // Actions column
-                        &:nth-last-child(2) {  // Created At column
-                            white-space: nowrap;
-                        }
+                    .small {
+                        font-size: 13px;
                     }
                 }
             }
         }
     }
 
-    // Badge styles moved to backend_theme/static/src/backend/app_menu/layout/style/layout_style.scss
-    // for consistency across the entire application
-
-    // Icon-only Action Buttons
-    .btn-icon-only {
-        background: transparent;
-        border: none;
-        padding: 8px;
-        border-radius: 6px;
-        transition: all 0.15s ease;
-        color: #6b7280;
-        cursor: pointer;
-
-        &:hover {
-            background: #f3f4f6;
+    // Role Badges
+    .badge {
+        &.badge-role-admin {
+            background-color: #ddd6fe;
+            color: #6d28d9;
         }
 
-        &.btn-edit:hover {
-            color: #3b82f6;
-            background: #eff6ff;
+        &.badge-role-maker {
+            background-color: #d1fae5;
+            color: #065f46;
         }
 
-        &.btn-archive:hover {
-            color: #f97316;
-            background: #fff7ed;
+        &.badge-role-checker {
+            background-color: #fed7aa;
+            color: #9a3412;
         }
 
-        // Focus state for accessibility
-        &:focus {
-            outline: 2px solid #3b82f6;
-            outline-offset: 2px;
+        &.badge-role-viewer {
+            background-color: var(--slate-200);
+            color: var(--slate-700);
         }
+
+        // Status Badges
+        &.badge-status-active {
+            background-color: #dcfce7;
+            color: #166534;
+            border: 1px solid #86efac;
+        }
+
+        &.badge-status-inactive {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+    }
+
+    // Button styling in table
+    .btn-group-sm .btn {
+        padding: 6px 12px;
+        font-size: 13px;
     }
 }

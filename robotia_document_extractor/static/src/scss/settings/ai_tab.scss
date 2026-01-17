@@ -1,86 +1,95 @@
-// AI Tab Styles - Clean Modern Design
+/* AI Tab Specific Styles */
 
-.ai-tab {
-    .card {
-        background: white;
-        border: 1px solid #e5e7eb;
-        border-radius: 12px;
-    }
-
-    .alert-info {
-        background: #dbeafe;
-        border: 1px solid #bfdbfe;
-        color: #1e40af;
-        border-radius: 8px;
-        padding: 16px;
-
-        .alert-heading {
-            color: #1e3a8a;
-            font-weight: 700;
-        }
-
-        i {
-            color: #3b82f6;
-        }
-    }
-
-    h4 {
-        color: #111827;
-        font-weight: 700;
-    }
-
-    .text-muted {
-        color: #6b7280;
-    }
-
-    .btn-primary {
-        background: #2563eb;
-        border-color: #2563eb;
-        border-radius: 8px;
-        padding: 10px 20px;
-        font-size: 16px;
-        font-weight: 500;
-
-        &:hover {
-            background: #1d4ed8;
-            border-color: #1d4ed8;
-        }
-
-        i {
-            margin-right: 8px;
-        }
-    }
-
-    .list-group-item {
-        border: 1px solid #e5e7eb;
-        border-left: 3px solid transparent;
-        transition: border-color 0.15s ease, background-color 0.15s ease;
-        padding: 12px 16px;
-
-        &:hover {
-            border-left-color: #3b82f6;
-            background: #f9fafb;
-        }
-
-        strong {
-            color: #111827;
-            font-weight: 600;
-        }
-
-        p {
-            color: #6b7280;
-            margin-bottom: 0;
-        }
-
-        i {
-            color: #22c55e;
-            margin-right: 12px;
-        }
-    }
-
-    h6 {
-        color: #6b7280;
-        font-weight: 500;
+.settings-ai-tab {
+    // Service Account Status Display
+    .service-account-status {
+        border: 1px solid var(--border-color);
         font-size: 14px;
+
+        i {
+            font-size: 20px;
+            flex-shrink: 0;
+
+            &.text-success {
+                color: var(--accent-green);
+            }
+
+            &.text-warning {
+                color: var(--accent-warning);
+            }
+        }
+
+        span {
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+        }
+    }
+
+    // Service Account Upload (Custom File Input)
+    .service-account-upload {
+        input[type="file"] {
+            display: none; // Hide default file input
+        }
+
+        label[for="serviceAccountFile"] {
+            cursor: pointer;
+            margin-bottom: 0;
+            transition: all 0.2s;
+
+            &:hover {
+                background-color: var(--slate-50);
+                border-color: var(--slate-400);
+                transform: translateY(-1px);
+            }
+
+            &:active {
+                transform: translateY(0);
+            }
+        }
+    }
+
+    // Password Input Fields (show masked text)
+    input[type="password"] {
+        letter-spacing: 0.2em;
+        font-family: monospace;
+
+        &::placeholder {
+            letter-spacing: normal;
+            font-family: inherit;
+        }
+    }
+
+    // Number badges showing current values
+    .badge {
+        font-family: 'Monaco', 'Courier New', monospace;
+    }
+
+    // Model select dropdown
+    .form-select {
+        cursor: pointer;
+    }
+
+    // Google Drive Section specific styles
+    .settings-card-header {
+        // Override for Google Drive toggle in header
+        .form-check-switch {
+            display: flex;
+            align-items: center;
+            margin-left: auto;
+        }
+    }
+
+    // Cron Interval Controls
+    .cron-interval-controls {
+        .form-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        .form-control,
+        .form-select {
+            font-size: 13px;
+        }
     }
 }

@@ -129,9 +129,4 @@
         </field>
     </record>
 
-    <menuitem id="menu_extraction_job"
-              name="Extraction Jobs"
-              parent="robotia_document_extractor.menu_document_extractor_root"
-              action="action_extraction_job"
-              sequence="10"/>
 </odoo>
