@@ -147,7 +147,7 @@
                                                 <!-- Sub-steps for Category Mapping: Show detected categories -->
                                                 <t t-if="step.key === 'category_mapping' and (isCompleted or isActive) and state.detectedCategories.length > 0">
                                                     <div class="stepper-substeps">
-                                                        <t t-foreach="state.detectedCategories" t-as="catKey" t-key="catKey">
+                                                        <t t-foreach="state.detectedCategories" t-as="catKey" t-key="'cat_' + catKey + '_' + catKey_index">
                                                             <div class="substep-item completed">
                                                                 <i class="fa fa-check-circle-o"/>
                                                                 <span t-esc="getCategoryLabel(catKey)"/>
@@ -164,7 +164,7 @@
                                                     <t t-if="showSubSteps">
                                                         <div class="stepper-substeps">
                                                             <!-- Completed sub-steps -->
-                                                            <t t-foreach="stepCompletedSubSteps" t-as="subKey" t-key="subKey">
+                                                            <t t-foreach="stepCompletedSubSteps" t-as="subKey" t-key="step.key + '_completed_' + subKey + '_' + subKey_index">
                                                                 <div class="substep-item completed">
                                                                     <i class="fa fa-check-circle"/>
                                                                     <span t-esc="getCategoryLabel(subKey)"/>

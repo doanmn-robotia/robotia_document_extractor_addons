@@ -45,15 +45,19 @@ def build_mega_context_system_instruction(substances, activity_fields, provinces
             hs_codes.extend([c.code for c in s.sub_hs_code_ids])
         hs_str = ', '.join(hs_codes) if hs_codes else 'N/A'
 
+        # Handle False values (Odoo Char fields return False when empty)
+        name = s.name or 'N/A'
+        code = s.code or 'N/A'
+
         substance_lines.append(
-            f"{s.id:4d} | {s.name:20s} | {s.code:12s} | {hs_str:25s} | {s.gwp}"
+            f"{s.id:4d} | {name:20s} | {code:12s} | {hs_str:25s} | {s.gwp}"
         )
 
     substance_table = '\n'.join(substance_lines)
 
     # Build activity fields table (compact)
     activity_table = '\n'.join([
-        f"{f.code:23s} | {f.name}"
+        f"{(f.code or 'N/A'):23s} | {f.name or 'N/A'}"
         for f in activity_fields
     ])
 

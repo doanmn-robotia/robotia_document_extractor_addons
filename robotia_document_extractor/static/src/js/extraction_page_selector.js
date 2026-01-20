@@ -156,9 +156,12 @@ export class ExtractionPageSelector extends Component {
 
     /**
      * Get completed sub-steps for a specific step
+     * Returns unique list (filters out duplicates)
      */
     getStepCompletedSubSteps(stepKey) {
-        return this.state.stepSubSteps[stepKey] || []
+        const subSteps = this.state.stepSubSteps[stepKey] || [];
+        // Filter duplicates using Set
+        return [...new Set(subSteps)];
     }
 
     async processInitialFile(fileUrl, fileName) {

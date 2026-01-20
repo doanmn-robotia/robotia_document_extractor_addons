@@ -16,15 +16,51 @@ def get_metadata_schema(form_type):
     Returns:
         str: Compact metadata schema
     """
-    return """## METADATA SCHEMA
+
+    # Build table presence flags section based on form type
+    if form_type == '01':
+        table_flags_section = """| has_table_1_1 | bool | True if substance_usage table has data rows |
+| has_table_1_2 | bool | True if equipment_product table has data rows |
+| has_table_1_3 | bool | True if equipment_ownership table has data rows |
+| has_table_1_4 | bool | True if collection_recycling table has data rows |
+| is_capacity_merged_table_1_2 | bool | True if Table 1.2 has 1 capacity column (merged) |
+| is_capacity_merged_table_1_3 | bool | True if Table 1.3 has 1 capacity column (merged) |"""
+
+        example_flags = """"has_table_1_1": true,
+  "has_table_1_2": true,
+  "has_table_1_3": false,
+  "has_table_1_4": false,
+  "is_capacity_merged_table_1_2": false,
+  "is_capacity_merged_table_1_3": false,"""
+    else:  # '02'
+        table_flags_section = """| has_table_2_1 | bool | True if quota_usage table has data rows |
+| has_table_2_2 | bool | True if equipment_product_report table has data rows |
+| has_table_2_3 | bool | True if equipment_ownership_report table has data rows |
+| has_table_2_4 | bool | True if collection_recycling_report table has data rows |
+| is_capacity_merged_table_2_2 | bool | True if Table 2.2 has 1 capacity column (merged) |
+| is_capacity_merged_table_2_3 | bool | True if Table 2.3 has 1 capacity column (merged) |"""
+
+        example_flags = """"has_table_2_1": true,
+  "has_table_2_2": false,
+  "has_table_2_3": false,
+  "has_table_2_4": false,
+  "is_capacity_merged_table_2_2": false,
+  "is_capacity_merged_table_2_3": false,"""
+
+    return f"""## METADATA SCHEMA
 
 Extract organization information and document metadata.
+
+⚠️ **CRITICAL**: Metadata is extracted LAST, so you can LOOK BACK at ENTIRE CHAT HISTORY to infer flags.
 
 ### Required Fields
 
 | Field | Type | Extract From |
 |-------|------|--------------|
-| year | int | Header "Là năm mà dữ liệu được thống kê, thường sẽ nằm ở tiêu đề của bảng (header bảng) chứ không phải là ngày nộp báo cáo hay ngày ký báo cáo" |
+| year | int | **LOOK BACK in chat history**: Extract from table column headers (merged cells "Năm ..."). If table has 3 years → year = middle year (year_2). If table has 1 year → year = that year. |
+| year_1 | int/null | **LOOK BACK**: First year from table headers (only if table has 3 year columns) |
+| year_2 | int/null | **LOOK BACK**: Second year from table headers (= year, only if table has 3 year columns) |
+| year_3 | int/null | **LOOK BACK**: Third year from table headers (only if table has 3 year columns) |
 | organization_name | str | "Tên tổ chức:" (must be specific, not placeholder) |
 | business_id | str | "Mã số doanh nghiệp:" (NOT "Số giấy phép...") |
 | business_license_date | str | "Ngày đăng ký lần đầu:" → YYYY-MM-DD (FIRST date only!) |
@@ -39,11 +75,67 @@ Extract organization information and document metadata.
 | contact_country_code | str | Infer from address ("VN", "US", etc.) |
 | contact_state_code | str/null | Lookup from province table ("VN-SG", "VN-HN", etc.) |
 | activity_field_codes | array[str] | Infer from checkboxes OR table presence |
+{table_flags_section}
+
+### CRITICAL: Year Extraction Logic
+
+**MUST LOOK BACK at chat history** to find years from table column headers:
+
+**For tables with 3 year columns** (Bảng 1.1 or Bảng 2.1):
+- Table headers: "Năm 2021" | "Năm 2022" | "Năm 2023"
+- year_1 = 2021 (first year)
+- year_2 = 2022 (middle year, **this is also "year"**)
+- year_3 = 2023 (third year)
+- **year = year_2** (the middle/main reporting year)
+
+**For tables with 1 year column** (other tables):
+- Table header: "Năm 2022"
+- **year = 2022**
+- year_1, year_2, year_3 = null (not applicable)
+
+**If no years found in chat history** (fallback):
+- Infer from document title or context
+- Set year_1 = year - 1, year_2 = year, year_3 = year + 1
+
+### CRITICAL: Table Presence Flags (has_table_x_x)
+
+**LOOK BACK at chat history** to see which categories were extracted:
+
+- If extracted `substance_usage` → has_table_1_1 = true (Form 01)
+- If extracted `equipment_product` → has_table_1_2 = true (Form 01)
+- If extracted `equipment_ownership` → has_table_1_3 = true (Form 01)
+- If extracted `collection_recycling` → has_table_1_4 = true (Form 01)
+- If extracted `quota_usage` → has_table_2_1 = true (Form 02)
+- If extracted `equipment_product_report` → has_table_2_2 = true (Form 02)
+- If extracted `equipment_ownership_report` → has_table_2_3 = true (Form 02)
+- If extracted `collection_recycling_report` → has_table_2_4 = true (Form 02)
+
+### CRITICAL: Capacity Merged Flags (is_capacity_merged_table_x_x)
+
+**LOOK BACK at equipment table responses** in chat history:
+
+- Check if equipment table has field `capacity` (1 column) → is_capacity_merged = true
+- Check if equipment table has `cooling_capacity` + `power_capacity` (2 columns) → is_capacity_merged = false
+
+### Activity Field Codes Inference
+
+**Priority 1**: Extract from checkboxes/ticks in document
+
+**Priority 2**: If no checkboxes, infer from has_table flags:
+- has_table_1_1 = true → Check substance_usage data rows for usage_type (production/import/export)
+- has_table_1_2 = true → Add equipment_production or equipment_import
+- has_table_1_3 = true → Add ac_ownership or refrigeration_ownership
+- has_table_1_4 = true → Add collection_recycling
+
+**Rule**: Only add activity if table has at LEAST 1 DATA ROW (is_title=false with actual values)
 
 ### EXAMPLE JSON Output
 
-{
-  "year": 2024,
+{{
+  "year": 2022,
+  "year_1": 2021,
+  "year_2": 2022,
+  "year_3": 2023,
   "organization_name": "CÔNG TY TNHH ABC",
   "business_id": "0800666682",
   "business_license_date": "2020-03-15",
@@ -57,8 +149,9 @@ Extract organization information and document metadata.
   "contact_email": "contact@abc.com",
   "contact_country_code": "VN",
   "contact_state_code": "VN-SG",
-  "activity_field_codes": ["production", "import", "export", "equipment_production", "equipment_import", "ac_ownership", "refrigeration_ownership", "collection_recycling"]
-}
+  "activity_field_codes": ["production", "import", "export"],
+  {example_flags}
+}}
 """
 
 
