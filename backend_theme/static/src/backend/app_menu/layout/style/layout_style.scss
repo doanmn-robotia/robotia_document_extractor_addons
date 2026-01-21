@@ -520,6 +520,11 @@ html {
             outline: none;
         }
 
+        // Readonly fields: apply padding directly to container since no input exists
+        &.o_readonly_modifier {
+            padding: 10px 12px;
+        }
+
         // Move padding to inputs so they are fully clickable
         input:not(.o_searchview_input),
         textarea,

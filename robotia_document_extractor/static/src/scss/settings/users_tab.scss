@@ -11,6 +11,7 @@
         background: white;
         border: 1px solid var(--border-color);
         transition: border-color 0.2s ease;
+        height: 100%;
 
         &:hover {
             border-color: var(--accent-blue);
