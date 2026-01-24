@@ -46,6 +46,14 @@
                     <group string="Document Extractor Role">
                         <field name="document_extractor_group" colspan="2" widget="card_selection" nolabel="1"/>
                     </group>
+
+                    <field name="is_admin" invisible="1"/>
+                    <group string="Allowed Menus" invisible="is_admin">
+                        <field name="show_menu_ids" widget="many2many_tags" options="{'no_create': True}" nolabel="1"/>
+                        <div class="alert alert-info" role="alert" colspan="2">
+                            <p><i class="fa fa-info-circle"/> Selecting a menu will automatically grant access to all its child menus.</p>
+                        </div>
+                    </group>
                 </sheet>
             </form>
         </field>
