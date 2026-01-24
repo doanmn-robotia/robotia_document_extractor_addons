@@ -5,7 +5,7 @@
     'version': '18.0.1.0.1',
     'sequence': 10,
     'description': "",
-    'depends': ['web', 'queue_job'],
+    'depends': ['web', 'queue_job', 'restrict_menu'],
     'category': "Document Extractor",
     'data': [
         'data/security_groups.xml',

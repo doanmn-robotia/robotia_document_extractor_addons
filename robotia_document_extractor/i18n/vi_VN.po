@@ -5191,6 +5191,20 @@ msgid "Document Extractor Role"
 msgstr "Vai trò hệ thống"
 
 #. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_users_form_simplified
+msgid "Allowed Menus"
+msgstr "Menu được phép truy cập"
+
+#. module: robotia_document_extractor
+#: model_terms:ir.ui.view,arch_db:robotia_document_extractor.view_users_form_simplified
+msgid ""
+"<i class=\"fa fa-info-circle\"/> Selecting a menu will automatically grant "
+"access to all its child menus."
+msgstr ""
+"<i class=\"fa fa-info-circle\"/> Chọn một menu sẽ tự động cấp quyền truy cập "
+"cho tất cả menu con của nó."
+
+#. module: robotia_document_extractor
 #: model:ir.model.fields,field_description:robotia_document_extractor.field_res_users__is_doc_checker
 msgid "Document Checker"
 msgstr "Người kiểm tra tài liệu"
