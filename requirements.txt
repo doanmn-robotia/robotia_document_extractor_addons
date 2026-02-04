@@ -1,0 +1,23 @@
+# Robotia Document Extractor - Python Dependencies
+
+# Google Gemini AI integration
+google-genai
+
+# Google Drive API
+google-api-python-client
+google-auth
+
+# PDF processing
+PyMuPDF
+
+# Image processing
+Pillow
+
+# LlamaParse OCR service
+llama-cloud-services
+
+# Fuzzy string matching
+rapidfuzz
+
+# Text normalization (accent/diacritic removal)
+unidecode

@@ -121,8 +121,154 @@
         <field name="context">{'module': 'robotia_document_extractor'}</field>
     </record>
 
+    <!-- Settings Dashboard (Client Action) -->
+    <record id="action_settings_dashboard" model="ir.actions.client">
+        <field name="name">Settings Dashboard</field>
+        <field name="tag">document_extractor.settings_dashboard</field>
+    </record>
 
-        <!-- Root Menu -->
+    <!-- ========================================== -->
+    <!-- Partner (Organization) Custom Views -->
+    <!-- ========================================== -->
+
+    <!-- Custom Organization List View -->
+    <record id="view_partner_organization_list" model="ir.ui.view">
+        <field name="name">res.partner.organization.list</field>
+        <field name="model">res.partner</field>
+        <field name="priority">20</field>
+        <field name="arch" type="xml">
+            <list string="Organizations">
+                <field name="name"/>
+                <field name="business_id"/>
+                <field name="city"/>
+                <field name="country_id" optional="hide"/>
+                <field name="phone"/>
+                <field name="email"/>
+                <field name="legal_representative_name" optional="hide"/>
+                <button name="action_view_dashboard" type="object" string="Dashboard" icon="fa-bar-chart"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Custom Organization Form View -->
+    <record id="view_partner_organization_form" model="ir.ui.view">
+        <field name="name">res.partner.organization.form</field>
+        <field name="model">res.partner</field>
+        <field name="priority">20</field>
+        <field name="arch" type="xml">
+            <form string="Organization">
+                <header>
+                    <button name="action_view_dashboard"
+                            type="object"
+                            string="Dashboard"
+                            class="btn-primary"
+                            icon="fa-bar-chart"
+                            help="View analytics dashboard for this organization"/>
+                </header>
+                <sheet>
+                    <field name="x_partner_type" invisible="1"/>
+                    <field name="image_1920" widget="image" class="oe_avatar"/>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Organization Name" required="1"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group string="Business License">
+                            <field name="business_id"/>
+                            <field name="business_license_date"/>
+                            <field name="business_license_place"/>
+                        </group>
+                        <group string="Contact Information">
+                            <field name="phone"/>
+                            <field name="mobile" optional="hide"/>
+                            <field name="email"/>
+                            <field name="fax"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <group string="Address">
+                            <field name="street" placeholder="Street..."/>
+                            <field name="street2" placeholder="Street 2..."/>
+                            <field name="city"/>
+                            <field name="state_id"/>
+                            <field name="zip"/>
+                            <field name="country_id"/>
+                        </group>
+                        <group string="Legal Representative">
+                            <field name="legal_representative_name"/>
+                            <field name="legal_representative_position"/>
+                            <field name="contact_person_name"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Internal Notes">
+                            <field name="comment" placeholder="Internal notes..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Custom Organization Search View -->
+    <record id="view_partner_organization_search" model="ir.ui.view">
+        <field name="name">res.partner.organization.search</field>
+        <field name="model">res.partner</field>
+        <field name="priority">20</field>
+        <field name="arch" type="xml">
+            <search string="Search Organizations">
+                <field name="name"/>
+                <field name="business_id"/>
+                <field name="legal_representative_name"/>
+                <field name="city"/>
+                <field name="country_id"/>
+                <filter string="Has Business License" name="has_license"
+                        domain="[('business_id', '!=', False)]"/>
+                <separator/>
+                <filter string="Companies" name="is_company"
+                        domain="[('is_company', '=', True)]"/>
+                <group expand="0" string="Group By">
+                    <filter string="City" name="group_by_city" context="{'group_by': 'city'}"/>
+                    <filter string="Country" name="group_by_country" context="{'group_by': 'country_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Organization Action -->
+    <record id="action_partner_organization" model="ir.actions.act_window">
+        <field name="name">Organizations</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('is_company', '=', True), ('x_partner_type', '=', 'organization')]</field>
+        <field name="context">{'default_is_company': True, 'default_x_partner_type': 'organization', 'search_default_has_license': 1}</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('view_partner_organization_list')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('view_partner_organization_form')})]"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first Organization
+            </p>
+            <p>
+                Organizations are automatically created when you extract documents.
+                You can also create them manually here.
+            </p>
+        </field>
+    </record>
+
+    <!-- ========================================== -->
+    <!-- Recovery Dashboard Client Action -->
+    <!-- ========================================== -->
+    <record id="action_recovery_dashboard" model="ir.actions.client">
+        <field name="name">Collection &amp; Recycling Dashboard</field>
+        <field name="tag">document_extractor.recovery_dashboard</field>
+    </record>
+
+            <!-- Root Menu -->
     <menuitem id="menu_document_extractor_root"
               name="Document Extractor"
               web_icon="robotia_document_extractor,static/description/icon.png"
@@ -310,13 +456,7 @@
               action="action_collection_recycling_report"
               sequence="4"/>
 
-    <!-- Settings Dashboard (Client Action) -->
-    <record id="action_settings_dashboard" model="ir.actions.client">
-        <field name="name">Settings Dashboard</field>
-        <field name="tag">document_extractor.settings_dashboard</field>
-    </record>
-
-    <!-- Settings Menu - Opens Settings Dashboard directly -->
+        <!-- Settings Menu - Opens Settings Dashboard directly -->
     <menuitem id="menu_settings"
               name="Settings"
               parent="menu_document_extractor_root"
@@ -324,146 +464,6 @@
               sequence="90"
               groups="group_document_extractor_admin"/>
 
-    <!-- ========================================== -->
-    <!-- Partner (Organization) Custom Views -->
-    <!-- ========================================== -->
-
-    <!-- Custom Organization List View -->
-    <record id="view_partner_organization_list" model="ir.ui.view">
-        <field name="name">res.partner.organization.list</field>
-        <field name="model">res.partner</field>
-        <field name="priority">20</field>
-        <field name="arch" type="xml">
-            <list string="Organizations">
-                <field name="name"/>
-                <field name="business_id"/>
-                <field name="city"/>
-                <field name="country_id" optional="hide"/>
-                <field name="phone"/>
-                <field name="email"/>
-                <field name="legal_representative_name" optional="hide"/>
-                <button name="action_view_dashboard" type="object" string="Dashboard" icon="fa-bar-chart"/>
-            </list>
-        </field>
-    </record>
-
-    <!-- Custom Organization Form View -->
-    <record id="view_partner_organization_form" model="ir.ui.view">
-        <field name="name">res.partner.organization.form</field>
-        <field name="model">res.partner</field>
-        <field name="priority">20</field>
-        <field name="arch" type="xml">
-            <form string="Organization">
-                <header>
-                    <button name="action_view_dashboard"
-                            type="object"
-                            string="Dashboard"
-                            class="btn-primary"
-                            icon="fa-bar-chart"
-                            help="View analytics dashboard for this organization"/>
-                </header>
-                <sheet>
-                    <field name="x_partner_type" invisible="1"/>
-                    <field name="image_1920" widget="image" class="oe_avatar"/>
-                    <div class="oe_title">
-                        <h1>
-                            <field name="name" placeholder="Organization Name" required="1"/>
-                        </h1>
-                    </div>
-
-                    <group>
-                        <group string="Business License">
-                            <field name="business_id"/>
-                            <field name="business_license_date"/>
-                            <field name="business_license_place"/>
-                        </group>
-                        <group string="Contact Information">
-                            <field name="phone"/>
-                            <field name="mobile" optional="hide"/>
-                            <field name="email"/>
-                            <field name="fax"/>
-                        </group>
-                    </group>
-
-                    <group>
-                        <group string="Address">
-                            <field name="street" placeholder="Street..."/>
-                            <field name="street2" placeholder="Street 2..."/>
-                            <field name="city"/>
-                            <field name="state_id"/>
-                            <field name="zip"/>
-                            <field name="country_id"/>
-                        </group>
-                        <group string="Legal Representative">
-                            <field name="legal_representative_name"/>
-                            <field name="legal_representative_position"/>
-                            <field name="contact_person_name"/>
-                        </group>
-                    </group>
-
-                    <notebook>
-                        <page string="Internal Notes">
-                            <field name="comment" placeholder="Internal notes..."/>
-                        </page>
-                    </notebook>
-                </sheet>
-            </form>
-        </field>
-    </record>
-
-    <!-- Custom Organization Search View -->
-    <record id="view_partner_organization_search" model="ir.ui.view">
-        <field name="name">res.partner.organization.search</field>
-        <field name="model">res.partner</field>
-        <field name="priority">20</field>
-        <field name="arch" type="xml">
-            <search string="Search Organizations">
-                <field name="name"/>
-                <field name="business_id"/>
-                <field name="legal_representative_name"/>
-                <field name="city"/>
-                <field name="country_id"/>
-                <filter string="Has Business License" name="has_license"
-                        domain="[('business_id', '!=', False)]"/>
-                <separator/>
-                <filter string="Companies" name="is_company"
-                        domain="[('is_company', '=', True)]"/>
-                <group expand="0" string="Group By">
-                    <filter string="City" name="group_by_city" context="{'group_by': 'city'}"/>
-                    <filter string="Country" name="group_by_country" context="{'group_by': 'country_id'}"/>
-                </group>
-            </search>
-        </field>
-    </record>
-
-    <!-- Organization Action -->
-    <record id="action_partner_organization" model="ir.actions.act_window">
-        <field name="name">Organizations</field>
-        <field name="res_model">res.partner</field>
-        <field name="view_mode">list,form</field>
-        <field name="domain">[('is_company', '=', True), ('x_partner_type', '=', 'organization')]</field>
-        <field name="context">{'default_is_company': True, 'default_x_partner_type': 'organization', 'search_default_has_license': 1}</field>
-        <field name="view_ids" eval="[(5, 0, 0),
-            (0, 0, {'view_mode': 'list', 'view_id': ref('view_partner_organization_list')}),
-            (0, 0, {'view_mode': 'form', 'view_id': ref('view_partner_organization_form')})]"/>
-        <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                Create your first Organization
-            </p>
-            <p>
-                Organizations are automatically created when you extract documents.
-                You can also create them manually here.
-            </p>
-        </field>
-    </record>
-
-    <!-- ========================================== -->
-    <!-- Recovery Dashboard Client Action -->
-    <!-- ========================================== -->
-    <record id="action_recovery_dashboard" model="ir.actions.client">
-        <field name="name">Collection &amp; Recycling Dashboard</field>
-        <field name="tag">document_extractor.recovery_dashboard</field>
-    </record>
 
 
 </odoo>

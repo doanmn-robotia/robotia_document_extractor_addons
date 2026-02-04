@@ -7,7 +7,7 @@
     -->
     <data noupdate="1">
         <!-- Form 01 (Registration) Default Prompt -->
-        <function model="document.extraction.service" name="_initialize_default_prompts"/>
+        <!-- <function model="document.extraction.service" name="_initialize_default_prompts"/> -->
 
         <!-- Extraction Strategy Configuration -->
         <record id="param_extraction_strategy" model="ir.config_parameter">
